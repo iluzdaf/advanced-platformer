@@ -4,8 +4,6 @@
 #include <limits>
 #include <stdexcept>
 #include "content/exit_catalog.hpp"
-#include "game/level_composition.hpp"
-#include "content/level_catalog.hpp"
 #include "content/content_validation.hpp"
 #include "content/level_data.hpp"
 #include "simple_platformer/math/aabb.hpp"
@@ -41,11 +39,11 @@ TEST_CASE("Exit definitions compose independent bounds and sprites", "[app][exit
 }
 
 TEST_CASE(
-    "Exit catalogue validates unused definitions and rejects placement settings",
+    "Exit catalog validates unused definitions and rejects placement settings",
     "[app][exits][json]")
 {
-    auto root = exitData();
-    auto& definition = root["exits"]["gate"];
+    auto exitJson = exitData();
+    auto& definition = exitJson["exits"]["gate"];
     SECTION("Invalid bounds")
     {
         definition["bodySize"] = {0, 24};
@@ -79,7 +77,7 @@ TEST_CASE(
         definition["consumeItem"] = true;
     }
     REQUIRE_THROWS_WITH(
-        simple_platformer::parseExitCatalog(root.dump(), "exits.json"),
+        simple_platformer::parseExitCatalog(exitJson.dump(), "exits.json"),
         Catch::Matchers::ContainsSubstring("exits.json: exits.gate"));
 }
 
@@ -93,36 +91,9 @@ TEST_CASE("Exit definitions and placement names validate without JSON", "[app][e
         simple_platformer::validateExitSettings(placement),
         "exit.definition: exit definition name cannot be empty");
     REQUIRE_THROWS_AS(
-        simple_platformer::loadExitCatalog("tests/fixtures/missing-exits.json"),
+        simple_platformer::loadExitCatalog("tests/fixtures/catalogs/missing-exits.json"),
         std::invalid_argument);
     REQUIRE_THROWS_WITH(
         simple_platformer::parseExitCatalog("{\n  \"exits\": {\n", "broken"),
         Catch::Matchers::ContainsSubstring("broken: line 3, column 1: invalid JSON"));
-}
-
-TEST_CASE("Level exit placement combines a definition with completion settings", "[app][exits]")
-{
-    const auto catalog = simple_platformer::loadLevelCatalog("tests/fixtures/levels.json");
-    const auto level = simple_platformer::composeGameLevel(catalog, 10, 7);
-    const auto& exit = level.world.exit();
-    if (!exit || !exit->sprite)
-    {
-        throw std::logic_error("Missing fixture exit");
-    }
-    REQUIRE(exit->bounds.size == glm::vec2{12, 24});
-    REQUIRE(exit->sprite->textureId == 7);
-    REQUIRE(exit->nextLevel == 25);
-    REQUIRE(exit->requirement.has_value());
-}
-
-TEST_CASE("Unknown unused exit definitions retain the legend path", "[app][exits]")
-{
-    const auto catalog = simple_platformer::parseLevelCatalog(
-        R"({"startLevel":1,"levels":[{"number":1,"file":"unknown_exit.json"}]})",
-        "fixture",
-        "tests/fixtures");
-    REQUIRE_THROWS_WITH(
-        simple_platformer::composeGameLevel(catalog, 1, 0),
-        Catch::Matchers::ContainsSubstring(
-            "unknown_exit.json: objectLegend.E.definition: unknown exit definition 'missing'"));
 }

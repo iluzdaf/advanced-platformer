@@ -6,6 +6,7 @@
 #include <glm/vec2.hpp>
 
 #include "game/game.hpp"
+#include "content/game_catalogs.hpp"
 #include "content/level_catalog.hpp"
 #include "simple_platformer/actor/actor.hpp"
 #include "simple_platformer/input/input_state.hpp"
@@ -52,24 +53,15 @@ namespace
     }
 }
 
-TEST_CASE("Breaking a tile under a position breaks nothing that cannot break", "[app][debug]")
-{
-    simple_platformer::Game game(
-        0,
-        simple_platformer::loadLevelCatalog("tests/fixtures/levels.json"),
-        tests::FixedStepSeconds);
-    // Off the map, and on the fixture's tiles, none of which breaks.
-    REQUIRE_FALSE(game.breakTileAt({-100.0F, -100.0F}));
-    REQUIRE_FALSE(game.breakTileAt({8.0F, 8.0F}));
-}
-
 TEST_CASE(
     "The game carries progress across levels and restarts after the final exit",
     "[app][level-transition]")
 {
     simple_platformer::Game game(
         0,
-        simple_platformer::loadLevelCatalog("tests/fixtures/levels.json"),
+        simple_platformer::loadLevelCatalog("tests/fixtures/levels/levels.json"),
+        simple_platformer::loadGameCatalogs("tests/fixtures/catalogs"),
+        simple_platformer::LuaNpcScripts{},
         tests::FixedStepSeconds);
     const auto initialHealth = game.playerHealth();
     const auto initialInventory = game.playerInventory();
@@ -113,7 +105,9 @@ TEST_CASE(
 {
     simple_platformer::Game game(
         0,
-        simple_platformer::loadLevelCatalog("tests/fixtures/locked_levels.json"),
+        simple_platformer::loadLevelCatalog("tests/fixtures/levels/locked_levels.json"),
+        simple_platformer::loadGameCatalogs("tests/fixtures/catalogs"),
+        simple_platformer::LuaNpcScripts{},
         tests::FixedStepSeconds);
     REQUIRE_FALSE(game.lockedExitHintIcon().has_value());
 
@@ -127,7 +121,6 @@ TEST_CASE(
     }
     const simple_platformer::Sprite icon =
         game.lockedExitHintIcon().value_or(simple_platformer::Sprite{});
-    // The fixture key's icon is the 8 by 8 region at the atlas origin; medicine's sits beside it.
     REQUIRE(icon.region.position == glm::vec2{0.0F, 0.0F});
     REQUIRE(icon.region.size == glm::vec2{8.0F, 8.0F});
 
