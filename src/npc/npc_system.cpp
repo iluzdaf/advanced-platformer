@@ -22,6 +22,7 @@
 #include "simple_platformer/navigation/navigation_path.hpp"
 #include "simple_platformer/navigation/path_follower.hpp"
 #include "simple_platformer/navigation/path_search.hpp"
+#include "simple_platformer/navigation/platformer_cells.hpp"
 #include "simple_platformer/navigation/platformer_navigation.hpp"
 #include "simple_platformer/npc/npc.hpp"
 #include "simple_platformer/npc/npc_activity.hpp"
@@ -385,8 +386,7 @@ namespace simple_platformer
                 away = {side, 0.0F};
                 const GridPosition ahead = cellAtFeet(
                     update.map.tileSize(), feet + glm::vec2{side * actor.body.bounds.size.x, 0.0F});
-                if (!update.map.contains(ahead) ||
-                    !canStandAt(update.map, ahead, actor.body.bounds.size))
+                if (!canStandAt(update.map, ahead, actor.body.bounds.size))
                 {
                     away = {0.0F, 0.0F};
                 }

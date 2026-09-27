@@ -1,26 +1,102 @@
 #include "simple_platformer/navigation/navigation_fill.hpp"
 
 #include <algorithm>
+#include <optional>
 #include <stdexcept>
 #include <vector>
 
 #include "simple_platformer/actor/actor.hpp"
 #include "simple_platformer/math/aabb.hpp"
+#include "simple_platformer/math/coordinates.hpp"
 #include "simple_platformer/math/validation.hpp"
 #include "simple_platformer/movement/platformer_movement.hpp"
 #include "simple_platformer/navigation/connection_cache.hpp"
 #include "simple_platformer/navigation/path_follower.hpp"
-#include "simple_platformer/navigation/platformer_navigation.hpp"
+#include "simple_platformer/navigation/path_search.hpp"
+#include "simple_platformer/navigation/platformer_connections.hpp"
+#include "simple_platformer/world/tile_map.hpp"
 #include "simple_platformer/world/world.hpp"
 
 namespace simple_platformer
 {
+    FillWork fillPlatformerConnections(
+        const TileMap& map,
+        glm::vec2 bodySize,
+        const PlatformerMovementConfig& movement,
+        float stepSeconds,
+        PlatformerConnectionCache& cache,
+        int tickBudget)
+    {
+        requirePositiveSeconds(stepSeconds, "Navigation simulation step");
+        if (tickBudget < 0)
+        {
+            throw std::invalid_argument("A fill budget cannot be negative");
+        }
+        cache.syncWith(map);
+        const ConnectionBody body{bodySize, movement, stepSeconds};
+        FillWork work;
+        while (work.budgetSpent < tickBudget)
+        {
+            const std::optional<GridPosition> next = cache.nextPending(body);
+            if (!next.has_value())
+            {
+                break;
+            }
+            PathSearchStatistics statistics;
+            platformerNeighborsKept(
+                map,
+                next.value_or(GridPosition{}),
+                bodySize,
+                movement,
+                stepSeconds,
+                cache,
+                &statistics);
+            ++work.cells;
+            work.simulatedTicks += statistics.simulatedTicks;
+            work.budgetSpent += statistics.simulatedTicks + KeepCostTicks;
+        }
+        return work;
+    }
+
+    void queueAllPlatformerConnections(
+        const TileMap& map,
+        glm::vec2 bodySize,
+        const PlatformerMovementConfig& movement,
+        float stepSeconds,
+        PlatformerConnectionCache& cache)
+    {
+        requirePositiveSeconds(stepSeconds, "Navigation simulation step");
+        cache.syncWith(map);
+        const ConnectionBody body{bodySize, movement, stepSeconds};
+        for (int row = 0; row < map.height(); ++row)
+        {
+            for (int column = 0; column < map.width(); ++column)
+            {
+                cache.queue({column, row}, body);
+            }
+        }
+    }
+
+    void keepAllPlatformerConnections(
+        const TileMap& map,
+        glm::vec2 bodySize,
+        const PlatformerMovementConfig& movement,
+        float stepSeconds,
+        PlatformerConnectionCache& cache)
+    {
+        cache.syncWith(map);
+        for (int row = 0; row < map.height(); ++row)
+        {
+            for (int column = 0; column < map.width(); ++column)
+            {
+                platformerNeighborsKept(map, {column, row}, bodySize, movement, stepSeconds, cache);
+            }
+        }
+    }
+
     std::vector<ConnectionBody> platformerBodiesIn(const World& world, float stepSeconds)
     {
-        if (!isFinitePositive(stepSeconds))
-        {
-            throw std::invalid_argument("Navigation step must be finite and positive");
-        }
+        requirePositiveSeconds(stepSeconds, "Navigation step");
         std::vector<ConnectionBody> bodies;
         for (const Actor& actor : world.actors())
         {
