@@ -124,6 +124,23 @@ namespace tests
         return brain(actor(world, id));
     }
 
+    inline simple_platformer::NpcPerception& perception(simple_platformer::Actor& actor)
+    {
+        std::optional<simple_platformer::NpcPerception>& component = actor.perception;
+        if (!component.has_value())
+        {
+            throw std::logic_error("The test actor has no NPC perception");
+        }
+        return *component;
+    }
+
+    inline simple_platformer::NpcPerception& perception(
+        simple_platformer::World& world,
+        simple_platformer::ActorId id)
+    {
+        return perception(actor(world, id));
+    }
+
     inline simple_platformer::NpcMachine& machine(simple_platformer::Actor& actor)
     {
         std::optional<simple_platformer::NpcMachine>& component = actor.machine;
@@ -173,6 +190,23 @@ namespace tests
         simple_platformer::ActorId id)
     {
         return rangedWeapon(actor(world, id));
+    }
+
+    inline simple_platformer::ContactDamage& contactDamage(simple_platformer::Actor& actor)
+    {
+        std::optional<simple_platformer::ContactDamage>& component = actor.contactDamage;
+        if (!component.has_value())
+        {
+            throw std::logic_error("The test actor has no contact damage");
+        }
+        return *component;
+    }
+
+    inline simple_platformer::ContactDamage& contactDamage(
+        simple_platformer::World& world,
+        simple_platformer::ActorId id)
+    {
+        return contactDamage(actor(world, id));
     }
 
     inline simple_platformer::PathFollower& pathFollower(simple_platformer::Actor& actor)
