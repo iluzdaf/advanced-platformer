@@ -14,6 +14,7 @@
 
 #include "simple_platformer/math/validation.hpp"
 #include "simple_platformer/render/sprite.hpp"
+#include "simple_platformer/world/tile_map.hpp"
 #include "tile_catalog.hpp"
 #include "level_data.hpp"
 #include "simple_platformer/math/validation.hpp"
@@ -113,9 +114,10 @@ namespace simple_platformer
         {
             throw std::invalid_argument("tile catalog must reserve ID zero for 'empty'");
         }
-        if (catalog.definitions.front().blocksMovement || catalog.definitions.front().blocksSight)
+        if (catalog.definitions.front().blocksMovement || catalog.definitions.front().blocksSight ||
+            catalog.definitions.front().climbable)
         {
-            throw std::invalid_argument("empty must allow movement and sight");
+            throw std::invalid_argument("empty must allow movement and sight and not be climbable");
         }
         std::set<int> usedIds;
         for (const auto& entry : catalog.ids)
@@ -132,7 +134,13 @@ namespace simple_platformer
                 // Empty tiles are not drawn, so they do not need a sprite region.
                 continue;
             }
-            const auto& sprite = catalog.definitions[static_cast<std::size_t>(id)].sprite;
+            const TileDefinition& definition = catalog.definitions[static_cast<std::size_t>(id)];
+            if (definition.climbable && !definition.blocksMovement)
+            {
+                throw std::invalid_argument(
+                    "climbable tile '" + entry.first + "' must block movement");
+            }
+            const auto& sprite = definition.sprite;
             if (!std::isfinite(sprite.position.x) || !std::isfinite(sprite.position.y) ||
                 !std::isfinite(sprite.size.x) || !std::isfinite(sprite.size.y) ||
                 sprite.position.x < 0 || sprite.position.y < 0 || sprite.size.x <= 0 ||
