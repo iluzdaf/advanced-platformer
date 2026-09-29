@@ -1,4 +1,4 @@
-#include "simple_platformer/navigation/connection_cache.hpp"
+#include "simple_platformer/navigation/platformer_connection_cache.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -12,7 +12,7 @@
 #include "simple_platformer/math/coordinates.hpp"
 #include "simple_platformer/math/validation.hpp"
 #include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/navigation/navigation_graph.hpp"
+#include "simple_platformer/navigation/route.hpp"
 #include "simple_platformer/navigation/platformer_connections.hpp"
 #include "simple_platformer/navigation/platformer_traversal_profile.hpp"
 #include "simple_platformer/world/tile_map.hpp"
@@ -98,7 +98,7 @@ namespace simple_platformer
         }
     }
 
-    const std::vector<NavigationConnection>* PlatformerConnectionCache::cachedConnections(
+    const std::vector<RouteConnection>* PlatformerConnectionCache::cachedConnections(
         Cell cell,
         const PlatformerTraversalProfile& profile) const
     {
@@ -129,10 +129,10 @@ namespace simple_platformer
         return connections->second.footprint;
     }
 
-    const std::vector<NavigationConnection>& PlatformerConnectionCache::storeConnections(
+    const std::vector<RouteConnection>& PlatformerConnectionCache::storeConnections(
         Cell cell,
         const PlatformerTraversalProfile& profile,
-        std::vector<NavigationConnection> connections,
+        std::vector<RouteConnection> connections,
         const CellRange& footprint)
     {
         requireValid(profile);

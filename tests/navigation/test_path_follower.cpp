@@ -7,7 +7,7 @@
 #include "simple_platformer/math/coordinates.hpp"
 #include "simple_platformer/movement/flying_movement.hpp"
 #include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/navigation/navigation_graph.hpp"
+#include "simple_platformer/navigation/route.hpp"
 #include "simple_platformer/navigation/navigation_path.hpp"
 #include "simple_platformer/navigation/path_follower.hpp"
 #include "simple_platformer/navigation/platformer_connections.hpp"
@@ -19,7 +19,7 @@
 #include "support/tile_size.hpp"
 #include "support/fixed_step.hpp"
 #include "support/navigation_paths.hpp"
-#include "support/navigation_connections.hpp"
+#include "support/route_connections.hpp"
 
 TEST_CASE("A flying path follower produces intentions for its next step", "[navigation][follower]")
 {
@@ -77,14 +77,14 @@ TEST_CASE(
         tests::TileMapBuilder({"..........", "....##....", "..........", "##########"});
     const glm::vec2 bodySize{12.0F, 12.0F};
     const simple_platformer::PlatformerMovementConfig config;
-    const std::vector<simple_platformer::NavigationConnection> connections =
+    const std::vector<simple_platformer::RouteConnection> connections =
         simple_platformer::buildPlatformerConnections(
             map,
             {2, 2},
             simple_platformer::PlatformerTraversalProfile{
                 bodySize, config, tests::FixedStepSeconds})
             .connections;
-    const simple_platformer::NavigationConnection& jump =
+    const simple_platformer::RouteConnection& jump =
         tests::connectionWith(connections, simple_platformer::Traversal::Jump);
 
     simple_platformer::PathFollower follower;
@@ -116,14 +116,14 @@ TEST_CASE(
         tests::TileMapBuilder({"..........", "....##....", "..........", "##########"});
     const glm::vec2 bodySize{12.0F, 12.0F};
     const simple_platformer::PlatformerMovementConfig config;
-    const std::vector<simple_platformer::NavigationConnection> connections =
+    const std::vector<simple_platformer::RouteConnection> connections =
         simple_platformer::buildPlatformerConnections(
             map,
             {2, 2},
             simple_platformer::PlatformerTraversalProfile{
                 bodySize, config, tests::FixedStepSeconds})
             .connections;
-    const simple_platformer::NavigationConnection& jump =
+    const simple_platformer::RouteConnection& jump =
         tests::connectionWith(connections, simple_platformer::Traversal::Jump);
 
     simple_platformer::PathFollower follower;
@@ -164,14 +164,14 @@ TEST_CASE(
         tests::TileMapBuilder({"..........", "....##....", "..........", "##########"});
     const glm::vec2 bodySize{12.0F, 12.0F};
     const simple_platformer::PlatformerMovementConfig config;
-    const std::vector<simple_platformer::NavigationConnection> connections =
+    const std::vector<simple_platformer::RouteConnection> connections =
         simple_platformer::buildPlatformerConnections(
             map,
             {2, 2},
             simple_platformer::PlatformerTraversalProfile{
                 bodySize, config, tests::FixedStepSeconds})
             .connections;
-    const simple_platformer::NavigationConnection& jump =
+    const simple_platformer::RouteConnection& jump =
         tests::connectionWith(connections, simple_platformer::Traversal::Jump);
 
     simple_platformer::PathFollower follower;
@@ -210,14 +210,14 @@ TEST_CASE(
         tests::TileMapBuilder({"..........", "....##....", "..........", "##########"});
     const glm::vec2 bodySize{12.0F, 12.0F};
     const simple_platformer::PlatformerMovementConfig config;
-    const std::vector<simple_platformer::NavigationConnection> connections =
+    const std::vector<simple_platformer::RouteConnection> connections =
         simple_platformer::buildPlatformerConnections(
             map,
             {2, 2},
             simple_platformer::PlatformerTraversalProfile{
                 bodySize, config, tests::FixedStepSeconds})
             .connections;
-    const simple_platformer::NavigationConnection& jump =
+    const simple_platformer::RouteConnection& jump =
         tests::connectionWith(connections, simple_platformer::Traversal::Jump);
 
     // The same jump, but its waypoint claims a row above where it really lands.

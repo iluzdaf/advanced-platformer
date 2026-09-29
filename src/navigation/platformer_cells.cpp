@@ -8,7 +8,7 @@
 #include "simple_platformer/math/coordinates.hpp"
 #include "simple_platformer/math/validation.hpp"
 #include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/navigation/navigation_graph.hpp"
+#include "simple_platformer/navigation/route.hpp"
 #include "simple_platformer/physics/collision.hpp"
 #include "simple_platformer/world/tile_map.hpp"
 
@@ -62,7 +62,7 @@ namespace simple_platformer
         return standsAt(map, cell, bodySize);
     }
 
-    Aabb boundsAtSurface(int tileSize, NavigationLocation location, glm::vec2 bodySize)
+    Aabb boundsAtSurface(int tileSize, RouteLocation location, glm::vec2 bodySize)
     {
         Aabb bounds = boxInCell(tileSize, location.cell, bodySize);
         const float left = static_cast<float>(location.cell.x * tileSize);
@@ -84,7 +84,7 @@ namespace simple_platformer
         return bounds;
     }
 
-    bool canOccupy(const TileMap& map, NavigationLocation location, glm::vec2 bodySize)
+    bool canOccupy(const TileMap& map, RouteLocation location, glm::vec2 bodySize)
     {
         requireBodySize(bodySize);
         if (location.surface == ClimbSurface::None)

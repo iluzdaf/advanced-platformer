@@ -9,9 +9,9 @@
 #include "simple_platformer/math/coordinates.hpp"
 #include "simple_platformer/movement/platformer_movement.hpp"
 #include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/navigation/connection_cache.hpp"
+#include "simple_platformer/navigation/platformer_connection_cache.hpp"
 #include "simple_platformer/navigation/navigation_fill.hpp"
-#include "simple_platformer/navigation/navigation_graph.hpp"
+#include "simple_platformer/navigation/route.hpp"
 #include "simple_platformer/navigation/path_follower.hpp"
 #include "simple_platformer/navigation/platformer_traversal_profile.hpp"
 #include "simple_platformer/npc/npc.hpp"
@@ -206,7 +206,7 @@ TEST_CASE("An NPC's search after a break waits for the fill and asks again", "[n
     }
     REQUIRE(filledTicks > 0);
     REQUIRE(world.platformerConnections().cellsPending(profile) == 0);
-    const std::vector<simple_platformer::NavigationConnection>* overTheHole =
+    const std::vector<simple_platformer::RouteConnection>* overTheHole =
         world.platformerConnections().cachedConnections({2, 1}, profile);
     REQUIRE(overTheHole != nullptr);
     REQUIRE(overTheHole->empty());

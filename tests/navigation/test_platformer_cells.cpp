@@ -5,7 +5,7 @@
 #include "simple_platformer/math/aabb.hpp"
 #include "simple_platformer/math/coordinates.hpp"
 #include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/navigation/navigation_graph.hpp"
+#include "simple_platformer/navigation/route.hpp"
 #include "simple_platformer/navigation/platformer_cells.hpp"
 #include "simple_platformer/world/tile_map.hpp"
 #include "support/tile_map_builder.hpp"
@@ -47,7 +47,7 @@ TEST_CASE("A wall location may extend above the open map top", "[navigation][pla
         tests::TileMapBuilder({".c..", ".c..", "####"})
             .where('c', tests::Tile{}.blocksMovement().climbable());
     const glm::vec2 tall{12.0F, 40.0F};
-    const simple_platformer::NavigationLocation onWall{{2, 0}, ClimbSurface::LeftWall};
+    const simple_platformer::RouteLocation onWall{{2, 0}, ClimbSurface::LeftWall};
 
     REQUIRE(simple_platformer::boundsAtSurface(tests::TileSize, onWall, tall).position.y < 0.0F);
     REQUIRE(simple_platformer::canOccupy(map, onWall, tall));

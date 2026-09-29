@@ -15,9 +15,9 @@
 #include "simple_platformer/movement/platformer_movement.hpp"
 #include "simple_platformer/movement/surface_climb.hpp"
 #include "simple_platformer/navigation/actor_navigation.hpp"
-#include "simple_platformer/navigation/connection_cache.hpp"
+#include "simple_platformer/navigation/platformer_connection_cache.hpp"
 #include "simple_platformer/input/input_program.hpp"
-#include "simple_platformer/navigation/navigation_graph.hpp"
+#include "simple_platformer/navigation/route.hpp"
 #include "simple_platformer/navigation/navigation_path.hpp"
 #include "simple_platformer/navigation/platformer_cells.hpp"
 #include "simple_platformer/navigation/platformer_traversal_profile.hpp"
@@ -54,11 +54,10 @@ namespace simple_platformer
                 const Aabb last = cellBounds(tileSize, range.last);
                 info.footprint = Aabb{first.position, last.position + last.size - first.position};
             }
-            const std::vector<NavigationConnection>* cached =
-                cache.cachedConnections(cell, profile);
+            const std::vector<RouteConnection>* cached = cache.cachedConnections(cell, profile);
             if (cached != nullptr)
             {
-                for (const NavigationConnection& connection : *cached)
+                for (const RouteConnection& connection : *cached)
                 {
                     info.connections.push_back(
                         {feetOf(boundsAtSurface(
@@ -180,8 +179,7 @@ namespace simple_platformer
                 {
                     continue;
                 }
-                const std::vector<NavigationConnection>* cached =
-                    cache.cachedConnections(cell, profile);
+                const std::vector<RouteConnection>* cached = cache.cachedConnections(cell, profile);
                 info.cells.push_back(
                     {bounds,
                      cached == nullptr ? std::nullopt
