@@ -3,7 +3,6 @@
 #include <optional>
 #include <vector>
 
-#include "simple_platformer/math/aabb.hpp"
 #include "simple_platformer/math/coordinates.hpp"
 #include "simple_platformer/navigation/navigation_graph.hpp"
 #include "simple_platformer/navigation/platformer_traversal_profile.hpp"
@@ -40,14 +39,14 @@ namespace simple_platformer
     // previously simulated walks; newly simulated walks are returned for later storage.
     BuiltPlatformerConnections buildPlatformerConnections(
         const TileMap& map,
-        GridPosition cell,
+        Cell cell,
         const PlatformerTraversalProfile& profile,
         const PlatformerConnectionCache* walkCache = nullptr);
 
     // Stores a completed build; it does not simulate connections or check for a hit.
     void storePlatformerConnections(
         PlatformerConnectionCache& cache,
-        GridPosition cell,
+        Cell cell,
         const PlatformerTraversalProfile& profile,
         BuiltPlatformerConnections built);
 

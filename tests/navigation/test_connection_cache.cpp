@@ -9,7 +9,6 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/math/aabb.hpp"
 #include "simple_platformer/math/coordinates.hpp"
 #include "simple_platformer/movement/surface_climb.hpp"
 #include "simple_platformer/navigation/connection_cache.hpp"
@@ -24,8 +23,8 @@
 namespace
 {
     using simple_platformer::BuiltPlatformerConnections;
+    using simple_platformer::Cell;
     using simple_platformer::CellRange;
-    using simple_platformer::GridPosition;
     using simple_platformer::NavigationConnection;
     using simple_platformer::PlatformerConnectionCache;
     using simple_platformer::PlatformerTraversalProfile;
@@ -39,7 +38,7 @@ TEST_CASE("Built connections enter the cache only when stored", "[navigation][ca
     // A ledge with a drop and a gap: walks, a fall and jumps leave the middle cell.
     const simple_platformer::TileMap map =
         tests::TileMapBuilder({"........", "........", "........", "###..###", "########"});
-    const GridPosition cell{1, 2};
+    const Cell cell{1, 2};
     PlatformerConnectionCache cache;
     const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
 
@@ -70,7 +69,7 @@ TEST_CASE("Connections are cached separately for each profile", "[navigation][ca
 {
     const simple_platformer::TileMap map =
         tests::TileMapBuilder({"........", "........", "########"});
-    const GridPosition cell{3, 1};
+    const Cell cell{3, 1};
     PlatformerConnectionCache cache;
     const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
     BuiltPlatformerConnections initial =
@@ -141,7 +140,7 @@ TEST_CASE("A walk is cached per length and profile, and a break leaves it", "[na
     REQUIRE(rightwards != nullptr);
     REQUIRE(rightwards->columns == 3);
     REQUIRE(rightwards->cost.value_or(0) == 35);
-    REQUIRE(rightwards->sweep.last == GridPosition{4, 1});
+    REQUIRE(rightwards->sweep.last == Cell{4, 1});
     REQUIRE(rightwards->simulatedTicks == 35);
     // Leftwards is its own length, and a walk past the limit is cached as such.
     REQUIRE(cache.cachedWalk(-3, profile)->cost.value_or(0) == 36);
@@ -167,8 +166,8 @@ TEST_CASE("Cached walks change nothing but the ticks simulated", "[navigation][c
     const simple_platformer::TileMap map = tests::TileMapBuilder({open, open, floor});
     PlatformerConnectionCache cache;
     const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
-    const GridPosition first{20, 1};
-    const GridPosition second{25, 1};
+    const Cell first{20, 1};
+    const Cell second{25, 1};
 
     // The first cell simulates every length it can walk, and the one it cannot.
     BuiltPlatformerConnections firstBuild =

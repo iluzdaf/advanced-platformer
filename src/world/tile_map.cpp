@@ -18,13 +18,13 @@ namespace simple_platformer
         int height,
         std::vector<int> tiles,
         std::vector<TileDefinition> definitions)
-        : cellSize(tileSize),
+        : mapTileSize(tileSize),
           mapWidth(width),
           mapHeight(height),
           tileIds(std::move(tiles)),
           tileDefinitions(std::move(definitions))
     {
-        if (cellSize <= 0)
+        if (mapTileSize <= 0)
         {
             throw std::invalid_argument("A tile map must have a positive tile size");
         }
@@ -126,25 +126,25 @@ namespace simple_platformer
 
     int TileMap::tileSize() const
     {
-        return cellSize;
+        return mapTileSize;
     }
 
     float TileMap::pixelWidth() const
     {
-        return static_cast<float>(mapWidth * cellSize);
+        return static_cast<float>(mapWidth * mapTileSize);
     }
 
     float TileMap::pixelHeight() const
     {
-        return static_cast<float>(mapHeight * cellSize);
+        return static_cast<float>(mapHeight * mapTileSize);
     }
 
-    bool TileMap::contains(GridPosition cell) const
+    bool TileMap::contains(Cell cell) const
     {
         return simple_platformer::contains(size(), cell);
     }
 
-    int TileMap::tileAt(GridPosition cell) const
+    int TileMap::tileAt(Cell cell) const
     {
         if (!contains(cell))
         {
@@ -154,18 +154,18 @@ namespace simple_platformer
         return tileIds[indexOf(cell)];
     }
 
-    const TileDefinition& TileMap::definitionAt(GridPosition cell) const
+    const TileDefinition& TileMap::definitionAt(Cell cell) const
     {
         const int tileId = tileAt(cell);
         return tileDefinitions[static_cast<std::size_t>(tileId)];
     }
 
-    bool TileMap::blocksSight(GridPosition cell) const
+    bool TileMap::blocksSight(Cell cell) const
     {
         return contains(cell) ? definitionAt(cell).blocksSight : blocksMovement(cell);
     }
 
-    bool TileMap::blocksMovement(GridPosition cell) const
+    bool TileMap::blocksMovement(Cell cell) const
     {
         if (cell.x < 0 || cell.x >= mapWidth)
         {
@@ -185,12 +185,12 @@ namespace simple_platformer
         return definitionAt(cell).blocksMovement;
     }
 
-    bool TileMap::climbableAt(GridPosition cell) const
+    bool TileMap::climbableAt(Cell cell) const
     {
         return contains(cell) && definitionAt(cell).climbable;
     }
 
-    bool TileMap::breakTile(GridPosition cell)
+    bool TileMap::breakTile(Cell cell)
     {
         if (!contains(cell))
         {
@@ -208,12 +208,12 @@ namespace simple_platformer
         return true;
     }
 
-    const std::vector<GridPosition>& TileMap::brokenCells() const
+    const std::vector<Cell>& TileMap::brokenCells() const
     {
         return brokenCellLog;
     }
 
-    std::size_t TileMap::indexOf(GridPosition cell) const
+    std::size_t TileMap::indexOf(Cell cell) const
     {
         return static_cast<std::size_t>(cell.y) * static_cast<std::size_t>(mapWidth) +
                static_cast<std::size_t>(cell.x);
