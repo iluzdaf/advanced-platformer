@@ -217,10 +217,11 @@ namespace simple_platformer
 
         SpriteRenderer renderer;
         const int atlas = renderer.loadTexture("assets/textures/sprites.png");
-        const TextureView atlasTexture = renderer.textureView(atlas);
+        const Texture atlasTexture = renderer.texture(atlas);
         FixedStep fixedStep;
         LevelCatalog levelCatalog = loadLevelCatalog("assets/levels/levels.json");
-        GameCatalogs gameCatalogs = loadGameCatalogs("assets/catalogs");
+        GameCatalogs gameCatalogs =
+            loadGameCatalogs("assets/catalogs", {atlasTexture.width, atlasTexture.height});
         LuaNpcScripts npcScripts;
         loadNpcActivityScripts(npcScripts, gameCatalogs.machines, "assets/scripts");
         Game game(

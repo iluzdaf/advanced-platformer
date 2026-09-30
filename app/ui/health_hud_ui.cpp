@@ -1,7 +1,5 @@
 #include "health_hud_ui.hpp"
 
-#include <stdexcept>
-
 #include <imgui.h>
 
 #include "graphics/display_viewport.hpp"
@@ -16,14 +14,9 @@ namespace simple_platformer
     void drawHealthHud(
         const Health& health,
         const HudIcons& icons,
-        const TextureView& atlas,
+        const Texture& atlas,
         const WindowViewport& viewport)
     {
-        if (!atlasContains(atlas, icons.fullHeart) || !atlasContains(atlas, icons.emptyHeart))
-        {
-            throw std::invalid_argument("The health HUD atlas is missing its heart regions");
-        }
-
         ImDrawList* drawList = ImGui::GetBackgroundDrawList();
         const ImVec2 size = {HudIconSize * viewport.scale.x, HudIconSize * viewport.scale.y};
         ImVec2 position = {

@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <cstdio>
 #include <optional>
-#include <stdexcept>
 
 #include <imgui.h>
 
@@ -34,14 +33,10 @@ namespace simple_platformer
     }
 
     bool drawInventoryButton(
-        const TextureView& atlas,
+        const Texture& atlas,
         const SpriteRegion& bagIcon,
         const WindowViewport& viewport)
     {
-        if (!atlasContains(atlas, bagIcon))
-        {
-            throw std::invalid_argument("The HUD atlas is missing its bag region");
-        }
         const ImVec2 size{HudIconSize * viewport.scale.x, HudIconSize * viewport.scale.y};
         const ImVec2 position{
             viewport.topLeft.x + HudMargin * viewport.scale.x,
@@ -77,7 +72,7 @@ namespace simple_platformer
 
     std::optional<std::size_t> drawInventory(
         const Game& game,
-        const TextureView& atlas,
+        const Texture& atlas,
         const WindowViewport& viewport)
     {
         const auto& slots = game.playerInventory().slots();
