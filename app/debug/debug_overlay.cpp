@@ -2,7 +2,6 @@
 
 #include "navigation_debug.hpp"
 
-#include <cmath>
 #include <cstddef>
 #include <optional>
 #include <stdexcept>
@@ -53,10 +52,8 @@ namespace simple_platformer
             const Sprite& sprite,
             float atlasWidth)
         {
-            if (!isFinite(sprite.region.position) || !isFinite(sprite.region.size) ||
-                !isFinite(sprite.size) || sprite.region.position.x < 0.0F ||
-                sprite.region.position.y < 0.0F || sprite.region.size.x <= 0.0F ||
-                sprite.region.size.y <= 0.0F || sprite.size.x <= 0.0F || sprite.size.y <= 0.0F ||
+            if (!isFiniteNonNegative(sprite.region.position) ||
+                !isFinitePositive(sprite.region.size) || !isFinitePositive(sprite.size) ||
                 atlasWidth < sprite.region.size.x)
             {
                 throw std::logic_error("Debug overlay requires a valid sprite region");
@@ -247,7 +244,7 @@ namespace simple_platformer
             throw std::invalid_argument(
                 "Debug overlay simulation step must be finite and positive");
         }
-        if (!std::isfinite(atlasWidth) || atlasWidth <= 0.0F)
+        if (!isFinitePositive(atlasWidth))
         {
             throw std::invalid_argument("Debug overlay atlas width must be positive and finite");
         }

@@ -1,7 +1,6 @@
 #include "content_validation.hpp"
 #include "content_diagnostics.hpp"
 
-#include <cmath>
 #include <cstddef>
 #include <map>
 #include <set>
@@ -23,10 +22,8 @@ namespace simple_platformer
 {
     void validateContentSprite(const Sprite& sprite)
     {
-        if (!isFinite(sprite.region.position) || sprite.region.position.x < 0 ||
-            sprite.region.position.y < 0 || !isFinite(sprite.region.size) ||
-            sprite.region.size.x <= 0 || sprite.region.size.y <= 0 || !isFinite(sprite.size) ||
-            sprite.size.x <= 0 || sprite.size.y <= 0)
+        if (!isFiniteNonNegative(sprite.region.position) || !isFinitePositive(sprite.region.size) ||
+            !isFinitePositive(sprite.size))
         {
             throw std::invalid_argument(
                 "sprite requires finite non-negative atlas position and positive sizes");
@@ -49,8 +46,7 @@ namespace simple_platformer
                 fieldPath(path, "quantity"),
                 "expected a positive integer, got " + std::to_string(placement.stack.quantity));
         }
-        if (!isFinite(placement.bodySize) || placement.bodySize.x <= 0.0F ||
-            placement.bodySize.y <= 0.0F)
+        if (!isFinitePositive(placement.bodySize))
         {
             failJson(sourceName, fieldPath(path, "bodySize"), "expected a finite, positive size");
         }
@@ -141,10 +137,7 @@ namespace simple_platformer
                     "climbable tile '" + entry.first + "' must block movement");
             }
             const auto& sprite = definition.sprite;
-            if (!std::isfinite(sprite.position.x) || !std::isfinite(sprite.position.y) ||
-                !std::isfinite(sprite.size.x) || !std::isfinite(sprite.size.y) ||
-                sprite.position.x < 0 || sprite.position.y < 0 || sprite.size.x <= 0 ||
-                sprite.size.y <= 0)
+            if (!isFiniteNonNegative(sprite.position) || !isFinitePositive(sprite.size))
             {
                 throw std::invalid_argument("invalid sprite region for tile '" + entry.first + "'");
             }
