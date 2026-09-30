@@ -27,9 +27,13 @@ target_sources(
     ${PROJECT_SOURCE_DIR}/src/navigation/platformer_connection_cache.cpp
     ${PROJECT_SOURCE_DIR}/src/navigation/platformer_connections.cpp
     ${PROJECT_SOURCE_DIR}/src/navigation/route_search.cpp
+    ${PROJECT_SOURCE_DIR}/src/npc/npc_activities.cpp
+    ${PROJECT_SOURCE_DIR}/src/npc/npc_scripted_activity.cpp
     ${PROJECT_SOURCE_DIR}/src/npc/npc_senses.cpp
     ${PROJECT_SOURCE_DIR}/src/npc/npc_system.cpp
     ${PROJECT_SOURCE_DIR}/src/npc/npc_fact_rows.cpp
+    ${PROJECT_SOURCE_DIR}/src/npc/npc_facts.cpp
+    ${PROJECT_SOURCE_DIR}/src/npc/npc_navigation.cpp
     ${PROJECT_SOURCE_DIR}/src/npc/npc_state_machine.cpp
     ${PROJECT_SOURCE_DIR}/src/npc/npc_transitions.cpp
     ${PROJECT_SOURCE_DIR}/src/physics/body.cpp
