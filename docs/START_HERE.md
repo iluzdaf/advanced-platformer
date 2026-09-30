@@ -87,16 +87,9 @@ A practical route through the implementation is:
 3. Read the tests for the existing variable-height jump, coyote-time, and jump-buffer
    rules before changing them.
 4. Add one focused movement ability, such as a double jump, dash, wall slide, or wall
-   jump. Keep the rule in the movement layer and cover it with tests before adding its
-   animation or effects.
+   jump, following the [movement-ability recipe](ARCHITECTURE.md#adding-a-movement-ability).
 5. Turn the mechanics into a game by composing actors, authoring JSON levels, adding
    pickups or combat rules, and providing animation and HUD feedback.
-
-The engine currently provides the ordinary platformer baseline. It does not already
-contain a generic movement-ability framework. The
-[movement extension recipe](ARCHITECTURE.md#adding-a-movement-ability) explains where
-a movement feature belongs; the more scalable optional-component design remains a
-clearly labelled [future direction](FUTURE_WORK.md#optional-movement-abilities).
 
 ### Enemy behaviour requirements
 

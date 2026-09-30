@@ -19,29 +19,3 @@ validated JSON consumed by the example game. The loader should still produce
 `LevelData`, and composition should still create the core's map and world.
 Simulation must not depend on the editor or JSON, so handwritten and tool-generated
 levels remain equivalent.
-
-## Surface movement and a scripted spider
-
-The rat and boar already use Lua activities over C++ sensing, movement, navigation,
-and combat. See [NPC behaviour](ARCHITECTURE.md#npc-behaviour) for the current boundary.
-The engine now has opt-in wall and ceiling climbing on explicitly marked tiles.
-The engine can now route and follow one path across floors, walls, and ceilings.
-The spider still needs its actor content, policy, and artwork. A pounce would also
-need an engine-owned movement request. Lua can then choose when to patrol, chase,
-or pounce; C++ executes those moves.
-
-## Optional movement abilities
-
-`PlatformerMovement` is the shared baseline for ground actors. Add abilities such as
-double jump, dash, wall slide, or wall jump as optional actor components when a feature
-needs them. Keep their configuration and runtime state separate from ordinary walking.
-
-If several abilities coexist, use an explicit update order:
-
-1. Select an ability and produce movement modifiers.
-2. Apply ordinary movement and collision with those modifiers.
-3. Update ability state from collision contacts, such as landing or hitting a wall.
-
-Resolve competing abilities in visible policy code, with a documented priority. Test
-each ability on its own and cover interactions that change the result. Introduce this
-phase with a real ability rather than a general callback framework in advance.
