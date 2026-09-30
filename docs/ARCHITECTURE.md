@@ -162,33 +162,23 @@ iterators and pointers during a system update.
 
 - Positive X points right.
 - Positive Y points down.
-- AABBs and tiles use a top-left world position.
+- AABBs and tiles are placed by their top-left corner in world coordinates.
 - Actor spawns, pickup placement, exits, patrol points, and navigation destinations use
-  world coordinates; actor and navigation placement helpers commonly use feet, the
-  bottom centre of an actor body.
+  world coordinates, usually as feet, described below.
 - The internal resolution is 320 by 180 pixels.
 - Tiles are square. `tiles.json` declares `tileSize` in world pixels, each `TileMap`
   carries it, and every cell calculation takes that size rather than assuming one. The
   game uses 16.
 - Window output is an integer-scaled internal image with letterboxing when required.
 
-The two actor-position conventions are deliberately named:
-
-```cpp
-struct Aabb
-{
-    glm::vec2 position; // top-left world position
-    glm::vec2 size;
-};
-
-glm::vec2 feetOf(const Aabb& box);
-Aabb boxStandingOn(glm::vec2 feet, glm::vec2 size);
-void moveFeetTo(Aabb& box, glm::vec2 feet);
-```
-
-Physics code works with `body.bounds.position`. Content and ground navigation use
-`feetOf`. `boxStandingOn` builds a new box by its feet, and `moveFeetTo` moves an
-existing one, keeping its size. There is no ambiguous general `setPosition` function.
+A body has two points that code places it by, so the code never uses a general
+`setPosition`, which would leave the reader guessing which point it moves. Physics works
+with the top-left corner of the body's `Aabb`, where collision measures from. Content and
+ground navigation work with its feet, the middle of the bottom edge, where a standing
+body meets the ground and where a level author thinks of it standing. Each place names
+its point: `topLeft` for the corner, and the feet functions in
+[`aabb.hpp`](../include/simple_platformer/math/aabb.hpp) to read a box's feet or to
+build or move a box by them.
 
 ## Time
 
@@ -236,17 +226,9 @@ small.
 
 `World` owns actors, projectiles, their short-lived burst effects, pickups, item
 definitions, the current exit, and the level's platformer connection cache. An actor has a
-typed, monotonically increasing ID
-rather than exposing its vector index:
-
-```cpp
-struct ActorId
-{
-    std::uint32_t value = 0;
-};
-```
-
-Zero is invalid. IDs are not reused within a world. `World::findActor` performs a
+typed, monotonically increasing
+[`ActorId`](../include/simple_platformer/actor/actor_id.hpp) rather than exposing its
+vector index. Zero is invalid. IDs are not reused within a world. `World::findActor` performs a
 linear search, which is appropriate for the example's small number of actors and keeps
 the public model simple.
 
