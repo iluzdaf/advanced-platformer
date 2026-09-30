@@ -26,6 +26,8 @@ std = {
         "type",
         "warn",
         "xpcall",
+        -- glm::vec2 as a Lua value type; the constructor is read-only.
+        "vec2",
     },
 }
 
