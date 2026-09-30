@@ -300,7 +300,7 @@ namespace simple_platformer
             throw std::logic_error("The world has no player to respawn");
         }
 
-        placeFeetAt(player->body.bounds, controlledPlayerSpawnFeet);
+        moveFeetTo(player->body.bounds, controlledPlayerSpawnFeet);
         player->body.velocity = {0.0F, 0.0F};
         player->intentions = {};
         player->life = LifeState::Alive;

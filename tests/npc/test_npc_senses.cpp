@@ -199,7 +199,7 @@ TEST_CASE("NPC target memory expires and rejects a dead player", "[npc][senses]"
     REQUIRE(brain(world, npcId).target == playerId);
     REQUIRE(tests::perception(world, npcId).targetVisible);
 
-    simple_platformer::placeFeetAt(actor(world, playerId).body.bounds, {166.0F, 28.0F});
+    simple_platformer::moveFeetTo(actor(world, playerId).body.bounds, {166.0F, 28.0F});
     simple_platformer::updateNpcSenses(map, world, 0.4F);
     REQUIRE(brain(world, npcId).target == playerId);
     REQUIRE_FALSE(tests::perception(world, npcId).targetVisible);
@@ -208,7 +208,7 @@ TEST_CASE("NPC target memory expires and rejects a dead player", "[npc][senses]"
     simple_platformer::updateNpcSenses(map, world, 0.7F);
     REQUIRE_FALSE(brain(world, npcId).target.has_value());
 
-    simple_platformer::placeFeetAt(actor(world, playerId).body.bounds, {38.0F, 28.0F});
+    simple_platformer::moveFeetTo(actor(world, playerId).body.bounds, {38.0F, 28.0F});
     simple_platformer::updateNpcSenses(map, world, 0.1F);
     REQUIRE(brain(world, npcId).target == playerId);
     REQUIRE(tests::perception(world, npcId).targetVisible);
@@ -241,7 +241,7 @@ TEST_CASE("An NPC remembers where it heard a hidden player shoot", "[npc][senses
          simple_platformer::NoiseKind::Shot});
     // Delivery depends on the next sensing update, not a timestamp window, and uses
     // the source's old position even after it has moved out of hearing range.
-    simple_platformer::placeFeetAt(actor(world, playerId).body.bounds, {118.0F, 30.0F});
+    simple_platformer::moveFeetTo(actor(world, playerId).body.bounds, {118.0F, 30.0F});
     world.advanceSimulationTime(0.5F);
     simple_platformer::updateNpcSenses(map, world, 0.01F);
     REQUIRE(brain(world, npcId).target == playerId);
@@ -253,7 +253,7 @@ TEST_CASE("An NPC remembers where it heard a hidden player shoot", "[npc][senses
     REQUIRE_FALSE(tests::perception(world, secondNpc).heardLanding);
 
     // The consumed shot is not heard again; memory decays without another observation.
-    simple_platformer::placeFeetAt(actor(world, playerId).body.bounds, {118.0F, 30.0F});
+    simple_platformer::moveFeetTo(actor(world, playerId).body.bounds, {118.0F, 30.0F});
     world.advanceSimulationTime(0.4F);
     simple_platformer::updateNpcSenses(map, world, 0.4F);
     REQUIRE(brain(world, npcId).target == playerId);
