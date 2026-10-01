@@ -18,3 +18,6 @@
 
 # Format Markdown with Prettier (#145)
 cd42883e87bca79093dab75aecae41e1bc23dee0
+
+# Reformat with clang-format 23 (#5)
+746c08d00cd2f79c88d0ade0cc09afe6bb12d0b1
