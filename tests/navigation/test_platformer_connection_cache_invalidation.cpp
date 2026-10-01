@@ -239,9 +239,8 @@ TEST_CASE("A broken floor takes a walk away and gives a fall", "[navigation][cac
     PlatformerConnectionCache& cache = world.platformerConnections();
     const auto walksTo = [](const std::vector<RouteConnection>& connections, Cell cell)
     {
-        return std::any_of(
-            connections.begin(),
-            connections.end(),
+        return std::ranges::any_of(
+            connections,
             [cell](const RouteConnection& connection)
             {
                 return connection.step.traversal == advanced_platformer::Traversal::Walk &&
@@ -273,9 +272,8 @@ TEST_CASE("A broken floor takes a walk away and gives a fall", "[navigation][cac
     const std::vector<RouteConnection>* fromTheEdge = cache.cachedConnections({2, 0}, profile);
     REQUIRE(fromTheEdge != nullptr);
     REQUIRE(
-        std::any_of(
-            fromTheEdge->begin(),
-            fromTheEdge->end(),
+        std::ranges::any_of(
+            *fromTheEdge,
             [](const RouteConnection& connection)
             {
                 return connection.step.traversal == advanced_platformer::Traversal::Fall &&

@@ -164,10 +164,8 @@ namespace advanced_platformer
 
     bool World::removeActor(ActorId id)
     {
-        const auto actor = std::find_if(
-            actorStorage.begin(),
-            actorStorage.end(),
-            [id](const Actor& candidate) { return candidate.id == id; });
+        const auto actor = std::ranges::find_if(
+            actorStorage, [id](const Actor& candidate) { return candidate.id == id; });
         if (actor == actorStorage.end())
         {
             return false;
@@ -183,19 +181,15 @@ namespace advanced_platformer
 
     Actor* World::findActor(ActorId id)
     {
-        const auto actor = std::find_if(
-            actorStorage.begin(),
-            actorStorage.end(),
-            [id](const Actor& candidate) { return candidate.id == id; });
+        const auto actor = std::ranges::find_if(
+            actorStorage, [id](const Actor& candidate) { return candidate.id == id; });
         return actor == actorStorage.end() ? nullptr : &*actor;
     }
 
     const Actor* World::findActor(ActorId id) const
     {
-        const auto actor = std::find_if(
-            actorStorage.begin(),
-            actorStorage.end(),
-            [id](const Actor& candidate) { return candidate.id == id; });
+        const auto actor = std::ranges::find_if(
+            actorStorage, [id](const Actor& candidate) { return candidate.id == id; });
         return actor == actorStorage.end() ? nullptr : &*actor;
     }
 

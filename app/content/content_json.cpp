@@ -39,7 +39,7 @@ namespace advanced_platformer
         checkJsonObject(value, sourceName, path);
         for (const auto& entry : value.items())
         {
-            if (std::find(allowed.begin(), allowed.end(), entry.key()) == allowed.end())
+            if (std::ranges::find(allowed, entry.key()) == allowed.end())
             {
                 failJson(sourceName, path, std::format("unknown field '{}'", entry.key()));
             }

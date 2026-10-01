@@ -35,9 +35,8 @@ namespace
 
     std::size_t spritesFrom(const advanced_platformer::RenderScene& scene, int textureId)
     {
-        return static_cast<std::size_t>(std::count_if(
-            scene.sprites.begin(),
-            scene.sprites.end(),
+        return static_cast<std::size_t>(std::ranges::count_if(
+            scene.sprites,
             [textureId](const advanced_platformer::SpriteDrawCommand& sprite)
             { return sprite.textureId == textureId; }));
     }
@@ -47,9 +46,8 @@ namespace
         int textureId)
     {
         REQUIRE(spritesFrom(scene, textureId) == 1);
-        return *std::find_if(
-            scene.sprites.begin(),
-            scene.sprites.end(),
+        return *std::ranges::find_if(
+            scene.sprites,
             [textureId](const advanced_platformer::SpriteDrawCommand& sprite)
             { return sprite.textureId == textureId; });
     }

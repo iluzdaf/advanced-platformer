@@ -34,6 +34,10 @@ The project uses C++26. Before reading the engine, it helps to be comfortable wi
 - [`std::format`](https://en.cppreference.com/w/cpp/utility/format/format), for error
   messages, such as `std::format("unknown item '{}'", name)`, rather than joining
   strings with `+`. Each `{}` takes the next argument, and `{{` and `}}` write a brace.
+- [`std::ranges`](https://en.cppreference.com/w/cpp/algorithm/ranges) algorithms, which
+  take a whole container, such as `std::ranges::any_of(profiles, matches)`, rather than
+  its `begin()` and `end()`. A call that works on part of a container still passes the
+  two iterators.
 
 Positions, sizes and velocities are [GLM](https://github.com/g-truc/glm) `glm::vec2`.
 Tests use [Catch2](https://github.com/catchorg/Catch2). Lua scripting goes through

@@ -149,8 +149,7 @@ namespace advanced_platformer
         ProfileCache& forProfile = cacheFor(profile);
         if (forProfile.waiting.erase(cell) > 0)
         {
-            forProfile.pending.erase(
-                std::find(forProfile.pending.begin(), forProfile.pending.end(), cell));
+            forProfile.pending.erase(std::ranges::find(forProfile.pending, cell));
         }
         std::ranges::stable_sort(connections, {}, &RouteConnection::sourceSurface);
         CachedConnections& cached = forProfile.cells[cell];
@@ -233,8 +232,7 @@ namespace advanced_platformer
         {
             return;
         }
-        profileCache->pending.erase(
-            std::find(profileCache->pending.begin(), profileCache->pending.end(), cell));
+        profileCache->pending.erase(std::ranges::find(profileCache->pending, cell));
         profileCache->pending.push_front(cell);
     }
 
@@ -253,9 +251,8 @@ namespace advanced_platformer
         {
             return 0;
         }
-        return static_cast<std::size_t>(std::count_if(
-            profileCache->cells.begin(),
-            profileCache->cells.end(),
+        return static_cast<std::size_t>(std::ranges::count_if(
+            profileCache->cells,
             [](const auto& entry) { return !entry.second.connections.empty(); }));
     }
 

@@ -53,9 +53,8 @@ namespace advanced_platformer
             std::vector<const char*> categories;
             for (const Measurement& measurement : measurements)
             {
-                const bool seen = std::any_of(
-                    categories.begin(),
-                    categories.end(),
+                const bool seen = std::ranges::any_of(
+                    categories,
                     [&](const char* category)
                     { return std::string_view(category) == measurement.category; });
                 if (!seen)

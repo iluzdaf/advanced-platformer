@@ -124,9 +124,8 @@ TEST_CASE("Debug overlay data samples the simulated jump curve", "[app][debug]")
     REQUIRE(path.connections.size() == 1);
     REQUIRE(path.connections.front().sampledFeet.size() > 2);
     const float takeoffY = advanced_platformer::feetInCell(tests::TileSize, {2, 2}).y;
-    const bool risesAboveTakeoff = std::any_of(
-        path.connections.front().sampledFeet.begin(),
-        path.connections.front().sampledFeet.end(),
+    const bool risesAboveTakeoff = std::ranges::any_of(
+        path.connections.front().sampledFeet,
         [takeoffY](glm::vec2 feet) { return feet.y < takeoffY; });
     REQUIRE(risesAboveTakeoff);
 }

@@ -71,9 +71,8 @@ namespace advanced_platformer
                 }
                 const PlatformerTraversalProfile profile =
                     platformerTraversalProfileFor(actor, stepSeconds);
-                const bool known = std::any_of(
-                    profiles.begin(),
-                    profiles.end(),
+                const bool known = std::ranges::any_of(
+                    profiles,
                     [&profile](const PlatformerTraversalProfile& existing)
                     { return existing == profile; });
                 if (!known)
@@ -117,9 +116,8 @@ namespace advanced_platformer
         const std::vector<PlatformerTraversalProfile> profiles = cache.knownProfiles();
         // The step's budget is shared among profiles with cells waiting. A profile
         // without pending cells costs nothing.
-        const auto waiting = static_cast<int>(std::count_if(
-            profiles.begin(),
-            profiles.end(),
+        const auto waiting = static_cast<int>(std::ranges::count_if(
+            profiles,
             [&cache](const PlatformerTraversalProfile& profile)
             { return cache.cellsPending(profile) > 0; }));
         const int budgetEach = tickBudget / std::max(1, waiting);

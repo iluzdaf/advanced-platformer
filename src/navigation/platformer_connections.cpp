@@ -234,9 +234,8 @@ namespace advanced_platformer
 
         void keepCheapest(std::vector<RouteConnection>& connections, RouteConnection candidate)
         {
-            const auto existing = std::find_if(
-                connections.begin(),
-                connections.end(),
+            const auto existing = std::ranges::find_if(
+                connections,
                 [&candidate](const RouteConnection& connection)
                 {
                     return connection.step.destination.cell == candidate.step.destination.cell &&

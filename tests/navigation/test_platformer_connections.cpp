@@ -43,9 +43,8 @@ namespace
         Cell destination,
         Traversal traversal)
     {
-        return std::any_of(
-            connections.begin(),
-            connections.end(),
+        return std::ranges::any_of(
+            connections,
             [destination, traversal](const RouteConnection& connection)
             {
                 return connection.step.destination.cell == destination &&
@@ -62,9 +61,8 @@ TEST_CASE("Walk connections reach every cell on the floor", "[navigation][platfo
     const std::vector<RouteConnection> walks =
         advanced_platformer::buildPlatformerConnections(floor, {1, 0}, profile).connections;
     REQUIRE(
-        std::count_if(
-            walks.begin(),
-            walks.end(),
+        std::ranges::count_if(
+            walks,
             [](const RouteConnection& connection)
             { return connection.step.traversal == Traversal::Walk; }) == 5);
     REQUIRE(hasConnection(walks, {0, 0}, Traversal::Walk));
@@ -258,9 +256,8 @@ TEST_CASE(
         advanced_platformer::buildPlatformerConnections(map, besideWall, climber);
     const auto climbs = [&climbing](ClimbSurface from, Cell cell, ClimbSurface surface)
     {
-        return std::any_of(
-            climbing.connections.begin(),
-            climbing.connections.end(),
+        return std::ranges::any_of(
+            climbing.connections,
             [from, cell, surface](const RouteConnection& connection)
             {
                 return connection.step.traversal == Traversal::Climb &&
@@ -288,9 +285,8 @@ TEST_CASE(
         advanced_platformer::buildPlatformerConnections(map, {2, 2}, climber);
     REQUIRE_FALSE(upTheWall.connections.empty());
     REQUIRE(
-        std::all_of(
-            upTheWall.connections.begin(),
-            upTheWall.connections.end(),
+        std::ranges::all_of(
+            upTheWall.connections,
             [](const RouteConnection& connection)
             {
                 return connection.step.traversal == Traversal::Climb &&
@@ -313,9 +309,8 @@ TEST_CASE("A climber cannot hold an unmarked wall", "[navigation][platformer][cl
         advanced_platformer::buildPlatformerConnections(map, {2, 4}, climber).connections;
     REQUIRE(hasConnection(connections, {3, 4}, Traversal::Walk));
     REQUIRE(
-        std::none_of(
-            connections.begin(),
-            connections.end(),
+        std::ranges::none_of(
+            connections,
             [](const RouteConnection& connection)
             { return connection.step.traversal == Traversal::Climb; }));
 }
@@ -336,9 +331,8 @@ TEST_CASE(
     const std::vector<RouteConnection> connections =
         advanced_platformer::buildPlatformerConnections(map, {2, 1}, tallClimber).connections;
     REQUIRE(
-        std::any_of(
-            connections.begin(),
-            connections.end(),
+        std::ranges::any_of(
+            connections,
             [](const RouteConnection& connection)
             {
                 return connection.step.traversal == Traversal::Climb &&

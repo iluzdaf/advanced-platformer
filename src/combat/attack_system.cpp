@@ -22,8 +22,7 @@ namespace advanced_platformer
     {
         bool hasHit(const BiteAttack& bite, ActorId id)
         {
-            return std::find(bite.actorsHit.begin(), bite.actorsHit.end(), id) !=
-                   bite.actorsHit.end();
+            return std::ranges::find(bite.actorsHit, id) != bite.actorsHit.end();
         }
 
         Projectile makeProjectile(const Actor& actor, const RangedWeapon& weapon)
@@ -171,7 +170,7 @@ namespace advanced_platformer
                 {
                     if (target.id == actor.id || target.life != LifeState::Alive ||
                         !target.health.has_value() || !areOpponents(actor.team, target.team) ||
-                        std::find(contact.actorsHit.begin(), contact.actorsHit.end(), target.id) !=
+                        std::ranges::find(contact.actorsHit, target.id) !=
                             contact.actorsHit.end() ||
                         !overlaps(actor.body.bounds, target.body.bounds))
                     {

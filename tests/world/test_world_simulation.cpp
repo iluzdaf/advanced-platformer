@@ -132,15 +132,13 @@ TEST_CASE(
     // The chasing NPC searched for a path at least once.
     REQUIRE(advanced_platformer::frameStatisticCount(profile, "Path searches") >= 1);
     REQUIRE(
-        std::any_of(
-            profile.phases.begin(),
-            profile.phases.end(),
+        std::ranges::any_of(
+            profile.phases,
             [](const advanced_platformer::PhaseTiming& phase)
             { return std::string_view(phase.name) == "Path search"; }));
     REQUIRE(
-        std::all_of(
-            profile.phases.begin(),
-            profile.phases.end(),
+        std::ranges::all_of(
+            profile.phases,
             [](const advanced_platformer::PhaseTiming& phase) { return phase.seconds >= 0.0F; }));
     REQUIRE(profile.nestedSecondsOfOpenPhases.empty());
 }

@@ -85,8 +85,9 @@ namespace advanced_platformer
             std::vector<std::size_t>& indexes,
             const std::function<void(std::size_t)>& remove)
         {
-            std::sort(indexes.begin(), indexes.end());
-            indexes.erase(std::unique(indexes.begin(), indexes.end()), indexes.end());
+            std::ranges::sort(indexes);
+            const auto duplicates = std::ranges::unique(indexes);
+            indexes.erase(duplicates.begin(), duplicates.end());
             for (auto index = indexes.rbegin(); index != indexes.rend(); ++index)
             {
                 remove(*index);

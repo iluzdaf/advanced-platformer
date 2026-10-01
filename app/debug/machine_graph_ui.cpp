@@ -159,9 +159,8 @@ namespace advanced_platformer
             const float labelWidth = ImGui::GetItemRectMax().x - labelTopLeft.x;
             ImGui::SetWindowFontScale(1.0F);
 
-            const auto outputCount = static_cast<std::size_t>(std::count_if(
-                machine.transitions.begin(),
-                machine.transitions.end(),
+            const auto outputCount = static_cast<std::size_t>(std::ranges::count_if(
+                machine.transitions,
                 [&state](const NpcMachineTransition& transition)
                 { return transition.from == state.name; }));
             const float itemSpacing = ImGui::GetStyle().ItemSpacing.x;
