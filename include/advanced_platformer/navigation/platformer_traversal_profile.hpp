@@ -31,18 +31,7 @@ namespace advanced_platformer
         PlatformerMovementConfig movement;
         float stepSeconds = 0.0F;
         std::optional<SurfaceClimbConfig> climb;
-    };
 
-    inline bool operator==(
-        const PlatformerTraversalProfile& left,
-        const PlatformerTraversalProfile& right)
-    {
-        if (left.size != right.size || left.movement != right.movement ||
-            left.stepSeconds != right.stepSeconds ||
-            left.climb.has_value() != right.climb.has_value())
-        {
-            return false;
-        }
-        return !left.climb.has_value() || left.climb->speed == right.climb->speed;
-    }
+        bool operator==(const PlatformerTraversalProfile&) const = default;
+    };
 }

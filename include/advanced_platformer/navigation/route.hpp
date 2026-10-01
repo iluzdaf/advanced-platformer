@@ -17,12 +17,9 @@ namespace advanced_platformer
     {
         Cell cell;
         ClimbSurface surface = ClimbSurface::None;
-    };
 
-    constexpr bool operator==(RouteLocation left, RouteLocation right)
-    {
-        return left.cell == right.cell && left.surface == right.surface;
-    }
+        constexpr bool operator==(const RouteLocation&) const = default;
+    };
 
     // One edge of a route: its destination, traversal, and any recorded inputs.
     struct RouteStep

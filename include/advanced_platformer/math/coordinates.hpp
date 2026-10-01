@@ -17,17 +17,9 @@ namespace advanced_platformer
     {
         int x = 0;
         int y = 0;
+
+        constexpr bool operator==(const Cell&) const = default;
     };
-
-    constexpr bool operator==(Cell left, Cell right)
-    {
-        return left.x == right.x && left.y == right.y;
-    }
-
-    constexpr bool operator!=(Cell left, Cell right)
-    {
-        return !(left == right);
-    }
 
     // For keying an unordered container by cell.
     struct CellHash

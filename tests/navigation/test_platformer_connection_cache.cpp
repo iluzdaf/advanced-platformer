@@ -92,15 +92,27 @@ TEST_CASE("Connections are cached separately for each profile", "[navigation][ca
     climber.climb = advanced_platformer::SurfaceClimbConfig{60.0F};
     REQUIRE(cache.cachedConnections(cell, climber) == nullptr);
 
+    // Climbers share connections only when they climb at the same speed.
+    BuiltPlatformerConnections climberBuild =
+        advanced_platformer::buildPlatformerConnections(map, cell, climber);
+    advanced_platformer::storePlatformerConnections(cache, cell, climber, std::move(climberBuild));
+    PlatformerTraversalProfile sameClimber = profile;
+    sameClimber.climb = advanced_platformer::SurfaceClimbConfig{60.0F};
+    REQUIRE(cache.cachedConnections(cell, sameClimber) != nullptr);
+    PlatformerTraversalProfile quickerClimber = climber;
+    quickerClimber.climb->speed += 1.0F;
+    REQUIRE(cache.cachedConnections(cell, quickerClimber) == nullptr);
+
     BuiltPlatformerConnections tallBuild =
         advanced_platformer::buildPlatformerConnections(map, cell, taller, &cache);
     REQUIRE(tallBuild.simulatedTicks > 0);
     advanced_platformer::storePlatformerConnections(cache, cell, taller, std::move(tallBuild));
-    REQUIRE(cache.size() == 2);
+    REQUIRE(cache.size() == 3);
     // The cache lists profiles in the order first seen.
-    REQUIRE(cache.knownProfiles().size() == 2);
+    REQUIRE(cache.knownProfiles().size() == 3);
     REQUIRE(cache.knownProfiles()[0] == profile);
-    REQUIRE(cache.knownProfiles()[1] == taller);
+    REQUIRE(cache.knownProfiles()[1] == climber);
+    REQUIRE(cache.knownProfiles()[2] == taller);
 
     cache.clear();
     REQUIRE(cache.size() == 0);

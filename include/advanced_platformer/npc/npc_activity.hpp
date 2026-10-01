@@ -11,10 +11,7 @@ namespace advanced_platformer
     {
         NpcState state = NpcState::Idle;
 
-        bool operator==(const BuiltInNpcActivity& other) const
-        {
-            return state == other.state;
-        }
+        bool operator==(const BuiltInNpcActivity&) const = default;
     };
 
     struct LuaNpcActivity
@@ -22,10 +19,7 @@ namespace advanced_platformer
         std::string script;
         std::string activity;
 
-        bool operator==(const LuaNpcActivity& other) const
-        {
-            return script == other.script && activity == other.activity;
-        }
+        bool operator==(const LuaNpcActivity&) const = default;
     };
 
     using NpcActivity = std::variant<BuiltInNpcActivity, LuaNpcActivity>;

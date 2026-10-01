@@ -22,6 +22,11 @@ The project uses C++26. Before reading the engine, it helps to be comfortable wi
   connections leaving a location this way, so expanding a location reads them straight
   from the connection cache. A span does not keep its list alive: hand back one of a
   list that outlives the call, never of a vector made inside it.
+- [Defaulted comparisons](https://en.cppreference.com/w/cpp/language/default_comparisons),
+  such as `bool operator==(const Cell&) const = default;`, which compare every member in
+  order. `!=` comes with `==`. Configs such as `PlatformerTraversalProfile` compare this
+  way. That comparison decides which actors share cached connections, and a field added
+  later can't be left out of it.
 
 Positions, sizes and velocities are [GLM](https://github.com/g-truc/glm) `glm::vec2`.
 Tests use [Catch2](https://github.com/catchorg/Catch2). Lua scripting goes through
