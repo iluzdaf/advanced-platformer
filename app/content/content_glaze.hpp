@@ -123,7 +123,7 @@ namespace advanced_platformer
     Sprite spriteFrom(const SpriteJson& json);
 
     // Reports a Glaze read error as "source: line L, column C: what was wrong", naming the
-    // key or value found there.
+    // key or value found there, or "invalid JSON: ..." when the text is not JSON at all.
     [[noreturn]] void failContentRead(
         std::string_view text,
         std::string_view sourceName,
