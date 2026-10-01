@@ -31,43 +31,9 @@ namespace advanced_platformer
 {
     namespace
     {
-        // A transition exits the old state's activity, then the new state's activity is
-        // entered and updated on the same tick.
-        void updateMachineState(
-            const NpcUpdate& update,
-            Actor& actor,
-            NpcBrain& brain,
-            const NpcPerception& perception,
-            PathFollower& follower,
-            const Actor* target,
-            NpcMachine& machine,
-            const NpcFacts& facts)
-        {
-            const LuaNpcActivity previous = activeNpcMachineState(machine).does;
-            const bool fired = advanceNpcMachine(machine, facts, update.deltaTime).has_value();
-            if (fired && machine.activityEntered)
-            {
-                exitScriptedActivity(update, actor, brain, follower, target, previous, facts);
-                machine.activityEntered = false;
-            }
-
-            NpcFacts activeFacts = facts;
-            if (fired)
-            {
-                activeFacts = gatherNpcFacts(
-                    update.map, actor, brain, perception, target, machine.stateElapsed);
-            }
-            const LuaNpcActivity& activity = activeNpcMachineState(machine).does;
-            if (!machine.activityEntered)
-            {
-                enterScriptedActivity(
-                    update, actor, brain, follower, target, activity, activeFacts);
-                machine.activityEntered = true;
-            }
-            updateScriptedActivity(update, actor, brain, follower, target, activity, activeFacts);
-        }
-
-        // Which state comes next is decided once, from the facts, before the state acts.
+        // Which state comes next is decided once, from the facts, before the state acts. A
+        // transition exits the old state's activity, then the new state's activity is
+        // entered and updated on the same tick, with facts gathered again for it.
         void updateNpcState(const NpcUpdate& update, Actor& actor)
         {
             if (!actor.brain.has_value() || !actor.perception.has_value() ||
@@ -80,9 +46,28 @@ namespace advanced_platformer
             PathFollower& follower = *actor.pathFollower;
             NpcMachine& machine = *actor.machine;
             const Actor* target = livingTarget(update.world, brain);
-            const NpcFacts facts =
+
+            NpcFacts facts =
                 gatherNpcFacts(update.map, actor, brain, perception, target, machine.stateElapsed);
-            updateMachineState(update, actor, brain, perception, follower, target, machine, facts);
+            const LuaNpcActivity previous = activeNpcMachineState(machine).does;
+            if (advanceNpcMachine(machine, facts, update.deltaTime).has_value())
+            {
+                if (machine.activityEntered)
+                {
+                    exitScriptedActivity(update, actor, brain, follower, target, previous, facts);
+                    machine.activityEntered = false;
+                }
+                facts = gatherNpcFacts(
+                    update.map, actor, brain, perception, target, machine.stateElapsed);
+            }
+
+            const LuaNpcActivity& activity = activeNpcMachineState(machine).does;
+            if (!machine.activityEntered)
+            {
+                enterScriptedActivity(update, actor, brain, follower, target, activity, facts);
+                machine.activityEntered = true;
+            }
+            updateScriptedActivity(update, actor, brain, follower, target, activity, facts);
             machine.stateElapsed += update.deltaTime;
         }
     }
@@ -102,10 +87,6 @@ namespace advanced_platformer
             if (!actor.brain.has_value())
             {
                 continue;
-            }
-            if (!actor.pathFollower.has_value())
-            {
-                throw std::logic_error("An NPC is missing its path follower");
             }
 
             actor.intentions = {};
