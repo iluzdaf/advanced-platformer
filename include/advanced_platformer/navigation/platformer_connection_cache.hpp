@@ -43,7 +43,8 @@ namespace advanced_platformer
         void prioritise(Cell cell, const PlatformerTraversalProfile& profile);
 
         // The cached connections for this cell and profile, or nothing if absent. A
-        // climber's cell holds the connections leaving each of its surfaces.
+        // climber's cell holds the connections leaving each of its surfaces, sorted by
+        // that surface so each surface's connections sit together.
         const std::vector<RouteConnection>* cachedConnections(
             Cell cell,
             const PlatformerTraversalProfile& profile) const;
@@ -52,7 +53,8 @@ namespace advanced_platformer
             Cell cell,
             const PlatformerTraversalProfile& profile) const;
         // Stores these as the cell's connections for the profile, replacing any previous value,
-        // and returns the stored connections. The footprint is every cell their
+        // and returns the stored connections. They are sorted by the surface they leave,
+        // keeping their order within each surface. The footprint is every cell their
         // simulation swept: a break inside it drops them.
         const std::vector<RouteConnection>& storeConnections(
             Cell cell,

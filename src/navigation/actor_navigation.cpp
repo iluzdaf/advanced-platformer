@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <limits>
 #include <optional>
+#include <span>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -137,13 +138,17 @@ namespace advanced_platformer
             return std::abs(cell.x - goal.x) + std::abs(cell.y - goal.y);
         }
 
-        // A flight to each open cell next to this one, for a cost of 1.
-        std::vector<RouteConnection> flyingConnections(const TileMap& map, Cell cell)
+        // Fills connections with a flight, costing 1, to each open cell next to this one.
+        // One search passes the same connections for every cell, reusing their storage.
+        void flyingConnections(
+            const TileMap& map,
+            Cell cell,
+            std::vector<RouteConnection>& connections)
         {
             constexpr std::array<glm::ivec2, 4> Directions{
                 glm::ivec2{-1, 0}, glm::ivec2{1, 0}, glm::ivec2{0, -1}, glm::ivec2{0, 1}};
 
-            std::vector<RouteConnection> connections;
+            connections.clear();
             for (const glm::ivec2 direction : Directions)
             {
                 const Cell candidate{cell.x + direction.x, cell.y + direction.y};
@@ -152,7 +157,6 @@ namespace advanced_platformer
                     connections.push_back({{{candidate}, Traversal::Fly, {}}, 1});
                 }
             }
-            return connections;
         }
 
         // The cheapest flight from the cell at the flyer's feet to the goal cell, through
@@ -177,12 +181,14 @@ namespace advanced_platformer
             }
             const Cell goal = cellAtFeet(tileSize, goalFeet);
             int cellsExpanded = 0;
+            std::vector<RouteConnection> leaving;
             const ConnectionFunction connections =
-                [&map, profile, &cellsExpanded](RouteLocation location)
+                [&map, profile, &cellsExpanded, &leaving](RouteLocation location)
             {
                 const PhaseScope connectionPhase(profile, "Navigation", "Connection retrieval");
                 ++cellsExpanded;
-                return flyingConnections(map, location.cell);
+                flyingConnections(map, location.cell, leaving);
+                return std::span<const RouteConnection>(leaving);
             };
             RouteSearchResult result;
             {
@@ -231,22 +237,19 @@ namespace advanced_platformer
             return static_cast<int>(std::ceil(distance / (maximumSpeed * profile.stepSeconds)));
         }
 
-        // Adds the penalty to each jump in this search's copy of the connections. The
-        // cached costs stay the simulated ticks.
-        void applyJumpStartPenalty(std::vector<RouteConnection>& connections, int penaltyTicks)
+        // The cost of a connection to the platformer search, which adds the start penalty
+        // to a jump's simulated ticks. The cached costs stay the simulated ticks.
+        int withJumpStartPenalty(const RouteConnection& connection)
         {
-            for (RouteConnection& connection : connections)
+            if (connection.step.traversal != Traversal::Jump)
             {
-                if (connection.step.traversal != Traversal::Jump)
-                {
-                    continue;
-                }
-                if (connection.cost > std::numeric_limits<int>::max() - penaltyTicks)
-                {
-                    throw std::overflow_error("A route connection cost is too large");
-                }
-                connection.cost += penaltyTicks;
+                return connection.cost;
             }
+            if (connection.cost > std::numeric_limits<int>::max() - JumpStartPenaltyTicks)
+            {
+                throw std::overflow_error("A route connection cost is too large");
+            }
+            return connection.cost + JumpStartPenaltyTicks;
         }
 
         void requireValid(glm::vec2 goalFeet, const PlatformerTraversalProfile& profile)
@@ -309,22 +312,12 @@ namespace advanced_platformer
                     throw std::logic_error("The search expanded a cell the cache does not hold");
                 }
 
-                // 2. Keep the connections that leave this location's surface. A floor
-                //    expands with floor connections, a wall with that wall's climbs.
-                std::vector<RouteConnection> leaving;
-                for (const RouteConnection& connection : *cellConnections)
-                {
-                    if (connection.sourceSurface == location.surface)
-                    {
-                        leaving.push_back(connection);
-                    }
-                }
-
-                // 3. Charge each jump the start penalty. This changes the search's copy
-                //    only; the cached costs stay the simulated ticks.
-                applyJumpStartPenalty(leaving, JumpStartPenaltyTicks);
-
-                return leaving;
+                // 2. Hand back the connections that leave this location's surface, without
+                //    copying them. A floor expands with floor connections, a wall with that
+                //    wall's climbs. The cache keeps each surface's connections together.
+                const auto [first, last] = std::ranges::equal_range(
+                    *cellConnections, location.surface, {}, &RouteConnection::sourceSurface);
+                return std::span<const RouteConnection>(first, last);
             };
 
             const HeuristicFunction heuristic = [tileSize, &profile](Cell cell, Cell goalCell)
@@ -338,8 +331,15 @@ namespace advanced_platformer
             RouteSearchResult result;
             {
                 const PhaseScope algorithmPhase(frameProfile, "Navigation", "Search algorithm");
-                result =
-                    findLowestCostRoute(start, goal, map.size(), connections, heuristic, canExpand);
+                // 3. Charge each jump the start penalty as the search adds up costs.
+                result = findLowestCostRoute(
+                    start,
+                    goal,
+                    map.size(),
+                    connections,
+                    heuristic,
+                    canExpand,
+                    withJumpStartPenalty);
             }
 
             addFrameStatistic(frameProfile, "Navigation", "Cells expanded", cellsExpanded);

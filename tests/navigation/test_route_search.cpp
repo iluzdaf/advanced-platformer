@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <optional>
+#include <span>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -18,6 +19,7 @@ namespace
     using advanced_platformer::Cell;
     using advanced_platformer::ClimbSurface;
     using advanced_platformer::ConnectionFunction;
+    using advanced_platformer::CostFunction;
     using advanced_platformer::endOf;
     using advanced_platformer::ExpansionReady;
     using advanced_platformer::findLowestCostRoute;
@@ -48,6 +50,7 @@ namespace
     }
 
     // The same connections leave every location of a cell listed; any other cell has none.
+    // The function owns the table, so the connections it hands back outlive each call.
     ConnectionFunction connectionsFrom(
         std::vector<std::pair<Cell, std::vector<RouteConnection>>> table)
     {
@@ -57,29 +60,30 @@ namespace
             {
                 if (cell == location.cell)
                 {
-                    return connections;
+                    return std::span<const RouteConnection>(connections);
                 }
             }
-            return std::vector<RouteConnection>{};
+            return std::span<const RouteConnection>{};
         };
     }
 
     // A row of cells, each leading to the next for a cost of 1, up to the last column.
+    // Each call refills the function's own storage, which lasts until the next call.
     ConnectionFunction lineUpTo(int lastColumn)
     {
-        return [lastColumn](RouteLocation location)
+        return [lastColumn, next = std::vector<RouteConnection>{}](RouteLocation location) mutable
         {
+            next.clear();
             const Cell cell = location.cell;
-            if (cell.x >= lastColumn)
+            if (cell.x < lastColumn)
             {
-                return std::vector<RouteConnection>{};
+                next.push_back(connectionTo(floorOf(cell.x + 1, cell.y), Traversal::Fly, 1));
             }
-            return std::vector<RouteConnection>{
-                connectionTo(floorOf(cell.x + 1, cell.y), Traversal::Fly, 1)};
+            return std::span<const RouteConnection>(next);
         };
     }
 
-    std::vector<RouteConnection> noConnections(RouteLocation)
+    std::span<const RouteConnection> noConnections(RouteLocation)
     {
         return {};
     }
@@ -129,23 +133,25 @@ TEST_CASE(
     // three apart.
     const RouteLocation wall{{0, 0}, ClimbSurface::LeftWall};
     const RouteLocation ceiling{{0, 0}, ClimbSurface::Ceiling};
+    const std::vector<RouteConnection> fromFloor{
+        connectionTo(ceiling, Traversal::Climb, 5), connectionTo(wall, Traversal::Climb, 1)};
+    const std::vector<RouteConnection> fromWall{connectionTo(ceiling, Traversal::Climb, 1)};
+    const std::vector<RouteConnection> fromCeiling{
+        connectionTo({{1, 0}, ClimbSurface::Ceiling}, Traversal::Climb, 1)};
     const ConnectionFunction connections = [&](RouteLocation location)
     {
         switch (location.surface)
         {
         case ClimbSurface::None:
-            return std::vector<RouteConnection>{
-                connectionTo(ceiling, Traversal::Climb, 5),
-                connectionTo(wall, Traversal::Climb, 1)};
+            return std::span<const RouteConnection>(fromFloor);
         case ClimbSurface::LeftWall:
-            return std::vector<RouteConnection>{connectionTo(ceiling, Traversal::Climb, 1)};
+            return std::span<const RouteConnection>(fromWall);
         case ClimbSurface::Ceiling:
-            return std::vector<RouteConnection>{
-                connectionTo({{1, 0}, ClimbSurface::Ceiling}, Traversal::Climb, 1)};
+            return std::span<const RouteConnection>(fromCeiling);
         case ClimbSurface::RightWall:
             break;
         }
-        return std::vector<RouteConnection>{};
+        return std::span<const RouteConnection>{};
     };
 
     const RouteSearchResult result =
@@ -242,6 +248,27 @@ TEST_CASE(
     REQUIRE(jumpRoute.steps.front().inputs.size() == 1);
 }
 
+TEST_CASE("A search can charge connections differently from their own cost", "[navigation][search]")
+{
+    // The jump's own cost of 1 makes it the cheaper way. Charging jumps 5 more as the
+    // search adds up costs sends the route around it, while the connection itself keeps
+    // its own cost.
+    const ConnectionFunction connections = connectionsFrom(
+        {{{0, 0},
+          {connectionTo(floorOf(2, 0), Traversal::Jump, 1),
+           connectionTo(floorOf(1, 0), Traversal::Walk, 1)}},
+         {{1, 0}, {connectionTo(floorOf(2, 0), Traversal::Walk, 1)}}});
+    const CostFunction penalisedJumps = [](const RouteConnection& connection)
+    { return connection.cost + (connection.step.traversal == Traversal::Jump ? 5 : 0); };
+
+    const RouteSearchResult result = findLowestCostRoute(
+        floorOf(0, 0), {2, 0}, TestGrid, connections, zeroHeuristic, {}, penalisedJumps);
+    REQUIRE(result.route.has_value());
+    REQUIRE(routeOf(result).steps.size() == 2);
+    REQUIRE(routeOf(result).steps.front().traversal == Traversal::Walk);
+    REQUIRE(connections({{0, 0}}).front().cost == 1);
+}
+
 TEST_CASE(
     "A search rejects places off its grid, missing functions and costs below one",
     "[navigation][search][validation]")
@@ -274,11 +301,16 @@ TEST_CASE(
         findLowestCostRoute(floorOf(0, 0), {1, 0}, TestGrid, noConnections, negativeHeuristic),
         std::invalid_argument);
 
-    // A connection that costs nothing.
+    // A connection that costs nothing, and a cost function that charges nothing.
     const ConnectionFunction costsNothing =
         connectionsFrom({{{0, 0}, {connectionTo(floorOf(1, 0), Traversal::Walk, 0)}}});
     REQUIRE_THROWS_AS(
         findLowestCostRoute(floorOf(0, 0), {1, 0}, TestGrid, costsNothing, zeroHeuristic),
+        std::invalid_argument);
+    const CostFunction chargesNothing = [](const RouteConnection&) { return 0; };
+    REQUIRE_THROWS_AS(
+        findLowestCostRoute(
+            floorOf(0, 0), {1, 0}, TestGrid, lineUpTo(2), zeroHeuristic, {}, chargesNothing),
         std::invalid_argument);
 }
 

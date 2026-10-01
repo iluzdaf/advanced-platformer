@@ -595,11 +595,17 @@ walls and ceilings.
 The caller supplies three things:
 
 - The connections leaving a location. Each is one step to a place nearby, with a
-  positive cost and any inputs that make the step.
+  positive cost and any inputs that make the step. The caller hands them back as a
+  `std::span`, a view of connections it already holds rather than a copy, so expanding
+  a location copies nothing. The view need only last until the search asks again.
 - A goal cell, which may be off the grid.
 - A heuristic that guesses the cost from a cell to the goal cell. The guess must never
   be more than the real cost. A heuristic that always guesses zero turns A* into
   Dijkstra's search.
+
+A caller may also give a cost function, for what each connection costs this search
+when that differs from the connection's own cost. The platformer search uses it for its
+jump-start penalty.
 
 The search ends in one of three ways:
 
@@ -669,7 +675,9 @@ while the map stands.
 `PlatformerConnectionCache` in `navigation/platformer_connection_cache` stores, per profile:
 
 - the connections leaving each cell, from every surface of it, with the footprint
-  their simulation swept, built by searches or background fill;
+  their simulation swept, built by searches or background fill. They are sorted by the
+  surface they leave, so the search can hand back one surface's connections as a single
+  view of the cache;
 - walk results by length, including failed attempts; successful flat-ground walks
   start and end at rest, so their costs can be reused from any cell of any floor.
 

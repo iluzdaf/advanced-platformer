@@ -2,7 +2,7 @@
 
 #include <functional>
 #include <optional>
-#include <vector>
+#include <span>
 
 #include "advanced_platformer/math/coordinates.hpp"
 #include "advanced_platformer/navigation/route.hpp"
@@ -10,8 +10,10 @@
 namespace advanced_platformer
 {
     // Returns the connections leaving a location. Each is one step to a place nearby,
-    // with its cost and the inputs that make the step.
-    using ConnectionFunction = std::function<std::vector<RouteConnection>(RouteLocation location)>;
+    // with its cost and the inputs that make the step. They are a view, not a copy: the
+    // search reads them before it asks again, so they need only last until the next call.
+    using ConnectionFunction =
+        std::function<std::span<const RouteConnection>(RouteLocation location)>;
     // Guesses the cost from a cell to the goal cell. The guess must never be more than
     // the real cost, and never below zero.
     using HeuristicFunction = std::function<int(Cell cell, Cell goal)>;
@@ -19,6 +21,10 @@ namespace advanced_platformer
     // before it asks for that location's connections, so a cache can finish its work
     // first. An empty function allows every location.
     using ExpansionReady = std::function<bool(RouteLocation location)>;
+    // Says what taking a connection costs this search, which may differ from the
+    // connection's own cost, such as with a penalty for starting a jump. The cost must be
+    // greater than zero. An empty function uses each connection's own cost.
+    using CostFunction = std::function<int(const RouteConnection& connection)>;
 
     // What a search ends with. A finished search has a route to the cheapest location in
     // the goal cell. If it could not reach that cell, the route leads to a cell as close
@@ -41,5 +47,6 @@ namespace advanced_platformer
         GridSize grid,
         const ConnectionFunction& connections,
         const HeuristicFunction& heuristic,
-        const ExpansionReady& canExpand = {});
+        const ExpansionReady& canExpand = {},
+        const CostFunction& costOf = {});
 }
