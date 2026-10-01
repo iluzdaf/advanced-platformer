@@ -5,24 +5,24 @@ boundaries, data model, runtime flow, and the reasons behind them.
 
 Use this as a reference when working on a particular feature:
 
-| Area                      | Section                                                                   | What it covers                                                                                                                                |
-| ------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Orientation               | [Purpose and scope](#purpose-and-scope)                                   | What the repository is and is not.                                                                                                            |
-|                           | [Project shape](#project-shape)                                           | Targets, folders, and the dependency boundary.                                                                                                |
-|                           | [Runtime flow](#runtime-flow)                                             | The fixed step and the order systems run in.                                                                                                  |
-|                           | [Coordinates](#coordinates)                                               | Axes and feet positions.                                                                                                                      |
-|                           | [Time](#time)                                                             | The step, timers, stamps, and which to use.                                                                                                   |
-| The data model            | [World ownership and identity](#world-ownership-and-identity)             | What the world owns.                                                                                                                          |
-|                           | [Actor composition](#actor-composition)                                   | How capabilities fit together.                                                                                                                |
-| Gameplay systems          | [Input and movement](#input-and-movement)                                 | Intentions, platformer and flying movement.                                                                                                   |
-|                           | [Tile map, collision, and validation](#tile-map-collision-and-validation) | Terrain and sweeps.                                                                                                                           |
-|                           | [NPC behaviour](#npc-behaviour)                                           | Sensing, memory, machines, and Lua activities.                                                                                                |
-|                           | [Navigation](#navigation)                                                 | Path search, following, simulated traversals, and the connection cache.                                                                       |
-|                           | [Combat, projectiles, and life cycle](#combat-projectiles-and-life-cycle) | Attacks and death.                                                                                                                            |
-|                           | [Inventory, pickups, and levels](#inventory-pickups-and-levels)           | The level loop and the [data-driven boundary](#data-driven-level-boundary). [CONTENT.md](CONTENT.md) is the file-by-file authoring reference. |
-| Presentation and practice | [Presentation](#presentation)                                             | Animation, rendering, camera, and UI.                                                                                                         |
-|                           | [Error handling and validation](#error-handling-and-validation)           | Which layer rejects what.                                                                                                                     |
-|                           | [Testing and quality checks](#testing-and-quality-checks)                 | How to verify it.                                                                                                                             |
+| Area                      | Section                                                                   | What it covers                                                              |
+| ------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Orientation               | [Purpose and scope](#purpose-and-scope)                                   | What the repository is and is not.                                          |
+|                           | [Project shape](#project-shape)                                           | Targets, folders, and the dependency boundary.                              |
+|                           | [Runtime flow](#runtime-flow)                                             | The fixed step and the order systems run in.                                |
+|                           | [Coordinates](#coordinates)                                               | Axes and feet positions.                                                    |
+|                           | [Time](#time)                                                             | The step, timers, stamps, and which to use.                                 |
+| The data model            | [World ownership and identity](#world-ownership-and-identity)             | What the world owns.                                                        |
+|                           | [Actor composition](#actor-composition)                                   | How capabilities fit together.                                              |
+| Gameplay systems          | [Input and movement](#input-and-movement)                                 | Intentions, platformer and flying movement.                                 |
+|                           | [Tile map, collision, and validation](#tile-map-collision-and-validation) | Terrain and sweeps.                                                         |
+|                           | [NPC behaviour](#npc-behaviour)                                           | Sensing, memory, machines, and Lua activities.                              |
+|                           | [Navigation](#navigation)                                                 | Path search, following, simulated traversals, and the connection cache.     |
+|                           | [Combat, projectiles, and life cycle](#combat-projectiles-and-life-cycle) | Attacks and death.                                                          |
+|                           | [Inventory, pickups, and levels](#inventory-pickups-and-levels)           | The level loop and the [data-driven boundary](#data-driven-level-boundary). |
+| Presentation and practice | [Presentation](#presentation)                                             | Animation, rendering, camera, and UI.                                       |
+|                           | [Error handling and validation](#error-handling-and-validation)           | Which layer rejects what.                                                   |
+|                           | [Testing and quality checks](#testing-and-quality-checks)                 | How to verify it.                                                           |
 
 ## Purpose and scope
 
@@ -161,7 +161,7 @@ iterators and pointers during a system update.
 - Actor spawns, pickup placement, exits, patrol points, and navigation destinations use
   world coordinates, usually as feet, described below.
 - The internal resolution is 320 by 180 pixels.
-- Tiles are square. `tiles.json` declares `tileSize` in world pixels, each `TileMap`
+- Tiles are square. The tile catalog declares the tile size in world pixels, each `TileMap`
   carries it, and every cell calculation takes that size rather than assuming one. The
   game uses 16.
 - Window output is an integer-scaled internal image with letterboxing when required.
@@ -369,13 +369,9 @@ weapons do not. `updateProjectiles` takes a mutable map; every other system take
 `const TileMap&`.
 
 Tests construct maps from ASCII strings with a helper in `tests/support` that supplies
-its own definitions and symbols, so the engine carries no fixture of its own. The example
-loads shared tile definitions separately from level files. Each level's `tileLegend`
-maps one-character map symbols to catalog names; there is no default, so a level
-says what every symbol it uses means.
-The loader resolves names to runtime IDs, reserving zero for `empty`.
-Actors, pickups, spawns, and exits are separate level data, not special tile IDs.
-Object legend markers expand into these placements during loading; their terrain is empty.
+its own definitions and symbols, so the engine carries no fixture of its own. The loader
+resolves tile names to runtime IDs, reserving zero for `empty`. Actors, pickups, spawns,
+and exits are separate level data, not special tile IDs.
 
 Collision moves an arbitrary-sized AABB along X, resolves it against nearby full-tile
 AABBs, then repeats along Y. The result reports left, right, ground, and ceiling
@@ -437,19 +433,14 @@ or shoot. This keeps perception and decisions separately testable.
 
 ### State machine
 
-Every NPC runs an `NpcMachine`, built from a machine in `machines.json`. Each named state
-runs a named Lua activity, and transitions have a `from`, a `to`, a `when` and an
-`after`. An update has three steps:
+Every NPC runs an `NpcMachine`, whose states each run a Lua activity. An update has
+three steps:
 
 1. `gatherNpcFacts` in `npc_facts.cpp` collects sensing, target memory, movement,
-   attacks, and state time into `NpcFacts`. [CONTENT.md](CONTENT.md#state-machines)
-   defines the machine-visible facts and their timing.
-2. `advanceNpcMachine` chooses the state. `when` is a map of fact names to the value
-   each must hold, answered by the rows in `npc_fact_rows.cpp`. `after` is how long every
-   condition must hold before the transition fires; the hold restarts when a condition
-   drops. Among the transitions from the active state, the first whose conditions have
-   held long enough fires, so a transition's position in the data is its priority, and
-   at most one fires an update.
+   attacks, and state time into `NpcFacts`.
+2. `advanceNpcMachine` chooses the state, answering each condition through the rows in
+   `npc_fact_rows.cpp` and tracking how long it has held. At most one transition fires
+   an update.
 3. A transition exits the old state's activity, resets the state's time, clears the
    route and enters the new activity. The active activity then updates, and its command
    requests a route, aim, or attack through `InputIntentions`. For example, a chase
@@ -462,9 +453,7 @@ to a state it lacks, a condition on a fact no row answers, or a hold that is not
 finite, non-negative time, and names the transition.
 
 The engine supplies facts, routes, movement and combat; machines and scripts hold every
-policy. The zombie and bat close in through the `pursuer` machine, and the zombie
-soldier keeps its range through `keep_distance`, which retreats while its target is
-nearer than its standoff.
+policy.
 
 Behaviour does not move the body directly. If a ground NPC reaches an awkward platform
 edge and loses its path, navigation can recover to a supported cell before repathing;
@@ -474,22 +463,17 @@ regression tests cover this case.
 
 The scripting target provides the protected Lua runtime that runs NPC activities.
 The core-facing boundary contains no Lua types. `NpcActivitySnapshot` is a copied,
-read-only-in-effect view of the NPC's feet and body centre, its target's known and last
-known feet and body centre, its patrol ends and heading, a walker's footing to either
-side, facts, state time, whether it holds a route and has finished it, and tuning.
-`NpcActivityCommand` carries only intentions and requests to aim, route, clear a route, or
-turn the patrol round.
-Applying those requests, including pathfinding, remains engine work.
+read-only-in-effect view of what the NPC knows, and `NpcActivityCommand` carries only
+intentions and requests. Applying those requests, including pathfinding, remains engine
+work.
 
-`LuaNpcScripts` loads each script into its own environment and requires it to return named
-activities with an `update` function; `enter` and `exit` are optional. Only the base, math,
-string, and table libraries are available, with dynamic loading and filesystem functions
-removed. Snapshots become fresh Lua tables whose positions are `glm::vec2` bound as the
+`LuaNpcScripts` loads each script into its own environment, without dynamic loading or
+filesystem access. Snapshots become fresh Lua tables whose positions are `glm::vec2` bound as the
 Lua value type `vec2`, so scripts do vector arithmetic with the engine's own glm maths
 instead of copying helpers they cannot share. A `vec2` is copied in and out, and scripts
 reach its constructor through a read-only global, so no script can change the type for
-another. Returned command tables reject unknown fields and wrong types, and their vectors,
-a `vec2` or an `{x, y}` table, must be finite.
+another. Returned command tables reject unknown fields, wrong types and non-finite
+vectors.
 
 Every visit has a `self` table keyed by stable `ActorId`, script, and activity. Calls are
 protected and have an instruction budget. A hook error or invalid command records its source,
@@ -498,16 +482,8 @@ simulation. A failed script replacement leaves the previous script in place. Bef
 removals are applied, an NPC cleanup system discards their script-owned state. Level replacement
 and restart discard that state for every actor before replacing the world.
 
-A machine state names its activity by script and activity:
-`{"script":"rat","activity":"flee"}`. The application loads referenced files from
-`assets/scripts` at startup and rejects missing scripts or activities. `common.lua`
-provides idle, patrol, chase, bite, shoot, search, retreat and watch, which the shipped
-machines share: the `pursuer` machine for the zombie and bat, `keep_distance` for the
-zombie soldier, and the rat's patrol and bite. The rat uses its own Lua to choose a flee goal while C++ follows the
-path. The spider's Lua patrol and pursuit route it over walls and ceilings the same
-way. The boar's Lua charge activity requests ordinary walking, ledge avoidance,
-and contact damage; its machine uses facts to choose wake and recovery transitions.
-Scripts cannot create noise events or apply damage directly.
+The application loads the scripts machines reference at startup and rejects missing
+scripts or activities. Scripts cannot create noise events or apply damage directly.
 
 ## Navigation
 
@@ -800,8 +776,6 @@ boundary keeps JSON out of the core: `app/content` owns the loaders and validato
 receives plain C++ values. Levels, actors, items, pickups, exits, and animation sets can
 therefore change without touching engine code.
 
-[CONTENT.md](CONTENT.md) is the field-by-field authoring reference for those files.
-
 Each file is read with [`content_glaze.hpp`](../app/content/content_glaze.hpp) into plain
 structs whose members are its keys: `readContent<T>` rejects an unknown key and a missing
 member that is not a `std::optional`, and reports where as `line L, column C`. The loader
@@ -848,7 +822,7 @@ The engine keeps visual and physical dimensions separate:
 - `Body::bounds.size` is the collision rectangle in world pixels.
 
 A tile has only a `SpriteRegion` and no `Sprite::size`: it always fills one cell, so its
-region is the catalog's `tileSize` square and `tiles.json` gives only where it starts.
+region is the tile size square.
 Every other sprite in the same atlas chooses its world size independently.
 
 Matching sizes are assigned explicitly; the engine does not assume a sprite and body
@@ -866,8 +840,7 @@ stops. Like `facing`, the heading follows the intentions rather than the velocit
 
 ### Animation
 
-Clips are authored in `animations.json`; [CONTENT.md](CONTENT.md#animation-sets) covers
-the format. The catalog loads before actors and stays unchanged for the session, and
+The animation catalog loads before actors and stays unchanged for the session, and
 composition creates a fresh animator for each actor. JSON defines clips, not selection
 rules.
 
@@ -883,9 +856,7 @@ the actor's `Sprite`. Pickup bobbing, hit flashes, death fading, and projectile 
 are calculated during scene construction from gameplay state and timers; they do not
 all require animation clips.
 
-The supplied atlas is 256 by 256 pixels. The example character clips use fixed 32 by
-24 source frames, grouped into named animation sets in `animations.json`.
-Artwork sources and atlas tooling live outside this repository; what is here is
+The supplied atlas is 256 by 256 pixels. Artwork sources and atlas tooling live outside this repository; what is here is
 the finished runtime atlas.
 
 Frames within a set must share one size. `SpriteRegion` supports arbitrary source
@@ -898,7 +869,7 @@ independent of animation frame dimensions.
 ### Camera and display viewport
 
 `CameraController` stores the previous view position. It begins centred on the player,
-then moves only enough to return the player's centre to a dead zone, sized by `levels.json`. The
+then moves only enough to return the player's centre to a dead zone, sized by the level catalog. The
 camera is clamped to the map and rounded to internal pixels for stable pixel art.
 
 `DisplayViewport` describes where the integer-scaled internal image appears in the
