@@ -133,7 +133,7 @@ GitHub Actions runs the jobs below. The names are the ones shown on a pull reque
 
 | Job                          | Runner         | What it does                                                                                                                                          | Runs on                            |
 | ---------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| macOS / Apple Clang          | `macos-latest` | Configures, builds, and runs the whole test suite.                                                                                                    | pushes to `main` and pull requests |
+| Build and test               | `macos-latest` | Configures, builds, and runs the whole test suite.                                                                                                    | pushes to `main` and pull requests |
 | Formatting                   | `ubuntu-24.04` | Checks the formatting of C++, JSON, YAML, Markdown, Python, and Lua, lints the Python and Lua, and runs the tests for the repository's tools.         | pull requests only                 |
 | Headers stand alone          | `ubuntu-24.04` | Compiles every public header on its own.                                                                                                              | pull requests only                 |
 | Static analysis (1/3 to 3/3) | `ubuntu-24.04` | Runs clang-tidy, with warnings as errors, on the files the pull request affects (see [Static analysis](#static-analysis)), split across three shards. | pull requests only                 |
@@ -142,9 +142,9 @@ GitHub Actions runs the jobs below. The names are the ones shown on a pull reque
 The Linux jobs are skipped on pushes because branch protection already ran them on the
 pull request.
 
-The macOS job uses a pinned `sccache` release backed by GitHub Actions' cache service.
-Only compiler outputs are cached; generated build directories are not. None of this
-affects local builds.
+The build and test job uses a pinned `sccache` release backed by GitHub Actions'
+cache service. Only compiler outputs are cached; generated build directories are not.
+None of this affects local builds.
 
 ## Formatting
 

@@ -175,8 +175,8 @@ jobs:
       - name: Require every static analysis shard
         run: test "${{ needs.static-analysis.result }}" = success
 
-  macos:
-    name: macOS / Apple Clang
+  build-and-test:
+    name: Build and test
     runs-on: macos-latest
     env:
       SCCACHE_GHA_ENABLED: "true"
