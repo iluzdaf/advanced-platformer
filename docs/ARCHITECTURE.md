@@ -21,15 +21,13 @@ Use this as a reference when working on a particular feature:
 |                           | [Combat, projectiles, and life cycle](#combat-projectiles-and-life-cycle) | Attacks and death.                                                                                                                            |
 |                           | [Inventory, pickups, and levels](#inventory-pickups-and-levels)           | The level loop and the [data-driven boundary](#data-driven-level-boundary). [CONTENT.md](CONTENT.md) is the file-by-file authoring reference. |
 | Presentation and practice | [Presentation](#presentation)                                             | Animation, rendering, camera, and UI.                                                                                                         |
-|                           | [Extension recipes](#extension-recipes)                                   | Where to make a gameplay change.                                                                                                              |
 |                           | [Error handling and validation](#error-handling-and-validation)           | Which layer rejects what.                                                                                                                     |
 |                           | [Testing and quality checks](#testing-and-quality-checks)                 | How to verify it.                                                                                                                             |
 
 ## Purpose and scope
 
-Advanced Platformer is a small C++26 engine with a complete example game. It
-keeps the code explicit enough to trace in a debugger and separates gameplay rules
-from graphics so the major paths can be tested without opening a window.
+Advanced Platformer is a small C++26 engine with a complete example game. It separates
+gameplay rules from graphics so the major paths can be tested without opening a window.
 
 The current example includes:
 
@@ -39,13 +37,12 @@ The current example includes:
 - scrolling maps and a dead-zone camera
 - actors assembled by composition
 - player and NPC control through the same `InputIntentions`
-- data-driven NPC state machines running Lua activities, sensing, and target memory
+- NPC sensing and target memory, with data-driven state machines running protected Lua
+  activities through a copied snapshot-and-command boundary
 - flying and platformer pathfinding
 - 360-degree projectiles and a timed bite attack
 - health, death, respawning, pickups, inventory, and three connected levels
 - sprite animation, an ImGui HUD, and an optional debug overlay
-- data-driven NPC machines which can run protected Lua activities through a copied
-  snapshot-and-command boundary
 
 The project deliberately does not try to provide slopes, one-way or moving platforms,
 dynamic rigid-body physics, actor pushing, multiplayer, general gameplay scripting beyond
@@ -322,6 +319,10 @@ the grip alone (`Keep`, the default), so code that ignores climbing never knocks
 climber off. Letting go or losing contact returns to normal platformer movement.
 Navigation routes a climber with the same update; see [traversals](#traversals).
 
+Further movement abilities follow `SurfaceClimb`: an optional component with its own
+configuration and state, sitting between intentions and collision and falling back to
+ordinary platformer movement, rather than more flags on `PlatformerMovement`.
+
 ### Flying movement
 
 Flying movement normalises a nonzero two-dimensional intention, multiplies it by the
@@ -510,11 +511,10 @@ Scripts cannot create noise events or apply damage directly.
 
 ## Navigation
 
-Navigation is the most advanced part of the engine. It keeps the search, which finds the cheapest route, apart from the code
-that says how places connect for each kind of movement. It never moves an actor itself:
-the path follower turns a path into intentions, and the ordinary movement systems do the
-moving. This section covers the search and the connections first, then the cache and
-the fill that builds it.
+Navigation keeps the search, which finds the cheapest route, apart from the code that
+says how places connect for each kind of movement. It never moves an actor itself: the
+path follower turns a path into intentions, and the ordinary movement systems do the
+moving.
 
 `findActorPath` is the one way into navigation. An NPC passes it the actor and a goal
 point. It looks only at the actor's body and the moves it has, never at what the actor
@@ -571,8 +571,7 @@ The caller supplies three things:
   a location copies nothing. The view need only last until the search asks again.
 - A goal cell, which may be off the grid.
 - A heuristic that guesses the cost from a cell to the goal cell. The guess must never
-  be more than the real cost. A heuristic that always guesses zero turns A* into
-  Dijkstra's search.
+  be more than the real cost.
 
 A caller may also give a cost function, for what each connection costs this search
 when that differs from the connection's own cost. The platformer search uses it for its
@@ -940,95 +939,6 @@ The inventory UI is an example presentation, not an engine rule. It derives its 
 from the configured slot count, uses at most three columns, pauses simulation while
 open, and emits item use requests instead of changing the world directly.
 
-## Extension recipes
-
-These recipes identify the existing boundaries a new feature should follow. They
-are routes through the current code, not requirements for a generic plugin system.
-
-### Adding a movement ability
-
-A movement ability belongs between intentions and collision. It may change velocity,
-gravity, or whether ordinary controls are available, but it should not render itself,
-edit the tile map, or move the body through a second collision implementation.
-
-For a focused ability:
-
-1. Add any new button edge or held input to `InputState` and `InputIntentions`.
-2. Give configuration and runtime state clear names. Keep them separate from input so
-   the ability can be driven by either a player or an NPC.
-3. Decide visibly how the ability interacts with ordinary horizontal control,
-   jumping, gravity, and collision.
-4. Apply movement through the existing platformer movement and collision path.
-5. Add focused tests for starting, continuing, ending, and resetting the ability, then
-   add a small number of interaction tests.
-6. Select animation and effects from the resulting state rather than using animation
-   frames to drive the mechanic.
-
-A first small feature can extend the existing platformer subject directly. Wall and
-ceiling climbing shows the optional form: `SurfaceClimb` is an actor component with its
-own configuration and state, and its update falls back to ordinary platformer movement
-when the actor holds no surface. Follow it for further abilities instead of filling
-`PlatformerMovement` with unrelated flags.
-
-### Adding an NPC state
-
-A new state is a named state and its transitions in a machine, running an activity from
-a script; it needs no C++. When the activity needs something scripts cannot see or ask
-for, extend the engine:
-
-1. Add any fact its transitions decide on to `NpcFacts`, gather it in
-   `gatherNpcFacts`, and give it a row in `npc_fact_rows.cpp` so a transition can ask
-   for it.
-2. Add a field to `NpcActivitySnapshot` for an observation a script needs, or to
-   `NpcActivityCommand` for a request the engine does not yet carry, and bind it in the
-   scripting target.
-3. Continue to move and attack through `InputIntentions`; NPC decision code should not
-   write body position or bypass combat systems.
-4. Test the engine side with `RecordingNpcScripts` or a small inline fixture script.
-   Shipped scripts are content and are checked only for loading and running cleanly.
-
-### Creating a new enemy
-
-First check whether existing components and activities express the enemy. If they do,
-add a named definition in `actors.json` and place it in a level. For an enemy whose
-policy needs a custom activity, the advanced route is a machine with Lua. Extend the
-engine only where that policy needs facts or capabilities it does not already expose:
-
-1. a machine in `machines.json` for new states and transitions;
-2. a Lua activity in `assets/scripts` for policy that existing activities cannot express;
-3. a C++ fact when the policy needs an observation the engine does not yet supply;
-4. a C++ component or system when the engine lacks a movement or combat capability;
-5. animation frames and an animation set when the enemy needs new presentation;
-6. focused tests for new engine rules and interactions, while content-integrity tests
-   check that shipped references resolve.
-
-Take only the steps the enemy needs. They are alternatives, not stages: a machine can
-arrange existing activities without new Lua, and a new fact does not need a script.
-
-Species, capabilities, and decisions are separate concerns. Artwork does not determine
-the brain, and a ranged weapon needs no `Shooter` subclass. The decision policy is
-its machine and the activities it runs. Share an activity between actors through a
-common script such as `common.lua`.
-
-### Choosing the layer
-
-| Change                                                                         | Primary location                  |
-| ------------------------------------------------------------------------------ | --------------------------------- |
-| Input binding or mouse conversion                                              | `app/application.cpp`             |
-| Movement or collision rule                                                     | `src/movement` or `src/physics`   |
-| NPC perception or decision                                                     | `src/npc`                         |
-| Generic search or movement-specific connections                                | `src/navigation`                  |
-| Damage, attacks, or projectiles                                                | `src/combat`                      |
-| Animation definitions                                                          | `assets/catalogs/animations.json` |
-| Content loading and validation                                                 | `app/content`                     |
-| Playable level composition and session flow                                    | `app/game`                        |
-| Actor, tile, item, pickup, and exit definitions; level geometry and placements | `assets`                          |
-| HUD or debugging presentation                                                  | `app/ui` or `app/debug`           |
-
-When a feature crosses layers, keep its rule in the simulation and pass plain state to
-presentation. Add the smallest test at the layer that owns the rule before adding an
-end-to-end test.
-
 ## Error handling and validation
 
 Validation has three boundaries:
@@ -1067,43 +977,9 @@ objects already satisfy their documented invariants.
 ## Testing and quality checks
 
 Tests mirror the source subjects and focus on behaviour rather than private
-implementation. Important coverage includes:
-
-- coordinate and feet conversions;
-- fixed-step accumulation and input-edge consumption;
-- actor identity, lookup, removal, and deferred requests;
-- platformer and flying movement;
-- arbitrary body sizes, four-sided tile collision, corners, and map boundaries;
-- camera dead-zone following, clamping, centring, and pixel rounding;
-- NPC sensing, memory, FSM transitions, continuous patrol, and edge recovery;
-- lowest-cost search, heuristics, flying paths, standability, falls, replayed jump
-  programs, the connection cache, breaks and the fill;
-- bite and ranged attack phases;
-- swept projectiles, teams, damage, death, removal, and respawn;
-- inventory stacking and capacity, automatic pickup, item use, exit requirements, and
-  level transitions;
-- animation selection and render-scene generation;
-- supplied level validation and invalid-content diagnostics.
-
-For a new rule, start beside the code you changed:
-
-| Change                                     | Test starting point                          |
-| ------------------------------------------ | -------------------------------------------- |
-| Content parsing or definition validation   | `tests/app/content/`                         |
-| Level parsing, validation, and diagnostics | `tests/app/content/test_level_data*.cpp`     |
-| Composing catalog entries into levels      | `tests/app/game/test_level_*composition.cpp` |
-| Carrying player state between levels       | `tests/app/game/test_level_transition.cpp`   |
-| Pickup collection and movement             | `tests/world/test_pickups.cpp`               |
-| Exit requirements and completion           | `tests/world/test_level_exit.cpp`            |
-| Item use and inventory persistence         | `tests/world/test_world_inventory.cpp`       |
-| Level-object draw commands                 | `tests/render/test_level_object_render.cpp`  |
-| Behaviour involving multiple systems       | `tests/world/test_world_simulation.cpp`      |
-| NPC behaviour across a simulation step     | `tests/world/test_npc_world_simulation.cpp`  |
-| Visual state converted to draw commands    | `tests/render/test_render_scene.cpp`         |
-
-Use small independent data in tests rather than asserting the example campaign's
-enemy count, item values, or inventory capacity. Its own checks should test validity,
-so you can change content without rewriting unrelated tests.
+implementation. Tests build their own small maps, actors and content rather than
+depending on the example campaign's levels, enemy counts or item values; checks on the
+shipped content test only that it is valid.
 
 OpenGL and ImGui integration remain a manual run; automated graphics-context tests are
 avoided. [README.md](../README.md#continuous-integration) lists what CI checks.
