@@ -85,6 +85,42 @@ struct glz::from<glz::JSON, advanced_platformer::SpriteAnchor>
 {
 };
 
+namespace advanced_platformer
+{
+    // A struct read from an object that may leave any member out, which then keeps its C++
+    // default. Unknown keys are still errors. The struct's member names are the keys.
+    template <class T> class WithDefaults
+    {
+    public:
+        T& get()
+        {
+            return value;
+        }
+
+        const T& get() const
+        {
+            return value;
+        }
+
+    private:
+        T value{};
+    };
+}
+
+template <class T> struct glz::from<glz::JSON, advanced_platformer::WithDefaults<T>>
+{
+    template <auto Options>
+    static void op(
+        advanced_platformer::WithDefaults<T>& wrapped,
+        auto&& context,
+        auto&& it,
+        auto&& end)
+    {
+        parse<JSON>::op<opt_false<Options, &opts::error_on_missing_keys>>(
+            wrapped.get(), context, it, end);
+    }
+};
+
 // A vector is written as [x, y], with exactly two numbers.
 template <> struct glz::from<glz::JSON, glm::vec2>
 {
