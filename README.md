@@ -24,7 +24,15 @@ New to the project? Start with [START_HERE.md](docs/START_HERE.md).
 - CMake 3.25 or newer
 - A C++26 compiler: Apple Clang supplied with current Xcode
 
-All third-party source required by the project is vendored under `external/`.
+Third-party libraries are git submodules under `external/` (see
+[THIRD_PARTY.md](THIRD_PARTY.md)). Clone with them:
+
+```sh
+git clone --recurse-submodules https://github.com/iluzdaf/advanced-platformer.git
+```
+
+In a checkout made without them, run `git submodule update --init`. Run it again after
+pulling a change that moves a submodule.
 
 macOS is the supported development platform, where development and graphical testing
 take place. Linux is used solely for CI quality checks and is not a supported local
@@ -293,7 +301,7 @@ tests/         Catch2 tests for core systems and testable application code
   support/     test-only builders and simulation helpers
 tools/         repository quality and maintenance scripts
 docs/          reading route, architecture, content format, and future work
-external/      fixed third-party source releases
+external/      third-party libraries, as pinned git submodules
 .github/       continuous-integration workflow
 ```
 

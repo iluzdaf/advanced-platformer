@@ -1,9 +1,9 @@
 #pragma once
 
-// sol2 supports its public API through this umbrella header. Listing its internal headers
-// would couple the adapter to implementation details without improving include hygiene.
+// sol2 supports its public API, and the Lua C API it wraps, through this umbrella header.
+// Listing its internal headers would couple the adapter to implementation details without
+// improving include hygiene.
 // NOLINTBEGIN(misc-include-cleaner)
-#include <lua.hpp>
 #include <sol/sol.hpp>
 
 namespace advanced_platformer

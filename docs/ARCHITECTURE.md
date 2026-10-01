@@ -79,10 +79,10 @@ The project has four main CMake targets:
 The boundary matters for tests: one can construct a `World`, run movement or a complete
 simulation tick, and inspect the result without needing a window or graphics context.
 
-All third-party source is vendored under `external/` so the project builds offline and
-everyone works from the same releases. The current dependencies include GLFW, glad, GLM, ImGui,
-ImPlot for the debug overlay's plots, imgui-node-editor for its machine window, Catch2,
-stb image loading, nlohmann/json, Lua, and sol2. Lua and sol2 are private to the scripting
+Third-party libraries are git submodules under `external/`, each pinned to one upstream
+commit so everyone builds against the same source. The current dependencies include GLFW,
+glad, GLM, ImGui, ImPlot for the debug overlay's plots, imgui-node-editor for its machine
+window, Catch2, stb image loading, nlohmann/json, Lua, and sol2. Lua and sol2 are private to the scripting
 target rather than leaking through public headers.
 
 ### Application folders
