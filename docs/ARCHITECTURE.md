@@ -82,8 +82,8 @@ simulation tick, and inspect the result without needing a window or graphics con
 Third-party libraries are git submodules under `external/`, each pinned to one upstream
 commit so everyone builds against the same source. The current dependencies include GLFW,
 glad, GLM, ImGui, ImPlot for the debug overlay's plots, imgui-node-editor for its machine
-window, Catch2, stb image loading, nlohmann/json, Lua, and sol2. Lua and sol2 are private to the scripting
-target rather than leaking through public headers.
+window, Catch2, stb image loading, nlohmann/json and Glaze, Lua, and sol2. Lua and sol2
+are private to the scripting target rather than leaking through public headers.
 
 ### Application folders
 
@@ -1062,6 +1062,9 @@ Validation has three boundaries:
    required fields. Their `readOptional...` counterparts leave C++ defaults unchanged
    only when a field is absent; present but invalid values are errors. Both use the
    same `json...` value checks and accept a source filename and field path.
+   `items.json` is instead read with Glaze into structs that mirror the file, through
+   `content_glaze`: the structs are the shape, and Glaze rejects unknown keys, missing
+   required members, and wrong types, reporting the line and column.
 2. **Application content:** plain C++ validators check authoring rules.
    [`content_validation.cpp`](../app/content/content_validation.cpp) covers legends, map rows,
    placement counts, quantities, and exit settings. Actor, item, pickup, and exit catalog

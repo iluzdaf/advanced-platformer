@@ -11,7 +11,7 @@ CheckOptions:
   - key: misc-include-cleaner.UnusedIncludes
     value: 'true'
   - key: misc-include-cleaner.IgnoreHeaders
-    value: 'glm/.*;catch2/.*'
+    value: 'glm/.*;catch2/.*;glaze/.*'
 
   - key: readability-identifier-naming.ClassCase
     value: CamelCase
