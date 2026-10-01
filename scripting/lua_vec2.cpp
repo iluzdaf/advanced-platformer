@@ -12,7 +12,7 @@
 // NOLINTBEGIN(misc-include-cleaner)
 #include <sol/sol.hpp>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

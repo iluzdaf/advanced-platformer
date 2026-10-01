@@ -2,7 +2,7 @@
 
 struct GLFWwindow;
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     // ImGui and ImPlot with their GLFW and OpenGL 3 backends, for as long as it lives.
     class ImGuiSession

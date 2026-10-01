@@ -10,16 +10,16 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/input/input_state.hpp"
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/npc/npc_activity_scripts.hpp"
+#include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/npc/npc_activity_scripts.hpp"
 
 // sol2 supports its public API through this umbrella header. Listing its internal headers
 // would couple the adapter to implementation details without improving include hygiene.
 // NOLINTBEGIN(misc-include-cleaner)
 #include <sol/sol.hpp>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

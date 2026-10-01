@@ -6,10 +6,10 @@
 #include "debug/frame_profile_ui.hpp"
 #include "debug/frame_selection.hpp"
 #include "debug/machine_graph_ui.hpp"
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/timing/frame_profile.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/timing/frame_profile.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     struct DebugOverlay;
     struct WindowViewport;

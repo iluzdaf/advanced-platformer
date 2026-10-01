@@ -5,15 +5,15 @@
 #include "animation_catalog.hpp"
 #include "machine_catalog.hpp"
 #include <glm/vec2.hpp>
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/combat/combat.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/render/sprite.hpp"
-#include "simple_platformer/movement/flying_movement.hpp"
-#include "simple_platformer/npc/npc.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/render/sprite.hpp"
+#include "advanced_platformer/movement/flying_movement.hpp"
+#include "advanced_platformer/npc/npc.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     // Initial component settings; each composition creates fresh runtime state.
     struct ActorDefinition

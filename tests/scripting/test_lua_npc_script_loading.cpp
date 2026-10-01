@@ -3,20 +3,20 @@
 
 #include <filesystem>
 
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/npc/npc_activity.hpp"
-#include "simple_platformer/npc/npc_activity_scripts.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/npc/npc_activity.hpp"
+#include "advanced_platformer/npc/npc_activity_scripts.hpp"
 #include "lua_npc_scripts.hpp"
 
 namespace
 {
-    constexpr simple_platformer::ActorId FirstActor{1};
-    const simple_platformer::LuaNpcActivity Activity{"example", "decide"};
+    constexpr advanced_platformer::ActorId FirstActor{1};
+    const advanced_platformer::LuaNpcActivity Activity{"example", "decide"};
 }
 
 TEST_CASE("A Lua script that cannot be read is reported by its full path", "[lua][npc]")
 {
-    simple_platformer::LuaNpcScripts scripts;
+    advanced_platformer::LuaNpcScripts scripts;
     const std::filesystem::path missing = "missing-script.lua";
     REQUIRE_THROWS_WITH(
         scripts.loadScript("missing", missing),
@@ -25,15 +25,15 @@ TEST_CASE("A Lua script that cannot be read is reported by its full path", "[lua
 
 TEST_CASE("A Lua script can be loaded from an asset file", "[lua][npc]")
 {
-    simple_platformer::LuaNpcScripts scripts;
+    advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScript("fixture", "tests/fixtures/scripts/example_npc.lua");
-    const simple_platformer::LuaNpcActivity activity{"fixture", "idle"};
-    simple_platformer::NpcActivitySnapshot snapshot;
+    const advanced_platformer::LuaNpcActivity activity{"fixture", "idle"};
+    advanced_platformer::NpcActivitySnapshot snapshot;
     snapshot.facts.targetKnown = true;
     snapshot.tuning["direction"] = 4.0F;
     scripts.enter(FirstActor, activity, snapshot);
 
-    const simple_platformer::NpcActivityCommand command =
+    const advanced_platformer::NpcActivityCommand command =
         scripts.update(FirstActor, activity, snapshot, 0.25F);
 
     REQUIRE(command.intentions.direction.x == 1.0F);
@@ -42,7 +42,7 @@ TEST_CASE("A Lua script can be loaded from an asset file", "[lua][npc]")
 
 TEST_CASE("A broken reload leaves the working Lua script in place", "[lua][npc]")
 {
-    simple_platformer::LuaNpcScripts scripts;
+    advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScriptText(
         "example",
         "return {activities={decide={update=function() return {jumpPressed=true} end}}}",
@@ -53,14 +53,14 @@ TEST_CASE("A broken reload leaves the working Lua script in place", "[lua][npc]"
         Catch::Matchers::ContainsSubstring("broken.lua"));
     REQUIRE(scripts.hasActivity(Activity));
 
-    const simple_platformer::NpcActivitySnapshot snapshot;
+    const advanced_platformer::NpcActivitySnapshot snapshot;
     scripts.enter(FirstActor, Activity, snapshot);
     REQUIRE(scripts.update(FirstActor, Activity, snapshot, 0.1F).intentions.jumpPressed);
 }
 
 TEST_CASE("Lua scripts reject activities without an update function", "[lua][npc]")
 {
-    simple_platformer::LuaNpcScripts scripts;
+    advanced_platformer::LuaNpcScripts scripts;
 
     REQUIRE_THROWS_WITH(
         scripts.loadScriptText(

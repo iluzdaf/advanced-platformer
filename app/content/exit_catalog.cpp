@@ -7,11 +7,11 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/render/sprite.hpp"
-#include "simple_platformer/world/level_exit.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/render/sprite.hpp"
+#include "advanced_platformer/world/level_exit.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     void validateExitDefinition(const ExitDefinition& definition)
     {

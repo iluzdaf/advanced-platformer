@@ -1,4 +1,4 @@
-# Simple Platformer Architecture
+# Advanced Platformer Architecture
 
 This document explains the architecture that exists in the repository now: its main
 boundaries, data model, runtime flow, and the reasons behind them.
@@ -30,7 +30,7 @@ Use this as a reference when working on a particular feature:
 
 ## Purpose and scope
 
-Simple Platformer is a small C++17 teaching engine with a complete example game. It
+Advanced Platformer is a small C++17 teaching engine with a complete example game. It
 keeps the code explicit enough to trace in a debugger and separates gameplay rules
 from graphics so the major paths can be tested without opening a window.
 
@@ -65,15 +65,15 @@ them are implemented.
 
 The project has four main CMake targets:
 
-- `simple_platformer_core` contains simulation and render-scene construction. It has
+- `advanced_platformer_core` contains simulation and render-scene construction. It has
   no dependency on GLFW, OpenGL, ImGui, or JSON parsing.
-- `simple_platformer_scripting` owns the Lua VM and implements the NPC activity scripting
+- `advanced_platformer_scripting` owns the Lua VM and implements the NPC activity scripting
   boundary without exposing Lua types to the core. It lives on its own in `scripting/`,
   as the application does in `app/`. `lua_npc_scripts.hpp` is its interface; its other
   headers use sol2 and are private to it.
-- `simple_platformer` contains the executable, window, input adapter, OpenGL renderer,
+- `advanced_platformer` contains the executable, window, input adapter, OpenGL renderer,
   and ImGui presentation.
-- `simple_platformer_tests` contains Catch2 tests for the core and for the application
+- `advanced_platformer_tests` contains Catch2 tests for the core and for the application
   code that can be tested without a window.
 
 The boundary matters for tests: one can construct a `World`, run movement or a complete
@@ -178,7 +178,7 @@ with the top-left corner of the body's `Aabb`, where collision measures from. Co
 ground navigation work with its feet, the middle of the bottom edge, where a standing
 body meets the ground and where a level author thinks of it standing. Each place names
 its point: `topLeft` for the corner, and the feet functions in
-[`aabb.hpp`](../include/simple_platformer/math/aabb.hpp) to read a box's feet or to
+[`aabb.hpp`](../include/advanced_platformer/math/aabb.hpp) to read a box's feet or to
 build or move a box by them.
 
 ## Time
@@ -228,7 +228,7 @@ small.
 `World` owns actors, projectiles, their short-lived burst effects, pickups, item
 definitions, the current exit, and the level's platformer connection cache. An actor has a
 typed, monotonically increasing
-[`ActorId`](../include/simple_platformer/actor/actor_id.hpp) rather than exposing its
+[`ActorId`](../include/advanced_platformer/actor/actor_id.hpp) rather than exposing its
 vector index. Zero is invalid. IDs are not reused within a world. `World::findActor` performs a
 linear search, which is appropriate for the example's small number of actors and keeps
 the public model simple.
@@ -244,7 +244,7 @@ collection invariants.
 
 ## Actor composition
 
-Players and NPCs are configurations of the same [`Actor`](../include/simple_platformer/actor/actor.hpp),
+Players and NPCs are configurations of the same [`Actor`](../include/advanced_platformer/actor/actor.hpp),
 not subclasses. Every actor has a body, intentions, facing, and team. Optional
 components supply its capabilities.
 
@@ -274,9 +274,9 @@ need rather than virtual dispatch.
 ### Shared intentions
 
 Player input and NPC decisions produce the same
-[`InputIntentions`](../include/simple_platformer/input/input_state.hpp).
+[`InputIntentions`](../include/advanced_platformer/input/input_state.hpp).
 
-An [`InputProgram`](../include/simple_platformer/input/input_program.hpp) holds a timed sequence
+An [`InputProgram`](../include/advanced_platformer/input/input_program.hpp) holds a timed sequence
 of intentions for navigation to replay. The sequence and replay rules belong to input,
 not to pathfinding.
 
@@ -319,7 +319,7 @@ observes the contacts that step returns. Gravity and its default rates live with
 too, and the platformer config only overrides them. This direction keeps platformer
 rules separate from tile collision and avoids a general ability framework.
 
-An optional [`SurfaceClimb`](../include/simple_platformer/movement/surface_climb.hpp)
+An optional [`SurfaceClimb`](../include/advanced_platformer/movement/surface_climb.hpp)
 lets an actor cling to a climbable tile's wall or underside, moving up and down walls
 and sideways along ceilings. `climbGrip` grabs (`Hold`), lets go (`Release`), or leaves
 the grip alone (`Keep`, the default), so code that ignores climbing never knocks a
@@ -440,7 +440,7 @@ or shoot. This keeps perception and decisions separately testable.
 
 ### Explicit state machine
 
-Built-in states are declared in [`npc.hpp`](../include/simple_platformer/npc/npc.hpp).
+Built-in states are declared in [`npc.hpp`](../include/advanced_platformer/npc/npc.hpp).
 `NpcTactic` selects Pursuer or KeepDistance policy. An update has three steps:
 
 1. `gatherNpcFacts` in `npc_facts.cpp` collects sensing, target memory, movement,

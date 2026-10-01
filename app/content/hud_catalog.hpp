@@ -2,9 +2,9 @@
 #include <filesystem>
 #include <string_view>
 #include <glm/vec2.hpp>
-#include "simple_platformer/render/sprite.hpp"
+#include "advanced_platformer/render/sprite.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     // Where the HUD's icons sit in the atlas. The HUD lays each out at its own icon size.
     struct HudIcons

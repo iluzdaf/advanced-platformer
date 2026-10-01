@@ -1,17 +1,17 @@
-#include "simple_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
 
-#include "simple_platformer/input/input_state.hpp"
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/physics/body.hpp"
-#include "simple_platformer/physics/collision.hpp"
-#include "simple_platformer/world/tile_map.hpp"
+#include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/physics/body.hpp"
+#include "advanced_platformer/physics/collision.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

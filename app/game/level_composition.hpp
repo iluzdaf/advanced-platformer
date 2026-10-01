@@ -6,10 +6,10 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/world/tile_map.hpp"
-#include "simple_platformer/world/world.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
+#include "advanced_platformer/world/world.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     struct Actor;
     struct LevelCatalog;

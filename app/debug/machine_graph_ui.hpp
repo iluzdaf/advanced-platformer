@@ -8,9 +8,9 @@
 #include <imgui.h>
 #include <imgui_node_editor.h>
 
-#include "simple_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     struct MachineDebugInfo;
 

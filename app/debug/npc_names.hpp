@@ -2,9 +2,9 @@
 
 #include <string>
 
-#include "simple_platformer/npc/npc_activity.hpp"
+#include "advanced_platformer/npc/npc_activity.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     enum class NpcState;
     enum class NpcTactic;

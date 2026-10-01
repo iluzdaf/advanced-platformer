@@ -1,4 +1,4 @@
-#include "simple_platformer/navigation/platformer_connection_cache.hpp"
+#include "advanced_platformer/navigation/platformer_connection_cache.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -9,16 +9,16 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/navigation/route.hpp"
-#include "simple_platformer/navigation/platformer_connections.hpp"
-#include "simple_platformer/navigation/platformer_traversal_profile.hpp"
-#include "simple_platformer/timing/frame_profile.hpp"
-#include "simple_platformer/world/tile_map.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/navigation/route.hpp"
+#include "advanced_platformer/navigation/platformer_connections.hpp"
+#include "advanced_platformer/navigation/platformer_traversal_profile.hpp"
+#include "advanced_platformer/timing/frame_profile.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     void PlatformerConnectionCache::requireValid(const PlatformerTraversalProfile& profile) const
     {

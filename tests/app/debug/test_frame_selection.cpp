@@ -5,17 +5,17 @@
 #include <vector>
 
 #include "debug/frame_selection.hpp"
-#include "simple_platformer/timing/frame_profile.hpp"
+#include "advanced_platformer/timing/frame_profile.hpp"
 #include "support/require_near.hpp"
 
 namespace
 {
-    using simple_platformer::frameAtPlotFraction;
-    using simple_platformer::FrameHistory;
-    using simple_platformer::frameNearestPlotFraction;
-    using simple_platformer::FrameProfile;
-    using simple_platformer::FrameSelection;
-    using simple_platformer::recordFrameForPlot;
+    using advanced_platformer::frameAtPlotFraction;
+    using advanced_platformer::FrameHistory;
+    using advanced_platformer::frameNearestPlotFraction;
+    using advanced_platformer::FrameProfile;
+    using advanced_platformer::FrameSelection;
+    using advanced_platformer::recordFrameForPlot;
 
     FrameProfile frameTaking(float seconds)
     {

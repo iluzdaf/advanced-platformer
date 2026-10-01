@@ -3,10 +3,10 @@
 #include <string>
 #include <variant>
 
-#include "simple_platformer/npc/npc.hpp"
-#include "simple_platformer/npc/npc_activity.hpp"
+#include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/npc/npc_activity.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     const char* nameOf(NpcState state)
     {

@@ -14,11 +14,11 @@
 #include <imgui.h>
 #include <implot.h>
 
-#include "simple_platformer/timing/fixed_step.hpp"
-#include "simple_platformer/timing/frame_profile.hpp"
+#include "advanced_platformer/timing/fixed_step.hpp"
+#include "advanced_platformer/timing/frame_profile.hpp"
 #include "ui/hud_draw.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

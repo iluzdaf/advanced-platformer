@@ -7,22 +7,22 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/navigation/platformer_connection_cache.hpp"
-#include "simple_platformer/navigation/navigation_fill.hpp"
-#include "simple_platformer/navigation/route.hpp"
-#include "simple_platformer/navigation/navigation_path.hpp"
-#include "simple_platformer/navigation/platformer_cells.hpp"
-#include "simple_platformer/navigation/platformer_connections.hpp"
-#include "simple_platformer/navigation/actor_navigation.hpp"
-#include "simple_platformer/navigation/platformer_traversal_profile.hpp"
-#include "simple_platformer/navigation/traversal.hpp"
-#include "simple_platformer/timing/frame_profile.hpp"
-#include "simple_platformer/world/tile_map.hpp"
-#include "simple_platformer/world/world.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/navigation/platformer_connection_cache.hpp"
+#include "advanced_platformer/navigation/navigation_fill.hpp"
+#include "advanced_platformer/navigation/route.hpp"
+#include "advanced_platformer/navigation/navigation_path.hpp"
+#include "advanced_platformer/navigation/platformer_cells.hpp"
+#include "advanced_platformer/navigation/platformer_connections.hpp"
+#include "advanced_platformer/navigation/actor_navigation.hpp"
+#include "advanced_platformer/navigation/platformer_traversal_profile.hpp"
+#include "advanced_platformer/navigation/traversal.hpp"
+#include "advanced_platformer/timing/frame_profile.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
+#include "advanced_platformer/world/world.hpp"
 #include "support/actor_builder.hpp"
 #include "support/fixed_step.hpp"
 #include "support/prepare_navigation_cache.hpp"
@@ -33,11 +33,11 @@
 
 namespace
 {
-    using simple_platformer::Cell;
-    using simple_platformer::FrameProfile;
-    using simple_platformer::PlatformerConnectionCache;
-    using simple_platformer::PlatformerTraversalProfile;
-    using simple_platformer::RouteConnection;
+    using advanced_platformer::Cell;
+    using advanced_platformer::FrameProfile;
+    using advanced_platformer::PlatformerConnectionCache;
+    using advanced_platformer::PlatformerTraversalProfile;
+    using advanced_platformer::RouteConnection;
 
     constexpr glm::vec2 BodySize{12.0F, 12.0F};
 }
@@ -55,7 +55,7 @@ TEST_CASE("A break drops only the cells whose footprint holds it", "[navigation]
     cache.storeConnections(
         {9, 1},
         profile,
-        {{{{{10, 1}}, simple_platformer::Traversal::Walk, {}}, 1}},
+        {{{{{10, 1}}, advanced_platformer::Traversal::Walk, {}}, 1}},
         {{8, 0}, {10, 2}});
     REQUIRE(cache.cellsConnected(profile) == 1);
 
@@ -119,7 +119,7 @@ TEST_CASE("Dropped and queued cells wait in one queue, each once", "[navigation]
 
 TEST_CASE("Syncing with the map applies each break once", "[navigation][cache]")
 {
-    simple_platformer::TileMap map =
+    advanced_platformer::TileMap map =
         tests::TileMapBuilder({"........", "###g####"})
             .where('g', tests::Tile().blocksMovement().breaksInto('.'));
     PlatformerConnectionCache cache;
@@ -132,27 +132,27 @@ TEST_CASE("Syncing with the map applies each break once", "[navigation][cache]")
     FrameProfile breaking;
     cache.applyRecordedTileBreaks(map, &breaking);
     REQUIRE(cache.cachedConnections({3, 0}, profile) == nullptr);
-    REQUIRE(simple_platformer::frameStatisticCount(breaking, "Tile breaks applied") == 1);
-    REQUIRE(simple_platformer::frameStatisticCount(breaking, "Cells dropped") == 1);
+    REQUIRE(advanced_platformer::frameStatisticCount(breaking, "Tile breaks applied") == 1);
+    REQUIRE(advanced_platformer::frameStatisticCount(breaking, "Cells dropped") == 1);
 
     // Reapplying the same break log leaves the recached cell intact.
     cache.storeConnections({3, 0}, profile, {}, {{2, 0}, {4, 1}});
     FrameProfile again;
     cache.applyRecordedTileBreaks(map, &again);
     REQUIRE(cache.cachedConnections({3, 0}, profile) != nullptr);
-    REQUIRE(simple_platformer::frameStatisticCount(again, "Tile breaks applied") == 0);
-    REQUIRE(simple_platformer::frameStatisticCount(again, "Cells dropped") == 0);
+    REQUIRE(advanced_platformer::frameStatisticCount(again, "Tile breaks applied") == 0);
+    REQUIRE(advanced_platformer::frameStatisticCount(again, "Cells dropped") == 0);
 }
 
 TEST_CASE("A broken wall opens a route once the fill has caught up", "[navigation][cache]")
 {
     // A corridor one cell tall with a breakable wall across it: no jump gets over.
-    simple_platformer::TileMap map =
+    advanced_platformer::TileMap map =
         tests::TileMapBuilder({"########", "#..g...#", "########"})
             .where('g', tests::Tile().blocksMovement().breaksInto('.'));
     const Cell start{1, 1};
     const Cell goal{5, 1};
-    simple_platformer::World world;
+    advanced_platformer::World world;
     world.addActor(tests::ActorBuilder::sized(BodySize)
                        .atFeet({24.0F, 32.0F})
                        .platforming()
@@ -160,14 +160,14 @@ TEST_CASE("A broken wall opens a route once the fill has caught up", "[navigatio
     const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
     tests::prepareNavigationCache(map, world);
     PlatformerConnectionCache& cache = world.platformerConnections();
-    const simple_platformer::Actor platformer =
+    const advanced_platformer::Actor platformer =
         tests::ActorBuilder::sized(BodySize).restingAt({start}).platforming();
     const auto search = [&](FrameProfile& frame)
     {
-        return simple_platformer::findActorPath(
+        return advanced_platformer::findActorPath(
                    map,
                    platformer,
-                   simple_platformer::feetInCell(tests::TileSize, goal),
+                   advanced_platformer::feetInCell(tests::TileSize, goal),
                    profile.stepSeconds,
                    cache,
                    &frame)
@@ -176,12 +176,12 @@ TEST_CASE("A broken wall opens a route once the fill has caught up", "[navigatio
 
     FrameProfile blocked;
     const auto blockedResult = search(blocked);
-    REQUIRE(blockedResult.status == simple_platformer::NavigationPathStatus::Unreachable);
+    REQUIRE(blockedResult.status == advanced_platformer::NavigationPathStatus::Unreachable);
     REQUIRE(blockedResult.path.has_value());
     REQUIRE(
-        simple_platformer::endOf(
-            blockedResult.path.value_or(simple_platformer::NavigationPath{})) ==
-        simple_platformer::feetInCell(tests::TileSize, {2, 1}));
+        advanced_platformer::endOf(
+            blockedResult.path.value_or(advanced_platformer::NavigationPath{})) ==
+        advanced_platformer::feetInCell(tests::TileSize, {2, 1}));
 
     REQUIRE(map.breakTile({3, 1}));
 
@@ -189,9 +189,9 @@ TEST_CASE("A broken wall opens a route once the fill has caught up", "[navigatio
     // simulating it. The start moves to the front of the fill queue.
     FrameProfile waiting;
     const auto waitingResult = search(waiting);
-    REQUIRE(waitingResult.status == simple_platformer::NavigationPathStatus::Deferred);
+    REQUIRE(waitingResult.status == advanced_platformer::NavigationPathStatus::Deferred);
     REQUIRE_FALSE(waitingResult.path.has_value());
-    REQUIRE(simple_platformer::frameStatisticCount(waiting, "Paths deferred") == 1);
+    REQUIRE(advanced_platformer::frameStatisticCount(waiting, "Paths deferred") == 1);
     REQUIRE(cache.cachedConnections(start, profile) == nullptr);
     REQUIRE(cache.nextPending(profile).value_or(Cell{}) == start);
     const std::size_t pending = cache.cellsPending(profile);
@@ -201,27 +201,27 @@ TEST_CASE("A broken wall opens a route once the fill has caught up", "[navigatio
     // route through the gap without simulating.
     FrameProfile fillProfile;
     const int cellsCached =
-        simple_platformer::advanceNavigationFill(map, cache, 1000000, &fillProfile);
+        advanced_platformer::advanceNavigationFill(map, cache, 1000000, &fillProfile);
     REQUIRE(cellsCached == static_cast<int>(pending));
-    REQUIRE(simple_platformer::frameStatisticCount(fillProfile, "Fill simulated ticks") > 0);
+    REQUIRE(advanced_platformer::frameStatisticCount(fillProfile, "Fill simulated ticks") > 0);
     REQUIRE(cache.cellsPending(profile) == 0);
     FrameProfile opened;
     const auto openedResult = search(opened);
-    REQUIRE(openedResult.status == simple_platformer::NavigationPathStatus::Found);
+    REQUIRE(openedResult.status == advanced_platformer::NavigationPathStatus::Found);
     REQUIRE(openedResult.path.has_value());
-    REQUIRE(simple_platformer::frameStatisticCount(opened, "Paths deferred") == 0);
+    REQUIRE(advanced_platformer::frameStatisticCount(opened, "Paths deferred") == 0);
 }
 
 TEST_CASE("A broken floor takes a walk away and gives a fall", "[navigation][cache]")
 {
     // An upper floor with a breakable tile, over a lower floor that catches a fall.
-    simple_platformer::TileMap map =
+    advanced_platformer::TileMap map =
         tests::TileMapBuilder({"........................",
                                "###g####################",
                                "........................",
                                "########################"})
             .where('g', tests::Tile().blocksMovement().breaksInto('.'));
-    simple_platformer::World world;
+    advanced_platformer::World world;
     world.addActor(tests::ActorBuilder::sized(BodySize)
                        .atFeet({24.0F, 16.0F})
                        .platforming()
@@ -236,7 +236,7 @@ TEST_CASE("A broken floor takes a walk away and gives a fall", "[navigation][cac
             connections.end(),
             [cell](const RouteConnection& connection)
             {
-                return connection.step.traversal == simple_platformer::Traversal::Walk &&
+                return connection.step.traversal == advanced_platformer::Traversal::Walk &&
                        connection.step.destination.cell == cell;
             });
     };
@@ -252,16 +252,16 @@ TEST_CASE("A broken floor takes a walk away and gives a fall", "[navigation][cac
     // The walk across the hole is gone, and a fall into it has appeared.
     FrameProfile breaking;
     cache.applyRecordedTileBreaks(map, &breaking);
-    const int dropped = simple_platformer::frameStatisticCount(breaking, "Cells dropped");
+    const int dropped = advanced_platformer::frameStatisticCount(breaking, "Cells dropped");
     REQUIRE(dropped > 0);
     REQUIRE(cache.cachedCellCount(profile) == cachedBeforeBreak - dropped);
-    auto firstBuild = simple_platformer::buildPlatformerConnections(map, {1, 0}, profile, &cache);
-    simple_platformer::storePlatformerConnections(cache, {1, 0}, profile, std::move(firstBuild));
+    auto firstBuild = advanced_platformer::buildPlatformerConnections(map, {1, 0}, profile, &cache);
+    advanced_platformer::storePlatformerConnections(cache, {1, 0}, profile, std::move(firstBuild));
     const std::vector<RouteConnection>* afterBreak = cache.cachedConnections({1, 0}, profile);
     REQUIRE(afterBreak != nullptr);
     REQUIRE_FALSE(walksTo(*afterBreak, {6, 0}));
-    auto edgeBuild = simple_platformer::buildPlatformerConnections(map, {2, 0}, profile, &cache);
-    simple_platformer::storePlatformerConnections(cache, {2, 0}, profile, std::move(edgeBuild));
+    auto edgeBuild = advanced_platformer::buildPlatformerConnections(map, {2, 0}, profile, &cache);
+    advanced_platformer::storePlatformerConnections(cache, {2, 0}, profile, std::move(edgeBuild));
     const std::vector<RouteConnection>* fromTheEdge = cache.cachedConnections({2, 0}, profile);
     REQUIRE(fromTheEdge != nullptr);
     REQUIRE(std::any_of(
@@ -269,7 +269,7 @@ TEST_CASE("A broken floor takes a walk away and gives a fall", "[navigation][cac
         fromTheEdge->end(),
         [](const RouteConnection& connection)
         {
-            return connection.step.traversal == simple_platformer::Traversal::Fall &&
+            return connection.step.traversal == advanced_platformer::Traversal::Fall &&
                    connection.step.destination.cell == Cell{3, 2};
         }));
     // A cell whose simulations never came near the hole was left as it was.
@@ -281,46 +281,46 @@ TEST_CASE("A broken floor takes a walk away and gives a fall", "[navigation][cac
 
 TEST_CASE("A broken climbable tile takes its climbs away", "[navigation][cache][climb]")
 {
-    using simple_platformer::ClimbSurface;
-    using simple_platformer::RouteLocation;
-    simple_platformer::TileMap map =
+    using advanced_platformer::ClimbSurface;
+    using advanced_platformer::RouteLocation;
+    advanced_platformer::TileMap map =
         tests::TileMapBuilder({"......", ".c....", ".g....", ".c....", "######"})
             .where('c', tests::Tile().blocksMovement().climbable())
             .where('g', tests::Tile().blocksMovement().climbable().breaksInto('.'));
-    const simple_platformer::SurfaceClimbConfig climbing{60.0F};
+    const advanced_platformer::SurfaceClimbConfig climbing{60.0F};
     const PlatformerTraversalProfile climber{BodySize, {}, tests::FixedStepSeconds, climbing};
     const RouteLocation start{{2, 3}};
     const RouteLocation onWall{{2, 1}, ClimbSurface::LeftWall};
-    const glm::vec2 wallFeet = simple_platformer::feetOf(
-        simple_platformer::boundsAtSurface(tests::TileSize, onWall, BodySize));
+    const glm::vec2 wallFeet = advanced_platformer::feetOf(
+        advanced_platformer::boundsAtSurface(tests::TileSize, onWall, BodySize));
     PlatformerConnectionCache cache;
     tests::fillConnections(map, cache, climber);
-    const simple_platformer::Actor climberActor =
+    const advanced_platformer::Actor climberActor =
         tests::ActorBuilder::sized(BodySize).restingAt(start).platforming().climbing(climbing);
     const auto search = [&]()
     {
-        return simple_platformer::findActorPath(
+        return advanced_platformer::findActorPath(
                    map, climberActor, wallFeet, climber.stepSeconds, cache)
             .value();
     };
 
     const auto climbed = search();
-    REQUIRE(climbed.status == simple_platformer::NavigationPathStatus::Found);
+    REQUIRE(climbed.status == advanced_platformer::NavigationPathStatus::Found);
     REQUIRE(
-        simple_platformer::endOf(climbed.path.value_or(simple_platformer::NavigationPath{})) ==
+        advanced_platformer::endOf(climbed.path.value_or(advanced_platformer::NavigationPath{})) ==
         wallFeet);
 
     REQUIRE(map.breakTile({1, 2}));
 
     // The cells that climbed past the tile wait for the fill; then the wall above
     // the gap is out of reach, and the path stops in the cell below it.
-    REQUIRE(search().status == simple_platformer::NavigationPathStatus::Deferred);
-    simple_platformer::advanceNavigationFill(map, cache, 1000000);
+    REQUIRE(search().status == advanced_platformer::NavigationPathStatus::Deferred);
+    advanced_platformer::advanceNavigationFill(map, cache, 1000000);
     const auto stopped = search();
-    REQUIRE(stopped.status == simple_platformer::NavigationPathStatus::Unreachable);
+    REQUIRE(stopped.status == advanced_platformer::NavigationPathStatus::Unreachable);
     REQUIRE(
-        simple_platformer::cellAtFeet(
+        advanced_platformer::cellAtFeet(
             tests::TileSize,
-            simple_platformer::endOf(stopped.path.value_or(simple_platformer::NavigationPath{}))) ==
-        Cell{2, 3});
+            advanced_platformer::endOf(
+                stopped.path.value_or(advanced_platformer::NavigationPath{}))) == Cell{2, 3});
 }

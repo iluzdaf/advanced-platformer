@@ -1,4 +1,4 @@
-#include "simple_platformer/npc/npc_system.hpp"
+#include "advanced_platformer/npc/npc_system.hpp"
 
 #include <optional>
 #include <stdexcept>
@@ -7,30 +7,30 @@
 #include <glm/geometric.hpp>
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/combat/attack_system.hpp"
-#include "simple_platformer/input/input_state.hpp"
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/navigation/actor_navigation.hpp"
-#include "simple_platformer/navigation/path_follower.hpp"
-#include "simple_platformer/navigation/platformer_cells.hpp"
-#include "simple_platformer/npc/npc.hpp"
-#include "simple_platformer/npc/npc_built_in_activity.hpp"
-#include "simple_platformer/npc/npc_activity.hpp"
-#include "simple_platformer/npc/npc_activity_scripts.hpp"
-#include "simple_platformer/npc/npc_facts.hpp"
-#include "simple_platformer/npc/npc_navigation.hpp"
-#include "simple_platformer/npc/npc_scripted_activity.hpp"
-#include "simple_platformer/npc/npc_senses.hpp"
-#include "simple_platformer/npc/npc_state_machine.hpp"
-#include "simple_platformer/npc/npc_transitions.hpp"
-#include "simple_platformer/npc/npc_update.hpp"
-#include "simple_platformer/timing/frame_profile.hpp"
-#include "simple_platformer/world/tile_map.hpp"
-#include "simple_platformer/world/world.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/combat/attack_system.hpp"
+#include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/navigation/actor_navigation.hpp"
+#include "advanced_platformer/navigation/path_follower.hpp"
+#include "advanced_platformer/navigation/platformer_cells.hpp"
+#include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/npc/npc_built_in_activity.hpp"
+#include "advanced_platformer/npc/npc_activity.hpp"
+#include "advanced_platformer/npc/npc_activity_scripts.hpp"
+#include "advanced_platformer/npc/npc_facts.hpp"
+#include "advanced_platformer/npc/npc_navigation.hpp"
+#include "advanced_platformer/npc/npc_scripted_activity.hpp"
+#include "advanced_platformer/npc/npc_senses.hpp"
+#include "advanced_platformer/npc/npc_state_machine.hpp"
+#include "advanced_platformer/npc/npc_transitions.hpp"
+#include "advanced_platformer/npc/npc_update.hpp"
+#include "advanced_platformer/timing/frame_profile.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
+#include "advanced_platformer/world/world.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

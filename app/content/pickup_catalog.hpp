@@ -6,10 +6,10 @@
 #include <string_view>
 #include <glm/vec2.hpp>
 #include "item_catalog.hpp"
-#include "simple_platformer/render/sprite.hpp"
-#include "simple_platformer/world/pickup.hpp"
+#include "advanced_platformer/render/sprite.hpp"
+#include "advanced_platformer/world/pickup.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     struct PickupDefinition
     {

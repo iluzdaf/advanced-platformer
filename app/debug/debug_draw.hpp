@@ -4,9 +4,9 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/aabb.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     struct WindowViewport;
 

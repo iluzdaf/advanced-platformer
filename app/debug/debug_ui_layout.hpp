@@ -1,6 +1,6 @@
 #pragma once
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     // Stable columns shared by the independently visible debug panels.
     constexpr float FrameProfilePanelWidth = 420.0F;

@@ -8,9 +8,9 @@
 
 #include <optional>
 
-#include "simple_platformer/timing/frame_profile.hpp"
+#include "advanced_platformer/timing/frame_profile.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     FramePlotRequest drawDebugTools(
         DebugTools& tools,

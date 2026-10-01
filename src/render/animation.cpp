@@ -1,4 +1,4 @@
-#include "simple_platformer/render/animation.hpp"
+#include "advanced_platformer/render/animation.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -6,10 +6,10 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/render/sprite.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/render/sprite.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

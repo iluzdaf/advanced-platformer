@@ -1,4 +1,4 @@
-#include "simple_platformer/timing/frame_profile.hpp"
+#include "advanced_platformer/timing/frame_profile.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -9,9 +9,9 @@
 #include <string_view>
 #include <vector>
 
-#include "simple_platformer/math/validation.hpp"
+#include "advanced_platformer/math/validation.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

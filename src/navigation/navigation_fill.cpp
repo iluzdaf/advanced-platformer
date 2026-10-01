@@ -1,4 +1,4 @@
-#include "simple_platformer/navigation/navigation_fill.hpp"
+#include "advanced_platformer/navigation/navigation_fill.hpp"
 
 #include <algorithm>
 #include <optional>
@@ -6,19 +6,19 @@
 #include <utility>
 #include <vector>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/navigation/actor_navigation.hpp"
-#include "simple_platformer/navigation/platformer_connection_cache.hpp"
-#include "simple_platformer/navigation/platformer_connections.hpp"
-#include "simple_platformer/navigation/platformer_traversal_profile.hpp"
-#include "simple_platformer/timing/frame_profile.hpp"
-#include "simple_platformer/world/tile_map.hpp"
-#include "simple_platformer/world/world.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/navigation/actor_navigation.hpp"
+#include "advanced_platformer/navigation/platformer_connection_cache.hpp"
+#include "advanced_platformer/navigation/platformer_connections.hpp"
+#include "advanced_platformer/navigation/platformer_traversal_profile.hpp"
+#include "advanced_platformer/timing/frame_profile.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
+#include "advanced_platformer/world/world.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

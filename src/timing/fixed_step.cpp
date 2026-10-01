@@ -1,4 +1,4 @@
-#include "simple_platformer/timing/fixed_step.hpp"
+#include "advanced_platformer/timing/fixed_step.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -6,7 +6,7 @@
 #include <functional>
 #include <stdexcept>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     FixedStep::FixedStep(double stepSeconds, double maximumFrameSeconds)
         : step(stepSeconds),

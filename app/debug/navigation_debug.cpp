@@ -9,23 +9,23 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/navigation/actor_navigation.hpp"
-#include "simple_platformer/navigation/platformer_connection_cache.hpp"
-#include "simple_platformer/input/input_program.hpp"
-#include "simple_platformer/navigation/route.hpp"
-#include "simple_platformer/navigation/platformer_cells.hpp"
-#include "simple_platformer/navigation/platformer_traversal_profile.hpp"
-#include "simple_platformer/navigation/traversal.hpp"
-#include "simple_platformer/physics/body.hpp"
-#include "simple_platformer/world/tile_map.hpp"
-#include "simple_platformer/world/world.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/navigation/actor_navigation.hpp"
+#include "advanced_platformer/navigation/platformer_connection_cache.hpp"
+#include "advanced_platformer/input/input_program.hpp"
+#include "advanced_platformer/navigation/route.hpp"
+#include "advanced_platformer/navigation/platformer_cells.hpp"
+#include "advanced_platformer/navigation/platformer_traversal_profile.hpp"
+#include "advanced_platformer/navigation/traversal.hpp"
+#include "advanced_platformer/physics/body.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
+#include "advanced_platformer/world/world.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

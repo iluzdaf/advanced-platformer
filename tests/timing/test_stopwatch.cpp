@@ -2,12 +2,12 @@
 
 #include <chrono>
 
-#include "simple_platformer/timing/stopwatch.hpp"
+#include "advanced_platformer/timing/stopwatch.hpp"
 #include "support/spin_for.hpp"
 
 namespace
 {
-    using simple_platformer::Stopwatch;
+    using advanced_platformer::Stopwatch;
     using tests::spinFor;
 }
 

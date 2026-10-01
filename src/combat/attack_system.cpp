@@ -1,4 +1,4 @@
-#include "simple_platformer/combat/attack_system.hpp"
+#include "advanced_platformer/combat/attack_system.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -7,16 +7,16 @@
 #include <glm/geometric.hpp>
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/combat/combat.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/world/world.hpp"
-#include "simple_platformer/world/world_requests.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/world/world.hpp"
+#include "advanced_platformer/world/world_requests.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

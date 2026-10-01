@@ -1,11 +1,11 @@
-#include "simple_platformer/npc/npc_transitions.hpp"
-#include "simple_platformer/npc/npc_facts.hpp"
+#include "advanced_platformer/npc/npc_transitions.hpp"
+#include "advanced_platformer/npc/npc_facts.hpp"
 
 #include <optional>
 
-#include "simple_platformer/npc/npc.hpp"
+#include "advanced_platformer/npc/npc.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

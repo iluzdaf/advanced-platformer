@@ -9,11 +9,11 @@
 #include <string_view>
 #include <vector>
 #include <nlohmann/json.hpp>
-#include "simple_platformer/npc/npc.hpp"
-#include "simple_platformer/npc/npc_activity.hpp"
-#include "simple_platformer/npc/npc_state_machine.hpp"
+#include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/npc/npc_activity.hpp"
+#include "advanced_platformer/npc/npc_state_machine.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

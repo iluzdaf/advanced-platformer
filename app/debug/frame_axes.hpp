@@ -2,9 +2,9 @@
 
 #include <cstddef>
 
-#include "simple_platformer/timing/fixed_step.hpp"
+#include "advanced_platformer/timing/fixed_step.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     class FrameHistory;
 

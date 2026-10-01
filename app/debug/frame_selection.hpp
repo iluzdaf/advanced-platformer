@@ -3,9 +3,9 @@
 #include <cstddef>
 #include <optional>
 
-#include "simple_platformer/timing/frame_profile.hpp"
+#include "advanced_platformer/timing/frame_profile.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     // Which frame a click this far across the plot picks, or nothing where no frame has
     // been plotted. Frames sit at whole x positions, oldest first, on an axis as long as

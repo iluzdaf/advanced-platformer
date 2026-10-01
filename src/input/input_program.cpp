@@ -1,11 +1,11 @@
-#include "simple_platformer/input/input_program.hpp"
+#include "advanced_platformer/input/input_program.hpp"
 
 #include <stdexcept>
 
-#include "simple_platformer/input/input_state.hpp"
-#include "simple_platformer/math/validation.hpp"
+#include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/math/validation.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     float durationOf(const InputProgram& program)
     {

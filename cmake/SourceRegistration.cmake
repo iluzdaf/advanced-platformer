@@ -1,8 +1,8 @@
 function(verify_project_source_registration)
     set(project_targets
-        simple_platformer_core
-        simple_platformer_scripting
-        simple_platformer
+        advanced_platformer_core
+        advanced_platformer_scripting
+        advanced_platformer
     )
     set(project_source_patterns
         ${PROJECT_SOURCE_DIR}/app/*.cpp
@@ -10,7 +10,7 @@ function(verify_project_source_registration)
     )
 
     if(BUILD_TESTING)
-        list(APPEND project_targets simple_platformer_tests)
+        list(APPEND project_targets advanced_platformer_tests)
         list(APPEND project_source_patterns ${PROJECT_SOURCE_DIR}/tests/*.cpp)
     endif()
 

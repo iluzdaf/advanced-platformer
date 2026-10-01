@@ -1,4 +1,4 @@
-#include "simple_platformer/npc/npc_navigation.hpp"
+#include "advanced_platformer/npc/npc_navigation.hpp"
 
 #include <optional>
 #include <utility>
@@ -6,18 +6,18 @@
 #include <glm/geometric.hpp>
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/input/input_state.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/navigation/actor_navigation.hpp"
-#include "simple_platformer/navigation/navigation_path.hpp"
-#include "simple_platformer/navigation/path_follower.hpp"
-#include "simple_platformer/npc/npc_update.hpp"
-#include "simple_platformer/timing/frame_profile.hpp"
-#include "simple_platformer/world/tile_map.hpp"
-#include "simple_platformer/world/world.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/navigation/actor_navigation.hpp"
+#include "advanced_platformer/navigation/navigation_path.hpp"
+#include "advanced_platformer/navigation/path_follower.hpp"
+#include "advanced_platformer/npc/npc_update.hpp"
+#include "advanced_platformer/timing/frame_profile.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
+#include "advanced_platformer/world/world.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

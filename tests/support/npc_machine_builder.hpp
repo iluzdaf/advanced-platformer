@@ -3,9 +3,9 @@
 #include <string>
 #include <utility>
 
-#include "simple_platformer/npc/npc.hpp"
-#include "simple_platformer/npc/npc_activity.hpp"
-#include "simple_platformer/npc/npc_state_machine.hpp"
+#include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/npc/npc_activity.hpp"
+#include "advanced_platformer/npc/npc_state_machine.hpp"
 
 namespace tests
 {
@@ -37,26 +37,27 @@ namespace tests
             return builder;
         }
 
-        Stated state(std::string name, simple_platformer::NpcState does) &&;
-        Stated state(std::string name, simple_platformer::LuaNpcActivity does) &&;
+        Stated state(std::string name, advanced_platformer::NpcState does) &&;
+        Stated state(std::string name, advanced_platformer::LuaNpcActivity does) &&;
 
     protected:
         NpcMachineBuilder() = default;
 
-        simple_platformer::NpcStateMachine built;
+        advanced_platformer::NpcStateMachine built;
     };
 
     // A machine with its states so far, waiting for more or for its first transition.
     class NpcMachineBuilder::Stated : public NpcMachineBuilder
     {
     public:
-        Stated state(std::string name, simple_platformer::NpcState does) &&
+        Stated state(std::string name, advanced_platformer::NpcState does) &&
         {
-            built.states.push_back({std::move(name), simple_platformer::BuiltInNpcActivity{does}});
+            built.states.push_back(
+                {std::move(name), advanced_platformer::BuiltInNpcActivity{does}});
             return std::move(*this);
         }
 
-        Stated state(std::string name, simple_platformer::LuaNpcActivity does) &&
+        Stated state(std::string name, advanced_platformer::LuaNpcActivity does) &&
         {
             built.states.push_back({std::move(name), std::move(does)});
             return std::move(*this);
@@ -64,7 +65,7 @@ namespace tests
 
         Transitioning transition(std::string from, std::string to) &&;
 
-        operator simple_platformer::NpcStateMachine() &&
+        operator advanced_platformer::NpcStateMachine() &&
         {
             return std::move(built);
         }
@@ -72,7 +73,7 @@ namespace tests
     private:
         friend class NpcMachineBuilder;
 
-        explicit Stated(simple_platformer::NpcStateMachine machine)
+        explicit Stated(advanced_platformer::NpcStateMachine machine)
         {
             built = std::move(machine);
         }
@@ -96,14 +97,14 @@ namespace tests
 
         Transitioning transition(std::string from, std::string to) &&
         {
-            simple_platformer::NpcMachineTransition transition;
+            advanced_platformer::NpcMachineTransition transition;
             transition.from = std::move(from);
             transition.to = std::move(to);
             built.transitions.push_back(std::move(transition));
             return std::move(*this);
         }
 
-        operator simple_platformer::NpcStateMachine() &&
+        operator advanced_platformer::NpcStateMachine() &&
         {
             return std::move(built);
         }
@@ -111,7 +112,7 @@ namespace tests
     private:
         friend class Stated;
 
-        explicit Transitioning(simple_platformer::NpcStateMachine machine)
+        explicit Transitioning(advanced_platformer::NpcStateMachine machine)
         {
             built = std::move(machine);
         }
@@ -119,15 +120,15 @@ namespace tests
 
     inline NpcMachineBuilder::Stated NpcMachineBuilder::state(
         std::string name,
-        simple_platformer::NpcState does) &&
+        advanced_platformer::NpcState does) &&
     {
-        built.states.push_back({std::move(name), simple_platformer::BuiltInNpcActivity{does}});
+        built.states.push_back({std::move(name), advanced_platformer::BuiltInNpcActivity{does}});
         return Stated(std::move(built));
     }
 
     inline NpcMachineBuilder::Stated NpcMachineBuilder::state(
         std::string name,
-        simple_platformer::LuaNpcActivity does) &&
+        advanced_platformer::LuaNpcActivity does) &&
     {
         built.states.push_back({std::move(name), std::move(does)});
         return Stated(std::move(built));
@@ -137,7 +138,7 @@ namespace tests
         std::string from,
         std::string to) &&
     {
-        simple_platformer::NpcMachineTransition transition;
+        advanced_platformer::NpcMachineTransition transition;
         transition.from = std::move(from);
         transition.to = std::move(to);
         built.transitions.push_back(std::move(transition));

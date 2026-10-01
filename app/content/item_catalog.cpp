@@ -2,7 +2,7 @@
 #include "content_diagnostics.hpp"
 #include "content_json.hpp"
 #include "content_validation.hpp"
-#include "simple_platformer/inventory/item.hpp"
+#include "advanced_platformer/inventory/item.hpp"
 #include <cstddef>
 #include <nlohmann/json.hpp>
 #include <filesystem>
@@ -13,7 +13,7 @@
 #include <string_view>
 #include <vector>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     void validateItemCatalog(const ItemCatalog& catalog)
     {

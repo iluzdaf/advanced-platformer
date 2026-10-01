@@ -4,7 +4,7 @@
 #include <limits>
 #include <stdexcept>
 #include "content/item_catalog.hpp"
-#include "simple_platformer/inventory/item.hpp"
+#include "advanced_platformer/inventory/item.hpp"
 
 namespace
 {
@@ -19,23 +19,23 @@ namespace
 
 TEST_CASE("Item JSON resolves custom names to stable runtime IDs", "[app][items][json]")
 {
-    const auto catalog = simple_platformer::parseItemCatalog(itemData().dump(), "items.json");
-    const auto stack = simple_platformer::composeItemStack(catalog, {"herb", 2});
+    const auto catalog = advanced_platformer::parseItemCatalog(itemData().dump(), "items.json");
+    const auto stack = advanced_platformer::composeItemStack(catalog, {"herb", 2});
     REQUIRE(stack.item > 0);
-    REQUIRE(stack.item == simple_platformer::itemDefinition(catalog, "herb").id);
+    REQUIRE(stack.item == advanced_platformer::itemDefinition(catalog, "herb").id);
     REQUIRE(stack.quantity == 2);
-    const auto items = simple_platformer::composeItems(catalog, 6);
+    const auto items = advanced_platformer::composeItems(catalog, 6);
     REQUIRE(items.size() == 1);
     REQUIRE(items[0].name == "Healing herb");
     REQUIRE(items[0].maximumStack == 4);
-    REQUIRE(items[0].effect == simple_platformer::ItemEffect::Heal);
+    REQUIRE(items[0].effect == advanced_platformer::ItemEffect::Heal);
     REQUIRE(items[0].effectAmount == 3);
     REQUIRE(items[0].icon.textureId == 6);
     REQUIRE(items[0].icon.size == glm::vec2{8, 12});
     REQUIRE_THROWS_AS(
-        simple_platformer::composeItemStack(catalog, {"missing", 1}), std::invalid_argument);
+        advanced_platformer::composeItemStack(catalog, {"missing", 1}), std::invalid_argument);
     REQUIRE_THROWS_AS(
-        simple_platformer::composeItemStack(catalog, {"herb", 0}), std::invalid_argument);
+        advanced_platformer::composeItemStack(catalog, {"herb", 0}), std::invalid_argument);
 }
 
 TEST_CASE("Item JSON rejects malformed and invalid definitions", "[app][items][json]")
@@ -83,20 +83,20 @@ TEST_CASE("Item JSON rejects malformed and invalid definitions", "[app][items][j
         item["name"] = 1;
     }
     REQUIRE_THROWS_WITH(
-        simple_platformer::parseItemCatalog(itemJson.dump(), "items.json"),
+        advanced_platformer::parseItemCatalog(itemJson.dump(), "items.json"),
         Catch::Matchers::ContainsSubstring("items.json: items."));
 }
 
 TEST_CASE("Item definitions are validated without JSON", "[app][items][validation]")
 {
-    auto catalog = simple_platformer::parseItemCatalog(itemData().dump(), "fixture");
+    auto catalog = advanced_platformer::parseItemCatalog(itemData().dump(), "fixture");
     catalog.definitions.at("herb").icon.size.x = std::numeric_limits<float>::infinity();
-    REQUIRE_THROWS_AS(simple_platformer::validateItemCatalog(catalog), std::invalid_argument);
+    REQUIRE_THROWS_AS(advanced_platformer::validateItemCatalog(catalog), std::invalid_argument);
     REQUIRE_THROWS_AS(
-        simple_platformer::loadItemCatalog("tests/fixtures/catalogs/missing-items.json"),
+        advanced_platformer::loadItemCatalog("tests/fixtures/catalogs/missing-items.json"),
         std::invalid_argument);
     REQUIRE_THROWS_AS(
-        simple_platformer::parseItemCatalog("not JSON", "broken"), std::invalid_argument);
+        advanced_platformer::parseItemCatalog("not JSON", "broken"), std::invalid_argument);
 }
 
 TEST_CASE(
@@ -105,9 +105,9 @@ TEST_CASE(
 {
     auto itemJson = itemData();
     itemJson["items"]["other_herb"] = itemJson["items"]["herb"];
-    const auto catalog = simple_platformer::parseItemCatalog(itemJson.dump(), "items.json");
-    const auto& first = simple_platformer::itemDefinition(catalog, "herb");
-    const auto& second = simple_platformer::itemDefinition(catalog, "other_herb");
+    const auto catalog = advanced_platformer::parseItemCatalog(itemJson.dump(), "items.json");
+    const auto& first = advanced_platformer::itemDefinition(catalog, "herb");
+    const auto& second = advanced_platformer::itemDefinition(catalog, "other_herb");
     REQUIRE(first.id > 0);
     REQUIRE(second.id > 0);
     REQUIRE(first.id != second.id);

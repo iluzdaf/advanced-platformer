@@ -15,10 +15,10 @@
 #include <stb_image.h>
 
 #include "graphics/display_viewport.hpp"
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/render/render_scene.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/render/render_scene.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

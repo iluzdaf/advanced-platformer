@@ -17,15 +17,15 @@
 #include <variant>
 
 #include <glm/vec2.hpp>
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/npc/npc.hpp"
-#include "simple_platformer/world/level_exit.hpp"
-#include "simple_platformer/world/pickup.hpp"
-#include "simple_platformer/world/tile_map.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/world/level_exit.hpp"
+#include "advanced_platformer/world/pickup.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

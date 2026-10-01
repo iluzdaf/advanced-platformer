@@ -4,13 +4,13 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/world/tile_map.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
 #include "support/tile_map_builder.hpp"
 #include "support/tile_size.hpp"
 
 TEST_CASE("'.' is empty and '#' blocks movement and sight", "[support][tile-map-builder]")
 {
-    const simple_platformer::TileMap map = tests::TileMapBuilder({".#"});
+    const advanced_platformer::TileMap map = tests::TileMapBuilder({".#"});
 
     REQUIRE(map.tileAt({0, 0}) == 0);
     REQUIRE_FALSE(map.blocksMovement({0, 0}));
@@ -23,7 +23,7 @@ TEST_CASE("'.' is empty and '#' blocks movement and sight", "[support][tile-map-
 
 TEST_CASE("'#' has a one-tile sprite region", "[support][tile-map-builder]")
 {
-    const simple_platformer::TileMap map = tests::TileMapBuilder({"#"});
+    const advanced_platformer::TileMap map = tests::TileMapBuilder({"#"});
     const auto side = static_cast<float>(tests::TileSize);
 
     REQUIRE(map.definitionAt({0, 0}).sprite.size == glm::vec2{side, side});
@@ -31,7 +31,7 @@ TEST_CASE("'#' has a one-tile sprite region", "[support][tile-map-builder]")
 
 TEST_CASE("Declared tiles have only the properties they request", "[support][tile-map-builder]")
 {
-    const simple_platformer::TileMap map =
+    const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"gwc"})
             .where('g', tests::Tile().blocksSight())
             .where('w', tests::Tile().blocksMovement())
@@ -49,7 +49,7 @@ TEST_CASE(
     "Declared tiles take IDs from 1 in order and '#' the next one",
     "[support][tile-map-builder]")
 {
-    const simple_platformer::TileMap map =
+    const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"ba#"}).where('b', tests::Tile()).where('a', tests::Tile());
 
     REQUIRE(map.tileAt({0, 0}) == 1);
@@ -59,7 +59,7 @@ TEST_CASE(
 
 TEST_CASE("A declared tile keeps its sprite region", "[support][tile-map-builder]")
 {
-    const simple_platformer::TileMap map = tests::TileMapBuilder({"s"}).where(
+    const advanced_platformer::TileMap map = tests::TileMapBuilder({"s"}).where(
         's', tests::Tile().withSprite({{16.0F, 32.0F}, {16.0F, 16.0F}}));
 
     REQUIRE(map.definitionAt({0, 0}).sprite.position == glm::vec2{16.0F, 32.0F});
@@ -68,9 +68,9 @@ TEST_CASE("A declared tile keeps its sprite region", "[support][tile-map-builder
 
 TEST_CASE("A breakable tile breaks into the tile its symbol names", "[support][tile-map-builder]")
 {
-    simple_platformer::TileMap map = tests::TileMapBuilder({"cr"})
-                                         .where('c', tests::Tile().breaksInto('r'))
-                                         .where('r', tests::Tile().breaksInto('.'));
+    advanced_platformer::TileMap map = tests::TileMapBuilder({"cr"})
+                                           .where('c', tests::Tile().breaksInto('r'))
+                                           .where('r', tests::Tile().breaksInto('.'));
 
     REQUIRE(map.breakTile({0, 0}));
     REQUIRE(map.tileAt({0, 0}) == map.tileAt({1, 0}));
@@ -94,12 +94,12 @@ TEST_CASE("The tile map builder rejects symbols it has not declared", "[support]
 {
     const auto usedButUndeclared = []
     {
-        const simple_platformer::TileMap map = tests::TileMapBuilder({".g"});
+        const advanced_platformer::TileMap map = tests::TileMapBuilder({".g"});
         return map.width();
     };
     const auto breaksIntoUndeclared = []
     {
-        const simple_platformer::TileMap map =
+        const advanced_platformer::TileMap map =
             tests::TileMapBuilder({"c"}).where('c', tests::Tile().breaksInto('r'));
         return map.width();
     };

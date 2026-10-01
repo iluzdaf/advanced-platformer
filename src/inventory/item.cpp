@@ -1,8 +1,8 @@
-#include "simple_platformer/inventory/item.hpp"
+#include "advanced_platformer/inventory/item.hpp"
 
 #include <stdexcept>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     void validateItemDefinition(const ItemDefinition& definition)
     {

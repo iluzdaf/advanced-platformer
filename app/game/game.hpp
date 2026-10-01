@@ -10,12 +10,12 @@
 #include "content/level_catalog.hpp"
 #include "content/game_catalogs.hpp"
 #include "content/hud_catalog.hpp"
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/render/camera.hpp"
-#include "simple_platformer/render/sprite.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/render/camera.hpp"
+#include "advanced_platformer/render/sprite.hpp"
 #include "lua_npc_scripts.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     // How long the screen keeps hinting after the player last stood in a locked exit.
     constexpr float LockedExitHintSeconds = 1.0F;

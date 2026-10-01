@@ -3,9 +3,9 @@
 #include <imgui.h>
 
 #include "graphics/sprite_renderer.hpp"
-#include "simple_platformer/render/sprite.hpp"
+#include "advanced_platformer/render/sprite.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

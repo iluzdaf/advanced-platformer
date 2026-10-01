@@ -10,19 +10,19 @@
 #include "content/actor_definition.hpp"
 #include "content/animation_catalog.hpp"
 #include "content/machine_catalog.hpp"
-#include "simple_platformer/npc/npc.hpp"
-#include "simple_platformer/npc/npc_state_machine.hpp"
-#include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/render/sprite.hpp"
+#include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/npc/npc_state_machine.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/render/sprite.hpp"
 #include "support/actor_components.hpp"
 
 TEST_CASE("Actor JSON accepts custom names and configures component choices", "[app][actors][json]")
 {
     const auto animations =
-        simple_platformer::loadAnimationCatalog("tests/fixtures/catalogs/animations.json");
+        advanced_platformer::loadAnimationCatalog("tests/fixtures/catalogs/animations.json");
     const auto machines =
-        simple_platformer::loadMachineCatalog("tests/fixtures/catalogs/machines.json");
-    const auto catalog = simple_platformer::parseActorCatalog(
+        advanced_platformer::loadMachineCatalog("tests/fixtures/catalogs/machines.json");
+    const auto catalog = advanced_platformer::parseActorCatalog(
         R"({
         "player":"hero", "actors":{
           "hero":{"bodySize":[12,20],"platformer":{"jumpSpeed":210},"health":5,"inventorySlots":3},
@@ -35,8 +35,8 @@ TEST_CASE("Actor JSON accepts custom names and configures component choices", "[
         animations,
         machines);
     REQUIRE(catalog.player == "hero");
-    auto actor = simple_platformer::composeActor(
-        simple_platformer::actorDefinition(catalog, "scout"),
+    auto actor = advanced_platformer::composeActor(
+        advanced_platformer::actorDefinition(catalog, "scout"),
         animations,
         7,
         {},
@@ -44,33 +44,33 @@ TEST_CASE("Actor JSON accepts custom names and configures component choices", "[
         machines);
     REQUIRE(actor.machine.has_value());
     REQUIRE(
-        simple_platformer::activeNpcMachineState(
-            actor.machine.value_or(simple_platformer::NpcMachine{}))
+        advanced_platformer::activeNpcMachineState(
+            actor.machine.value_or(advanced_platformer::NpcMachine{}))
             .name == "rest");
     REQUIRE(tests::flyingMovement(actor).speed == 25);
     REQUIRE(tests::bite(actor).damage == 2);
     REQUIRE(tests::senses(actor).searchDuration == 3);
-    REQUIRE(tests::brain(actor).tactic == simple_platformer::NpcTactic::KeepDistance);
+    REQUIRE(tests::brain(actor).tactic == advanced_platformer::NpcTactic::KeepDistance);
     REQUIRE(tests::senses(actor).standoffDistance == 30);
     REQUIRE(tests::sprite(actor).textureId == 7);
-    REQUIRE(tests::sprite(actor).anchor == simple_platformer::SpriteAnchor::BodyCenter);
+    REQUIRE(tests::sprite(actor).anchor == advanced_platformer::SpriteAnchor::BodyCenter);
     REQUIRE_FALSE(actor.platformerMovement.has_value());
     REQUIRE_THROWS_AS(
-        simple_platformer::actorDefinition(catalog, "missing"), std::invalid_argument);
+        advanced_platformer::actorDefinition(catalog, "missing"), std::invalid_argument);
 }
 
 TEST_CASE("Actor JSON configures climbing without exposing attachment state", "[app][actors][json]")
 {
-    const auto catalog = simple_platformer::parseActorCatalog(
+    const auto catalog = advanced_platformer::parseActorCatalog(
         R"({"player":"hero","actors":{"hero":{"bodySize":[12,12],"platformer":{},
         "surfaceClimb":{"speed":75},"health":2,"inventorySlots":1}}})",
         "actors.json",
         {});
 
-    auto actor =
-        simple_platformer::composeActor(simple_platformer::actorDefinition(catalog, "hero"), {}, 0);
+    auto actor = advanced_platformer::composeActor(
+        advanced_platformer::actorDefinition(catalog, "hero"), {}, 0);
     REQUIRE(tests::surfaceClimb(actor).config.speed == 75.0F);
-    REQUIRE(tests::surfaceClimb(actor).surface == simple_platformer::ClimbSurface::None);
+    REQUIRE(tests::surfaceClimb(actor).surface == advanced_platformer::ClimbSurface::None);
 }
 
 TEST_CASE("Climbing requires platformer movement and positive speed", "[app][actors][json]")
@@ -93,7 +93,7 @@ TEST_CASE("Climbing requires platformer movement and positive speed", "[app][act
     }
 
     REQUIRE_THROWS_WITH(
-        simple_platformer::parseActorCatalog(actorJson.dump(), "actors.json", {}),
+        advanced_platformer::parseActorCatalog(actorJson.dump(), "actors.json", {}),
         Catch::Matchers::ContainsSubstring("actors.json:"));
 }
 
@@ -145,6 +145,6 @@ TEST_CASE(
         actorJson["actors"]["unused"] = {{"flying", {{"speed", -1}}}};
     }
     REQUIRE_THROWS_WITH(
-        simple_platformer::parseActorCatalog(actorJson.dump(), "actors.json", {}),
+        advanced_platformer::parseActorCatalog(actorJson.dump(), "actors.json", {}),
         Catch::Matchers::ContainsSubstring("actors.json:"));
 }

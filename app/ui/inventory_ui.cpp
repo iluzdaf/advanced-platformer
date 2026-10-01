@@ -9,15 +9,15 @@
 #include "game/game.hpp"
 #include "graphics/display_viewport.hpp"
 #include "graphics/sprite_renderer.hpp"
-#include "simple_platformer/inventory/inventory.hpp"
-#include "simple_platformer/inventory/item.hpp"
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/render/sprite.hpp"
+#include "advanced_platformer/inventory/inventory.hpp"
+#include "advanced_platformer/inventory/item.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/render/sprite.hpp"
 #include "ui/hud_draw.hpp"
 #include "ui/hud_layout.hpp"
 #include "ui/inventory_layout.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

@@ -1,22 +1,22 @@
-#include "simple_platformer/npc/npc_scripted_activity.hpp"
+#include "advanced_platformer/npc/npc_scripted_activity.hpp"
 
 #include <stdexcept>
 #include <vector>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/input/input_state.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/navigation/path_follower.hpp"
-#include "simple_platformer/npc/npc.hpp"
-#include "simple_platformer/npc/npc_built_in_activity.hpp"
-#include "simple_platformer/npc/npc_activity.hpp"
-#include "simple_platformer/npc/npc_activity_scripts.hpp"
-#include "simple_platformer/npc/npc_facts.hpp"
-#include "simple_platformer/npc/npc_navigation.hpp"
-#include "simple_platformer/npc/npc_update.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/navigation/path_follower.hpp"
+#include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/npc/npc_built_in_activity.hpp"
+#include "advanced_platformer/npc/npc_activity.hpp"
+#include "advanced_platformer/npc/npc_activity_scripts.hpp"
+#include "advanced_platformer/npc/npc_facts.hpp"
+#include "advanced_platformer/npc/npc_navigation.hpp"
+#include "advanced_platformer/npc/npc_update.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

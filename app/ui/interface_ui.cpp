@@ -10,7 +10,7 @@
 #include "ui/inventory_ui.hpp"
 #include "ui/pause_ui.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     InterfaceRequests drawInterface(
         const Game& game,

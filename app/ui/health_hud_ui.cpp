@@ -5,11 +5,11 @@
 #include "graphics/display_viewport.hpp"
 #include "content/hud_catalog.hpp"
 #include "graphics/sprite_renderer.hpp"
-#include "simple_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor.hpp"
 #include "ui/hud_draw.hpp"
 #include "ui/hud_layout.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     void drawHealthHud(
         const Health& health,

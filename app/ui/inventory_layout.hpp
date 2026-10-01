@@ -2,7 +2,7 @@
 
 #include <cstddef>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     struct InventoryGridLayout
     {

@@ -5,9 +5,9 @@
 #include <string_view>
 #include <glm/vec2.hpp>
 #include <vector>
-#include "simple_platformer/inventory/item.hpp"
+#include "advanced_platformer/inventory/item.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     struct NamedItemStack
     {

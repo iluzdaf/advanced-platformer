@@ -10,27 +10,27 @@
 #include <glm/geometric.hpp>
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/combat/attack_system.hpp"
-#include "simple_platformer/combat/combat.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/navigation/navigation_path.hpp"
-#include "simple_platformer/navigation/path_follower.hpp"
-#include "simple_platformer/npc/npc.hpp"
-#include "simple_platformer/npc/npc_state_machine.hpp"
-#include "simple_platformer/render/actor_sprite.hpp"
-#include "simple_platformer/render/animation.hpp"
-#include "simple_platformer/render/camera.hpp"
-#include "simple_platformer/render/sprite.hpp"
-#include "simple_platformer/world/tile_map.hpp"
-#include "simple_platformer/world/world.hpp"
-#include "simple_platformer/world/pickup.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/combat/attack_system.hpp"
+#include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/navigation/navigation_path.hpp"
+#include "advanced_platformer/navigation/path_follower.hpp"
+#include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/npc/npc_state_machine.hpp"
+#include "advanced_platformer/render/actor_sprite.hpp"
+#include "advanced_platformer/render/animation.hpp"
+#include "advanced_platformer/render/camera.hpp"
+#include "advanced_platformer/render/sprite.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
+#include "advanced_platformer/world/world.hpp"
+#include "advanced_platformer/world/pickup.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

@@ -7,14 +7,14 @@
 #include <stdexcept>
 #include <vector>
 
-#include "simple_platformer/timing/fixed_step.hpp"
+#include "advanced_platformer/timing/fixed_step.hpp"
 
 namespace
 {
+    using advanced_platformer::FixedDeltaSeconds;
+    using advanced_platformer::FixedStep;
+    using advanced_platformer::FixedStepResult;
     using Catch::Matchers::WithinAbs;
-    using simple_platformer::FixedDeltaSeconds;
-    using simple_platformer::FixedStep;
-    using simple_platformer::FixedStepResult;
 }
 
 TEST_CASE("Elapsed time is simulated in fixed 60 Hz updates", "[timing][fixed-step]")

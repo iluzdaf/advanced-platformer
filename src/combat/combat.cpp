@@ -1,6 +1,6 @@
-#include "simple_platformer/combat/combat.hpp"
+#include "advanced_platformer/combat/combat.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     bool areOpponents(Team first, Team second)
     {

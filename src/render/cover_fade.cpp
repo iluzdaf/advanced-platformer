@@ -1,4 +1,4 @@
-#include "simple_platformer/render/cover_fade.hpp"
+#include "advanced_platformer/render/cover_fade.hpp"
 
 #include <algorithm>
 #include <optional>
@@ -6,18 +6,18 @@
 #include <glm/common.hpp>
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/combat/combat.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/npc/npc.hpp"
-#include "simple_platformer/world/pickup.hpp"
-#include "simple_platformer/world/sight.hpp"
-#include "simple_platformer/world/tile_map.hpp"
-#include "simple_platformer/world/world.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/world/pickup.hpp"
+#include "advanced_platformer/world/sight.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
+#include "advanced_platformer/world/world.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

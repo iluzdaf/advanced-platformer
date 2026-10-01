@@ -1,21 +1,21 @@
-#include "simple_platformer/world/world_simulation.hpp"
+#include "advanced_platformer/world/world_simulation.hpp"
 
-#include "simple_platformer/actor/actor_system.hpp"
-#include "simple_platformer/actor/lifecycle.hpp"
-#include "simple_platformer/combat/attack_system.hpp"
-#include "simple_platformer/combat/projectile_system.hpp"
-#include "simple_platformer/npc/npc_scripted_activity.hpp"
-#include "simple_platformer/npc/npc_senses.hpp"
-#include "simple_platformer/navigation/navigation_fill.hpp"
-#include "simple_platformer/npc/npc_system.hpp"
-#include "simple_platformer/timing/frame_profile.hpp"
-#include "simple_platformer/world/level_exit.hpp"
-#include "simple_platformer/world/pickup.hpp"
-#include "simple_platformer/world/tile_map.hpp"
-#include "simple_platformer/world/world.hpp"
-#include "simple_platformer/world/world_requests.hpp"
+#include "advanced_platformer/actor/actor_system.hpp"
+#include "advanced_platformer/actor/lifecycle.hpp"
+#include "advanced_platformer/combat/attack_system.hpp"
+#include "advanced_platformer/combat/projectile_system.hpp"
+#include "advanced_platformer/npc/npc_scripted_activity.hpp"
+#include "advanced_platformer/npc/npc_senses.hpp"
+#include "advanced_platformer/navigation/navigation_fill.hpp"
+#include "advanced_platformer/npc/npc_system.hpp"
+#include "advanced_platformer/timing/frame_profile.hpp"
+#include "advanced_platformer/world/level_exit.hpp"
+#include "advanced_platformer/world/pickup.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
+#include "advanced_platformer/world/world.hpp"
+#include "advanced_platformer/world/world_requests.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     void updateWorldSimulation(
         TileMap& map,

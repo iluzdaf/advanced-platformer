@@ -11,7 +11,7 @@
 #include "hud_catalog.hpp"
 #include "machine_catalog.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     // Shared definitions, not live actors or levels. Keep these for the game session.
     struct GameCatalogs

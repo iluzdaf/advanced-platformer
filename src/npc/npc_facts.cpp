@@ -1,16 +1,16 @@
-#include "simple_platformer/npc/npc_facts.hpp"
+#include "advanced_platformer/npc/npc_facts.hpp"
 
 #include <glm/geometric.hpp>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/combat/attack_system.hpp"
-#include "simple_platformer/combat/combat.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/npc/npc.hpp"
-#include "simple_platformer/npc/npc_senses.hpp"
-#include "simple_platformer/world/tile_map.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/combat/attack_system.hpp"
+#include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/npc/npc_senses.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

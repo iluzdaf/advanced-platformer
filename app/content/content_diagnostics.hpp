@@ -4,7 +4,7 @@
 #include <string>
 #include <string_view>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     // Diagnostic formatting shared by the JSON readers and the authoring validators.
     // Deliberately free of any JSON dependency so validators stay usable for C++ content.

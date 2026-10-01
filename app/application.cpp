@@ -23,15 +23,15 @@
 #include "graphics/imgui_session.hpp"
 #include "graphics/sprite_renderer.hpp"
 #include "ui/interface_ui.hpp"
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/input/input_state.hpp"
-#include "simple_platformer/render/render_scene.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/render/render_scene.hpp"
 #include "lua_npc_scripts.hpp"
-#include "simple_platformer/timing/fixed_step.hpp"
-#include "simple_platformer/timing/frame_profile.hpp"
-#include "simple_platformer/timing/stopwatch.hpp"
+#include "advanced_platformer/timing/fixed_step.hpp"
+#include "advanced_platformer/timing/frame_profile.hpp"
+#include "advanced_platformer/timing/stopwatch.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {
@@ -208,7 +208,7 @@ namespace simple_platformer
 
     int runApplication()
     {
-        const GameWindow window("Simple Platformer", {960, 540});
+        const GameWindow window("Advanced Platformer", {960, 540});
         ApplicationContext context;
         glfwSetWindowUserPointer(window.handle(), &context);
         glfwSetKeyCallback(window.handle(), handleKey);

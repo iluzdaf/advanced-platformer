@@ -7,13 +7,13 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/input/input_program.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/navigation/platformer_connection_cache.hpp"
-#include "simple_platformer/navigation/platformer_traversal_profile.hpp"
-#include "simple_platformer/navigation/traversal.hpp"
+#include "advanced_platformer/input/input_program.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/navigation/platformer_connection_cache.hpp"
+#include "advanced_platformer/navigation/platformer_traversal_profile.hpp"
+#include "advanced_platformer/navigation/traversal.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     class TileMap;
     class World;

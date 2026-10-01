@@ -1,4 +1,4 @@
-#include "simple_platformer/navigation/actor_navigation.hpp"
+#include "advanced_platformer/navigation/actor_navigation.hpp"
 
 #include <algorithm>
 #include <array>
@@ -13,23 +13,23 @@
 #include <glm/geometric.hpp>
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/navigation/platformer_connection_cache.hpp"
-#include "simple_platformer/navigation/route.hpp"
-#include "simple_platformer/navigation/navigation_path.hpp"
-#include "simple_platformer/navigation/route_search.hpp"
-#include "simple_platformer/navigation/platformer_cells.hpp"
-#include "simple_platformer/navigation/platformer_traversal_profile.hpp"
-#include "simple_platformer/navigation/traversal.hpp"
-#include "simple_platformer/timing/frame_profile.hpp"
-#include "simple_platformer/world/tile_map.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/navigation/platformer_connection_cache.hpp"
+#include "advanced_platformer/navigation/route.hpp"
+#include "advanced_platformer/navigation/navigation_path.hpp"
+#include "advanced_platformer/navigation/route_search.hpp"
+#include "advanced_platformer/navigation/platformer_cells.hpp"
+#include "advanced_platformer/navigation/platformer_traversal_profile.hpp"
+#include "advanced_platformer/navigation/traversal.hpp"
+#include "advanced_platformer/timing/frame_profile.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

@@ -1,8 +1,8 @@
-#include "simple_platformer/timing/stopwatch.hpp"
+#include "advanced_platformer/timing/stopwatch.hpp"
 
 #include <chrono>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     Stopwatch::Stopwatch()
         : start(std::chrono::steady_clock::now())

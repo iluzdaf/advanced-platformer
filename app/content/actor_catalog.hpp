@@ -8,7 +8,7 @@
 #include "animation_catalog.hpp"
 #include "machine_catalog.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     struct ActorCatalog
     {

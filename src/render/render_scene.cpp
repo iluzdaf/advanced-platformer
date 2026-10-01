@@ -1,4 +1,4 @@
-#include "simple_platformer/render/render_scene.hpp"
+#include "advanced_platformer/render/render_scene.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -6,20 +6,20 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/combat/combat.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/world/level_exit.hpp"
-#include "simple_platformer/world/pickup.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/render/actor_sprite.hpp"
-#include "simple_platformer/render/camera.hpp"
-#include "simple_platformer/render/sprite.hpp"
-#include "simple_platformer/world/tile_map.hpp"
-#include "simple_platformer/world/world.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/world/level_exit.hpp"
+#include "advanced_platformer/world/pickup.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/render/actor_sprite.hpp"
+#include "advanced_platformer/render/camera.hpp"
+#include "advanced_platformer/render/sprite.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
+#include "advanced_platformer/world/world.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

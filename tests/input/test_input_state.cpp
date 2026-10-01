@@ -2,13 +2,13 @@
 
 #include <stdexcept>
 
-#include "simple_platformer/input/input_state.hpp"
+#include "advanced_platformer/input/input_state.hpp"
 
 namespace
 {
-    using simple_platformer::InputButton;
-    using simple_platformer::InputIntentions;
-    using simple_platformer::InputState;
+    using advanced_platformer::InputButton;
+    using advanced_platformer::InputIntentions;
+    using advanced_platformer::InputState;
 }
 
 TEST_CASE("Held buttons produce two-dimensional input intentions", "[input]")

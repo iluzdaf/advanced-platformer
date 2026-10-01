@@ -1,10 +1,10 @@
-#include "simple_platformer/world/sight.hpp"
+#include "advanced_platformer/world/sight.hpp"
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/physics/segment_cast.hpp"
+#include "advanced_platformer/physics/segment_cast.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     bool lineOfSight(const TileMap& map, glm::vec2 from, glm::vec2 to)
     {

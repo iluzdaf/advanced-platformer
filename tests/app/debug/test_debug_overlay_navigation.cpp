@@ -8,19 +8,19 @@
 
 #include "debug/debug_overlay.hpp"
 #include "debug/navigation_debug.hpp"
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/navigation/path_follower.hpp"
-#include "simple_platformer/navigation/route.hpp"
-#include "simple_platformer/navigation/platformer_connections.hpp"
-#include "simple_platformer/navigation/platformer_traversal_profile.hpp"
-#include "simple_platformer/navigation/traversal.hpp"
-#include "simple_platformer/render/camera.hpp"
-#include "simple_platformer/world/world.hpp"
-#include "simple_platformer/world/pickup.hpp"
-#include "simple_platformer/world/tile_map.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/navigation/path_follower.hpp"
+#include "advanced_platformer/navigation/route.hpp"
+#include "advanced_platformer/navigation/platformer_connections.hpp"
+#include "advanced_platformer/navigation/platformer_traversal_profile.hpp"
+#include "advanced_platformer/navigation/traversal.hpp"
+#include "advanced_platformer/render/camera.hpp"
+#include "advanced_platformer/world/world.hpp"
+#include "advanced_platformer/world/pickup.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
 #include "support/actor_builder.hpp"
 #include "support/tile_map_builder.hpp"
 #include "support/tile_size.hpp"
@@ -30,95 +30,98 @@
 
 TEST_CASE("Debug overlay data describes path connections and progress", "[app][debug]")
 {
-    simple_platformer::PathFollower follower;
+    advanced_platformer::PathFollower follower;
     follower.path = tests::floorPath(
         {1, 2},
-        {{{{3, 2}}, simple_platformer::Traversal::Walk, {}},
-         {{{4, 1}}, simple_platformer::Traversal::Jump, {}},
-         {{{4, 3}}, simple_platformer::Traversal::Fall, {}}});
+        {{{{3, 2}}, advanced_platformer::Traversal::Walk, {}},
+         {{{4, 1}}, advanced_platformer::Traversal::Jump, {}},
+         {{{4, 3}}, advanced_platformer::Traversal::Fall, {}}});
     follower.nextStep = 1;
-    follower.goal = simple_platformer::feetInCell(tests::TileSize, {4, 3});
+    follower.goal = advanced_platformer::feetInCell(tests::TileSize, {4, 3});
 
-    simple_platformer::Actor npc =
+    advanced_platformer::Actor npc =
         tests::ActorBuilder::sized({12.0F, 12.0F}).at({16.0F, 32.0F}).platforming().thinking({});
     npc.pathFollower = follower;
 
-    simple_platformer::World world;
+    advanced_platformer::World world;
     world.addActor(npc);
-    const simple_platformer::TileMap map = tests::TileMapBuilder({"......", "######"});
-    const simple_platformer::CameraController cameraController{
-        simple_platformer::Camera{}, {80.0F, 40.0F}};
+    const advanced_platformer::TileMap map = tests::TileMapBuilder({"......", "######"});
+    const advanced_platformer::CameraController cameraController{
+        advanced_platformer::Camera{}, {80.0F, 40.0F}};
 
-    const simple_platformer::DebugOverlay debug = simple_platformer::makeDebugOverlay(
+    const advanced_platformer::DebugOverlay debug = advanced_platformer::makeDebugOverlay(
         world, map, cameraController, 128.0F, tests::FixedStepSeconds);
 
     REQUIRE(debug.actors.size() == 1);
     REQUIRE(debug.actors.front().pathFollower.has_value());
-    const simple_platformer::PathFollowerDebugInfo path =
-        debug.actors.front().pathFollower.value_or(simple_platformer::PathFollowerDebugInfo{});
+    const advanced_platformer::PathFollowerDebugInfo path =
+        debug.actors.front().pathFollower.value_or(advanced_platformer::PathFollowerDebugInfo{});
     REQUIRE(path.hasPath);
     REQUIRE(path.nextStep == 1);
     REQUIRE(path.stepCount == 3);
-    REQUIRE(path.goalFeet == simple_platformer::feetInCell(tests::TileSize, {4, 3}));
+    REQUIRE(path.goalFeet == advanced_platformer::feetInCell(tests::TileSize, {4, 3}));
     REQUIRE(path.connections.size() == 3);
 
-    REQUIRE(path.connections[0].fromFeet == simple_platformer::feetInCell(tests::TileSize, {1, 2}));
-    REQUIRE(path.connections[0].toFeet == simple_platformer::feetInCell(tests::TileSize, {3, 2}));
-    REQUIRE(path.connections[0].traversal == simple_platformer::Traversal::Walk);
+    REQUIRE(
+        path.connections[0].fromFeet == advanced_platformer::feetInCell(tests::TileSize, {1, 2}));
+    REQUIRE(path.connections[0].toFeet == advanced_platformer::feetInCell(tests::TileSize, {3, 2}));
+    REQUIRE(path.connections[0].traversal == advanced_platformer::Traversal::Walk);
     REQUIRE(path.connections[0].completed);
     REQUIRE_FALSE(path.connections[0].next);
 
-    REQUIRE(path.connections[1].fromFeet == simple_platformer::feetInCell(tests::TileSize, {3, 2}));
-    REQUIRE(path.connections[1].toFeet == simple_platformer::feetInCell(tests::TileSize, {4, 1}));
-    REQUIRE(path.connections[1].traversal == simple_platformer::Traversal::Jump);
+    REQUIRE(
+        path.connections[1].fromFeet == advanced_platformer::feetInCell(tests::TileSize, {3, 2}));
+    REQUIRE(path.connections[1].toFeet == advanced_platformer::feetInCell(tests::TileSize, {4, 1}));
+    REQUIRE(path.connections[1].traversal == advanced_platformer::Traversal::Jump);
     REQUIRE_FALSE(path.connections[1].completed);
     REQUIRE(path.connections[1].next);
 
-    REQUIRE(path.connections[2].fromFeet == simple_platformer::feetInCell(tests::TileSize, {4, 1}));
-    REQUIRE(path.connections[2].toFeet == simple_platformer::feetInCell(tests::TileSize, {4, 3}));
-    REQUIRE(path.connections[2].traversal == simple_platformer::Traversal::Fall);
+    REQUIRE(
+        path.connections[2].fromFeet == advanced_platformer::feetInCell(tests::TileSize, {4, 1}));
+    REQUIRE(path.connections[2].toFeet == advanced_platformer::feetInCell(tests::TileSize, {4, 3}));
+    REQUIRE(path.connections[2].traversal == advanced_platformer::Traversal::Fall);
     REQUIRE_FALSE(path.connections[2].completed);
     REQUIRE_FALSE(path.connections[2].next);
 }
 
 TEST_CASE("Debug overlay data samples the simulated jump curve", "[app][debug]")
 {
-    const simple_platformer::TileMap map =
+    const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"..........", "....##....", "..........", "##########"});
-    const simple_platformer::PlatformerMovementConfig movementConfig;
-    const std::vector<simple_platformer::RouteConnection> connections =
-        simple_platformer::buildPlatformerConnections(
+    const advanced_platformer::PlatformerMovementConfig movementConfig;
+    const std::vector<advanced_platformer::RouteConnection> connections =
+        advanced_platformer::buildPlatformerConnections(
             map,
             {2, 2},
-            simple_platformer::PlatformerTraversalProfile{
+            advanced_platformer::PlatformerTraversalProfile{
                 {12.0F, 12.0F}, movementConfig, tests::FixedStepSeconds})
             .connections;
-    const simple_platformer::RouteConnection& jump =
-        tests::connectionWith(connections, simple_platformer::Traversal::Jump);
+    const advanced_platformer::RouteConnection& jump =
+        tests::connectionWith(connections, advanced_platformer::Traversal::Jump);
 
-    simple_platformer::Actor npc = tests::ActorBuilder::sized({12.0F, 12.0F})
-                                       .at({0.0F, 0.0F})
-                                       .platforming(movementConfig)
-                                       .thinking({});
-    npc.pathFollower = simple_platformer::PathFollower{
+    advanced_platformer::Actor npc = tests::ActorBuilder::sized({12.0F, 12.0F})
+                                         .at({0.0F, 0.0F})
+                                         .platforming(movementConfig)
+                                         .thinking({});
+    npc.pathFollower = advanced_platformer::PathFollower{
         tests::floorPath({2, 2}, {jump.step}),
         0,
         0.0F,
-        simple_platformer::feetInCell(tests::TileSize, jump.step.destination.cell)};
+        advanced_platformer::feetInCell(tests::TileSize, jump.step.destination.cell)};
 
-    simple_platformer::World world;
+    advanced_platformer::World world;
     world.addActor(npc);
-    const simple_platformer::CameraController cameraController{
-        simple_platformer::Camera{}, {80.0F, 40.0F}};
+    const advanced_platformer::CameraController cameraController{
+        advanced_platformer::Camera{}, {80.0F, 40.0F}};
 
-    const simple_platformer::DebugOverlay debug = simple_platformer::makeDebugOverlay(
+    const advanced_platformer::DebugOverlay debug = advanced_platformer::makeDebugOverlay(
         world, map, cameraController, 128.0F, tests::FixedStepSeconds);
-    const simple_platformer::PathFollowerDebugInfo path =
-        debug.actors.front().pathFollower.value_or(simple_platformer::PathFollowerDebugInfo{});
+    const advanced_platformer::PathFollowerDebugInfo path =
+        debug.actors.front().pathFollower.value_or(advanced_platformer::PathFollowerDebugInfo{});
 
     REQUIRE(path.connections.size() == 1);
     REQUIRE(path.connections.front().sampledFeet.size() > 2);
-    const float takeoffY = simple_platformer::feetInCell(tests::TileSize, {2, 2}).y;
+    const float takeoffY = advanced_platformer::feetInCell(tests::TileSize, {2, 2}).y;
     const bool risesAboveTakeoff = std::any_of(
         path.connections.front().sampledFeet.begin(),
         path.connections.front().sampledFeet.end(),
@@ -128,23 +131,23 @@ TEST_CASE("Debug overlay data samples the simulated jump curve", "[app][debug]")
 
 TEST_CASE("The overlay shows only navigation cells near the camera", "[app][debug]")
 {
-    const simple_platformer::TileMap map =
+    const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"........................", "########################"});
-    simple_platformer::World world;
+    advanced_platformer::World world;
     world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
                        .atFeet({8.0F, 16.0F})
                        .platforming()
                        .thinking({64.0F, 1.0F}));
-    const simple_platformer::CameraController cameraController{
-        simple_platformer::Camera{}, {80.0F, 40.0F}};
+    const advanced_platformer::CameraController cameraController{
+        advanced_platformer::Camera{}, {80.0F, 40.0F}};
 
-    const simple_platformer::DebugOverlay debug = simple_platformer::makeDebugOverlay(
+    const advanced_platformer::DebugOverlay debug = advanced_platformer::makeDebugOverlay(
         world, map, cameraController, 128.0F, tests::FixedStepSeconds);
 
     REQUIRE(debug.navigationCache.has_value());
-    const simple_platformer::NavigationCacheDebugInfo navigation =
-        debug.navigationCache.value_or(simple_platformer::NavigationCacheDebugInfo{});
-    const std::vector<simple_platformer::NavigationCellDebugInfo>& cells = navigation.cells;
+    const advanced_platformer::NavigationCacheDebugInfo navigation =
+        debug.navigationCache.value_or(advanced_platformer::NavigationCacheDebugInfo{});
+    const std::vector<advanced_platformer::NavigationCellDebugInfo>& cells = navigation.cells;
     REQUIRE(cells.size() == 21);
     REQUIRE(cells.front().bounds.topLeft == glm::vec2{0.0F, 0.0F});
     // As for actors, one tile beyond the camera's edge is shown; the rest are not.

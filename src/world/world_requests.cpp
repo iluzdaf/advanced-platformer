@@ -1,4 +1,4 @@
-#include "simple_platformer/world/world_requests.hpp"
+#include "advanced_platformer/world/world_requests.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -6,12 +6,12 @@
 #include <stdexcept>
 #include <vector>
 
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/combat/combat.hpp"
-#include "simple_platformer/inventory/item_use.hpp"
-#include "simple_platformer/world/world.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/inventory/item_use.hpp"
+#include "advanced_platformer/world/world.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     void WorldRequests::damage(ActorId target, int amount)
     {

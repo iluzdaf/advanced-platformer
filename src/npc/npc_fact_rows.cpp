@@ -1,11 +1,11 @@
-#include "simple_platformer/npc/npc_fact_rows.hpp"
+#include "advanced_platformer/npc/npc_fact_rows.hpp"
 
 #include <string_view>
 #include <vector>
 
-#include "simple_platformer/npc/npc_facts.hpp"
+#include "advanced_platformer/npc/npc_facts.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     const std::vector<NpcFactRow>& npcFactRows()
     {

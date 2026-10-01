@@ -4,9 +4,9 @@
 #include <cstddef>
 #include <vector>
 
-#include "simple_platformer/timing/frame_profile.hpp"
+#include "advanced_platformer/timing/frame_profile.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     void FrameAxes::fit(Axis& axis, float worstSeconds, std::size_t capacity)
     {

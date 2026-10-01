@@ -3,9 +3,9 @@
 #include <map>
 #include <string>
 #include <string_view>
-#include "simple_platformer/npc/npc_state_machine.hpp"
+#include "advanced_platformer/npc/npc_state_machine.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     // Data-driven NPC state machines by name. An actor definition names one to run
     // instead of its brain's tactic.

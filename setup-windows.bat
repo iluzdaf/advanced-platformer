@@ -34,7 +34,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-set "SOLUTION=build\windows-vs\SimplePlatformer.sln"
+set "SOLUTION=build\windows-vs\AdvancedPlatformer.sln"
 if not exist "%SOLUTION%" (
     echo.
     echo CMake completed, but %SOLUTION% was not created.

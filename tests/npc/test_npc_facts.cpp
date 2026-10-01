@@ -6,13 +6,13 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/npc/npc.hpp"
-#include "simple_platformer/npc/npc_facts.hpp"
-#include "simple_platformer/npc/npc_senses.hpp"
-#include "simple_platformer/world/tile_map.hpp"
-#include "simple_platformer/world/world.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/npc/npc_facts.hpp"
+#include "advanced_platformer/npc/npc_senses.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
+#include "advanced_platformer/world/world.hpp"
 #include "support/actor_builder.hpp"
 #include "support/actor_components.hpp"
 #include "support/tile_map_builder.hpp"
@@ -28,9 +28,9 @@ namespace
     }
 
     // A grounded walker at (24, 32) that notices within 32 pixels.
-    simple_platformer::ActorId addWalkingNpc(simple_platformer::World& world)
+    advanced_platformer::ActorId addWalkingNpc(advanced_platformer::World& world)
     {
-        const simple_platformer::ActorId npcId =
+        const advanced_platformer::ActorId npcId =
             world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
                                .atFeet({24.0F, 32.0F})
                                .platforming()
@@ -39,18 +39,18 @@ namespace
         return npcId;
     }
 
-    simple_platformer::NpcFacts factsOf(
-        const simple_platformer::TileMap& map,
-        simple_platformer::World& world,
-        simple_platformer::ActorId npcId)
+    advanced_platformer::NpcFacts factsOf(
+        const advanced_platformer::TileMap& map,
+        advanced_platformer::World& world,
+        advanced_platformer::ActorId npcId)
     {
-        const simple_platformer::NpcBrain& npcBrain = brain(world, npcId);
-        return simple_platformer::gatherNpcFacts(
+        const advanced_platformer::NpcBrain& npcBrain = brain(world, npcId);
+        return advanced_platformer::gatherNpcFacts(
             map,
             actor(world, npcId),
             npcBrain,
             tests::perception(world, npcId),
-            simple_platformer::livingTarget(world, npcBrain),
+            advanced_platformer::livingTarget(world, npcBrain),
             0.0F);
     }
 }
@@ -76,14 +76,14 @@ TEST_CASE("Same-run and notice-distance facts are independent", "[npc][facts]")
 
     const auto observeFacts = [](const Scenario& scenario)
     {
-        const simple_platformer::TileMap map =
+        const advanced_platformer::TileMap map =
             tests::TileMapBuilder({"............", "............", scenario.floor});
-        simple_platformer::World world;
+        advanced_platformer::World world;
         const auto targetId = world.addActor(makePlayer(scenario.targetFeet));
         tests::platformerMovement(actor(world, targetId)).grounded = scenario.targetGrounded;
         if (!scenario.targetAlive)
         {
-            actor(world, targetId).life = simple_platformer::LifeState::Dying;
+            actor(world, targetId).life = advanced_platformer::LifeState::Dying;
         }
         const auto npcId = addWalkingNpc(world);
         if (scenario.rememberTarget)
@@ -139,9 +139,9 @@ TEST_CASE("Same-run and notice-distance facts are independent", "[npc][facts]")
 
 TEST_CASE("Heard landings and blocked walking are facts", "[npc][facts]")
 {
-    const simple_platformer::TileMap map =
+    const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"............", "............", "############"});
-    simple_platformer::World world;
+    advanced_platformer::World world;
     const auto npcId = addWalkingNpc(world);
     REQUIRE_FALSE(factsOf(map, world, npcId).heardLanding);
     REQUIRE_FALSE(factsOf(map, world, npcId).movementBlocked);

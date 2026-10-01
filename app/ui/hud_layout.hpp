@@ -1,6 +1,6 @@
 #pragma once
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     // In internal pixels; the viewport scales them to the window.
     constexpr float HudIconSize = 16.0F;

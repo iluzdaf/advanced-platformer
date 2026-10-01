@@ -1,10 +1,10 @@
-#include "simple_platformer/input/input_state.hpp"
+#include "advanced_platformer/input/input_state.hpp"
 
 #include <algorithm>
 #include <cstddef>
 #include <stdexcept>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

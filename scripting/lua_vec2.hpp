@@ -5,7 +5,7 @@
 // NOLINTBEGIN(misc-include-cleaner)
 #include <sol/sol.hpp>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     // Binds glm::vec2 as the Lua value type vec2: x and y, the arithmetic operators, ==,
     // tostring, and length, distance, distanceSquared, and dot. A vec2 is copied in and

@@ -1,17 +1,17 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "debug/frame_axes.hpp"
-#include "simple_platformer/timing/frame_profile.hpp"
+#include "advanced_platformer/timing/frame_profile.hpp"
 #include "support/require_near.hpp"
 
 namespace
 {
-    using simple_platformer::AxisHeadroom;
-    using simple_platformer::FrameAxes;
-    using simple_platformer::FrameAxisFloorMilliseconds;
-    using simple_platformer::FrameHistory;
-    using simple_platformer::FrameProfile;
-    using simple_platformer::SimulationAxisFloorMilliseconds;
+    using advanced_platformer::AxisHeadroom;
+    using advanced_platformer::FrameAxes;
+    using advanced_platformer::FrameAxisFloorMilliseconds;
+    using advanced_platformer::FrameHistory;
+    using advanced_platformer::FrameProfile;
+    using advanced_platformer::SimulationAxisFloorMilliseconds;
 
     FrameProfile frameTaking(float frameSeconds, float simulationSeconds)
     {

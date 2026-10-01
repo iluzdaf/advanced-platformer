@@ -2,24 +2,24 @@
 
 #include <stdexcept>
 
-#include "simple_platformer/input/input_state.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/physics/body.hpp"
+#include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/physics/body.hpp"
 #include "support/require_near.hpp"
 #include "support/tile_map_builder.hpp"
 
 namespace
 {
-    using simple_platformer::Body;
-    using simple_platformer::ClimbGrip;
-    using simple_platformer::ClimbSurface;
-    using simple_platformer::InputIntentions;
-    using simple_platformer::PlatformerMovement;
-    using simple_platformer::SurfaceClimb;
-    using simple_platformer::WallHeading;
+    using advanced_platformer::Body;
+    using advanced_platformer::ClimbGrip;
+    using advanced_platformer::ClimbSurface;
+    using advanced_platformer::InputIntentions;
+    using advanced_platformer::PlatformerMovement;
+    using advanced_platformer::SurfaceClimb;
+    using advanced_platformer::WallHeading;
 
-    const simple_platformer::TileMap Wall =
+    const advanced_platformer::TileMap Wall =
         tests::TileMapBuilder({"......", "..c...", "..c...", "..c...", "######"})
             .where('c', tests::Tile{}.blocksMovement().climbable());
 }
@@ -33,7 +33,7 @@ TEST_CASE("A climb request holds and moves along a wall", "[movement][climb]")
     intentions.climbGrip = ClimbGrip::Hold;
     intentions.direction.y = -1.0F;
 
-    simple_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
+    advanced_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
 
     REQUIRE(climb.surface == ClimbSurface::LeftWall);
     REQUIRE_NEAR(body.bounds.topLeft.y, 30.0F);
@@ -42,19 +42,19 @@ TEST_CASE("A climb request holds and moves along a wall", "[movement][climb]")
     REQUIRE(climb.wallHeading == WallHeading::Up);
 
     intentions.direction = {};
-    simple_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
+    advanced_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
     REQUIRE(climb.surface == ClimbSurface::LeftWall);
     REQUIRE_NEAR(body.bounds.topLeft.y, 30.0F);
     REQUIRE_NEAR(body.velocity.y, 0.0F);
 
     intentions.direction.y = 1.0F;
-    simple_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
+    advanced_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
     REQUIRE_NEAR(body.bounds.topLeft.y, 36.0F);
     REQUIRE(climb.wallHeading == WallHeading::Down);
 
     // Holding still keeps the way it last climbed.
     intentions.direction = {};
-    simple_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
+    advanced_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
     REQUIRE(climb.wallHeading == WallHeading::Down);
 }
 
@@ -68,16 +68,18 @@ TEST_CASE("A wall heading follows the climb and resets off the wall", "[movement
 
     for (const ClimbSurface wall : {ClimbSurface::LeftWall, ClimbSurface::RightWall})
     {
-        REQUIRE(simple_platformer::wallHeadingFor(wall, up, WallHeading::Down) == WallHeading::Up);
         REQUIRE(
-            simple_platformer::wallHeadingFor(wall, down, WallHeading::Up) == WallHeading::Down);
+            advanced_platformer::wallHeadingFor(wall, up, WallHeading::Down) == WallHeading::Up);
         REQUIRE(
-            simple_platformer::wallHeadingFor(wall, still, WallHeading::Down) == WallHeading::Down);
+            advanced_platformer::wallHeadingFor(wall, down, WallHeading::Up) == WallHeading::Down);
+        REQUIRE(
+            advanced_platformer::wallHeadingFor(wall, still, WallHeading::Down) ==
+            WallHeading::Down);
     }
     for (const ClimbSurface offTheWall : {ClimbSurface::None, ClimbSurface::Ceiling})
     {
         REQUIRE(
-            simple_platformer::wallHeadingFor(offTheWall, down, WallHeading::Down) ==
+            advanced_platformer::wallHeadingFor(offTheWall, down, WallHeading::Down) ==
             WallHeading::Up);
     }
 }
@@ -91,7 +93,7 @@ TEST_CASE("The opposite side of a wall can also be climbed", "[movement][climb]"
     intentions.climbGrip = ClimbGrip::Hold;
     intentions.direction.y = -1.0F;
 
-    simple_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
+    advanced_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
 
     REQUIRE(climb.surface == ClimbSurface::RightWall);
     REQUIRE_NEAR(body.bounds.topLeft.y, 30.0F);
@@ -99,7 +101,7 @@ TEST_CASE("The opposite side of a wall can also be climbed", "[movement][climb]"
 
 TEST_CASE("A ceiling climb moves horizontally without gravity", "[movement][climb]")
 {
-    const simple_platformer::TileMap map =
+    const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"......", ".ccc..", "......", "......", "######"})
             .where('c', tests::Tile{}.blocksMovement().climbable());
     Body body{{{32.0F, 32.0F}, {12.0F, 12.0F}}, {0.0F, 20.0F}};
@@ -109,7 +111,7 @@ TEST_CASE("A ceiling climb moves horizontally without gravity", "[movement][clim
     intentions.climbGrip = ClimbGrip::Hold;
     intentions.direction.x = 1.0F;
 
-    simple_platformer::updateSurfaceClimbMovement(map, body, movement, climb, intentions, 0.1F);
+    advanced_platformer::updateSurfaceClimbMovement(map, body, movement, climb, intentions, 0.1F);
 
     REQUIRE(climb.surface == ClimbSurface::Ceiling);
     REQUIRE_NEAR(body.bounds.topLeft.x, 38.0F);
@@ -120,7 +122,7 @@ TEST_CASE("A ceiling climb moves horizontally without gravity", "[movement][clim
 
 TEST_CASE("A wall climber can turn onto a ceiling", "[movement][climb]")
 {
-    const simple_platformer::TileMap map =
+    const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"......", "..ccc.", "..c...", "..c...", "######"})
             .where('c', tests::Tile{}.blocksMovement().climbable());
     Body body{{{48.0F, 36.0F}, {12.0F, 12.0F}}, {0.0F, 0.0F}};
@@ -129,12 +131,12 @@ TEST_CASE("A wall climber can turn onto a ceiling", "[movement][climb]")
     InputIntentions intentions;
     intentions.climbGrip = ClimbGrip::Hold;
     intentions.direction.y = -1.0F;
-    simple_platformer::updateSurfaceClimbMovement(map, body, movement, climb, intentions, 0.1F);
+    advanced_platformer::updateSurfaceClimbMovement(map, body, movement, climb, intentions, 0.1F);
     REQUIRE(climb.surface == ClimbSurface::LeftWall);
     REQUIRE_NEAR(body.bounds.topLeft.y, 32.0F);
 
     intentions.direction = {1.0F, 0.0F};
-    simple_platformer::updateSurfaceClimbMovement(map, body, movement, climb, intentions, 0.1F);
+    advanced_platformer::updateSurfaceClimbMovement(map, body, movement, climb, intentions, 0.1F);
 
     REQUIRE(climb.surface == ClimbSurface::Ceiling);
     REQUIRE_NEAR(body.bounds.topLeft.x, 54.0F);
@@ -150,17 +152,17 @@ TEST_CASE("Keeping the grip stays on a held wall and never grabs one", "[movemen
     REQUIRE(intentions.climbGrip == ClimbGrip::Keep);
 
     // Touching the wall without holding it: Keep leaves the actor off, so it falls.
-    simple_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
+    advanced_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
     REQUIRE(climb.surface == ClimbSurface::None);
 
     body = Body{{{48.0F, 36.0F}, {12.0F, 12.0F}}, {0.0F, 0.0F}};
     intentions.climbGrip = ClimbGrip::Hold;
-    simple_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
+    advanced_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
     REQUIRE(climb.surface == ClimbSurface::LeftWall);
 
     // Holding it: Keep stays on, without moving.
     intentions.climbGrip = ClimbGrip::Keep;
-    simple_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
+    advanced_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
     REQUIRE(climb.surface == ClimbSurface::LeftWall);
     REQUIRE_NEAR(body.bounds.topLeft.y, 36.0F);
 }
@@ -172,11 +174,11 @@ TEST_CASE("Releasing climb resumes ordinary falling", "[movement][climb]")
     SurfaceClimb climb{{60.0F}};
     InputIntentions intentions;
     intentions.climbGrip = ClimbGrip::Hold;
-    simple_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
+    advanced_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
     REQUIRE(climb.surface == ClimbSurface::LeftWall);
 
     intentions.climbGrip = ClimbGrip::Release;
-    simple_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
+    advanced_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
 
     REQUIRE(climb.surface == ClimbSurface::None);
     REQUIRE(body.bounds.topLeft.y > 36.0F);
@@ -185,7 +187,7 @@ TEST_CASE("Releasing climb resumes ordinary falling", "[movement][climb]")
 
 TEST_CASE("A climb request needs an adjacent surface", "[movement][climb]")
 {
-    const simple_platformer::TileMap map =
+    const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"......", "......", "......", "......", "######"});
     Body body{{{48.0F, 36.0F}, {12.0F, 12.0F}}, {0.0F, 0.0F}};
     PlatformerMovement movement;
@@ -193,7 +195,7 @@ TEST_CASE("A climb request needs an adjacent surface", "[movement][climb]")
     InputIntentions intentions;
     intentions.climbGrip = ClimbGrip::Hold;
 
-    simple_platformer::updateSurfaceClimbMovement(map, body, movement, climb, intentions, 0.1F);
+    advanced_platformer::updateSurfaceClimbMovement(map, body, movement, climb, intentions, 0.1F);
 
     REQUIRE(climb.surface == ClimbSurface::None);
     REQUIRE(body.velocity.y > 0.0F);
@@ -201,7 +203,7 @@ TEST_CASE("A climb request needs an adjacent surface", "[movement][climb]")
 
 TEST_CASE("A climb request cannot attach to an unmarked solid wall", "[movement][climb]")
 {
-    const simple_platformer::TileMap map =
+    const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"......", "..X...", "..X...", "..X...", "######"})
             .where('X', tests::Tile{}.blocksMovement());
     Body body{{{48.0F, 36.0F}, {12.0F, 12.0F}}, {0.0F, 0.0F}};
@@ -211,7 +213,7 @@ TEST_CASE("A climb request cannot attach to an unmarked solid wall", "[movement]
     intentions.climbGrip = ClimbGrip::Hold;
     intentions.direction.y = -1.0F;
 
-    simple_platformer::updateSurfaceClimbMovement(map, body, movement, climb, intentions, 0.1F);
+    advanced_platformer::updateSurfaceClimbMovement(map, body, movement, climb, intentions, 0.1F);
 
     REQUIRE(climb.surface == ClimbSurface::None);
     REQUIRE(body.velocity.y > 0.0F);
@@ -219,7 +221,7 @@ TEST_CASE("A climb request cannot attach to an unmarked solid wall", "[movement]
 
 TEST_CASE("A climb request cannot attach to an unmarked solid ceiling", "[movement][climb]")
 {
-    const simple_platformer::TileMap map =
+    const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"......", ".XXX..", "......", "......", "######"})
             .where('X', tests::Tile{}.blocksMovement());
     Body body{{{32.0F, 32.0F}, {12.0F, 12.0F}}, {0.0F, 0.0F}};
@@ -229,7 +231,7 @@ TEST_CASE("A climb request cannot attach to an unmarked solid ceiling", "[moveme
     intentions.climbGrip = ClimbGrip::Hold;
     intentions.direction.x = 1.0F;
 
-    simple_platformer::updateSurfaceClimbMovement(map, body, movement, climb, intentions, 0.1F);
+    advanced_platformer::updateSurfaceClimbMovement(map, body, movement, climb, intentions, 0.1F);
 
     REQUIRE(climb.surface == ClimbSurface::None);
     REQUIRE(body.velocity.y > 0.0F);
@@ -237,7 +239,7 @@ TEST_CASE("A climb request cannot attach to an unmarked solid ceiling", "[moveme
 
 TEST_CASE("Climbing ends when the surface ends", "[movement][climb]")
 {
-    const simple_platformer::TileMap map =
+    const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"......", ".cc...", "......", "......", "######"})
             .where('c', tests::Tile{}.blocksMovement().climbable());
     Body body{{{32.0F, 32.0F}, {12.0F, 12.0F}}, {0.0F, 0.0F}};
@@ -247,12 +249,12 @@ TEST_CASE("Climbing ends when the surface ends", "[movement][climb]")
     intentions.climbGrip = ClimbGrip::Hold;
     intentions.direction.x = 1.0F;
 
-    simple_platformer::updateSurfaceClimbMovement(map, body, movement, climb, intentions, 0.4F);
+    advanced_platformer::updateSurfaceClimbMovement(map, body, movement, climb, intentions, 0.4F);
 
     REQUIRE(climb.surface == ClimbSurface::None);
     REQUIRE_NEAR(body.velocity.x, 0.0F);
     REQUIRE_NEAR(body.velocity.y, 0.0F);
-    simple_platformer::updateSurfaceClimbMovement(map, body, movement, climb, intentions, 0.1F);
+    advanced_platformer::updateSurfaceClimbMovement(map, body, movement, climb, intentions, 0.1F);
     REQUIRE(body.velocity.y > 0.0F);
 }
 
@@ -261,5 +263,5 @@ TEST_CASE("Climbing requires a positive finite speed", "[movement][climb]")
     SurfaceClimb climb;
     climb.config.speed = 0.0F;
     REQUIRE_THROWS_AS(
-        simple_platformer::validateSurfaceClimbConfig(climb.config), std::invalid_argument);
+        advanced_platformer::validateSurfaceClimbConfig(climb.config), std::invalid_argument);
 }

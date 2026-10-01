@@ -8,10 +8,10 @@
 #include "content/item_catalog.hpp"
 #include <string_view>
 #include <string>
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/world/pickup.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/world/pickup.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     void validatePickupDefinition(const PickupDefinition& definition, const ItemCatalog& items)
     {

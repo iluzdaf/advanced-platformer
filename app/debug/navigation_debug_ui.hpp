@@ -2,7 +2,7 @@
 
 #include <imgui.h>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     struct Aabb;
     struct NavigationCacheDebugInfo;

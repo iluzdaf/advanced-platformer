@@ -6,14 +6,14 @@
 #include <string>
 #include <vector>
 
-#include "simple_platformer/timing/frame_profile.hpp"
+#include "advanced_platformer/timing/frame_profile.hpp"
 #include "support/require_near.hpp"
 #include "support/spin_for.hpp"
 
 namespace
 {
-    using simple_platformer::FrameHistory;
-    using simple_platformer::FrameProfile;
+    using advanced_platformer::FrameHistory;
+    using advanced_platformer::FrameProfile;
 
     FrameProfile frameTaking(float seconds)
     {
@@ -90,9 +90,9 @@ TEST_CASE("A frame history rejects impossible measurements", "[timing][profile]"
 TEST_CASE("Adding to a phase sums repeats and keeps first-seen order", "[timing][profile]")
 {
     FrameProfile profile;
-    simple_platformer::addPhaseSeconds(profile, "Category A", "First", 0.001F);
-    simple_platformer::addPhaseSeconds(profile, "Category B", "Second", 0.002F);
-    simple_platformer::addPhaseSeconds(profile, "Category A", "First", 0.003F);
+    advanced_platformer::addPhaseSeconds(profile, "Category A", "First", 0.001F);
+    advanced_platformer::addPhaseSeconds(profile, "Category B", "Second", 0.002F);
+    advanced_platformer::addPhaseSeconds(profile, "Category A", "First", 0.003F);
 
     REQUIRE(profile.phases.size() == 2);
     REQUIRE(std::string(profile.phases[0].category) == "Category A");
@@ -100,38 +100,38 @@ TEST_CASE("Adding to a phase sums repeats and keeps first-seen order", "[timing]
     REQUIRE_NEAR(profile.phases[0].seconds, 0.004F);
     REQUIRE(std::string(profile.phases[1].name) == "Second");
     REQUIRE_THROWS_AS(
-        simple_platformer::addPhaseSeconds(profile, "Category A", "First", -0.001F),
+        advanced_platformer::addPhaseSeconds(profile, "Category A", "First", -0.001F),
         std::invalid_argument);
     // A phase belongs to one category.
     REQUIRE_THROWS_AS(
-        simple_platformer::addPhaseSeconds(profile, "Category B", "First", 0.001F),
+        advanced_platformer::addPhaseSeconds(profile, "Category B", "First", 0.001F),
         std::invalid_argument);
 }
 
 TEST_CASE("Adding a statistic sums repeats and keeps its category", "[timing][profile]")
 {
     FrameProfile profile;
-    simple_platformer::addFrameStatistic(nullptr, "Category A", "First");
-    simple_platformer::addFrameStatistic(&profile, "Category A", "First", 2);
-    simple_platformer::addFrameStatistic(&profile, "Category B", "Second");
-    simple_platformer::addFrameStatistic(&profile, "Category A", "First", 3);
+    advanced_platformer::addFrameStatistic(nullptr, "Category A", "First");
+    advanced_platformer::addFrameStatistic(&profile, "Category A", "First", 2);
+    advanced_platformer::addFrameStatistic(&profile, "Category B", "Second");
+    advanced_platformer::addFrameStatistic(&profile, "Category A", "First", 3);
 
     REQUIRE(profile.statistics.size() == 2);
     REQUIRE(std::string(profile.statistics[0].category) == "Category A");
     REQUIRE(std::string(profile.statistics[0].name) == "First");
     REQUIRE(profile.statistics[0].count == 5);
-    REQUIRE(simple_platformer::frameStatisticCount(profile, "First") == 5);
-    REQUIRE(simple_platformer::frameStatisticCount(profile, "Absent") == 0);
+    REQUIRE(advanced_platformer::frameStatisticCount(profile, "First") == 5);
+    REQUIRE(advanced_platformer::frameStatisticCount(profile, "Absent") == 0);
     REQUIRE(std::string(profile.statistics[1].name) == "Second");
     REQUIRE(profile.statistics[1].count == 1);
     REQUIRE_THROWS_AS(
-        simple_platformer::addFrameStatistic(&profile, "Category A", "First", -1),
+        advanced_platformer::addFrameStatistic(&profile, "Category A", "First", -1),
         std::invalid_argument);
     REQUIRE_THROWS_AS(
-        simple_platformer::addFrameStatistic(&profile, "Category B", "First"),
+        advanced_platformer::addFrameStatistic(&profile, "Category B", "First"),
         std::invalid_argument);
     REQUIRE_THROWS_AS(
-        simple_platformer::addFrameStatistic(
+        advanced_platformer::addFrameStatistic(
             &profile, "Category A", "First", std::numeric_limits<int>::max()),
         std::overflow_error);
 }
@@ -141,20 +141,20 @@ TEST_CASE(
     "[timing][profile]")
 {
     FrameProfile profile;
-    simple_platformer::addPhaseSeconds(profile, "Category A", "A first", 0.001F);
-    simple_platformer::addPhaseSeconds(profile, "Category A", "A second", 0.003F);
-    simple_platformer::addPhaseSeconds(profile, "Category B", "B only", 0.005F);
-    simple_platformer::addPhaseSeconds(profile, "Category C", "C first", 0.002F);
-    simple_platformer::addPhaseSeconds(profile, "Category C", "C second", 0.004F);
+    advanced_platformer::addPhaseSeconds(profile, "Category A", "A first", 0.001F);
+    advanced_platformer::addPhaseSeconds(profile, "Category A", "A second", 0.003F);
+    advanced_platformer::addPhaseSeconds(profile, "Category B", "B only", 0.005F);
+    advanced_platformer::addPhaseSeconds(profile, "Category C", "C first", 0.002F);
+    advanced_platformer::addPhaseSeconds(profile, "Category C", "C second", 0.004F);
     // A tie keeps simulation order.
-    simple_platformer::addPhaseSeconds(profile, "Category D", "D first", 0.001F);
-    simple_platformer::addPhaseSeconds(profile, "Category D", "D second", 0.001F);
+    advanced_platformer::addPhaseSeconds(profile, "Category D", "D first", 0.001F);
+    advanced_platformer::addPhaseSeconds(profile, "Category D", "D second", 0.001F);
 
-    const std::vector<simple_platformer::PhaseTiming> sorted =
-        simple_platformer::phasesByCost(profile.phases);
+    const std::vector<advanced_platformer::PhaseTiming> sorted =
+        advanced_platformer::phasesByCost(profile.phases);
     std::vector<std::string> names;
     names.reserve(sorted.size());
-    for (const simple_platformer::PhaseTiming& phase : sorted)
+    for (const advanced_platformer::PhaseTiming& phase : sorted)
     {
         names.emplace_back(phase.name);
     }
@@ -163,7 +163,7 @@ TEST_CASE(
         names ==
         std::vector<std::string>{
             "C second", "C first", "B only", "A second", "A first", "D first", "D second"});
-    REQUIRE(simple_platformer::phasesByCost({}).empty());
+    REQUIRE(advanced_platformer::phasesByCost({}).empty());
 }
 
 TEST_CASE("A frame history lists every phase its frames ran, in order", "[timing][profile]")
@@ -173,17 +173,17 @@ TEST_CASE("A frame history lists every phase its frames ran, in order", "[timing
 
     // The second frame introduces a phase between two already seen in the first.
     FrameProfile first = frameTaking(0.016F);
-    simple_platformer::addPhaseSeconds(first, "Category A", "First", 0.001F);
-    simple_platformer::addPhaseSeconds(first, "Category C", "Last", 0.002F);
+    advanced_platformer::addPhaseSeconds(first, "Category A", "First", 0.001F);
+    advanced_platformer::addPhaseSeconds(first, "Category C", "Last", 0.002F);
     FrameProfile second = frameTaking(0.016F);
-    simple_platformer::addPhaseSeconds(second, "Category A", "First", 0.003F);
-    simple_platformer::addPhaseSeconds(second, "Category B", "Middle", 0.004F);
-    simple_platformer::addPhaseSeconds(second, "Category C", "Last", 0.005F);
+    advanced_platformer::addPhaseSeconds(second, "Category A", "First", 0.003F);
+    advanced_platformer::addPhaseSeconds(second, "Category B", "Middle", 0.004F);
+    advanced_platformer::addPhaseSeconds(second, "Category C", "Last", 0.005F);
     history.push(first);
     history.push(second);
     history.push(frameTaking(0.007F));
 
-    const std::vector<simple_platformer::PhaseTiming> phases = history.phasesSummed();
+    const std::vector<advanced_platformer::PhaseTiming> phases = history.phasesSummed();
     REQUIRE(phases.size() == 3);
     REQUIRE(std::string(phases[0].name) == "First");
     REQUIRE(std::string(phases[1].name) == "Middle");
@@ -199,8 +199,8 @@ TEST_CASE("A frame history reports one measurement across its frames", "[timing]
     FrameHistory history(3);
     FrameProfile first = frameTaking(0.010F);
     first.simulationSeconds = 0.004F;
-    simple_platformer::addPhaseSeconds(first, "Category A", "First", 0.001F);
-    simple_platformer::addPhaseSeconds(first, "Category A", "Second", 0.003F);
+    advanced_platformer::addPhaseSeconds(first, "Category A", "First", 0.001F);
+    advanced_platformer::addPhaseSeconds(first, "Category A", "Second", 0.003F);
     FrameProfile second = frameTaking(0.007F);
     history.push(first);
     history.push(second);
@@ -218,17 +218,17 @@ TEST_CASE(
     FrameHistory history(2);
     FrameProfile first = frameTaking(0.016F);
     first.simulationTicks = 2;
-    simple_platformer::addFrameStatistic(&first, "Category A", "First", 2);
-    simple_platformer::addFrameStatistic(&first, "Category B", "Last", 10);
+    advanced_platformer::addFrameStatistic(&first, "Category A", "First", 2);
+    advanced_platformer::addFrameStatistic(&first, "Category B", "Last", 10);
     FrameProfile second = frameTaking(0.016F);
     second.simulationTicks = 1;
-    simple_platformer::addFrameStatistic(&second, "Category A", "First", 3);
-    simple_platformer::addFrameStatistic(&second, "Category C", "Middle", 7);
-    simple_platformer::addFrameStatistic(&second, "Category B", "Last", 5);
+    advanced_platformer::addFrameStatistic(&second, "Category A", "First", 3);
+    advanced_platformer::addFrameStatistic(&second, "Category C", "Middle", 7);
+    advanced_platformer::addFrameStatistic(&second, "Category B", "Last", 5);
     history.push(first);
     history.push(second);
     REQUIRE(history.totalSimulationTicks() == 3);
-    const std::vector<simple_platformer::FrameStatistic> summed = history.statisticsSummed();
+    const std::vector<advanced_platformer::FrameStatistic> summed = history.statisticsSummed();
     REQUIRE(summed.size() == 3);
     REQUIRE(std::string(summed[0].name) == "First");
     REQUIRE(std::string(summed[0].category) == "Category A");
@@ -249,7 +249,7 @@ TEST_CASE("A phase scope closes when work exits early", "[timing][profile]")
     FrameProfile profile;
     const auto finishEarly = [&profile]
     {
-        const simple_platformer::PhaseScope scope(&profile, "Category A", "Early return");
+        const advanced_platformer::PhaseScope scope(&profile, "Category A", "Early return");
         return 7;
     };
 
@@ -260,7 +260,7 @@ TEST_CASE("A phase scope closes when work exits early", "[timing][profile]")
     REQUIRE(profile.nestedSecondsOfOpenPhases.empty());
 
     REQUIRE_THROWS_AS(
-        simple_platformer::timePhase(
+        advanced_platformer::timePhase(
             &profile, "Category A", "Throwing", [] { throw std::runtime_error("failed"); }),
         std::runtime_error);
     REQUIRE(profile.nestedSecondsOfOpenPhases.empty());
@@ -269,17 +269,17 @@ TEST_CASE("A phase scope closes when work exits early", "[timing][profile]")
 TEST_CASE("Timing a phase charges it less the phases timed inside it", "[timing][profile]")
 {
     bool ran = false;
-    simple_platformer::timePhase(nullptr, "Category A", "Outer", [&ran] { ran = true; });
+    advanced_platformer::timePhase(nullptr, "Category A", "Outer", [&ran] { ran = true; });
     REQUIRE(ran);
 
     FrameProfile profile;
-    simple_platformer::timePhase(
+    advanced_platformer::timePhase(
         &profile,
         "Category A",
         "Outer",
         [&]
         {
-            simple_platformer::timePhase(
+            advanced_platformer::timePhase(
                 &profile,
                 "Category A",
                 "Inner",

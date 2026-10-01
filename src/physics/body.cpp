@@ -1,10 +1,10 @@
-#include "simple_platformer/physics/body.hpp"
+#include "advanced_platformer/physics/body.hpp"
 
 #include <algorithm>
 
-#include "simple_platformer/physics/collision.hpp"
+#include "advanced_platformer/physics/collision.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     void applyGravity(Body& body, float gravity, float maximumFallSpeed, float deltaTime)
     {

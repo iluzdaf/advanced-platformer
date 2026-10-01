@@ -3,19 +3,19 @@
 #include <catch2/catch_test_macros.hpp>
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/input/input_state.hpp"
-#include "simple_platformer/npc/npc.hpp"
-#include "simple_platformer/npc/npc_activity.hpp"
-#include "simple_platformer/npc/npc_activity_scripts.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/npc/npc_activity.hpp"
+#include "advanced_platformer/npc/npc_activity_scripts.hpp"
 #include "lua_npc_scripts.hpp"
 
 namespace
 {
-    using simple_platformer::ActorId;
-    using simple_platformer::LuaNpcActivity;
-    using simple_platformer::LuaNpcScripts;
-    using simple_platformer::NpcActivitySnapshot;
+    using advanced_platformer::ActorId;
+    using advanced_platformer::LuaNpcActivity;
+    using advanced_platformer::LuaNpcScripts;
+    using advanced_platformer::NpcActivitySnapshot;
 
     constexpr ActorId FirstActor{1};
     constexpr ActorId SecondActor{2};
@@ -26,7 +26,7 @@ namespace
         NpcActivitySnapshot snapshot;
         snapshot.feet = {12.0F, 34.0F};
         snapshot.targetFeet = {{56.0F, 78.0F}};
-        snapshot.patrol = simple_platformer::Patrol{{8.0F, 34.0F}, {80.0F, 34.0F}, true};
+        snapshot.patrol = advanced_platformer::Patrol{{8.0F, 34.0F}, {80.0F, 34.0F}, true};
         snapshot.facts.targetKnown = true;
         snapshot.facts.heardLanding = true;
         snapshot.facts.targetOnSameRun = true;
@@ -72,13 +72,13 @@ TEST_CASE("A Lua activity reads a copied snapshot and returns a command", "[lua]
     NpcActivitySnapshot snapshot = commandSnapshot();
     scripts.enter(FirstActor, Activity, snapshot);
 
-    const simple_platformer::NpcActivityCommand command =
+    const advanced_platformer::NpcActivityCommand command =
         scripts.update(FirstActor, Activity, snapshot, 0.5F);
 
     REQUIRE(command.intentions.direction.x == 1.5F);
     REQUIRE(command.intentions.direction.y == 0.0F);
     REQUIRE(command.intentions.primaryAttackPressed);
-    REQUIRE(command.intentions.climbGrip == simple_platformer::ClimbGrip::Hold);
+    REQUIRE(command.intentions.climbGrip == advanced_platformer::ClimbGrip::Hold);
     REQUIRE(command.intentions.jumpHeld);
     REQUIRE(command.intentions.jumpPressed);
     REQUIRE(command.intentions.avoidLedges);

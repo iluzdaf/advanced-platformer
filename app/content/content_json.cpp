@@ -14,9 +14,9 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 #include <glm/vec2.hpp>
-#include "simple_platformer/render/sprite.hpp"
+#include "advanced_platformer/render/sprite.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     void checkJsonObject(
         const nlohmann::json& value,

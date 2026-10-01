@@ -1,25 +1,25 @@
-#include "simple_platformer/world/pickup.hpp"
+#include "advanced_platformer/world/pickup.hpp"
 
 #include <cstddef>
 #include <stdexcept>
 #include <vector>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/inventory/inventory.hpp"
-#include "simple_platformer/inventory/item.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/physics/body.hpp"
-#include "simple_platformer/world/world.hpp"
-#include "simple_platformer/world/world_requests.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/inventory/inventory.hpp"
+#include "advanced_platformer/inventory/item.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/physics/body.hpp"
+#include "advanced_platformer/world/world.hpp"
+#include "advanced_platformer/world/world_requests.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     void validatePickup(const Pickup& pickup)
     {
-        if (!simple_platformer::isFinite(pickup.body.bounds.topLeft) ||
-            !simple_platformer::isFinite(pickup.body.bounds.size) ||
-            !simple_platformer::isFinite(pickup.body.velocity) ||
+        if (!advanced_platformer::isFinite(pickup.body.bounds.topLeft) ||
+            !advanced_platformer::isFinite(pickup.body.bounds.size) ||
+            !advanced_platformer::isFinite(pickup.body.velocity) ||
             pickup.body.bounds.size.x <= 0.0F || pickup.body.bounds.size.y <= 0.0F)
         {
             throw std::invalid_argument("Pickups require a finite body with positive-sized bounds");
