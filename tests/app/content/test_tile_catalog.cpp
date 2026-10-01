@@ -11,27 +11,58 @@
 #include "advanced_platformer/physics/segment_cast.hpp"
 #include "advanced_platformer/world/sight.hpp"
 
-TEST_CASE("Tile catalogs reject unknown fields and identify their definitions", "[app][tiles]")
+TEST_CASE("Tile catalogs reject unknown fields and say where", "[app][tiles]")
 {
     auto tileJson = nlohmann::json::parse(R"({"tileSize":16,"tiles":{
         "empty":{"blocksMovement":false,"blocksSight":false},
         "wall":{"blocksMovement":true,"blocksSight":true,"sprite":{"position":[0,0]}}
     }})");
+    std::string expected;
     SECTION("Definition typo")
     {
         tileJson["tiles"]["wall"]["blocksSighht"] = true;
+        expected = "unknown field 'blocksSighht'";
     }
     SECTION("Sprite typo")
     {
         tileJson["tiles"]["wall"]["sprite"]["width"] = 16;
+        expected = "unknown field 'width'";
     }
     SECTION("Invalid vector")
     {
         tileJson["tiles"]["wall"]["sprite"]["position"] = {0};
+        expected = "expected two numbers, [x, y]";
     }
     REQUIRE_THROWS_WITH(
         advanced_platformer::parseTileCatalog(tileJson.dump(), "tiles.json"),
-        Catch::Matchers::ContainsSubstring("tiles.json: tiles.wall"));
+        Catch::Matchers::StartsWith("tiles.json: line 1, column ") &&
+            Catch::Matchers::EndsWith(expected));
+}
+
+TEST_CASE("The empty tile has no sprite, and every other tile has one", "[app][tiles]")
+{
+    auto tileJson = nlohmann::json::parse(R"({"tileSize":16,"tiles":{
+        "empty":{"blocksMovement":false,"blocksSight":false},
+        "wall":{"blocksMovement":true,"blocksSight":true,"sprite":{"position":[0,0]}}
+    }})");
+    std::string expected;
+    SECTION("A sprite on the empty tile")
+    {
+        tileJson["tiles"]["empty"]["sprite"] = {{"position", {0, 0}}};
+        expected = "tiles.json: tiles.empty: unknown field 'sprite'";
+    }
+    SECTION("The empty tile breaking")
+    {
+        tileJson["tiles"]["empty"]["breaksInto"] = "wall";
+        expected = "tiles.json: tiles.empty: unknown field 'breaksInto'";
+    }
+    SECTION("A tile without a sprite")
+    {
+        tileJson["tiles"]["wall"].erase("sprite");
+        expected = "tiles.json: tiles.wall: missing 'sprite'";
+    }
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::parseTileCatalog(tileJson.dump(), "tiles.json"), expected);
 }
 
 TEST_CASE("Tile legends resolve distinct movement and sight properties", "[app][tiles]")
@@ -209,5 +240,6 @@ TEST_CASE("A tile sprite gives only where it starts, since it is one tile", "[ap
         "wide":{"blocksMovement":true,"blocksSight":true,"sprite":{"position":[0,0],"size":[32,16]}}
     }})",
             "tiles.json"),
-        Catch::Matchers::ContainsSubstring("tiles.wide.sprite"));
+        Catch::Matchers::StartsWith("tiles.json: line 3, column ") &&
+            Catch::Matchers::EndsWith("unknown field 'size'"));
 }
