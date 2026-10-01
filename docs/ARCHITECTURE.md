@@ -1053,18 +1053,14 @@ end-to-end test.
 
 Validation has three boundaries:
 
-1. **JSON shape:** loaders check types, integer ranges, required fields, and reject unknown
-   fields to catch misspellings. This includes catalogs, level placements, and legend
-   templates. `content_json` provides shared file-reading and shape-checking helpers.
-   `content_diagnostics` builds the field paths and raises the errors, and carries no
-   JSON dependency so the C++ validators can use it too.
-   `readInteger`, `readNumber`, `readBoolean`, `readText`, and `readVector` read
-   required fields. Their `readOptional...` counterparts leave C++ defaults unchanged
-   only when a field is absent; present but invalid values are errors. Both use the
-   same `json...` value checks and accept a source filename and field path.
-   `items.json` is instead read with Glaze into structs that mirror the file, through
-   `content_glaze`: the structs are the shape, and Glaze rejects unknown keys, missing
-   required members, and wrong types, reporting the line and column.
+1. **JSON shape:** reading a file checks its types and required fields, and rejects unknown
+   fields to catch misspellings. Catalogs are read with Glaze, through `content_glaze`, into
+   structs that mirror each file: the structs are the shape, and Glaze rejects unknown
+   keys, missing required members, and wrong types, reporting the line and column. Level
+   files, whose legends, map rows and name references do not map onto structs, are read
+   with nlohmann/json through the `content_json` helpers, which report a field path.
+   `content_diagnostics` builds the field paths and raises the errors, and carries no JSON
+   dependency so the C++ validators can use it too.
 2. **Application content:** plain C++ validators check authoring rules.
    [`content_validation.cpp`](../app/content/content_validation.cpp) covers legends, map rows,
    placement counts, quantities, and exit settings. Actor, item, pickup, and exit catalog
