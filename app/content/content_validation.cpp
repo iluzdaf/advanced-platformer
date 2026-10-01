@@ -47,28 +47,6 @@ namespace advanced_platformer
         }
     }
 
-    void validatePickupSettings(
-        const PickupPlacement& placement,
-        const std::string& path,
-        std::string_view sourceName)
-    {
-        if (!placement.definitionName.empty())
-        {
-            return;
-        }
-        if (placement.stack.quantity <= 0)
-        {
-            failJson(
-                sourceName,
-                fieldPath(path, "quantity"),
-                std::format("expected a positive integer, got {}", placement.stack.quantity));
-        }
-        if (!isFinitePositive(placement.bodySize))
-        {
-            failJson(sourceName, fieldPath(path, "bodySize"), "expected a finite, positive size");
-        }
-    }
-
     void validateExitSettings(
         const ExitPlacement& placement,
         const std::string& path,

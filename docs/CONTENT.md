@@ -139,16 +139,15 @@ Each occurrence creates a placement using the cell's bottom-centre feet anchor, 
 like `spawnCell`, with empty terrain underneath. Symbols must be one character and
 cannot appear in both legends. There must be exactly one player and one exit placement,
 whether supplied by a marker or explicitly. Repeated NPC and pickup markers create
-separate objects. Named pickups take their quantity and body size from `pickups.json`;
-an inline pickup states `item`, `quantity` and `bodySize` itself, in the placement or
-legend entry, and is drawn with the item's inventory icon. A pickup falls from
+separate objects. A pickup takes its item, quantity and body size from its definition
+in `pickups.json`. A pickup falls from
 where it is placed until it rests on a tile, and falls again if that tile breaks.
 
 Object entries use the same settings as explicit placements: NPCs can specify a
 `patrol`, and exits can specify `requirement`, `consumeItem`, and `nextLevel`.
 Patrol endpoints remain absolute positions, not offsets from the marker.
 `type` selects the object category: `player`, `actor`, `pickup`, or `exit`.
-For actors, exits, and named pickups, `definition` selects an entry in the corresponding
+For actors, pickups and exits, `definition` selects an entry in the corresponding
 catalog. A tile legend needs only the definition name because its category is
 already established by `tileLegend`.
 Do not put `spawnCell` or `spawnFeet` in a legend entry: the marker supplies its position.
@@ -465,8 +464,6 @@ A level places a named definition using one spawn placement:
 
 An object legend entry can use the same definition:
 `"M": { "type": "pickup", "definition": "medicine_box" }`.
-Inline `item` and `quantity` remain a shorthand for a 16-by-16 pickup using its item
-icon. A placement must not mix that shorthand with `definition`.
 New item and pickup names do not require changes to the level parser.
 
 ## Exits

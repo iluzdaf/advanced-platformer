@@ -35,14 +35,6 @@ TEST_CASE(
     {
         level["playerSpawnCell"][1] = -4294967296LL;
     }
-    SECTION("Pickup quantity")
-    {
-        level["pickups"] = tests::list({tests::object(
-            {{"item", "key"},
-             {"quantity", 4294967297LL},
-             {"bodySize", tests::numbers({8, 8})},
-             {"spawnCell", tests::numbers({1, 0})}})});
-    }
     SECTION("Exit destination")
     {
         level["exit"]["nextLevel"] = 4294967297LL;
@@ -80,11 +72,7 @@ TEST_CASE("Explicit level placements reject unknown fields", "[app][content][jso
     SECTION("Pickup")
     {
         level["pickups"] = tests::list({tests::object(
-            {{"item", "key"},
-             {"quantity", 1},
-             {"bodySize", tests::numbers({8, 8})},
-             {"spawnCell", tests::numbers({2, 0})},
-             {"quantitty", 3}})});
+            {{"definition", "key"}, {"spawnCell", tests::numbers({2, 0})}, {"quantitty", 3}})});
     }
     SECTION("Exit")
     {
@@ -193,22 +181,35 @@ TEST_CASE("Actor placements choose a cell or feet, not both", "[app][content][js
         std::invalid_argument);
 }
 
-TEST_CASE("Pickup definitions cannot mix with inline stack fields", "[app][content][json]")
+TEST_CASE("Pickup placements take their stack from a definition", "[app][content][json]")
 {
     auto level = minimalLevel();
     level["pickups"] = tests::list(
         {tests::object({{"definition", "treasure"}, {"spawnCell", tests::numbers({1, 0})}})});
-    SECTION("Item")
+    const char* expected = "";
+    SECTION("No definition")
+    {
+        tests::eraseKey(level["pickups"][0], "definition");
+        expected = "missing 'definition'";
+    }
+    SECTION("An inline item")
     {
         level["pickups"][0]["item"] = "key";
+        expected = "unknown field 'item'";
     }
-    SECTION("Quantity")
+    SECTION("An inline quantity")
     {
         level["pickups"][0]["quantity"] = 2;
+        expected = "unknown field 'quantity'";
     }
-    REQUIRE_THROWS_AS(
+    SECTION("An inline body size")
+    {
+        level["pickups"][0]["bodySize"] = tests::numbers({8, 8});
+        expected = "unknown field 'bodySize'";
+    }
+    REQUIRE_THROWS_WITH(
         advanced_platformer::parseLevelData(tests::dumpJson(level), "placement.json"),
-        std::invalid_argument);
+        Catch::Matchers::ContainsSubstring(expected));
 }
 
 TEST_CASE("Pickup definition names cannot be empty", "[app][content][json]")
@@ -220,17 +221,6 @@ TEST_CASE("Pickup definition names cannot be empty", "[app][content][json]")
     REQUIRE_THROWS_AS(
         advanced_platformer::parseLevelData(tests::dumpJson(level), "placement.json"),
         std::invalid_argument);
-}
-
-TEST_CASE("Inline pickup placements require a body size", "[app][content][json]")
-{
-    auto level = minimalLevel();
-    level["pickups"] = tests::list(
-        {tests::object({{"item", "key"}, {"quantity", 1}, {"spawnCell", tests::numbers({1, 0})}})});
-
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::parseLevelData(tests::dumpJson(level), "placement.json"),
-        Catch::Matchers::ContainsSubstring("bodySize"));
 }
 
 TEST_CASE("Missing level JSON is rejected at the file boundary", "[app][content][json]")

@@ -37,11 +37,6 @@ namespace advanced_platformer
     // filename appears in the message; C++ callers leave it off, which is why sourceName
     // is the trailing argument here, unlike in failJson.
 
-    // Checks positive quantity, not spatial placement or whether the item exists.
-    void validatePickupSettings(
-        const PickupPlacement& placement,
-        const std::string& path = "pickup",
-        std::string_view sourceName = {});
     // Checks a nonempty definition name, positive requirement quantity and next-level number.
     // Does not check spatial placement or whether the item or target level exists.
     void validateExitSettings(

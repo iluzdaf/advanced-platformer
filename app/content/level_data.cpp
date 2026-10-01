@@ -102,13 +102,9 @@ namespace advanced_platformer
         std::optional<PatrolJson> patrol;
     };
 
-    // A pickup names a definition, or gives its item, quantity and body size inline.
     struct PickupPlacementJson
     {
-        std::optional<std::string> definition;
-        std::optional<std::string> item;
-        std::optional<int> quantity;
-        std::optional<glm::vec2> bodySize;
+        std::string definition;
         std::optional<Cell> spawnCell;
         std::optional<glm::vec2> spawnFeet;
     };
@@ -130,9 +126,6 @@ namespace advanced_platformer
         LevelObjectType type = LevelObjectType::Player;
         std::optional<std::string> definition;
         std::optional<PatrolJson> patrol;
-        std::optional<std::string> item;
-        std::optional<int> quantity;
-        std::optional<glm::vec2> bodySize;
         std::optional<RequirementJson> requirement;
         std::optional<bool> consumeItem;
         std::optional<int> nextLevel;
@@ -229,41 +222,13 @@ namespace advanced_platformer
             const std::string& path)
         {
             PickupPlacement result;
+            result.definitionName = nameFrom(
+                json.definition,
+                "pickup definition name",
+                sourceName,
+                fieldPath(path, "definition"));
             result.spawn = positionFrom(
                 json.spawnCell, json.spawnFeet, "spawnCell", "spawnFeet", sourceName, path);
-            if (json.definition.has_value())
-            {
-                if (json.item.has_value() || json.quantity.has_value() || json.bodySize.has_value())
-                {
-                    failJson(
-                        sourceName,
-                        path,
-                        "use either a pickup definition or an inline item, quantity and bodySize");
-                }
-                result.definitionName = nameFrom(
-                    *json.definition,
-                    "pickup definition name",
-                    sourceName,
-                    fieldPath(path, "definition"));
-                return result;
-            }
-            if (!json.item.has_value())
-            {
-                failJson(sourceName, path, "missing 'item'");
-            }
-            if (!json.quantity.has_value())
-            {
-                failJson(sourceName, path, "missing 'quantity'");
-            }
-            if (!json.bodySize.has_value())
-            {
-                failJson(sourceName, path, "missing 'bodySize'");
-            }
-            result.stack = {
-                nameFrom(*json.item, "item name", sourceName, fieldPath(path, "item")),
-                *json.quantity};
-            result.bodySize = *json.bodySize;
-            validatePickupSettings(result, path, sourceName);
             return result;
         }
 
@@ -299,12 +264,9 @@ namespace advanced_platformer
             std::string_view sourceName,
             const std::string& path)
         {
-            const std::array<std::pair<std::string_view, bool>, 8> given{{
+            const std::array<std::pair<std::string_view, bool>, 5> given{{
                 {"definition", json.definition.has_value()},
                 {"patrol", json.patrol.has_value()},
-                {"item", json.item.has_value()},
-                {"quantity", json.quantity.has_value()},
-                {"bodySize", json.bodySize.has_value()},
                 {"requirement", json.requirement.has_value()},
                 {"consumeItem", json.consumeItem.has_value()},
                 {"nextLevel", json.nextLevel.has_value()},
@@ -318,7 +280,7 @@ namespace advanced_platformer
                 allowed = {"definition", "patrol"};
                 break;
             case LevelObjectType::Pickup:
-                allowed = {"definition", "item", "quantity", "bodySize"};
+                allowed = {"definition"};
                 break;
             case LevelObjectType::Exit:
                 allowed = {"definition", "requirement", "consumeItem", "nextLevel"};
@@ -354,9 +316,13 @@ namespace advanced_platformer
             return {requiredDefinition(json, sourceName, path), cell, std::nullopt, json.patrol};
         }
 
-        PickupPlacementJson pickupAt(const ObjectTemplateJson& json, Cell cell)
+        PickupPlacementJson pickupAt(
+            const ObjectTemplateJson& json,
+            Cell cell,
+            std::string_view sourceName,
+            const std::string& path)
         {
-            return {json.definition, json.item, json.quantity, json.bodySize, cell, std::nullopt};
+            return {requiredDefinition(json, sourceName, path), cell, std::nullopt};
         }
 
         ExitPlacementJson exitAt(
@@ -400,17 +366,9 @@ namespace advanced_platformer
                 }
                 case LevelObjectType::Pickup: {
                     const PickupPlacement placement =
-                        pickupFrom(pickupAt(json, anywhere), sourceName, path);
-                    if (placement.definitionName.empty())
-                    {
-                        result.itemReferences.emplace(
-                            fieldPath(path, "item"), placement.stack.item);
-                    }
-                    else
-                    {
-                        result.pickupReferences.emplace(
-                            fieldPath(path, "definition"), placement.definitionName);
-                    }
+                        pickupFrom(pickupAt(json, anywhere, sourceName, path), sourceName, path);
+                    result.pickupReferences.emplace(
+                        fieldPath(path, "definition"), placement.definitionName);
                     break;
                 }
                 case LevelObjectType::Exit: {
@@ -519,7 +477,7 @@ namespace advanced_platformer
                         actors.push_back(actorAt(json, cell, sourceName, templatePath));
                         break;
                     case LevelObjectType::Pickup:
-                        pickups.push_back(pickupAt(json, cell));
+                        pickups.push_back(pickupAt(json, cell, sourceName, templatePath));
                         break;
                     }
                 }
@@ -572,16 +530,8 @@ namespace advanced_platformer
         {
             const std::string origin = indexPath("pickups", index);
             result.pickups.push_back(pickupFrom(pickups[index], sourceName, origin));
-            const auto& placement = result.pickups.back();
-            if (placement.definitionName.empty())
-            {
-                result.itemReferences.emplace(fieldPath(origin, "item"), placement.stack.item);
-            }
-            else
-            {
-                result.pickupReferences.emplace(
-                    fieldPath(origin, "definition"), placement.definitionName);
-            }
+            result.pickupReferences.emplace(
+                fieldPath(origin, "definition"), result.pickups.back().definitionName);
         }
 
         result.exit = exitFrom(*file.exit, sourceName, "exit");

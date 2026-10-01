@@ -6,26 +6,12 @@
 #include <stdexcept>
 
 #include "content/content_validation.hpp"
+#include "content/item_catalog.hpp"
 #include "content/tile_catalog.hpp"
 #include "content/level_data.hpp"
 
-TEST_CASE("Pickup and exit settings are validated without JSON", "[app][content][validation]")
+TEST_CASE("Exit settings are validated without JSON", "[app][content][validation]")
 {
-    advanced_platformer::PickupPlacement pickup;
-    pickup.bodySize = {8.0F, 8.0F};
-    REQUIRE_NOTHROW(advanced_platformer::validatePickupSettings(pickup));
-    pickup.bodySize.y = 0.0F;
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::validatePickupSettings(pickup, "pickups[0]"),
-        "pickups[0].bodySize: expected a finite, positive size");
-    pickup.bodySize = {8.0F, 8.0F};
-    pickup.stack.quantity = 0;
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::validatePickupSettings(pickup, "objectLegend.K"),
-        "objectLegend.K.quantity: expected a positive integer, got 0");
-    pickup.stack.quantity = -2;
-    REQUIRE_THROWS_AS(advanced_platformer::validatePickupSettings(pickup), std::invalid_argument);
-
     advanced_platformer::ExitPlacement exit;
     exit.definitionName = "test_door";
     REQUIRE_NOTHROW(advanced_platformer::validateExitSettings(exit));

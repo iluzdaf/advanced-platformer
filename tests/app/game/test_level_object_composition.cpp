@@ -10,7 +10,7 @@
 #include "advanced_platformer/math/aabb.hpp"
 #include "support/atlas_size.hpp"
 
-TEST_CASE("Named pickups and exit requirements resolve through level composition", "[app][pickups]")
+TEST_CASE("Pickups and exit requirements resolve through level composition", "[app][pickups]")
 {
     const auto levelCatalog = advanced_platformer::parseLevelCatalog(
         R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"pickup_placement.json"}]})",

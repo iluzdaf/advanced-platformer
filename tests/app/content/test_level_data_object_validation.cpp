@@ -1,6 +1,7 @@
 #include <stdexcept>
 
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_string.hpp>
 
 #include "content/level_data.hpp"
 #include "support/json_document.hpp"
@@ -109,18 +110,27 @@ TEST_CASE("Object templates cannot provide a placement", "[app][content][json]")
         std::invalid_argument);
 }
 
-TEST_CASE("Pickup object templates require a positive quantity", "[app][content][json]")
+TEST_CASE("Pickup object templates name a definition", "[app][content][json]")
 {
     auto level = markerLevel();
-    level["objectLegend"]["K"] = tests::object(
-        {{"type", "pickup"},
-         {"item", "key"},
-         {"quantity", 0},
-         {"bodySize", tests::numbers({8, 8})}});
-
-    REQUIRE_THROWS_AS(
+    const char* expected = "";
+    SECTION("No definition")
+    {
+        level["objectLegend"]["K"] = tests::object({{"type", "pickup"}});
+        expected = "missing 'definition'";
+    }
+    SECTION("An inline stack")
+    {
+        level["objectLegend"]["K"] = tests::object(
+            {{"type", "pickup"},
+             {"item", "key"},
+             {"quantity", 1},
+             {"bodySize", tests::numbers({8, 8})}});
+        expected = "unknown field 'item'";
+    }
+    REQUIRE_THROWS_WITH(
         advanced_platformer::parseLevelData(tests::dumpJson(level), "bad markers"),
-        std::invalid_argument);
+        Catch::Matchers::ContainsSubstring(expected));
 }
 
 TEST_CASE("Unused object templates reject unknown fields", "[app][content][json]")

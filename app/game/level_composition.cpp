@@ -46,18 +46,11 @@ namespace advanced_platformer
             const ItemCatalog& items,
             int textureId)
         {
-            if (!placement.definitionName.empty())
-            {
-                return composePickup(
-                    pickupDefinition(pickups, placement.definitionName),
-                    items,
-                    textureId,
-                    feetOf(map, placement.spawn));
-            }
-            PickupDefinition definition;
-            definition.stack = placement.stack;
-            definition.bodySize = placement.bodySize;
-            return composePickup(definition, items, textureId, feetOf(map, placement.spawn));
+            return composePickup(
+                pickupDefinition(pickups, placement.definitionName),
+                items,
+                textureId,
+                feetOf(map, placement.spawn));
         }
 
         std::optional<Patrol> makePatrol(
