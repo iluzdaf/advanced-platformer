@@ -35,11 +35,7 @@ namespace advanced_platformer
             std::string script;
             std::string activity;
 
-            bool operator<(const ActivityOwner& other) const
-            {
-                return std::tie(actor, script, activity) <
-                       std::tie(other.actor, other.script, other.activity);
-            }
+            auto operator<=>(const ActivityOwner&) const = default;
         };
 
         struct LoadedScript

@@ -28,6 +28,8 @@ namespace advanced_platformer
     struct SurfaceClimbConfig
     {
         float speed = 60.0F;
+
+        bool operator==(const SurfaceClimbConfig&) const = default;
     };
 
     // Optional capability for a platformer actor. The surface is runtime state; the
