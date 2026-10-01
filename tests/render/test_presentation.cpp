@@ -23,12 +23,12 @@ TEST_CASE(
     advanced_platformer::World world;
     tests::addPlayer(
         world, tests::ActorBuilder::sized({12.0F, 12.0F}).inCell({0, 1}).platforming());
-    const advanced_platformer::ActorId npc =
-        world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                           .inCell({4, 1})
-                           .flying(0.0F)
-                           .withSprite({0, {}, {1.0F, 1.0F}})
-                           .withAnimator(tests::fullAnimator()));
+    const advanced_platformer::ActorId npc = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .inCell({4, 1})
+            .flying(0.0F)
+            .withSprite({0, {}, {1.0F, 1.0F}})
+            .withAnimator(tests::fullAnimator()));
 
     advanced_platformer::updateWorldPresentation(map, world, 0.0F);
 

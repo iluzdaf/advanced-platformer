@@ -125,11 +125,12 @@ TEST_CASE("An NPC with a machine takes its activity from the machine, not its ta
         tests::addPlayer(world, makePlayer({70.0F, 28.0F}));
     const advanced_platformer::ActorId npcId =
         world.addActor(makeNpc({24.0F, 32.0F})
-                           .running(tests::NpcMachineBuilder::named("test")
-                                        .state("nap", advanced_platformer::NpcState::Watch)
-                                        .state("hunt", advanced_platformer::NpcState::Chase)
-                                        .transition("nap", "hunt")
-                                        .when("targetKnown", true)));
+                           .running(
+                               tests::NpcMachineBuilder::named("test")
+                                   .state("nap", advanced_platformer::NpcState::Watch)
+                                   .state("hunt", advanced_platformer::NpcState::Chase)
+                                   .transition("nap", "hunt")
+                                   .when("targetKnown", true)));
     brain(world, npcId).tactic = advanced_platformer::NpcTactic::KeepDistance;
 
     advanced_platformer::updateNpcBehaviour(map, world, 0.1F);
@@ -156,8 +157,9 @@ TEST_CASE("A machine-controlled NPC does not copy its activity into the enum bra
     advanced_platformer::World world;
     const advanced_platformer::ActorId npcId =
         world.addActor(makeNpc({24.0F, 32.0F})
-                           .running(tests::NpcMachineBuilder::named("test").state(
-                               "watch", advanced_platformer::NpcState::Watch)));
+                           .running(
+                               tests::NpcMachineBuilder::named("test").state(
+                                   "watch", advanced_platformer::NpcState::Watch)));
     brain(world, npcId).lastKnownTargetFeet = {70.0F, 32.0F};
 
     advanced_platformer::updateNpcBehaviour(map, world, 0.1F);
@@ -197,16 +199,17 @@ TEST_CASE("A machine reacts to landing and blocked walking facts", "[npc][machin
             .platforming()
             .onTeam(advanced_platformer::Team::Enemy)
             .thinking({80.0F, 1.0F})
-            .running(tests::NpcMachineBuilder::named("charger")
-                         .state("sleep", advanced_platformer::LuaNpcActivity{"test", "rest"})
-                         .state("charge", advanced_platformer::LuaNpcActivity{"test", "walk"})
-                         .state("stunned", advanced_platformer::LuaNpcActivity{"test", "rest"})
-                         .transition("sleep", "charge")
-                         .when("heardLanding", true)
-                         .when("targetOnSameRun", true)
-                         .when("targetWithinNoticeDistance", true)
-                         .transition("charge", "stunned")
-                         .when("movementBlocked", true))
+            .running(
+                tests::NpcMachineBuilder::named("charger")
+                    .state("sleep", advanced_platformer::LuaNpcActivity{"test", "rest"})
+                    .state("charge", advanced_platformer::LuaNpcActivity{"test", "walk"})
+                    .state("stunned", advanced_platformer::LuaNpcActivity{"test", "rest"})
+                    .transition("sleep", "charge")
+                    .when("heardLanding", true)
+                    .when("targetOnSameRun", true)
+                    .when("targetWithinNoticeDistance", true)
+                    .transition("charge", "stunned")
+                    .when("movementBlocked", true))
             .withContactDamage();
     const auto npcId = world.addActor(std::move(charger));
     tests::platformerMovement(actor(world, npcId)).grounded = true;
@@ -220,8 +223,9 @@ TEST_CASE("A machine reacts to landing and blocked walking facts", "[npc][machin
     advanced_platformer::updateNpcSenses(map, world, 0.1F);
     REQUIRE(tests::perception(world, npcId).heardLanding);
     REQUIRE(brain(world, npcId).target == playerId);
-    REQUIRE(advanced_platformer::onSameGroundRun(
-        map, actor(world, npcId).body.bounds, actor(world, playerId).body.bounds));
+    REQUIRE(
+        advanced_platformer::onSameGroundRun(
+            map, actor(world, npcId).body.bounds, actor(world, playerId).body.bounds));
     advanced_platformer::updateNpcBehaviour(map, world, 0.1F, &scripts);
     REQUIRE(machine(world, npcId).definition.states[machine(world, npcId).active].name == "charge");
     REQUIRE(actor(world, npcId).intentions.direction.x == 1.0F);

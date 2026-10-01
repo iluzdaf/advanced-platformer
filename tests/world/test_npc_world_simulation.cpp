@@ -345,10 +345,11 @@ TEST_CASE(
     REQUIRE(jumpAndLand());
     advanced_platformer::Actor& rememberedZombie = requireUnseenChase();
     const glm::vec2 lastKnownFeet = tests::brain(rememberedZombie).lastKnownTargetFeet;
-    REQUIRE_FALSE(advanced_platformer::canStandAt(
-        map,
-        advanced_platformer::cellAtFeet(tests::TileSize, lastKnownFeet),
-        rememberedZombie.body.bounds.size));
+    REQUIRE_FALSE(
+        advanced_platformer::canStandAt(
+            map,
+            advanced_platformer::cellAtFeet(tests::TileSize, lastKnownFeet),
+            rememberedZombie.body.bounds.size));
     const float startingDistance =
         glm::distance(advanced_platformer::feetOf(rememberedZombie.body.bounds), lastKnownFeet);
 

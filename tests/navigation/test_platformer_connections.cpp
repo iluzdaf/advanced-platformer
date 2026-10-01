@@ -272,14 +272,15 @@ TEST_CASE(
     const advanced_platformer::BuiltPlatformerConnections upTheWall =
         advanced_platformer::buildPlatformerConnections(map, {2, 2}, climber);
     REQUIRE_FALSE(upTheWall.connections.empty());
-    REQUIRE(std::all_of(
-        upTheWall.connections.begin(),
-        upTheWall.connections.end(),
-        [](const RouteConnection& connection)
-        {
-            return connection.step.traversal == Traversal::Climb &&
-                   connection.sourceSurface == ClimbSurface::LeftWall;
-        }));
+    REQUIRE(
+        std::all_of(
+            upTheWall.connections.begin(),
+            upTheWall.connections.end(),
+            [](const RouteConnection& connection)
+            {
+                return connection.step.traversal == Traversal::Climb &&
+                       connection.sourceSurface == ClimbSurface::LeftWall;
+            }));
     REQUIRE(
         advanced_platformer::buildPlatformerConnections(map, {2, 2}, walker).connections.empty());
 }
@@ -293,11 +294,12 @@ TEST_CASE("A climber cannot hold an unmarked wall", "[navigation][platformer][cl
     const std::vector<RouteConnection> connections =
         advanced_platformer::buildPlatformerConnections(map, {2, 4}, climber).connections;
     REQUIRE(hasConnection(connections, {3, 4}, Traversal::Walk));
-    REQUIRE(std::none_of(
-        connections.begin(),
-        connections.end(),
-        [](const RouteConnection& connection)
-        { return connection.step.traversal == Traversal::Climb; }));
+    REQUIRE(
+        std::none_of(
+            connections.begin(),
+            connections.end(),
+            [](const RouteConnection& connection)
+            { return connection.step.traversal == Traversal::Climb; }));
 }
 
 TEST_CASE(
@@ -313,14 +315,15 @@ TEST_CASE(
 
     const std::vector<RouteConnection> connections =
         advanced_platformer::buildPlatformerConnections(map, {2, 1}, tallClimber).connections;
-    REQUIRE(std::any_of(
-        connections.begin(),
-        connections.end(),
-        [](const RouteConnection& connection)
-        {
-            return connection.step.traversal == Traversal::Climb &&
-                   connection.sourceSurface == ClimbSurface::LeftWall &&
-                   connection.step.destination.cell == Cell{2, 0} &&
-                   connection.step.destination.surface == ClimbSurface::LeftWall;
-        }));
+    REQUIRE(
+        std::any_of(
+            connections.begin(),
+            connections.end(),
+            [](const RouteConnection& connection)
+            {
+                return connection.step.traversal == Traversal::Climb &&
+                       connection.sourceSurface == ClimbSurface::LeftWall &&
+                       connection.step.destination.cell == Cell{2, 0} &&
+                       connection.step.destination.surface == ClimbSurface::LeftWall;
+            }));
 }

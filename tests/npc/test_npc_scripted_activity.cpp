@@ -74,8 +74,9 @@ TEST_CASE("A scripted route follows a climbing path", "[npc][lua][climb]")
             .platforming()
             .climbing({60.0F})
             .thinking({})
-            .running(tests::NpcMachineBuilder::named("climber").state(
-                "route", advanced_platformer::LuaNpcActivity{"climber", "route"}));
+            .running(
+                tests::NpcMachineBuilder::named("climber").state(
+                    "route", advanced_platformer::LuaNpcActivity{"climber", "route"}));
     tests::platformerMovement(npc).grounded = true;
     const advanced_platformer::ActorId npcId = world.addActor(npc);
     tests::RecordingNpcScripts scripts;
@@ -105,8 +106,9 @@ TEST_CASE(
     advanced_platformer::World world;
     const advanced_platformer::ActorId npcId = world.addActor(
         makeNpc({24.0F, 32.0F})
-            .running(tests::NpcMachineBuilder::named("scripted")
-                         .state("roam", advanced_platformer::LuaNpcActivity{"rat", "roam"}))
+            .running(
+                tests::NpcMachineBuilder::named("scripted")
+                    .state("roam", advanced_platformer::LuaNpcActivity{"rat", "roam"}))
             .patrolling({24.0F, 32.0F}, {72.0F, 32.0F}));
     tests::RecordingNpcScripts scripts;
     scripts.command.routeTo = glm::vec2{72.0F, 32.0F};
@@ -151,11 +153,12 @@ TEST_CASE("A scripted machine exits and enters around a transition", "[npc][lua]
         tests::addPlayer(world, makePlayer({56.0F, 32.0F}));
     const advanced_platformer::ActorId npcId = world.addActor(
         makeNpc({24.0F, 32.0F})
-            .running(tests::NpcMachineBuilder::named("scripted")
-                         .state("waiting", advanced_platformer::LuaNpcActivity{"rat", "wait"})
-                         .state("moving", advanced_platformer::LuaNpcActivity{"rat", "move"})
-                         .transition("waiting", "moving")
-                         .when("targetKnown", true)));
+            .running(
+                tests::NpcMachineBuilder::named("scripted")
+                    .state("waiting", advanced_platformer::LuaNpcActivity{"rat", "wait"})
+                    .state("moving", advanced_platformer::LuaNpcActivity{"rat", "move"})
+                    .transition("waiting", "moving")
+                    .when("targetKnown", true)));
     tests::RecordingNpcScripts scripts;
 
     advanced_platformer::updateNpcBehaviour(map, world, 0.1F, &scripts);
@@ -186,8 +189,9 @@ TEST_CASE("A scripted machine activity requires a scripting runtime", "[npc][lua
     advanced_platformer::World world;
     world.addActor(
         makeNpc({24.0F, 32.0F})
-            .running(tests::NpcMachineBuilder::named("scripted")
-                         .state("waiting", advanced_platformer::LuaNpcActivity{"rat", "wait"})));
+            .running(
+                tests::NpcMachineBuilder::named("scripted")
+                    .state("waiting", advanced_platformer::LuaNpcActivity{"rat", "wait"})));
 
     REQUIRE_THROWS_WITH(
         advanced_platformer::updateNpcBehaviour(map, world, 0.1F),

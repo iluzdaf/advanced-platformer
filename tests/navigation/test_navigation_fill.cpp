@@ -41,19 +41,22 @@ TEST_CASE(
     // Two walkers of one profile, one of another, and a flyer, which needs no connections.
     for (const float x : {24.0F, 40.0F})
     {
-        world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                           .atFeet({x, 32.0F})
-                           .platforming()
-                           .thinking({64.0F, 1.0F}));
+        world.addActor(
+            tests::ActorBuilder::sized({12.0F, 12.0F})
+                .atFeet({x, 32.0F})
+                .platforming()
+                .thinking({64.0F, 1.0F}));
     }
-    world.addActor(tests::ActorBuilder::sized({12.0F, 20.0F})
-                       .atFeet({56.0F, 32.0F})
-                       .platforming()
-                       .thinking({64.0F, 1.0F}));
-    world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                       .atFeet({8.0F, 16.0F})
-                       .flying(20.0F)
-                       .thinking({64.0F, 1.0F}));
+    world.addActor(
+        tests::ActorBuilder::sized({12.0F, 20.0F})
+            .atFeet({56.0F, 32.0F})
+            .platforming()
+            .thinking({64.0F, 1.0F}));
+    world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({8.0F, 16.0F})
+            .flying(20.0F)
+            .thinking({64.0F, 1.0F}));
 
     const advanced_platformer::TileMap map = tests::TileMapBuilder({".....", ".....", "#####"});
     advanced_platformer::queueNavigationFill(map, world, tests::FixedStepSeconds);
@@ -70,14 +73,16 @@ TEST_CASE("A fill caches queued cells for every known profile", "[navigation][fi
 {
     const advanced_platformer::TileMap map = tests::TileMapBuilder({".....", ".....", "#####"});
     advanced_platformer::World world;
-    world.addActor(tests::ActorBuilder::sized(Small.size)
-                       .atFeet({24.0F, 32.0F})
-                       .platforming()
-                       .thinking({64.0F, 1.0F}));
-    world.addActor(tests::ActorBuilder::sized(Tall.size)
-                       .atFeet({56.0F, 32.0F})
-                       .platforming()
-                       .thinking({64.0F, 1.0F}));
+    world.addActor(
+        tests::ActorBuilder::sized(Small.size)
+            .atFeet({24.0F, 32.0F})
+            .platforming()
+            .thinking({64.0F, 1.0F}));
+    world.addActor(
+        tests::ActorBuilder::sized(Tall.size)
+            .atFeet({56.0F, 32.0F})
+            .platforming()
+            .thinking({64.0F, 1.0F}));
     PlatformerConnectionCache& cache = world.platformerConnections();
     const std::size_t cells =
         static_cast<std::size_t>(map.width()) * static_cast<std::size_t>(map.height());
@@ -124,10 +129,11 @@ TEST_CASE("A fill caches queued cells until its budget is spent", "[navigation][
     const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"........", "........", "###..###", "########"});
     advanced_platformer::World world;
-    world.addActor(tests::ActorBuilder::sized(BodySize)
-                       .atFeet({24.0F, 32.0F})
-                       .platforming()
-                       .thinking({64.0F, 1.0F}));
+    world.addActor(
+        tests::ActorBuilder::sized(BodySize)
+            .atFeet({24.0F, 32.0F})
+            .platforming()
+            .thinking({64.0F, 1.0F}));
     PlatformerConnectionCache& cache = world.platformerConnections();
     const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
     const std::size_t cells =

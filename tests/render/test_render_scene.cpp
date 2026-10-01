@@ -81,10 +81,11 @@ namespace
 
     void addNpcIn(advanced_platformer::World& world, advanced_platformer::Cell cell)
     {
-        world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                           .inCell(cell)
-                           .flying(0.0F)
-                           .withSprite(square(NpcTexture, 12.0F)));
+        world.addActor(
+            tests::ActorBuilder::sized({12.0F, 12.0F})
+                .inCell(cell)
+                .flying(0.0F)
+                .withSprite(square(NpcTexture, 12.0F)));
     }
 }
 
@@ -146,10 +147,11 @@ TEST_CASE("Facing right does not flip the player sprite", "[render][scene]")
     const advanced_platformer::Camera camera{{0.0F, 0.0F}, {32.0F, 32.0F}};
     const advanced_platformer::Sprite player{1, {{1.0F, 0.0F}, {1.0F, 1.0F}}, {12.0F, 12.0F}};
     advanced_platformer::World world;
-    world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                       .at({4.0F, 4.0F})
-                       .platforming()
-                       .withSprite(player));
+    world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .at({4.0F, 4.0F})
+            .platforming()
+            .withSprite(player));
 
     const advanced_platformer::RenderScene scene =
         advanced_platformer::buildRenderScene(map, 1, camera, world);
@@ -162,14 +164,15 @@ TEST_CASE("A centre-anchored sprite surrounds a smaller flying body", "[render][
     const advanced_platformer::TileMap map = tests::TileMapBuilder({"..."});
     const advanced_platformer::Camera camera{{0.0F, 0.0F}, {48.0F, 32.0F}};
     advanced_platformer::World world;
-    world.addActor(tests::ActorBuilder::sized({12.0F, 8.0F})
-                       .at({10.0F, 10.0F})
-                       .flying(0.0F)
-                       .withSprite(
-                           {1,
-                            {{0.0F, 96.0F}, {32.0F, 24.0F}},
-                            {32.0F, 24.0F},
-                            advanced_platformer::SpriteAnchor::BodyCenter}));
+    world.addActor(
+        tests::ActorBuilder::sized({12.0F, 8.0F})
+            .at({10.0F, 10.0F})
+            .flying(0.0F)
+            .withSprite(
+                {1,
+                 {{0.0F, 96.0F}, {32.0F, 24.0F}},
+                 {32.0F, 24.0F},
+                 advanced_platformer::SpriteAnchor::BodyCenter}));
 
     const advanced_platformer::RenderScene scene =
         advanced_platformer::buildRenderScene(map, 1, camera, world);
@@ -197,10 +200,11 @@ TEST_CASE("Dying actors fade during the final part of their death", "[render][sc
     const advanced_platformer::TileMap map = tests::TileMapBuilder({".."});
     const advanced_platformer::Camera camera{{0.0F, 0.0F}, {32.0F, 16.0F}};
     advanced_platformer::World world;
-    world.addActor(tests::ActorBuilder::sized({8.0F, 8.0F})
-                       .at({4.0F, 4.0F})
-                       .platforming()
-                       .withSprite({1, {{0.0F, 0.0F}, {8.0F, 8.0F}}, {8.0F, 8.0F}}));
+    world.addActor(
+        tests::ActorBuilder::sized({8.0F, 8.0F})
+            .at({4.0F, 4.0F})
+            .platforming()
+            .withSprite({1, {{0.0F, 0.0F}, {8.0F, 8.0F}}, {8.0F, 8.0F}}));
 
     const auto aliveScene = advanced_platformer::buildRenderScene(map, 1, camera, world);
     REQUIRE(aliveScene.sprites.back().opacity == 1.0F);

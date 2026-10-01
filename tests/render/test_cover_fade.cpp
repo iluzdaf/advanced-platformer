@@ -76,10 +76,10 @@ namespace
         {
             addPlayerIn(world, *playerCell);
         }
-        const advanced_platformer::ActorId npcId =
-            world.addActor(tests::ActorBuilder::sized(npcBounds.size)
-                               .atFeet(advanced_platformer::feetOf(npcBounds))
-                               .flying(0.0F));
+        const advanced_platformer::ActorId npcId = world.addActor(
+            tests::ActorBuilder::sized(npcBounds.size)
+                .atFeet(advanced_platformer::feetOf(npcBounds))
+                .flying(0.0F));
         advanced_platformer::updateCoverFades(map, world, QuarterFade);
         return shown(world, npcId);
     }
@@ -180,11 +180,12 @@ TEST_CASE("An NPC that saw the player this update exposes them", "[render][cover
     advanced_platformer::World world;
     const advanced_platformer::ActorId player = addPlayerIn(world, {3, 1});
     tests::player(world).team = advanced_platformer::Team::Player;
-    world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                       .inCell({4, 1})
-                       .flying(0.0F)
-                       .onTeam(advanced_platformer::Team::Enemy)
-                       .thinking({64.0F, 1.0F}));
+    world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .inCell({4, 1})
+            .flying(0.0F)
+            .onTeam(advanced_platformer::Team::Enemy)
+            .thinking({64.0F, 1.0F}));
 
     // The screen reads what the senses update decided, in the order the simulation runs.
     advanced_platformer::updateNpcSenses(map, world, tests::FixedStepSeconds);

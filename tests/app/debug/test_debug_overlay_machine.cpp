@@ -28,12 +28,14 @@
 TEST_CASE("The overlay shows a machine state in place of the built-in state", "[app][debug]")
 {
     advanced_platformer::World world;
-    world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                       .at({16.0F, 32.0F})
-                       .platforming()
-                       .thinking({})
-                       .running(tests::NpcMachineBuilder::named("test").state(
-                           "rest", advanced_platformer::NpcState::Idle)));
+    world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .at({16.0F, 32.0F})
+            .platforming()
+            .thinking({})
+            .running(
+                tests::NpcMachineBuilder::named("test").state(
+                    "rest", advanced_platformer::NpcState::Idle)));
     const advanced_platformer::TileMap map = tests::TileMapBuilder({"......", "######"});
     const advanced_platformer::CameraController cameraController{
         advanced_platformer::Camera{}, {80.0F, 40.0F}};
@@ -56,11 +58,12 @@ namespace
             .at(topLeft)
             .platforming()
             .thinking({})
-            .running(tests::NpcMachineBuilder::named("test")
-                         .state("rest", advanced_platformer::NpcState::Idle)
-                         .state("hunt", advanced_platformer::NpcState::Chase)
-                         .transition("rest", "hunt")
-                         .when("targetKnown", true));
+            .running(
+                tests::NpcMachineBuilder::named("test")
+                    .state("rest", advanced_platformer::NpcState::Idle)
+                    .state("hunt", advanced_platformer::NpcState::Chase)
+                    .transition("rest", "hunt")
+                    .when("targetKnown", true));
     }
 
     // Which NPC the machine window follows, or nothing.

@@ -33,10 +33,11 @@ TEST_CASE(
         advanced_platformer::makeNavigationCacheDebugInfo(world, map, tests::FixedStepSeconds)
             .has_value());
 
-    world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                       .atFeet({8.0F, 32.0F})
-                       .platforming()
-                       .thinking({64.0F, 1.0F}));
+    world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({8.0F, 32.0F})
+            .platforming()
+            .thinking({64.0F, 1.0F}));
     const auto cellsOf = [&]
     {
         return advanced_platformer::makeNavigationCacheDebugInfo(
@@ -49,20 +50,22 @@ TEST_CASE(
     REQUIRE(cells.size() == 5);
     REQUIRE(cells.front().bounds.topLeft == glm::vec2{0.0F, 16.0F});
     REQUIRE(cells.front().bounds.size == glm::vec2{16.0F, 16.0F});
-    REQUIRE(std::all_of(
-        cells.begin(),
-        cells.end(),
-        [](const advanced_platformer::NavigationCellDebugInfo& cell)
-        { return !cell.connections.has_value(); }));
+    REQUIRE(
+        std::all_of(
+            cells.begin(),
+            cells.end(),
+            [](const advanced_platformer::NavigationCellDebugInfo& cell)
+            { return !cell.connections.has_value(); }));
 
     // Filled, every cell has its connections counted.
     tests::prepareNavigationCache(map, world);
     cells = cellsOf();
-    REQUIRE(std::all_of(
-        cells.begin(),
-        cells.end(),
-        [](const advanced_platformer::NavigationCellDebugInfo& cell)
-        { return cell.connections.has_value() && *cell.connections > 0; }));
+    REQUIRE(
+        std::all_of(
+            cells.begin(),
+            cells.end(),
+            [](const advanced_platformer::NavigationCellDebugInfo& cell)
+            { return cell.connections.has_value() && *cell.connections > 0; }));
 
     // A break the cache has synced with leaves the cells it dropped missing.
     REQUIRE(map.breakTile({2, 2}));
@@ -81,11 +84,12 @@ TEST_CASE(
     };
     REQUIRE_FALSE(listed({32.0F, 16.0F}));
     REQUIRE(listed({32.0F, 32.0F}));
-    REQUIRE(std::none_of(
-        cells.begin(),
-        cells.end(),
-        [](const advanced_platformer::NavigationCellDebugInfo& cell)
-        { return cell.connections.has_value(); }));
+    REQUIRE(
+        std::none_of(
+            cells.begin(),
+            cells.end(),
+            [](const advanced_platformer::NavigationCellDebugInfo& cell)
+            { return cell.connections.has_value(); }));
 }
 
 TEST_CASE(
@@ -96,14 +100,16 @@ TEST_CASE(
         tests::TileMapBuilder({".....", ".....", "##g##"})
             .where('g', tests::Tile().blocksMovement().breaksInto('.'));
     advanced_platformer::World world;
-    world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                       .atFeet({8.0F, 32.0F})
-                       .platforming()
-                       .thinking({64.0F, 1.0F}));
-    world.addActor(tests::ActorBuilder::sized({12.0F, 20.0F})
-                       .atFeet({40.0F, 32.0F})
-                       .platforming()
-                       .thinking({64.0F, 1.0F}));
+    world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({8.0F, 32.0F})
+            .platforming()
+            .thinking({64.0F, 1.0F}));
+    world.addActor(
+        tests::ActorBuilder::sized({12.0F, 20.0F})
+            .atFeet({40.0F, 32.0F})
+            .platforming()
+            .thinking({64.0F, 1.0F}));
     const auto infoFor = [&](std::size_t profileIndex)
     {
         advanced_platformer::NavigationDebugView view;
@@ -118,9 +124,10 @@ TEST_CASE(
 
     // The index picks a profile in the order first found and wraps; an actor name is
     // shown when the matching profile has one.
-    REQUIRE(advanced_platformer::makeNavigationCacheDebugInfo(world, map, tests::FixedStepSeconds)
-                .value_or(advanced_platformer::NavigationCacheDebugInfo{})
-                .actorName.empty());
+    REQUIRE(
+        advanced_platformer::makeNavigationCacheDebugInfo(world, map, tests::FixedStepSeconds)
+            .value_or(advanced_platformer::NavigationCacheDebugInfo{})
+            .actorName.empty());
     REQUIRE(infoFor(0).profileCount == 2);
     REQUIRE(infoFor(0).profileIndex == 0);
     REQUIRE(infoFor(0).bodySize == glm::vec2{12.0F, 12.0F});
@@ -159,10 +166,11 @@ TEST_CASE(
     const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"........", "......##", "########"});
     advanced_platformer::World world;
-    world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                       .atFeet({8.0F, 32.0F})
-                       .platforming()
-                       .thinking({64.0F, 1.0F}));
+    world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({8.0F, 32.0F})
+            .platforming()
+            .thinking({64.0F, 1.0F}));
     const auto infoAt = [&](std::optional<glm::vec2> cursor)
     {
         advanced_platformer::NavigationDebugView view;
@@ -241,10 +249,11 @@ TEST_CASE(
 
     // A walker is shown only the floor.
     advanced_platformer::World walkers;
-    walkers.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                         .inCell({3, 3})
-                         .platforming()
-                         .thinking({64.0F, 1.0F}));
+    walkers.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .inCell({3, 3})
+            .platforming()
+            .thinking({64.0F, 1.0F}));
     const advanced_platformer::NavigationCacheDebugInfo walking = infoFor(walkers);
     REQUIRE(walking.cells.size() == 5);
     REQUIRE_FALSE(isListed(walking, {16.0F, 16.0F}));
@@ -252,11 +261,12 @@ TEST_CASE(
     // A climber is also shown the cells along the wall and under the ceiling, marked as
     // ones it cannot stand in, and they are counted once cached.
     advanced_platformer::World climbers;
-    climbers.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                          .inCell({3, 3})
-                          .platforming()
-                          .climbing({60.0F})
-                          .thinking({64.0F, 1.0F}));
+    climbers.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .inCell({3, 3})
+            .platforming()
+            .climbing({60.0F})
+            .thinking({64.0F, 1.0F}));
     tests::prepareNavigationCache(map, climbers);
     const advanced_platformer::NavigationCacheDebugInfo climbing = infoFor(climbers);
     REQUIRE(climbing.cells.size() > walking.cells.size());

@@ -143,10 +143,11 @@ TEST_CASE("A walking NPC's search reads the fill's cache and never simulates", "
     const advanced_platformer::TileMap map = tests::TileMapBuilder({".....", ".....", "#####"});
     advanced_platformer::World world;
     const auto playerId = world.addActor(makePlayer({70.0F, 32.0F}));
-    const auto npcId = world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                                          .atFeet({56.0F, 32.0F})
-                                          .platforming()
-                                          .thinking({64.0F, 1.0F}));
+    const auto npcId = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({56.0F, 32.0F})
+            .platforming()
+            .thinking({64.0F, 1.0F}));
     tests::platformerMovement(world, npcId).grounded = true;
     brain(world, npcId).target = playerId;
     brain(world, npcId).lastKnownTargetFeet = {8.0F, 32.0F};
@@ -178,10 +179,11 @@ TEST_CASE("An NPC's search after a break waits for the fill and asks again", "[n
             .where('g', tests::Tile().blocksMovement().breaksInto('.'));
     advanced_platformer::World world;
     const auto playerId = world.addActor(makePlayer({70.0F, 32.0F}));
-    const auto npcId = world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                                          .atFeet({8.0F, 32.0F})
-                                          .platforming()
-                                          .thinking({64.0F, 1.0F}));
+    const auto npcId = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({8.0F, 32.0F})
+            .platforming()
+            .thinking({64.0F, 1.0F}));
     tests::prepareNavigationCache(map, world);
     const advanced_platformer::PlatformerTraversalProfile profile{
         {12.0F, 12.0F}, advanced_platformer::PlatformerMovementConfig{}, tests::FixedStepSeconds};
@@ -242,10 +244,11 @@ TEST_CASE("An NPC plans its path again after a break", "[npc][navigation]")
             .where('g', tests::Tile().blocksMovement().breaksInto('.'));
     advanced_platformer::World world;
     const auto playerId = world.addActor(makePlayer({40.0F, 32.0F}));
-    const auto npcId = world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                                          .atFeet({8.0F, 32.0F})
-                                          .platforming()
-                                          .thinking({64.0F, 1.0F}));
+    const auto npcId = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({8.0F, 32.0F})
+            .platforming()
+            .thinking({64.0F, 1.0F}));
     tests::prepareNavigationCache(map, world);
     tests::platformerMovement(world, npcId).grounded = true;
     brain(world, npcId).target = playerId;

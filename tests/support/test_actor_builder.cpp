@@ -70,14 +70,14 @@ TEST_CASE("The actor builder gives exactly one movement component", "[support][a
 TEST_CASE("An NPC from the actor builder is one World accepts", "[support][actor-builder]")
 {
     advanced_platformer::World world;
-    const advanced_platformer::ActorId id =
-        world.addActor(tests::ActorBuilder::sized({12.0F, 20.0F})
-                           .atFeet({24.0F, 32.0F})
-                           .platforming()
-                           .onTeam(advanced_platformer::Team::Enemy)
-                           .thinking({64.0F, 2.0F})
-                           .patrolling({8.0F, 32.0F}, {56.0F, 32.0F})
-                           .biting());
+    const advanced_platformer::ActorId id = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 20.0F})
+            .atFeet({24.0F, 32.0F})
+            .platforming()
+            .onTeam(advanced_platformer::Team::Enemy)
+            .thinking({64.0F, 2.0F})
+            .patrolling({8.0F, 32.0F}, {56.0F, 32.0F})
+            .biting());
 
     advanced_platformer::Actor& npc = tests::actor(world, id);
     REQUIRE(npc.team == advanced_platformer::Team::Enemy);
@@ -95,13 +95,14 @@ TEST_CASE("An NPC from the actor builder is one World accepts", "[support][actor
 TEST_CASE("A thinking actor from the builder can run a machine", "[support][actor-builder]")
 {
     advanced_platformer::World world;
-    const advanced_platformer::ActorId id =
-        world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                           .at({8.0F, 8.0F})
-                           .platforming()
-                           .thinking({})
-                           .running(tests::NpcMachineBuilder::named("test").state(
-                               "rest", advanced_platformer::NpcState::Idle)));
+    const advanced_platformer::ActorId id = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .at({8.0F, 8.0F})
+            .platforming()
+            .thinking({})
+            .running(
+                tests::NpcMachineBuilder::named("test").state(
+                    "rest", advanced_platformer::NpcState::Idle)));
     REQUIRE(
         advanced_platformer::activeNpcMachineState(
             tests::actor(world, id).machine.value_or(advanced_platformer::NpcMachine{}))
