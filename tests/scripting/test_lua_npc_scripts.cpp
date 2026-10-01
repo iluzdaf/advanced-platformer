@@ -91,7 +91,7 @@ TEST_CASE("A Lua activity reads a copied snapshot and returns a command", "[lua]
 }
 
 TEST_CASE(
-    "Lua sees both bodies' centres, its footing, its route and its patrol heading",
+    "A snapshot's centres, footing, route and patrol heading reach Lua as fields",
     "[lua][npc]")
 {
     LuaNpcScripts scripts;

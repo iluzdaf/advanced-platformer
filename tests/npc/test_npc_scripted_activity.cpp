@@ -216,7 +216,7 @@ TEST_CASE("Removing an actor forgets its scripted activity state", "[npc][lua][l
     REQUIRE(world.findActor(npcId) == nullptr);
 }
 
-TEST_CASE("A scripted activity sees both bodies' centres, its footing and its route", "[npc][lua]")
+TEST_CASE("The engine fills a scripted activity's snapshot from the world", "[npc][lua]")
 {
     // The walker stands at a ledge: there is floor to its left and none to its right.
     advanced_platformer::TileMap map = tests::TileMapBuilder({"........", "........", "##......"});
