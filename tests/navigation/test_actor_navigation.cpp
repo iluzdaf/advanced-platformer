@@ -146,9 +146,8 @@ namespace
 
     bool hasStep(const NavigationPath& path, Traversal traversal)
     {
-        return std::any_of(
-            path.waypoints.begin(),
-            path.waypoints.end(),
+        return std::ranges::any_of(
+            path.waypoints,
             [traversal](const Waypoint& waypoint) { return waypoint.traversal == traversal; });
     }
 
@@ -436,9 +435,8 @@ TEST_CASE(
     const NavigationPath path = pathOf(result);
     const auto passes = [&path](RouteLocation location)
     {
-        return std::any_of(
-            path.waypoints.begin(),
-            path.waypoints.end(),
+        return std::ranges::any_of(
+            path.waypoints,
             [location](const Waypoint& waypoint) { return waypoint.feet == feetAt(location); });
     };
     REQUIRE(passes({{2, 3}, ClimbSurface::LeftWall}));

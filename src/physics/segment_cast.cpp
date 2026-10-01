@@ -175,9 +175,8 @@ namespace advanced_platformer
                     spans.push_back(*span);
                 }
             });
-        std::sort(
-            spans.begin(),
-            spans.end(),
+        std::ranges::sort(
+            spans,
             [](const SegmentSpan& left, const SegmentSpan& right)
             { return left.enter < right.enter; });
 

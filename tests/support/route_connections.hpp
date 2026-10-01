@@ -20,9 +20,8 @@ namespace tests
         const std::vector<advanced_platformer::RouteConnection>& connections,
         advanced_platformer::Traversal traversal)
     {
-        const auto connection = std::find_if(
-            connections.begin(),
-            connections.end(),
+        const auto connection = std::ranges::find_if(
+            connections,
             [traversal](const advanced_platformer::RouteConnection& candidate)
             { return candidate.step.traversal == traversal; });
         if (connection == connections.end())
@@ -39,9 +38,8 @@ namespace tests
         advanced_platformer::Cell destination,
         advanced_platformer::Traversal traversal)
     {
-        const auto connection = std::find_if(
-            connections.begin(),
-            connections.end(),
+        const auto connection = std::ranges::find_if(
+            connections,
             [destination, traversal](const advanced_platformer::RouteConnection& candidate)
             {
                 return candidate.step.destination.cell == destination &&
@@ -60,9 +58,8 @@ namespace tests
         const std::vector<advanced_platformer::RouteConnection>& connections,
         int row)
     {
-        const auto jump = std::find_if(
-            connections.begin(),
-            connections.end(),
+        const auto jump = std::ranges::find_if(
+            connections,
             [row](const advanced_platformer::RouteConnection& connection)
             {
                 return connection.step.traversal == advanced_platformer::Traversal::Jump &&

@@ -26,9 +26,8 @@ namespace advanced_platformer
 
     const AnimationClip& clipFor(const AnimationSet& animationSet, AnimationName name)
     {
-        const auto clip = std::find_if(
-            animationSet.clips.begin(),
-            animationSet.clips.end(),
+        const auto clip = std::ranges::find_if(
+            animationSet.clips,
             [name](const AnimationClip& candidate) { return candidate.name == name; });
         if (clip == animationSet.clips.end())
         {

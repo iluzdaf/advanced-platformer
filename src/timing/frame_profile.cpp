@@ -101,9 +101,8 @@ namespace advanced_platformer
 
     int frameStatisticCount(const FrameProfile& profile, const char* name)
     {
-        const auto found = std::find_if(
-            profile.statistics.begin(),
-            profile.statistics.end(),
+        const auto found = std::ranges::find_if(
+            profile.statistics,
             [name](const FrameStatistic& statistic)
             { return std::string_view(statistic.name) == name; });
         return found == profile.statistics.end() ? 0 : found->count;
@@ -118,9 +117,8 @@ namespace advanced_platformer
         }
         // Register before running so an outer phase lists ahead of nested phases.
         addPhaseSeconds(*profile, category, name, 0.0F);
-        const auto phase = std::find_if(
-            profile->phases.begin(),
-            profile->phases.end(),
+        const auto phase = std::ranges::find_if(
+            profile->phases,
             [name](const PhaseTiming& timing) { return std::string_view(timing.name) == name; });
         phaseIndex = static_cast<std::size_t>(phase - profile->phases.begin());
         profile->nestedSecondsOfOpenPhases.push_back(0.0F);
@@ -154,10 +152,8 @@ namespace advanced_platformer
         std::vector<CategoryCost> categories;
         for (const PhaseTiming& phase : phases)
         {
-            const auto category = std::find_if(
-                categories.begin(),
-                categories.end(),
-                [&](const CategoryCost& cost) { return cost.name == phase.category; });
+            const auto category = std::ranges::find_if(
+                categories, [&](const CategoryCost& cost) { return cost.name == phase.category; });
             if (category == categories.end())
             {
                 categories.push_back({phase.category, phase.seconds});
@@ -165,9 +161,8 @@ namespace advanced_platformer
             }
             category->seconds += phase.seconds;
         }
-        std::stable_sort(
-            categories.begin(),
-            categories.end(),
+        std::ranges::stable_sort(
+            categories,
             [](const CategoryCost& left, const CategoryCost& right)
             { return left.seconds > right.seconds; });
 
@@ -303,9 +298,8 @@ namespace advanced_platformer
         {
             for (const FrameStatistic& statistic : frames[index].statistics)
             {
-                const auto existing = std::find_if(
-                    summed.begin(),
-                    summed.end(),
+                const auto existing = std::ranges::find_if(
+                    summed,
                     [&statistic](const FrameStatistic& entry)
                     { return std::string_view(entry.name) == statistic.name; });
                 if (existing == summed.end())

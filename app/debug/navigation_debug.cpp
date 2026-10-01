@@ -127,9 +127,8 @@ namespace advanced_platformer
             }
             const PlatformerTraversalProfile candidate =
                 platformerTraversalProfileFor(actor, simulationStepSeconds);
-            const bool known = std::any_of(
-                profiles.begin(),
-                profiles.end(),
+            const bool known = std::ranges::any_of(
+                profiles,
                 [&candidate](const PlatformerTraversalProfile& profile)
                 { return profile == candidate; });
             if (!known)

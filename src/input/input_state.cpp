@@ -71,8 +71,8 @@ namespace advanced_platformer
         intentions.jumpHeld = isHeld(InputButton::Jump);
         intentions.primaryAttackPressed = wasPressed(InputButton::PrimaryAttack);
 
-        std::fill(pressed.begin(), pressed.end(), false);
-        std::fill(released.begin(), released.end(), false);
+        std::ranges::fill(pressed, false);
+        std::ranges::fill(released, false);
         return intentions;
     }
 }

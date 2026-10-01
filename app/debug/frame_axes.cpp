@@ -33,9 +33,7 @@ namespace advanced_platformer
         }
         fit(frame, history.worst().frameSeconds, history.capacity());
         const std::vector<float> simulationSeconds = history.simulationSecondsOldestFirst();
-        fit(simulation,
-            *std::max_element(simulationSeconds.begin(), simulationSeconds.end()),
-            history.capacity());
+        fit(simulation, *std::ranges::max_element(simulationSeconds), history.capacity());
     }
 
     float FrameAxes::frameTopMilliseconds() const

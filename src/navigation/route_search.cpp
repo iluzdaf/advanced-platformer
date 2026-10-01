@@ -87,7 +87,7 @@ namespace advanced_platformer
                 steps.push_back(incoming.step);
                 current = incoming.parentIndex;
             }
-            std::reverse(steps.begin(), steps.end());
+            std::ranges::reverse(steps);
             return {nodes[current].location, std::move(steps)};
         }
 

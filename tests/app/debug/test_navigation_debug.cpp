@@ -51,9 +51,8 @@ TEST_CASE(
     REQUIRE(cells.front().bounds.topLeft == glm::vec2{0.0F, 16.0F});
     REQUIRE(cells.front().bounds.size == glm::vec2{16.0F, 16.0F});
     REQUIRE(
-        std::all_of(
-            cells.begin(),
-            cells.end(),
+        std::ranges::all_of(
+            cells,
             [](const advanced_platformer::NavigationCellDebugInfo& cell)
             { return !cell.connections.has_value(); }));
 
@@ -61,9 +60,8 @@ TEST_CASE(
     tests::prepareNavigationCache(map, world);
     cells = cellsOf();
     REQUIRE(
-        std::all_of(
-            cells.begin(),
-            cells.end(),
+        std::ranges::all_of(
+            cells,
             [](const advanced_platformer::NavigationCellDebugInfo& cell)
             { return cell.connections.has_value() && *cell.connections > 0; }));
 
@@ -76,18 +74,16 @@ TEST_CASE(
     REQUIRE(cells.size() == 5);
     const auto listed = [&cells](glm::vec2 position)
     {
-        return std::any_of(
-            cells.begin(),
-            cells.end(),
+        return std::ranges::any_of(
+            cells,
             [position](const advanced_platformer::NavigationCellDebugInfo& cell)
             { return cell.bounds.topLeft == position; });
     };
     REQUIRE_FALSE(listed({32.0F, 16.0F}));
     REQUIRE(listed({32.0F, 32.0F}));
     REQUIRE(
-        std::none_of(
-            cells.begin(),
-            cells.end(),
+        std::ranges::none_of(
+            cells,
             [](const advanced_platformer::NavigationCellDebugInfo& cell)
             { return cell.connections.has_value(); }));
 }
@@ -240,9 +236,8 @@ TEST_CASE(
     const auto isListed =
         [](const advanced_platformer::NavigationCacheDebugInfo& info, glm::vec2 position)
     {
-        return std::any_of(
-            info.cells.begin(),
-            info.cells.end(),
+        return std::ranges::any_of(
+            info.cells,
             [position](const advanced_platformer::NavigationCellDebugInfo& cell)
             { return cell.bounds.topLeft == position; });
     };

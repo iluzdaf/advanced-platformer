@@ -106,9 +106,8 @@ namespace advanced_platformer
                     sourceName,
                     fieldPath(path, "file"));
 
-                const auto duplicateNumber = std::find_if(
-                    result.levels.begin(),
-                    result.levels.end(),
+                const auto duplicateNumber = std::ranges::find_if(
+                    result.levels,
                     [&entry](const LevelCatalogEntry& existing)
                     { return existing.number == entry.number; });
                 if (duplicateNumber != result.levels.end())
@@ -119,9 +118,8 @@ namespace advanced_platformer
                 result.levels.push_back(std::move(entry));
             }
 
-            const auto start = std::find_if(
-                result.levels.begin(),
-                result.levels.end(),
+            const auto start = std::ranges::find_if(
+                result.levels,
                 [&result](const LevelCatalogEntry& entry)
                 { return entry.number == result.startLevel; });
             if (start == result.levels.end())
@@ -156,9 +154,8 @@ namespace advanced_platformer
 
     std::filesystem::path levelPath(const LevelCatalog& catalog, int levelNumber)
     {
-        const auto found = std::find_if(
-            catalog.levels.begin(),
-            catalog.levels.end(),
+        const auto found = std::ranges::find_if(
+            catalog.levels,
             [levelNumber](const LevelCatalogEntry& entry) { return entry.number == levelNumber; });
         if (found == catalog.levels.end())
         {

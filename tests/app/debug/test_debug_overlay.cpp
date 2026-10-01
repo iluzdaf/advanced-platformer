@@ -80,17 +80,15 @@ TEST_CASE("Game debug data retains actor definition names", "[app][debug]")
         tests::FixedStepSeconds);
 
     const advanced_platformer::DebugOverlay debug = game.debugOverlay(128.0F, std::nullopt, 0);
-    const auto npc = std::find_if(
-        debug.actors.begin(),
-        debug.actors.end(),
+    const auto npc = std::ranges::find_if(
+        debug.actors,
         [](const advanced_platformer::ActorDebugInfo& actor)
         { return actor.kind == advanced_platformer::ActorDebugKind::Npc; });
     REQUIRE(npc != debug.actors.end());
     REQUIRE(npc->definitionName == "test_guard");
 
-    const auto player = std::find_if(
-        debug.actors.begin(),
-        debug.actors.end(),
+    const auto player = std::ranges::find_if(
+        debug.actors,
         [](const advanced_platformer::ActorDebugInfo& actor)
         { return actor.kind == advanced_platformer::ActorDebugKind::Player; });
     REQUIRE(player != debug.actors.end());
