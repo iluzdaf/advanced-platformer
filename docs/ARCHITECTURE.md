@@ -3,9 +3,6 @@
 This document explains the architecture that exists in the repository now: its main
 boundaries, data model, runtime flow, and the reasons behind them.
 
-If this is your first time in the project, follow [START_HERE.md](START_HERE.md) before
-reading this document from top to bottom.
-
 Use this as a reference when working on a particular feature:
 
 | Area                      | Section                                                                   | What it covers                                                                                                                                |
@@ -806,6 +803,24 @@ therefore change without touching engine code.
 
 [CONTENT.md](CONTENT.md) is the field-by-field authoring reference for those files.
 
+Each file is read with [`content_glaze.hpp`](../app/content/content_glaze.hpp) into plain
+structs whose members are its keys: `readContent<T>` rejects an unknown key and a missing
+member that is not a `std::optional`, and reports where as `line L, column C`. The loader
+then converts the structs to engine types and validates them, reporting by field path
+through `fieldPath`, `indexPath` and `failJson`. `WithDefaults<T>` reads an object whose
+members each keep their C++ default when left out, and `ContentNames<E>` with
+`NamedEnumReader` reads an enum by name, listing the allowed names when one is unknown.
+
+Functions in `app/content` and `app/game` name what they do:
+
+| Verb          | Example                              | Meaning                                                                   |
+| ------------- | ------------------------------------ | ------------------------------------------------------------------------- |
+| `parse...`    | `parseItemCatalog(text, sourceName)` | Text to typed data. Never opens a file, so tests pass a string.           |
+| `load...`     | `loadItemCatalog(path)`              | Reads the file, then calls the matching `parse...`.                       |
+| `validate...` | `validateItemCatalog(catalog)`       | Authoring rules on typed data, whether it came from JSON or C++.          |
+| `compose...`  | `composeActor(definition, ...)`      | Authoring data and runtime context, such as a spawn position, to a value. |
+| a noun        | `itemDefinition(catalog, name)`      | A lookup that throws when the name is unknown.                            |
+
 ## Presentation
 
 ### Scene construction and rendering
@@ -1069,10 +1084,6 @@ implementation. Important coverage includes:
   level transitions;
 - animation selection and render-scene generation;
 - supplied level validation and invalid-content diagnostics.
-
-Tests that need an actor usually define a small local factory containing only the data
-relevant to that subject. This duplication is intentional: each test remains readable
-without discovering a large shared fixture full of unrelated defaults.
 
 For a new rule, start beside the code you changed:
 
