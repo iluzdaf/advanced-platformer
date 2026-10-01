@@ -1,7 +1,9 @@
 #include "animation_catalog.hpp"
+
 #include "content_diagnostics.hpp"
 #include "content_glaze.hpp"
 #include "content_validation.hpp"
+
 #include <array>
 #include <cstddef>
 #include <filesystem>
@@ -13,8 +15,10 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
 #include <glaze/glaze.hpp>
 #include <glm/vec2.hpp>
+
 #include "advanced_platformer/math/validation.hpp"
 #include "advanced_platformer/render/animation.hpp"
 #include "advanced_platformer/render/sprite.hpp"
@@ -90,7 +94,6 @@ namespace advanced_platformer
             }
             throw std::logic_error("An animation clip has no catalog name");
         }
-
     }
 
     void validateAnimationSet(const AnimationSet& set)
@@ -204,16 +207,6 @@ namespace advanced_platformer
         return parseAnimationCatalog(loadContentText(path), path.string());
     }
 
-    const AnimationSet& animationSet(const AnimationCatalog& catalog, const std::string& name)
-    {
-        const auto found = catalog.find(name);
-        if (found == catalog.end())
-        {
-            throw std::invalid_argument(std::format("unknown animation set '{}'", name));
-        }
-        return found->second;
-    }
-
     void validateAnimationAtlasRegions(
         const AnimationCatalog& catalog,
         glm::ivec2 atlasSize,
@@ -232,5 +225,15 @@ namespace advanced_platformer
                 }
             }
         }
+    }
+
+    const AnimationSet& animationSet(const AnimationCatalog& catalog, const std::string& name)
+    {
+        const auto found = catalog.find(name);
+        if (found == catalog.end())
+        {
+            throw std::invalid_argument(std::format("unknown animation set '{}'", name));
+        }
+        return found->second;
     }
 }

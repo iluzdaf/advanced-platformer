@@ -1,11 +1,12 @@
 #include "level_catalog.hpp"
+
 #include "content_diagnostics.hpp"
 #include "content_glaze.hpp"
-#include <format>
 
 #include <algorithm>
 #include <cstddef>
 #include <filesystem>
+#include <format>
 #include <stdexcept>
 #include <string>
 #include <string_view>

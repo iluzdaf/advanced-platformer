@@ -3,6 +3,7 @@
 #include <map>
 #include <string>
 #include <string_view>
+
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 
 namespace advanced_platformer

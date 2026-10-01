@@ -1,4 +1,5 @@
 #pragma once
+
 #include <array>
 #include <cstddef>
 #include <filesystem>
@@ -7,8 +8,10 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
 #include <glaze/glaze.hpp>
 #include <glm/vec2.hpp>
+
 #include "advanced_platformer/render/sprite.hpp"
 
 // Content files read with Glaze through structs that mirror them: their member names are the
@@ -72,22 +75,6 @@ namespace advanced_platformer
         }
     };
 
-    template <> struct ContentNames<SpriteAnchor>
-    {
-        static constexpr std::array Names{
-            std::pair{std::string_view{"feet"}, SpriteAnchor::BodyFeet},
-            std::pair{std::string_view{"center"}, SpriteAnchor::BodyCenter}};
-    };
-}
-
-template <>
-struct glz::from<glz::JSON, advanced_platformer::SpriteAnchor>
-    : advanced_platformer::NamedEnumReader<advanced_platformer::SpriteAnchor>
-{
-};
-
-namespace advanced_platformer
-{
     // A struct read from an object that may leave any member out, which then keeps its C++
     // default. Unknown keys are still errors. The struct's member names are the keys.
     template <class T> class WithDefaults
@@ -106,7 +93,20 @@ namespace advanced_platformer
     private:
         T value{};
     };
+
+    template <> struct ContentNames<SpriteAnchor>
+    {
+        static constexpr std::array Names{
+            std::pair{std::string_view{"feet"}, SpriteAnchor::BodyFeet},
+            std::pair{std::string_view{"center"}, SpriteAnchor::BodyCenter}};
+    };
 }
+
+template <>
+struct glz::from<glz::JSON, advanced_platformer::SpriteAnchor>
+    : advanced_platformer::NamedEnumReader<advanced_platformer::SpriteAnchor>
+{
+};
 
 template <class T> struct glz::from<glz::JSON, advanced_platformer::WithDefaults<T>>
 {

@@ -3,8 +3,10 @@
 #include <map>
 #include <string>
 #include <string_view>
-#include <glm/vec2.hpp>
 #include <vector>
+
+#include <glm/vec2.hpp>
+
 #include "advanced_platformer/inventory/item.hpp"
 
 namespace advanced_platformer

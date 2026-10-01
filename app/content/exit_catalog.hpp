@@ -3,7 +3,9 @@
 #include <map>
 #include <string>
 #include <string_view>
+
 #include <glm/vec2.hpp>
+
 #include "advanced_platformer/render/sprite.hpp"
 #include "advanced_platformer/world/level_exit.hpp"
 

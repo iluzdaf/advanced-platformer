@@ -1,17 +1,21 @@
 #include "pickup_catalog.hpp"
+
 #include "content_diagnostics.hpp"
-#include "content_validation.hpp"
 #include "content_glaze.hpp"
-#include <map>
-#include <optional>
-#include <glaze/glaze.hpp>
-#include <glm/vec2.hpp>
+#include "content_validation.hpp"
+#include "item_catalog.hpp"
+
 #include <filesystem>
 #include <format>
+#include <map>
+#include <optional>
 #include <stdexcept>
-#include "content/item_catalog.hpp"
-#include <string_view>
 #include <string>
+#include <string_view>
+
+#include <glaze/glaze.hpp>
+#include <glm/vec2.hpp>
+
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/world/pickup.hpp"
 
@@ -91,6 +95,24 @@ namespace advanced_platformer
         return parsePickupCatalog(loadContentText(path), path.string(), items);
     }
 
+    void validatePickupAtlasRegions(
+        const PickupCatalog& catalog,
+        glm::ivec2 atlasSize,
+        std::string_view sourceName)
+    {
+        for (const auto& [name, definition] : catalog)
+        {
+            if (definition.sprite.has_value())
+            {
+                requireInAtlas(
+                    definition.sprite->region,
+                    atlasSize,
+                    sourceName,
+                    fieldPath(fieldPath("pickups", name), "sprite"));
+            }
+        }
+    }
+
     const PickupDefinition& pickupDefinition(const PickupCatalog& catalog, const std::string& name)
     {
         const auto found = catalog.find(name);
@@ -118,23 +140,5 @@ namespace advanced_platformer
         }
         validatePickup(result);
         return result;
-    }
-
-    void validatePickupAtlasRegions(
-        const PickupCatalog& catalog,
-        glm::ivec2 atlasSize,
-        std::string_view sourceName)
-    {
-        for (const auto& [name, definition] : catalog)
-        {
-            if (definition.sprite.has_value())
-            {
-                requireInAtlas(
-                    definition.sprite->region,
-                    atlasSize,
-                    sourceName,
-                    fieldPath(fieldPath("pickups", name), "sprite"));
-            }
-        }
     }
 }

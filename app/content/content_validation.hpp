@@ -8,9 +8,10 @@
 
 #include <glm/vec2.hpp>
 
-#include "tile_catalog.hpp"
-#include "level_data.hpp"
 #include "advanced_platformer/render/sprite.hpp"
+
+#include "level_data.hpp"
+#include "tile_catalog.hpp"
 
 namespace advanced_platformer
 {

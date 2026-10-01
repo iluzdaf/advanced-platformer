@@ -1,11 +1,15 @@
 #include "hud_catalog.hpp"
+
 #include "content_diagnostics.hpp"
 #include "content_glaze.hpp"
 #include "content_validation.hpp"
+
 #include <filesystem>
 #include <string_view>
+
 #include <glaze/glaze.hpp>
 #include <glm/vec2.hpp>
+
 #include "advanced_platformer/math/validation.hpp"
 #include "advanced_platformer/render/sprite.hpp"
 

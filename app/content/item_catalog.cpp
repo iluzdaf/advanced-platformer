@@ -1,29 +1,26 @@
 #include "item_catalog.hpp"
+
 #include "content_diagnostics.hpp"
 #include "content_glaze.hpp"
 #include "content_validation.hpp"
-#include "advanced_platformer/inventory/item.hpp"
+
 #include <array>
 #include <cstddef>
-#include <format>
 #include <filesystem>
+#include <format>
+#include <limits>
 #include <map>
 #include <optional>
 #include <set>
-#include <limits>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
+
 #include <glaze/glaze.hpp>
 
-template <> struct advanced_platformer::ContentNames<advanced_platformer::ItemEffect>
-{
-    static constexpr std::array Names{
-        std::pair{std::string_view{"none"}, ItemEffect::None},
-        std::pair{std::string_view{"heal"}, ItemEffect::Heal}};
-};
+#include "advanced_platformer/inventory/item.hpp"
 
 template <>
 struct glz::from<glz::JSON, advanced_platformer::ItemEffect>
@@ -33,6 +30,13 @@ struct glz::from<glz::JSON, advanced_platformer::ItemEffect>
 
 namespace advanced_platformer
 {
+    template <> struct ContentNames<ItemEffect>
+    {
+        static constexpr std::array Names{
+            std::pair{std::string_view{"none"}, ItemEffect::None},
+            std::pair{std::string_view{"heal"}, ItemEffect::Heal}};
+    };
+
     // items.json as written: its member names are the file's keys. Glaze reflects only types
     // with linkage, so these cannot go in an anonymous namespace.
     struct ItemJson
@@ -103,6 +107,21 @@ namespace advanced_platformer
         return parseItemCatalog(loadContentText(path), path.string());
     }
 
+    void validateItemAtlasRegions(
+        const ItemCatalog& catalog,
+        glm::ivec2 atlasSize,
+        std::string_view sourceName)
+    {
+        for (const auto& [name, definition] : catalog.definitions)
+        {
+            requireInAtlas(
+                definition.icon.region,
+                atlasSize,
+                sourceName,
+                fieldPath(fieldPath("items", name), "icon"));
+        }
+    }
+
     const ItemDefinition& itemDefinition(const ItemCatalog& catalog, const std::string& name)
     {
         const auto found = catalog.definitions.find(name);
@@ -133,20 +152,5 @@ namespace advanced_platformer
             result.push_back(item);
         }
         return result;
-    }
-
-    void validateItemAtlasRegions(
-        const ItemCatalog& catalog,
-        glm::ivec2 atlasSize,
-        std::string_view sourceName)
-    {
-        for (const auto& [name, definition] : catalog.definitions)
-        {
-            requireInAtlas(
-                definition.icon.region,
-                atlasSize,
-                sourceName,
-                fieldPath(fieldPath("items", name), "icon"));
-        }
     }
 }

@@ -3,7 +3,9 @@
 #include <map>
 #include <string>
 #include <string_view>
+
 #include <glm/vec2.hpp>
+
 #include "actor_definition.hpp"
 #include "animation_catalog.hpp"
 #include "machine_catalog.hpp"

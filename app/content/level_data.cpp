@@ -1,13 +1,15 @@
 #include "level_data.hpp"
+
 #include "content_diagnostics.hpp"
 #include "content_glaze.hpp"
-#include <format>
 #include "content_validation.hpp"
+#include "item_catalog.hpp"
 
 #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <filesystem>
+#include <format>
 #include <map>
 #include <optional>
 #include <string>
@@ -18,8 +20,13 @@
 #include <glaze/glaze.hpp>
 #include <glm/vec2.hpp>
 
-#include "content/item_catalog.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
+
+// The type of an object legend entry, defined with the file's other shapes below.
+namespace advanced_platformer
+{
+    enum class LevelObjectType;
+}
 
 // A map cell is written as [column, row], with exactly two whole numbers.
 template <> struct glz::from<glz::JSON, advanced_platformer::Cell>
@@ -45,8 +52,31 @@ template <> struct glz::from<glz::JSON, advanced_platformer::Cell>
     }
 };
 
+template <>
+struct glz::from<glz::JSON, advanced_platformer::LevelObjectType>
+    : advanced_platformer::NamedEnumReader<advanced_platformer::LevelObjectType>
+{
+};
+
 namespace advanced_platformer
 {
+    enum class LevelObjectType
+    {
+        Player,
+        Actor,
+        Pickup,
+        Exit
+    };
+
+    template <> struct ContentNames<LevelObjectType>
+    {
+        static constexpr std::array Names{
+            std::pair{std::string_view{"player"}, LevelObjectType::Player},
+            std::pair{std::string_view{"actor"}, LevelObjectType::Actor},
+            std::pair{std::string_view{"pickup"}, LevelObjectType::Pickup},
+            std::pair{std::string_view{"exit"}, LevelObjectType::Exit}};
+    };
+
     // A level file as written: its member names are the file's keys. Glaze reflects only types
     // with linkage, so these cannot go in an anonymous namespace. A placement gives its position
     // as a cell or as feet; the reader checks it gives exactly one.
@@ -93,23 +123,6 @@ namespace advanced_platformer
         std::optional<int> nextLevel;
     };
 
-    enum class LevelObjectType
-    {
-        Player,
-        Actor,
-        Pickup,
-        Exit
-    };
-
-    template <> struct ContentNames<LevelObjectType>
-    {
-        static constexpr std::array Names{
-            std::pair{std::string_view{"player"}, LevelObjectType::Player},
-            std::pair{std::string_view{"actor"}, LevelObjectType::Actor},
-            std::pair{std::string_view{"pickup"}, LevelObjectType::Pickup},
-            std::pair{std::string_view{"exit"}, LevelObjectType::Exit}};
-    };
-
     // An object legend entry: a placement without a position, which comes from each map cell
     // marked with its symbol. The reader checks a type uses only its own fields.
     struct ObjectTemplateJson
@@ -136,16 +149,7 @@ namespace advanced_platformer
         std::optional<std::vector<PickupPlacementJson>> pickups;
         std::optional<ExitPlacementJson> exit;
     };
-}
 
-template <>
-struct glz::from<glz::JSON, advanced_platformer::LevelObjectType>
-    : advanced_platformer::NamedEnumReader<advanced_platformer::LevelObjectType>
-{
-};
-
-namespace advanced_platformer
-{
     namespace
     {
         LevelPosition positionFrom(

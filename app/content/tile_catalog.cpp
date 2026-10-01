@@ -1,4 +1,5 @@
 #include "tile_catalog.hpp"
+
 #include "content_diagnostics.hpp"
 #include "content_glaze.hpp"
 #include "content_validation.hpp"
@@ -14,6 +15,7 @@
 
 #include <glaze/glaze.hpp>
 #include <glm/vec2.hpp>
+
 #include "advanced_platformer/world/tile_map.hpp"
 
 namespace advanced_platformer
@@ -116,22 +118,6 @@ namespace advanced_platformer
         return parseTileCatalog(loadContentText(path), path.string());
     }
 
-    TileMap composeTileMap(
-        const std::vector<std::string>& rows,
-        const std::map<char, std::string>& legend,
-        const TileCatalog& catalog)
-    {
-        // Callers can supply catalogs built directly in C++, without using the JSON loader.
-        validateTileCatalog(catalog);
-        validateTileLegend(legend, catalog);
-        std::map<char, int> ids;
-        for (const auto& entry : legend)
-        {
-            ids.emplace(entry.first, catalog.ids.at(entry.second));
-        }
-        return TileMap::fromAscii(catalog.tileSize, rows, catalog.definitions, ids);
-    }
-
     void validateTileAtlasRegions(
         const TileCatalog& catalog,
         glm::ivec2 atlasSize,
@@ -149,5 +135,21 @@ namespace advanced_platformer
                     fieldPath(fieldPath("tiles", name), "sprite"));
             }
         }
+    }
+
+    TileMap composeTileMap(
+        const std::vector<std::string>& rows,
+        const std::map<char, std::string>& legend,
+        const TileCatalog& catalog)
+    {
+        // Callers can supply catalogs built directly in C++, without using the JSON loader.
+        validateTileCatalog(catalog);
+        validateTileLegend(legend, catalog);
+        std::map<char, int> ids;
+        for (const auto& entry : legend)
+        {
+            ids.emplace(entry.first, catalog.ids.at(entry.second));
+        }
+        return TileMap::fromAscii(catalog.tileSize, rows, catalog.definitions, ids);
     }
 }
