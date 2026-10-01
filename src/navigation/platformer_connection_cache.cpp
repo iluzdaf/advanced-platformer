@@ -152,6 +152,7 @@ namespace advanced_platformer
             forProfile.pending.erase(
                 std::find(forProfile.pending.begin(), forProfile.pending.end(), cell));
         }
+        std::ranges::stable_sort(connections, {}, &RouteConnection::sourceSurface);
         CachedConnections& cached = forProfile.cells[cell];
         cached = {std::move(connections), footprint};
         return cached.connections;

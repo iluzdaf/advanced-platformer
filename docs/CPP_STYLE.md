@@ -17,6 +17,11 @@ The project uses C++26. Before reading the engine, it helps to be comfortable wi
   the connections a search asks for.
 - [Structured bindings](https://en.cppreference.com/w/cpp/language/structured_binding),
   such as `for (const auto& [name, value] : map)`.
+- [`std::span`](https://en.cppreference.com/w/cpp/container/span), a view of a list
+  someone else holds, for passing it on without copying it. The route search takes the
+  connections leaving a location this way, so expanding a location reads them straight
+  from the connection cache. A span does not keep its list alive: hand back one of a
+  list that outlives the call, never of a vector made inside it.
 
 Positions, sizes and velocities are [GLM](https://github.com/g-truc/glm) `glm::vec2`.
 Tests use [Catch2](https://github.com/catchorg/Catch2). Lua scripting goes through

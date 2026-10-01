@@ -113,7 +113,8 @@ namespace advanced_platformer
         GridSize grid,
         const ConnectionFunction& connections,
         const HeuristicFunction& heuristic,
-        const ExpansionReady& canExpand)
+        const ExpansionReady& canExpand,
+        const CostFunction& costOf)
     {
         if (!connections)
         {
@@ -155,7 +156,8 @@ namespace advanced_platformer
             [&](const RouteConnection& connection, std::size_t parentIndex, int parentCost)
         {
             const RouteLocation destination = connection.step.destination;
-            if (connection.cost <= 0)
+            const int cost = costOf ? costOf(connection) : connection.cost;
+            if (cost <= 0)
             {
                 throw std::invalid_argument("A route connection must have positive cost");
             }
@@ -163,12 +165,12 @@ namespace advanced_platformer
             {
                 throw std::invalid_argument("A connection leads outside the grid");
             }
-            if (parentCost > std::numeric_limits<int>::max() - connection.cost)
+            if (parentCost > std::numeric_limits<int>::max() - cost)
             {
                 throw std::overflow_error("A route connection cost is too large");
             }
 
-            const int nextCost = parentCost + connection.cost;
+            const int nextCost = parentCost + cost;
             int& existing = nodeAt[slotOf(grid, destination)];
 
             // 1. The place already has a way in that costs no more than going through the

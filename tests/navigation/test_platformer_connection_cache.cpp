@@ -15,6 +15,7 @@
 #include "advanced_platformer/navigation/route.hpp"
 #include "advanced_platformer/navigation/platformer_connections.hpp"
 #include "advanced_platformer/navigation/platformer_traversal_profile.hpp"
+#include "advanced_platformer/navigation/traversal.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
 #include "support/fixed_step.hpp"
 #include "support/route_connections.hpp"
@@ -120,6 +121,41 @@ TEST_CASE("A non-standable cell is cached with no connections", "[navigation][ca
     REQUIRE(connections->empty());
     REQUIRE(cache.size() == 1);
     REQUIRE(cache.cachedConnections({3, 0}, profile) == connections);
+}
+
+TEST_CASE(
+    "Stored connections are sorted by the surface they leave, in their order within it",
+    "[navigation][cache]")
+{
+    // The search hands back one surface's connections as a single run of the cache, so
+    // each surface's connections must sit together.
+    using advanced_platformer::ClimbSurface;
+    using advanced_platformer::Traversal;
+    const auto leaving = [](ClimbSurface surface, int cost)
+    { return RouteConnection{{{{1, 0}}, Traversal::Climb, {}}, cost, surface}; };
+
+    PlatformerConnectionCache cache;
+    const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
+    cache.storeConnections(
+        {0, 0},
+        profile,
+        {leaving(ClimbSurface::Ceiling, 1),
+         leaving(ClimbSurface::None, 2),
+         leaving(ClimbSurface::Ceiling, 3),
+         leaving(ClimbSurface::None, 4)},
+        {{0, 0}, {1, 0}});
+
+    const std::vector<RouteConnection>* stored = cache.cachedConnections({0, 0}, profile);
+    REQUIRE(stored != nullptr);
+    REQUIRE(stored->size() == 4);
+    REQUIRE((*stored)[0].sourceSurface == ClimbSurface::None);
+    REQUIRE((*stored)[0].cost == 2);
+    REQUIRE((*stored)[1].sourceSurface == ClimbSurface::None);
+    REQUIRE((*stored)[1].cost == 4);
+    REQUIRE((*stored)[2].sourceSurface == ClimbSurface::Ceiling);
+    REQUIRE((*stored)[2].cost == 1);
+    REQUIRE((*stored)[3].sourceSurface == ClimbSurface::Ceiling);
+    REQUIRE((*stored)[3].cost == 3);
 }
 
 TEST_CASE("A walk is cached per length and profile, and a break leaves it", "[navigation][cache]")
