@@ -66,6 +66,16 @@ cmake --build --preset mac-release
 build/mac-release/advanced_platformer
 ```
 
+The `mac-llvm` preset builds the same debug configuration with Homebrew's upstream
+Clang and its libc++ instead of Xcode's (`brew install llvm`). Use it to check that a
+change builds with both compilers, as CI does:
+
+```sh
+cmake --preset mac-llvm
+cmake --build --preset mac-llvm
+ctest --preset mac-llvm
+```
+
 `CMakePresets.json` contains the shared macOS configurations.
 `CMakeUserPresets.json` is ignored and is available for personal configuration that
 should not be shared with version control.
@@ -133,7 +143,8 @@ GitHub Actions runs the jobs below. The names are the ones shown on a pull reque
 
 | Job                          | Runner         | What it does                                                                                                                                          | Runs on                            |
 | ---------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| Build and test               | `macos-latest` | Configures, builds, and runs the whole test suite.                                                                                                    | pushes to `main` and pull requests |
+| Build and test               | `macos-latest` | Configures, builds, and runs the whole test suite with Xcode's Apple Clang.                                                                           | pushes to `main` and pull requests |
+| Build and test (LLVM)        | `macos-latest` | The same with Homebrew's LLVM 23 Clang and its libc++, which catches code only one compiler or library accepts.                                       | pushes to `main` and pull requests |
 | Formatting                   | `ubuntu-24.04` | Checks the formatting of C++, JSON, YAML, Markdown, Python, and Lua, lints the Python and Lua, and runs the tests for the repository's tools.         | pull requests only                 |
 | Headers stand alone          | `ubuntu-24.04` | Compiles every public header on its own.                                                                                                              | pull requests only                 |
 | Static analysis (1/3 to 3/3) | `ubuntu-24.04` | Runs clang-tidy, with warnings as errors, on the files the pull request affects (see [Static analysis](#static-analysis)), split across three shards. | pull requests only                 |
@@ -145,7 +156,7 @@ pull request.
 Every job installs the same pinned CMake, 4.4.3, from PyPI rather than using the
 runner's own.
 
-The build and test job uses a pinned `sccache` release backed by GitHub Actions'
+The build and test jobs use a pinned `sccache` release backed by GitHub Actions'
 cache service. Only compiler outputs are cached; generated build directories are not.
 None of this affects local builds.
 

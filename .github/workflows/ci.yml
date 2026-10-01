@@ -228,3 +228,48 @@ jobs:
         run: '"$SCCACHE_PATH" --show-stats'
       - name: Test
         run: ctest --preset mac-debug
+
+  build-and-test-llvm:
+    name: Build and test (LLVM)
+    # The same build with Homebrew's upstream Clang and its libc++, which catches code that
+    # only one compiler or standard library accepts.
+    runs-on: macos-latest
+    env:
+      LLVM: 23
+      SCCACHE_GHA_ENABLED: "true"
+      HOMEBREW_NO_INSTALL_CLEANUP: "1"
+      HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: "1"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          submodules: true
+      - name: Install CMake
+        run: |
+          pipx install "cmake==$CMAKE"
+          bin=$(pipx environment --value PIPX_BIN_DIR)
+          "$bin/cmake" --version
+          echo "$bin" >> "$GITHUB_PATH"
+      - name: Install LLVM
+        run: |
+          brew install "llvm@$LLVM"
+          llvm=$(brew --prefix "llvm@$LLVM")
+          "$llvm/bin/clang++" --version
+          echo "LLVM_ROOT=$llvm" >> "$GITHUB_ENV"
+      - name: Set up compiler cache
+        uses: mozilla-actions/sccache-action@v0.0.11
+        with:
+          version: v0.17.0
+      - name: Configure
+        run: >
+          cmake --preset mac-llvm
+          -DCMAKE_C_COMPILER="$LLVM_ROOT/bin/clang"
+          -DCMAKE_CXX_COMPILER="$LLVM_ROOT/bin/clang++"
+          -DCMAKE_C_COMPILER_LAUNCHER="$SCCACHE_PATH"
+          -DCMAKE_CXX_COMPILER_LAUNCHER="$SCCACHE_PATH"
+      - name: Build
+        run: cmake --build --preset mac-llvm --parallel 3
+      - name: Show compiler cache statistics
+        run: '"$SCCACHE_PATH" --show-stats'
+      - name: Test
+        run: ctest --preset mac-llvm
