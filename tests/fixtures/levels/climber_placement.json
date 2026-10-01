@@ -1,0 +1,9 @@
+{
+  "tileLegend": { ".": "empty", "#": "stone" },
+  "objectLegend": {
+    "P": { "type": "player" },
+    "C": { "type": "actor", "definition": "test_climber" }
+  },
+  "map": [".......", "P..C...", "#######"],
+  "exit": { "definition": "test_door", "spawnCell": [6, 1] }
+}

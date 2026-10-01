@@ -94,7 +94,9 @@ TEST_CASE("Debug overlay data samples the simulated jump curve", "[app][debug]")
             map,
             {2, 2},
             advanced_platformer::PlatformerTraversalProfile{
-                {12.0F, 12.0F}, movementConfig, tests::FixedStepSeconds})
+                .size = {12.0F, 12.0F},
+                .movement = movementConfig,
+                .stepSeconds = tests::FixedStepSeconds})
             .connections;
     const advanced_platformer::RouteConnection& jump =
         tests::connectionWith(connections, advanced_platformer::Traversal::Jump);

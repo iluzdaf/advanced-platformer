@@ -45,7 +45,8 @@ namespace
 TEST_CASE("A break drops only the cells whose footprint holds it", "[navigation][cache]")
 {
     PlatformerConnectionCache cache;
-    const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
+    const PlatformerTraversalProfile profile{
+        .size = BodySize, .stepSeconds = tests::FixedStepSeconds};
     // Two cells: one swept the tile at (5, 1), the other never came near it.
     cache.storeConnections({0, 1}, profile, {}, {{0, 0}, {6, 2}});
     cache.storeConnections({9, 1}, profile, {}, {{8, 0}, {10, 2}});
@@ -75,8 +76,10 @@ TEST_CASE("A break drops only the cells whose footprint holds it", "[navigation]
 TEST_CASE("Dropped and queued cells wait in one queue, each once", "[navigation][cache]")
 {
     PlatformerConnectionCache cache;
-    const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
-    const PlatformerTraversalProfile other{{12.0F, 20.0F}, {}, tests::FixedStepSeconds};
+    const PlatformerTraversalProfile profile{
+        .size = BodySize, .stepSeconds = tests::FixedStepSeconds};
+    const PlatformerTraversalProfile other{
+        .size = {12.0F, 20.0F}, .stepSeconds = tests::FixedStepSeconds};
     REQUIRE(cache.cellsPending(profile) == 0);
     REQUIRE_FALSE(cache.nextPending(profile).has_value());
 
@@ -110,7 +113,7 @@ TEST_CASE("Dropped and queued cells wait in one queue, each once", "[navigation]
     REQUIRE(cache.nextPending(profile).value_or(Cell{1, 1}) != Cell{1, 1});
     // Moving a cell that is not waiting, or one of an unknown profile, changes nothing.
     cache.prioritise({1, 1}, profile);
-    cache.prioritise({0, 1}, {{1.0F, 1.0F}, {}, tests::FixedStepSeconds});
+    cache.prioritise({0, 1}, {.size = {1.0F, 1.0F}, .stepSeconds = tests::FixedStepSeconds});
     REQUIRE(cache.cellsPending(profile) == 3);
 
     cache.clear();
@@ -123,7 +126,8 @@ TEST_CASE("Syncing with the map applies each break once", "[navigation][cache]")
         tests::TileMapBuilder({"........", "###g####"})
             .where('g', tests::Tile().blocksMovement().breaksInto('.'));
     PlatformerConnectionCache cache;
-    const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
+    const PlatformerTraversalProfile profile{
+        .size = BodySize, .stepSeconds = tests::FixedStepSeconds};
     cache.storeConnections({3, 0}, profile, {}, {{2, 0}, {4, 1}});
     cache.applyRecordedTileBreaks(map);
     REQUIRE(cache.cachedConnections({3, 0}, profile) != nullptr);
@@ -158,7 +162,8 @@ TEST_CASE("A broken wall opens a route once the fill has caught up", "[navigatio
             .atFeet({24.0F, 32.0F})
             .platforming()
             .thinking({64.0F, 1.0F}));
-    const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
+    const PlatformerTraversalProfile profile{
+        .size = BodySize, .stepSeconds = tests::FixedStepSeconds};
     tests::prepareNavigationCache(map, world);
     PlatformerConnectionCache& cache = world.platformerConnections();
     const advanced_platformer::Actor platformer =
@@ -228,7 +233,8 @@ TEST_CASE("A broken floor takes a walk away and gives a fall", "[navigation][cac
             .atFeet({24.0F, 16.0F})
             .platforming()
             .thinking({64.0F, 1.0F}));
-    const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
+    const PlatformerTraversalProfile profile{
+        .size = BodySize, .stepSeconds = tests::FixedStepSeconds};
     tests::prepareNavigationCache(map, world);
     PlatformerConnectionCache& cache = world.platformerConnections();
     const auto walksTo = [](const std::vector<RouteConnection>& connections, Cell cell)
@@ -291,7 +297,8 @@ TEST_CASE("A broken climbable tile takes its climbs away", "[navigation][cache][
             .where('c', tests::Tile().blocksMovement().climbable())
             .where('g', tests::Tile().blocksMovement().climbable().breaksInto('.'));
     const advanced_platformer::SurfaceClimbConfig climbing{60.0F};
-    const PlatformerTraversalProfile climber{BodySize, {}, tests::FixedStepSeconds, climbing};
+    const PlatformerTraversalProfile climber{
+        .size = BodySize, .stepSeconds = tests::FixedStepSeconds, .climb = climbing};
     const RouteLocation start{{2, 3}};
     const RouteLocation onWall{{2, 1}, ClimbSurface::LeftWall};
     const glm::vec2 wallFeet = advanced_platformer::feetOf(

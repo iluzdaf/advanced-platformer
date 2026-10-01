@@ -13,20 +13,6 @@ namespace advanced_platformer
     // actor state; matching profiles share cached connections.
     struct PlatformerTraversalProfile
     {
-        PlatformerTraversalProfile() = default;
-
-        PlatformerTraversalProfile(
-            glm::vec2 bodySize,
-            PlatformerMovementConfig movementConfig,
-            float seconds,
-            std::optional<SurfaceClimbConfig> climbConfig = std::nullopt)
-            : size(bodySize),
-              movement(movementConfig),
-              stepSeconds(seconds),
-              climb(climbConfig)
-        {
-        }
-
         glm::vec2 size = {0.0F, 0.0F};
         PlatformerMovementConfig movement;
         float stepSeconds = 0.0F;

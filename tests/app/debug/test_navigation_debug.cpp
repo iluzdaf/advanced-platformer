@@ -115,8 +115,8 @@ TEST_CASE(
         advanced_platformer::NavigationDebugView view;
         view.profileIndex = profileIndex;
         view.namedProfiles = {
-            {"soldier", {{12.0F, 20.0F}, {}, tests::FixedStepSeconds}},
-            {"zombie", {{12.0F, 12.0F}, {}, tests::FixedStepSeconds}}};
+            {"soldier", {.size = {12.0F, 20.0F}, .stepSeconds = tests::FixedStepSeconds}},
+            {"zombie", {.size = {12.0F, 12.0F}, .stepSeconds = tests::FixedStepSeconds}}};
         return advanced_platformer::makeNavigationCacheDebugInfo(
                    world, map, tests::FixedStepSeconds, view)
             .value_or(advanced_platformer::NavigationCacheDebugInfo{});

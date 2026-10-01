@@ -190,9 +190,10 @@ namespace advanced_platformer
             {
                 navigation.namedProfiles.push_back(
                     {name,
-                     {definition.bodySize,
-                      definition.platformer.value_or(PlatformerMovementConfig{}),
-                      simulationStepSeconds}});
+                     {.size = definition.bodySize,
+                      .movement = definition.platformer.value_or(PlatformerMovementConfig{}),
+                      .stepSeconds = simulationStepSeconds,
+                      .climb = definition.surfaceClimb}});
             }
         }
         DebugOverlay overlay = makeDebugOverlay(

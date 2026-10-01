@@ -13,6 +13,12 @@
       "bodySize": [8, 12],
       "platformer": { "maximumSpeed": 23 },
       "senses": {}
+    },
+    "test_climber": {
+      "bodySize": [8, 8],
+      "platformer": { "maximumSpeed": 30 },
+      "surfaceClimb": { "speed": 40 },
+      "senses": {}
     }
   }
 }

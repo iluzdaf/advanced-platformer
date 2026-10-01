@@ -56,7 +56,8 @@ namespace
 
 TEST_CASE("Walk connections reach every cell on the floor", "[navigation][platformer]")
 {
-    const PlatformerTraversalProfile profile{SmallBody, {}, tests::FixedStepSeconds};
+    const PlatformerTraversalProfile profile{
+        .size = SmallBody, .stepSeconds = tests::FixedStepSeconds};
     const advanced_platformer::TileMap floor = tests::TileMapBuilder({"......", "######"});
     const std::vector<RouteConnection> walks =
         advanced_platformer::buildPlatformerConnections(floor, {1, 0}, profile).connections;
@@ -72,7 +73,8 @@ TEST_CASE("Walk connections reach every cell on the floor", "[navigation][platfo
 
 TEST_CASE("A direct walk costs less than stopping along the way", "[navigation][platformer]")
 {
-    const PlatformerTraversalProfile profile{SmallBody, {}, tests::FixedStepSeconds};
+    const PlatformerTraversalProfile profile{
+        .size = SmallBody, .stepSeconds = tests::FixedStepSeconds};
     const advanced_platformer::TileMap floor = tests::TileMapBuilder({"......", "######"});
     const std::vector<RouteConnection> walks =
         advanced_platformer::buildPlatformerConnections(floor, {1, 0}, profile).connections;
@@ -88,7 +90,8 @@ TEST_CASE("A fall from a ledge records inputs", "[navigation][platformer]")
 {
     const advanced_platformer::TileMap ledge =
         tests::TileMapBuilder({"........", "###.....", "........", "........", "########"});
-    const PlatformerTraversalProfile profile{SmallBody, {}, tests::FixedStepSeconds};
+    const PlatformerTraversalProfile profile{
+        .size = SmallBody, .stepSeconds = tests::FixedStepSeconds};
     const std::vector<RouteConnection> offTheEdge =
         advanced_platformer::buildPlatformerConnections(ledge, {2, 0}, profile).connections;
     const RouteConnection& fall = tests::connectionWith(offTheEdge, Traversal::Fall);
@@ -100,7 +103,8 @@ TEST_CASE("A jump reaches the platform above and records inputs", "[navigation][
 {
     const advanced_platformer::TileMap platform =
         tests::TileMapBuilder({"..........", "....##....", "..........", "##########"});
-    const PlatformerTraversalProfile profile{SmallBody, {}, tests::FixedStepSeconds};
+    const PlatformerTraversalProfile profile{
+        .size = SmallBody, .stepSeconds = tests::FixedStepSeconds};
     const std::vector<RouteConnection> beside =
         advanced_platformer::buildPlatformerConnections(platform, {2, 2}, profile).connections;
     const RouteConnection& jump = tests::jumpUpFrom(beside, 2);
@@ -112,7 +116,8 @@ TEST_CASE("A recorded jump replays to the landing it promised", "[navigation][pl
     const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"..........", "....##....", "..........", "##########"});
     const advanced_platformer::PlatformerMovementConfig config;
-    const PlatformerTraversalProfile profile{SmallBody, config, tests::FixedStepSeconds};
+    const PlatformerTraversalProfile profile{
+        .size = SmallBody, .movement = config, .stepSeconds = tests::FixedStepSeconds};
     const std::vector<RouteConnection> connections =
         advanced_platformer::buildPlatformerConnections(map, {2, 2}, profile).connections;
     const RouteConnection& jump = tests::connectionWith(connections, Traversal::Jump);
@@ -141,7 +146,8 @@ TEST_CASE("A recorded jump replays to the landing it promised", "[navigation][pl
 TEST_CASE("Failed airborne attempts still count their simulated ticks", "[navigation][platformer]")
 {
     const advanced_platformer::TileMap map = tests::TileMapBuilder({"##.##", "#####"});
-    const PlatformerTraversalProfile profile{SmallBody, {}, tests::FixedStepSeconds};
+    const PlatformerTraversalProfile profile{
+        .size = SmallBody, .stepSeconds = tests::FixedStepSeconds};
 
     const advanced_platformer::BuiltPlatformerConnections built =
         advanced_platformer::buildPlatformerConnections(map, {2, 0}, profile);
@@ -153,7 +159,8 @@ TEST_CASE("Failed airborne attempts still count their simulated ticks", "[naviga
 TEST_CASE("A walk connection costs the ticks its follower takes", "[navigation][platformer]")
 {
     const advanced_platformer::PlatformerMovementConfig config;
-    const PlatformerTraversalProfile profile{SmallBody, config, tests::FixedStepSeconds};
+    const PlatformerTraversalProfile profile{
+        .size = SmallBody, .movement = config, .stepSeconds = tests::FixedStepSeconds};
     const advanced_platformer::TileMap walkMap = tests::TileMapBuilder({"....", "####"});
     const std::vector<RouteConnection> walkConnections =
         advanced_platformer::buildPlatformerConnections(walkMap, {1, 0}, profile).connections;
@@ -182,7 +189,8 @@ TEST_CASE("A walk connection costs the ticks its follower takes", "[navigation][
 
 TEST_CASE("Airborne connection costs use the recorded program's ticks", "[navigation][platformer]")
 {
-    const PlatformerTraversalProfile profile{SmallBody, {}, tests::FixedStepSeconds};
+    const PlatformerTraversalProfile profile{
+        .size = SmallBody, .stepSeconds = tests::FixedStepSeconds};
 
     SECTION("jump")
     {
@@ -220,7 +228,10 @@ TEST_CASE("Platformer connections reject an invalid step", "[navigation][platfor
     {
         REQUIRE_THROWS_AS(
             advanced_platformer::buildPlatformerConnections(
-                map, {0, 0}, PlatformerTraversalProfile{SmallBody, movement, step}),
+                map,
+                {0, 0},
+                PlatformerTraversalProfile{
+                    .size = SmallBody, .movement = movement, .stepSeconds = step}),
             std::invalid_argument);
     }
 }
@@ -233,8 +244,12 @@ TEST_CASE(
     const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"......", ".c....", ".c....", ".c....", ".c....", "######"})
             .where('c', tests::Tile{}.blocksMovement().climbable());
-    const PlatformerTraversalProfile walker{SmallBody, {}, tests::FixedStepSeconds};
-    const PlatformerTraversalProfile climber{SmallBody, {}, tests::FixedStepSeconds, {{60.0F}}};
+    const PlatformerTraversalProfile walker{
+        .size = SmallBody, .stepSeconds = tests::FixedStepSeconds};
+    const PlatformerTraversalProfile climber{
+        .size = SmallBody,
+        .stepSeconds = tests::FixedStepSeconds,
+        .climb = advanced_platformer::SurfaceClimbConfig{.speed = 60.0F}};
     const Cell besideWall{2, 4};
 
     const advanced_platformer::BuiltPlatformerConnections walking =
@@ -289,7 +304,10 @@ TEST_CASE("A climber cannot hold an unmarked wall", "[navigation][platformer][cl
 {
     const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"......", ".#....", ".#....", ".#....", ".#....", "######"});
-    const PlatformerTraversalProfile climber{SmallBody, {}, tests::FixedStepSeconds, {{60.0F}}};
+    const PlatformerTraversalProfile climber{
+        .size = SmallBody,
+        .stepSeconds = tests::FixedStepSeconds,
+        .climb = advanced_platformer::SurfaceClimbConfig{.speed = 60.0F}};
 
     const std::vector<RouteConnection> connections =
         advanced_platformer::buildPlatformerConnections(map, {2, 4}, climber).connections;
@@ -311,7 +329,9 @@ TEST_CASE(
         tests::TileMapBuilder({".c..", ".c..", "####"})
             .where('c', tests::Tile{}.blocksMovement().climbable());
     const PlatformerTraversalProfile tallClimber{
-        {12.0F, 40.0F}, {}, tests::FixedStepSeconds, {{60.0F}}};
+        .size = {12.0F, 40.0F},
+        .stepSeconds = tests::FixedStepSeconds,
+        .climb = advanced_platformer::SurfaceClimbConfig{.speed = 60.0F}};
 
     const std::vector<RouteConnection> connections =
         advanced_platformer::buildPlatformerConnections(map, {2, 1}, tallClimber).connections;
