@@ -25,6 +25,14 @@ class TidyTargetSelectionTests(unittest.TestCase):
             selected_paths(self.paths, [Path("CMakeLists.txt")]), self.paths
         )
 
+    def test_submodule_update_selects_everything(self):
+        self.assertEqual(selected_paths(self.paths, [Path("external/glm")]), self.paths)
+
+    def test_vendored_source_change_selects_everything(self):
+        self.assertEqual(
+            selected_paths(self.paths, [Path("external/glad/src/glad.c")]), self.paths
+        )
+
     def test_removed_source_selects_nothing(self):
         self.assertEqual(selected_paths(self.paths, [Path("src/removed.cpp")]), [])
 
