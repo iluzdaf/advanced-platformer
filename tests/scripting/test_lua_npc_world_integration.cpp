@@ -35,7 +35,7 @@ TEST_CASE("An NPC machine invokes a loaded Lua activity", "[lua][npc][integratio
             .thinking({})
             .running(
                 tests::NpcMachineBuilder::named("fixture").state(
-                    "fleeing", advanced_platformer::LuaNpcActivity{"fixture", "flee"})));
+                    "fleeing", advanced_platformer::NpcActivity{"fixture", "flee"})));
 
     advanced_platformer::updateNpcBehaviour(map, world, 0.1F, &scripts);
 
@@ -75,8 +75,8 @@ TEST_CASE(
             .thinking({})
             .running(
                 tests::NpcMachineBuilder::named("walker")
-                    .state("moving", advanced_platformer::LuaNpcActivity{"walker", "walk"})
-                    .state("resting", advanced_platformer::LuaNpcActivity{"walker", "rest"})
+                    .state("moving", advanced_platformer::NpcActivity{"walker", "walk"})
+                    .state("resting", advanced_platformer::NpcActivity{"walker", "rest"})
                     .transition("moving", "resting")
                     .when("movementBlocked", true)));
     tests::platformerMovement(tests::actor(world, npc)).grounded = true;

@@ -46,7 +46,7 @@ namespace advanced_platformer
             sol::table activities;
         };
 
-        void requireValidCall(ActorId actor, const LuaNpcActivity& activity)
+        void requireValidCall(ActorId actor, const NpcActivity& activity)
         {
             if (actor.value == 0)
             {
@@ -118,7 +118,7 @@ namespace advanced_platformer
             return found == scripts.end() ? nullptr : &found->second;
         }
 
-        std::optional<sol::table> activityTable(const LuaNpcActivity& activity) const
+        std::optional<sol::table> activityTable(const NpcActivity& activity) const
         {
             const LoadedScript* script = scriptNamed(activity.script);
             if (script == nullptr)
@@ -135,7 +135,7 @@ namespace advanced_platformer
 
         void report(
             ActorId actor,
-            const LuaNpcActivity& activity,
+            const NpcActivity& activity,
             std::string hook,
             std::string message)
         {
@@ -281,14 +281,14 @@ namespace advanced_platformer
         return implementation->scriptNamed(script) != nullptr;
     }
 
-    bool LuaNpcScripts::hasActivity(const LuaNpcActivity& activity) const
+    bool LuaNpcScripts::hasActivity(const NpcActivity& activity) const
     {
         return implementation->activityTable(activity).has_value();
     }
 
     void LuaNpcScripts::enter(
         ActorId actor,
-        const LuaNpcActivity& activity,
+        const NpcActivity& activity,
         const NpcActivitySnapshot& snapshot)
     {
         requireValidCall(actor, activity);
@@ -322,7 +322,7 @@ namespace advanced_platformer
 
     NpcActivityCommand LuaNpcScripts::update(
         ActorId actor,
-        const LuaNpcActivity& activity,
+        const NpcActivity& activity,
         const NpcActivitySnapshot& snapshot,
         float deltaTime)
     {
@@ -370,7 +370,7 @@ namespace advanced_platformer
 
     void LuaNpcScripts::exit(
         ActorId actor,
-        const LuaNpcActivity& activity,
+        const NpcActivity& activity,
         const NpcActivitySnapshot& snapshot)
     {
         requireValidCall(actor, activity);

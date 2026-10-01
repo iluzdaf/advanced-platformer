@@ -19,7 +19,7 @@
 #include "advanced_platformer/npc/npc_activity_scripts.hpp"
 #include "advanced_platformer/npc/npc_facts.hpp"
 #include "advanced_platformer/npc/npc_navigation.hpp"
-#include "advanced_platformer/npc/npc_scripted_activity.hpp"
+#include "advanced_platformer/npc/npc_activity_runner.hpp"
 #include "advanced_platformer/npc/npc_senses.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "advanced_platformer/npc/npc_update.hpp"
@@ -49,25 +49,25 @@ namespace advanced_platformer
 
             NpcFacts facts =
                 gatherNpcFacts(update.map, actor, brain, perception, target, machine.stateElapsed);
-            const LuaNpcActivity previous = activeNpcMachineState(machine).does;
+            const NpcActivity previous = activeNpcMachineState(machine).does;
             if (advanceNpcMachine(machine, facts, update.deltaTime).has_value())
             {
                 if (machine.activityEntered)
                 {
-                    exitScriptedActivity(update, actor, brain, follower, target, previous, facts);
+                    exitNpcActivity(update, actor, brain, follower, target, previous, facts);
                     machine.activityEntered = false;
                 }
                 facts = gatherNpcFacts(
                     update.map, actor, brain, perception, target, machine.stateElapsed);
             }
 
-            const LuaNpcActivity& activity = activeNpcMachineState(machine).does;
+            const NpcActivity& activity = activeNpcMachineState(machine).does;
             if (!machine.activityEntered)
             {
-                enterScriptedActivity(update, actor, brain, follower, target, activity, facts);
+                enterNpcActivity(update, actor, brain, follower, target, activity, facts);
                 machine.activityEntered = true;
             }
-            updateScriptedActivity(update, actor, brain, follower, target, activity, facts);
+            updateNpcActivity(update, actor, brain, follower, target, activity, facts);
             machine.stateElapsed += update.deltaTime;
         }
     }

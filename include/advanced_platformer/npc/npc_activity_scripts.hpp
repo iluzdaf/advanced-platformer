@@ -68,16 +68,16 @@ namespace advanced_platformer
 
         virtual void enter(
             ActorId actor,
-            const LuaNpcActivity& activity,
+            const NpcActivity& activity,
             const NpcActivitySnapshot& snapshot) = 0;
         virtual NpcActivityCommand update(
             ActorId actor,
-            const LuaNpcActivity& activity,
+            const NpcActivity& activity,
             const NpcActivitySnapshot& snapshot,
             float deltaTime) = 0;
         virtual void exit(
             ActorId actor,
-            const LuaNpcActivity& activity,
+            const NpcActivity& activity,
             const NpcActivitySnapshot& snapshot) = 0;
         virtual void forget(ActorId actor) = 0;
     };

@@ -40,7 +40,7 @@ namespace advanced_platformer
             const NpcStateMachine& machine = entry.second;
             for (const NpcMachineState& state : machine.states)
             {
-                const LuaNpcActivity& activity = state.does;
+                const NpcActivity& activity = state.does;
                 if (!loaded.insert(activity.script).second)
                 {
                     continue;
@@ -54,7 +54,7 @@ namespace advanced_platformer
         {
             for (const NpcMachineState& state : machine.states)
             {
-                const LuaNpcActivity& activity = state.does;
+                const NpcActivity& activity = state.does;
                 if (!scripts.hasActivity(activity))
                 {
                     throw std::invalid_argument(

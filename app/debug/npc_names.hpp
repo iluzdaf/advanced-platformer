@@ -7,5 +7,5 @@
 namespace advanced_platformer
 {
     // The name the machine window prints for a state's activity: "script.activity".
-    std::string nameOf(const LuaNpcActivity& activity);
+    std::string nameOf(const NpcActivity& activity);
 }

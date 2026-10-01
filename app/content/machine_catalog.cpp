@@ -23,7 +23,7 @@ namespace advanced_platformer
 {
     // machines.json as written: its member names are the file's keys. Glaze reflects only types
     // with linkage, so these cannot go in an anonymous namespace.
-    struct LuaActivityJson
+    struct ActivityJson
     {
         std::string script;
         std::string activity;
@@ -32,7 +32,7 @@ namespace advanced_platformer
     struct MachineStateJson
     {
         std::string name;
-        LuaActivityJson does;
+        ActivityJson does;
     };
 
     struct MachineTransitionJson
@@ -70,8 +70,8 @@ namespace advanced_platformer
             return name;
         }
 
-        LuaNpcActivity luaActivity(
-            const LuaActivityJson& json,
+        NpcActivity npcActivity(
+            const ActivityJson& json,
             std::string_view sourceName,
             const std::string& path)
         {
@@ -99,7 +99,7 @@ namespace advanced_platformer
                 state.name = requireName(
                     stateJson.name, "state name", sourceName, fieldPath(statePath, "name"));
                 const std::string doesPath = fieldPath(statePath, "does");
-                state.does = luaActivity(stateJson.does, sourceName, doesPath);
+                state.does = npcActivity(stateJson.does, sourceName, doesPath);
                 machine.states.push_back(state);
             }
 

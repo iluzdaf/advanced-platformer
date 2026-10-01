@@ -119,12 +119,12 @@ TEST_CASE("A state machine rejects states and transitions it cannot run", "[npc]
     }
     SECTION("A Lua state without a script name")
     {
-        machine.states[0].does = advanced_platformer::LuaNpcActivity{"", "wait"};
+        machine.states[0].does = advanced_platformer::NpcActivity{"", "wait"};
         expected = "needs a Lua script name";
     }
     SECTION("A Lua state without an activity name")
     {
-        machine.states[0].does = advanced_platformer::LuaNpcActivity{"rat", ""};
+        machine.states[0].does = advanced_platformer::NpcActivity{"rat", ""};
         expected = "needs a Lua activity name";
     }
     SECTION("A transition to a state it lacks")
@@ -155,7 +155,7 @@ TEST_CASE(
     REQUIRE(advanced_platformer::activeNpcMachineState(machine).name == "rest");
     REQUIRE(
         advanced_platformer::activeNpcMachineState(machine).does ==
-        advanced_platformer::LuaNpcActivity{"test", "idle"});
+        advanced_platformer::NpcActivity{"test", "idle"});
 
     REQUIRE(
         advanced_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts(), 0.1F) ==

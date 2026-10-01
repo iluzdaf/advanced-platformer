@@ -17,7 +17,7 @@ namespace advanced_platformer
     struct NpcMachineState
     {
         std::string name;
-        LuaNpcActivity does;
+        NpcActivity does;
     };
 
     // A transition fires once every fact in `when` has held for `after` seconds. The

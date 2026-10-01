@@ -195,7 +195,7 @@ intentions instead of reading a keyboard. Follow this route:
 2. [`npc_facts.cpp`](../src/npc/npc_facts.cpp)
 3. [`npc_state_machine.cpp`](../src/npc/npc_state_machine.cpp), which chooses the
    state from the facts
-4. [`npc_scripted_activity.cpp`](../src/npc/npc_scripted_activity.cpp), which hands the
+4. [`npc_activity_runner.cpp`](../src/npc/npc_activity_runner.cpp), which hands the
    state's Lua activity a snapshot and applies the command it returns
 5. [`npc_system.cpp`](../src/npc/npc_system.cpp), which runs each NPC's decisions
 6. [`common.lua`](../assets/scripts/common.lua), the activities shipped machines share

@@ -31,8 +31,8 @@ TEST_CASE("Machine JSON keeps state order, expands from lists and reads holds", 
     REQUIRE(parsed.name == "test_machine");
     REQUIRE(parsed.states.size() == 3);
     REQUIRE(parsed.states[0].name == "rest");
-    REQUIRE(parsed.states[0].does == advanced_platformer::LuaNpcActivity{"test", "idle"});
-    REQUIRE(parsed.states[2].does == advanced_platformer::LuaNpcActivity{"rat", "flee"});
+    REQUIRE(parsed.states[0].does == advanced_platformer::NpcActivity{"test", "idle"});
+    REQUIRE(parsed.states[2].does == advanced_platformer::NpcActivity{"rat", "flee"});
     REQUIRE(parsed.transitions.size() == 4);
     REQUIRE(parsed.transitions[1].after == 0.5F);
     REQUIRE(parsed.transitions[1].when.at("targetKnown") == false);

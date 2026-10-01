@@ -13,13 +13,13 @@
 namespace
 {
     using advanced_platformer::ActorId;
-    using advanced_platformer::LuaNpcActivity;
     using advanced_platformer::LuaNpcScripts;
+    using advanced_platformer::NpcActivity;
     using advanced_platformer::NpcActivitySnapshot;
 
     constexpr ActorId FirstActor{1};
     constexpr ActorId SecondActor{2};
-    const LuaNpcActivity Activity{"example", "decide"};
+    const NpcActivity Activity{"example", "decide"};
 
     NpcActivitySnapshot commandSnapshot()
     {

@@ -7,7 +7,7 @@
 
 namespace advanced_platformer
 {
-    std::string nameOf(const LuaNpcActivity& activity)
+    std::string nameOf(const NpcActivity& activity)
     {
         return std::format("{}.{}", activity.script, activity.activity);
     }
