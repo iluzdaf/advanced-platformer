@@ -30,7 +30,7 @@ Use this as a reference when working on a particular feature:
 
 ## Purpose and scope
 
-Advanced Platformer is a small C++17 teaching engine with a complete example game. It
+Advanced Platformer is a small C++26 teaching engine with a complete example game. It
 keeps the code explicit enough to trace in a debugger and separates gameplay rules
 from graphics so the major paths can be tested without opening a window.
 

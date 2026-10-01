@@ -1,6 +1,6 @@
 # Advanced Platformer
 
-Advanced Platformer is a C++17 teaching engine and example game built from independently
+Advanced Platformer is a C++26 teaching engine and example game built from independently
 testable systems. The current implementation includes platformer movement, tile collision,
 scrolling, composed actors, NPC state machines with Lua activities, flying and platformer
 pathfinding, projectiles, animation, inventory, automatic pickups, a three-level game
@@ -21,8 +21,8 @@ New to the project? Start with [START_HERE.md](docs/START_HERE.md).
 
 ## Requirements
 
-- CMake 3.21 or newer
-- A C++17 compiler:
+- CMake 3.25 or newer
+- A C++26 compiler:
   - Apple Clang supplied with current Xcode on macOS
   - Visual Studio 2022 with the **Desktop development with C++** workload on Windows
 - **C++ CMake tools for Windows** when installing Visual Studio
