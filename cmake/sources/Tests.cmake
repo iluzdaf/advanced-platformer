@@ -1,6 +1,7 @@
 target_sources(
     advanced_platformer_tests
     PRIVATE
+        ${PROJECT_SOURCE_DIR}/app/debug/console_log.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/debug_overlay.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/frame_axes.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/frame_selection.cpp
@@ -50,6 +51,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_npc_script_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_pickup_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_tile_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/debug/test_console_log.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_debug_overlay.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_debug_overlay_machine.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_debug_overlay_navigation.cpp
@@ -97,6 +99,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/scripting/test_lua_npc_script_loading.cpp
         ${PROJECT_SOURCE_DIR}/tests/scripting/test_lua_npc_script_validation.cpp
         ${PROJECT_SOURCE_DIR}/tests/scripting/test_lua_npc_scripts.cpp
+        ${PROJECT_SOURCE_DIR}/tests/scripting/test_lua_npc_script_output.cpp
         ${PROJECT_SOURCE_DIR}/tests/scripting/test_lua_vec2.cpp
         ${PROJECT_SOURCE_DIR}/tests/scripting/test_lua_npc_world_integration.cpp
         ${PROJECT_SOURCE_DIR}/tests/support/test_actor_builder.cpp

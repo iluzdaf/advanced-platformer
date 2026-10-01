@@ -2,6 +2,8 @@ target_sources(
     advanced_platformer
     PRIVATE
         ${PROJECT_SOURCE_DIR}/app/application.cpp
+        ${PROJECT_SOURCE_DIR}/app/debug/console_log.cpp
+        ${PROJECT_SOURCE_DIR}/app/debug/console_ui.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/debug_draw.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/debug_overlay.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/debug_overlay_ui.cpp

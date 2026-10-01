@@ -478,7 +478,8 @@ vectors.
 Every visit has a `self` table keyed by stable `ActorId`, script, and activity. Calls are
 protected and have an instruction budget. A hook error or invalid command records its source,
 script, activity, hook, and actor, then produces no command instead of escaping into the
-simulation. A failed script replacement leaves the previous script in place. Before queued actor
+simulation. A script's `print` is recorded the same way rather than written to standard
+output. A failed script replacement leaves the previous script in place. Before queued actor
 removals are applied, an NPC cleanup system discards their script-owned state. Level replacement
 and restart discard that state for every actor before replacing the world.
 
@@ -898,6 +899,12 @@ collection and selection logic testable without a window.
 
 `app/debug/machine_graph_ui` presents the selected NPC's `NpcMachine` from that snapshot
 without editing it.
+
+Everything the application logs goes through one `ConsoleLog`: each frame the loop takes
+the scripts' recorded errors and prints from `Game`, and GLFW reports its errors there too.
+The log echoes every line to standard error and keeps the latest 500, which the debug
+tools' console window shows, errors in red, following new lines while it is scrolled to
+the bottom.
 
 Frame profiling is optional. The application owns each frame record and passes it to
 the simulation; work measures its own duration with nested scopes and adds named

@@ -1,5 +1,7 @@
 #include "debug_tools.hpp"
 
+#include "console_log.hpp"
+#include "console_ui.hpp"
 #include "debug_overlay.hpp"
 #include "debug_overlay_ui.hpp"
 #include "frame_profile_ui.hpp"
@@ -18,6 +20,7 @@ namespace advanced_platformer
         const DebugOverlay& overlay,
         const std::optional<WindowViewport>& viewport,
         const DebugToolVisibility& visibility,
+        const ConsoleLog& console,
         bool paused)
     {
         if (tools.machineActor.has_value() &&
@@ -39,6 +42,10 @@ namespace advanced_platformer
         if (visibility.stateMachine)
         {
             drawMachineGraph(tools.machineEditors, overlay.machine, tools.machineActor.has_value());
+        }
+        if (visibility.console)
+        {
+            drawConsole(tools.consoleView, console);
         }
         recordFrameForPlot(tools.frameHistory, tools.frameSelection, profile, paused);
         return drawFrameProfile(

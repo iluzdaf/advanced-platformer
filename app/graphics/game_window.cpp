@@ -1,7 +1,10 @@
 #include "game_window.hpp"
 
-#include <iostream>
+#include <format>
+#include <functional>
 #include <stdexcept>
+#include <string>
+#include <utility>
 
 #include <glad/glad.h>
 
@@ -14,10 +17,23 @@
 
 namespace advanced_platformer
 {
-    GameWindow::GlfwLibrary::GlfwLibrary()
+    namespace
     {
-        glfwSetErrorCallback([](int, const char* description)
-                             { std::cerr << "GLFW: " << description << '\n'; });
+        const std::function<void(std::string)>* glfwErrorReport = nullptr;
+    }
+
+    GameWindow::GlfwLibrary::GlfwLibrary(std::function<void(std::string)> reportError)
+        : reportError(std::move(reportError))
+    {
+        glfwErrorReport = &this->reportError;
+        glfwSetErrorCallback(
+            [](int, const char* description)
+            {
+                if (glfwErrorReport != nullptr)
+                {
+                    (*glfwErrorReport)(std::format("[glfw] {}", description));
+                }
+            });
         if (glfwInit() == GLFW_FALSE)
         {
             throw std::runtime_error("GLFW could not start");
@@ -27,9 +43,15 @@ namespace advanced_platformer
     GameWindow::GlfwLibrary::~GlfwLibrary()
     {
         glfwTerminate();
+        glfwSetErrorCallback(nullptr);
+        glfwErrorReport = nullptr;
     }
 
-    GameWindow::GameWindow(const char* title, glm::ivec2 size)
+    GameWindow::GameWindow(
+        const char* title,
+        glm::ivec2 size,
+        std::function<void(std::string)> reportError)
+        : library(std::move(reportError))
     {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);

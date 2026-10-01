@@ -114,6 +114,7 @@ against the 60 Hz budget, with simulation costs stacked by category.
 | Show or hide actor text                           | 3                                     |
 | Show or hide navigation-cache totals              | 4                                     |
 | Show or hide the state-machine window             | 5                                     |
+| Show or hide the console                          | 6                                     |
 | Lock or unlock the machine window to an NPC       | Click the NPC                         |
 | Pause and inspect a frame, or scrub across frames | Press or drag on the plot             |
 | Deselect and resume                               | Click the picked frame again          |

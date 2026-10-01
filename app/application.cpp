@@ -2,7 +2,9 @@
 
 #include <cstddef>
 #include <cstdlib>
+#include <iostream>
 #include <optional>
+#include <string>
 #include <utility>
 
 #include <glm/vec2.hpp>
@@ -15,6 +17,7 @@
 #include "content/game_catalogs.hpp"
 #include "content/level_catalog.hpp"
 #include "content/npc_script_catalog.hpp"
+#include "debug/console_log.hpp"
 #include "debug/debug_tools.hpp"
 #include "debug/frame_profile_ui.hpp"
 #include "game/game.hpp"
@@ -41,17 +44,11 @@ namespace advanced_platformer
             glm::vec2 aimDirection = {1.0F, 0.0F};
             bool showDebugOverlay = false;
             DebugToolVisibility debugToolVisibility;
-            // Which NPC body's navigation the overlay shows; N moves to the next.
             std::size_t debugBodyIndex = 0;
-            // B with the overlay open breaks the tile under the cursor, as a shot would.
             bool breakTileRequested = false;
             bool inventoryOpen = false;
-            // P pauses the simulation; . runs one fixed step while paused.
             bool simulationPaused = false;
             bool stepRequested = false;
-            // Set when the inventory opens or closes, the simulation pauses or resumes,
-            // or the game restarts, so the next step discards the time and input edges
-            // that built up across the change.
             bool playInterrupted = false;
             bool restartRequested = false;
         };
@@ -143,6 +140,11 @@ namespace advanced_platformer
                     !context->debugToolVisibility.stateMachine;
                 return;
             }
+            if (key == GLFW_KEY_6 && action == GLFW_PRESS && context->showDebugOverlay)
+            {
+                context->debugToolVisibility.console = !context->debugToolVisibility.console;
+                return;
+            }
             if (key == GLFW_KEY_N && action == GLFW_PRESS)
             {
                 ++context->debugBodyIndex;
@@ -180,9 +182,6 @@ namespace advanced_platformer
             context->input.setButton(InputButton::PrimaryAttack, action == GLFW_PRESS);
         }
 
-        // What the player asks of one simulation step: the buttons pressed since the last
-        // one, aimed at the cursor while the game has it. Without the cursor the last aim
-        // holds and no shot fires.
         InputIntentions playerIntentions(
             ApplicationContext& context,
             const Game& game,
@@ -208,7 +207,12 @@ namespace advanced_platformer
 
     int runApplication()
     {
-        const GameWindow window("Advanced Platformer", {960, 540});
+        ConsoleLog console(std::cerr);
+        const GameWindow window(
+            "Advanced Platformer",
+            {960, 540},
+            [&console](std::string message)
+            { console.write(ConsoleLevel::Error, std::move(message)); });
         ApplicationContext context;
         glfwSetWindowUserPointer(window.handle(), &context);
         glfwSetKeyCallback(window.handle(), handleKey);
@@ -301,15 +305,12 @@ namespace advanced_platformer
                     context.input.clearButton(InputButton::PrimaryAttack);
                 }
             }
-            // The game has the cursor while it is over the image and no UI wants the mouse.
             std::optional<glm::vec2> gameCursor = internalCursor;
             if (ImGui::GetIO().WantCaptureMouse || context.inventoryOpen)
             {
                 gameCursor.reset();
             }
 
-            // What input survives into the step: nothing while paused, across an
-            // interruption, or while ImGui has the keyboard; no attack without the cursor.
             const bool paused =
                 context.inventoryOpen || game.complete() || context.simulationPaused;
             if (paused || context.playInterrupted || ImGui::GetIO().WantCaptureKeyboard)
@@ -328,7 +329,6 @@ namespace advanced_platformer
             };
             if (paused || context.playInterrupted)
             {
-                // Time that built up would otherwise be simulated in a burst on resuming.
                 fixedStep.reset();
                 context.playInterrupted = false;
                 if (context.stepRequested && !context.inventoryOpen && !game.complete())
@@ -347,6 +347,11 @@ namespace advanced_platformer
                 profile.simulationSeconds = simulationWatch.elapsedSeconds();
             }
             context.stepRequested = false;
+
+            for (const LuaScriptDiagnostic& diagnostic : game.takeScriptDiagnostics())
+            {
+                writeScriptDiagnostic(console, diagnostic);
+            }
 
             const Stopwatch sceneWatch;
             const RenderScene scene = game.buildScene();
@@ -367,6 +372,7 @@ namespace advanced_platformer
                         debugTools.machineActor),
                     windowViewport,
                     context.debugToolVisibility,
+                    console,
                     paused);
                 if (plotRequest != FramePlotRequest::None)
                 {
