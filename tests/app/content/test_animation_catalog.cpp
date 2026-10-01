@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
+#include <string>
 #include <nlohmann/json.hpp>
 #include <limits>
 #include <stdexcept>
@@ -37,13 +38,20 @@ TEST_CASE("Animation catalogs reject invalid content with source context", "[app
     auto animationJson = nlohmann::json::parse(
         advanced_platformer::loadContentText("tests/fixtures/catalogs/animations.json"));
     auto& set = animationJson["animations"]["test_actor"];
+    // Shape errors name a line and column; rule errors name the set.
+    std::string start = "clips.json: animations.test_actor";
+    std::string end;
     SECTION("Missing clip")
     {
         set.erase("death");
+        start = "clips.json: line 1, column ";
+        end = "missing 'death'";
     }
     SECTION("Unknown clip")
     {
         set["run"] = set["move"];
+        start = "clips.json: line 1, column ";
+        end = "unknown field 'run'";
     }
     SECTION("Empty frames")
     {
@@ -56,10 +64,14 @@ TEST_CASE("Animation catalogs reject invalid content with source context", "[app
     SECTION("Boolean duration")
     {
         set["idle"]["frameDuration"] = true;
+        start = "clips.json: line 1, column ";
+        end = "invalid number 'true'";
     }
     SECTION("Nonboolean looping")
     {
         set["idle"]["looping"] = 1;
+        start = "clips.json: line 1, column ";
+        end = "expected true or false";
     }
     SECTION("Invalid rectangle")
     {
@@ -72,6 +84,8 @@ TEST_CASE("Animation catalogs reject invalid content with source context", "[app
     SECTION("Vector shape")
     {
         set["idle"]["frames"][0]["position"] = {1};
+        start = "clips.json: line 1, column ";
+        end = "expected two numbers, [x, y]";
     }
     SECTION("Mixed sizes")
     {
@@ -80,10 +94,12 @@ TEST_CASE("Animation catalogs reject invalid content with source context", "[app
     SECTION("Unknown field")
     {
         set["idle"]["elapsed"] = 0;
+        start = "clips.json: line 1, column ";
+        end = "unknown field 'elapsed'";
     }
     REQUIRE_THROWS_WITH(
         advanced_platformer::parseAnimationCatalog(animationJson.dump(), "clips.json"),
-        Catch::Matchers::ContainsSubstring("clips.json: animations.test_actor"));
+        Catch::Matchers::StartsWith(start) && Catch::Matchers::EndsWith(end));
 }
 
 TEST_CASE("Animation validation also accepts C++ definitions", "[app][animations]")

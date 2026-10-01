@@ -1,25 +1,70 @@
 #include "animation_catalog.hpp"
 #include "content_diagnostics.hpp"
+#include "content_glaze.hpp"
 #include "content_json.hpp"
 #include "content_validation.hpp"
 #include <array>
 #include <cstddef>
 #include <filesystem>
 #include <format>
+#include <map>
 #include <set>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
-#include <nlohmann/json.hpp>
+#include <glaze/glaze.hpp>
+#include <glm/vec2.hpp>
 #include "advanced_platformer/math/validation.hpp"
 #include "advanced_platformer/render/animation.hpp"
 #include "advanced_platformer/render/sprite.hpp"
 
 namespace advanced_platformer
 {
+    // animations.json as written: its member names are the file's keys. Glaze reflects only
+    // types with linkage, so these cannot go in an anonymous namespace.
+    struct FrameJson
+    {
+        glm::vec2 position{};
+        glm::vec2 size{};
+    };
+
+    struct ClipJson
+    {
+        std::vector<FrameJson> frames;
+        float frameDuration = 0.0F;
+        bool looping = false;
+    };
+
+    // Every set has all six clips.
+    struct AnimationSetJson
+    {
+        ClipJson idle;
+        ClipJson move;
+        ClipJson jump;
+        ClipJson fall;
+        ClipJson attack;
+        ClipJson death;
+    };
+
+    struct AnimationsJson
+    {
+        std::map<std::string, AnimationSetJson> animations;
+    };
+
     namespace
     {
+        // Each clip's member in an AnimationSetJson, in the order sets list their clips.
+        constexpr std::array<std::pair<AnimationName, ClipJson AnimationSetJson::*>, 6>
+            ClipMembers = {
+                {{AnimationName::Idle, &AnimationSetJson::idle},
+                 {AnimationName::Move, &AnimationSetJson::move},
+                 {AnimationName::Jump, &AnimationSetJson::jump},
+                 {AnimationName::Fall, &AnimationSetJson::fall},
+                 {AnimationName::Attack, &AnimationSetJson::attack},
+                 {AnimationName::Death, &AnimationSetJson::death}}};
+
         struct ClipEntry
         {
             std::string_view name;
@@ -47,16 +92,6 @@ namespace advanced_platformer
             throw std::logic_error("An animation clip has no catalog name");
         }
 
-        std::vector<std::string_view> clipNames()
-        {
-            std::vector<std::string_view> names;
-            names.reserve(Clips.size());
-            for (const ClipEntry& entry : Clips)
-            {
-                names.push_back(entry.name);
-            }
-            return names;
-        }
     }
 
     void validateAnimationSet(const AnimationSet& set)
@@ -141,41 +176,25 @@ namespace advanced_platformer
 
     AnimationCatalog parseAnimationCatalog(std::string_view text, std::string_view sourceName)
     {
-        const auto root = parseContentRoot(text, sourceName);
-        checkJsonFields(root, {"animations"}, sourceName, "root");
-        const auto& definitions = requiredJsonMember(root, "animations", sourceName, "root");
-        checkJsonObject(definitions, sourceName, "animations");
+        const auto file = readContent<AnimationsJson>(text, sourceName);
         AnimationCatalog catalog;
-        for (const auto& entry : definitions.items())
+        for (const auto& [name, json] : file.animations)
         {
-            const std::string setPath = fieldPath("animations", entry.key());
-            checkJsonFields(entry.value(), clipNames(), sourceName, setPath);
             AnimationSet set;
-            for (const ClipEntry& definition : Clips)
+            for (const auto& [type, member] : ClipMembers)
             {
-                const std::string name(definition.name);
-                const std::string clipPath = fieldPath(setPath, name);
-                const auto& value = requiredJsonMember(entry.value(), name, sourceName, setPath);
-                checkJsonFields(
-                    value, {"frames", "frameDuration", "looping"}, sourceName, clipPath);
+                const ClipJson& clipJson = json.*member;
                 AnimationClip clip;
-                clip.name = definition.type;
-                clip.frameDuration = readNumber(value, "frameDuration", sourceName, clipPath);
-                clip.looping = readBoolean(value, "looping", sourceName, clipPath);
-                const auto& frames = requiredJsonMember(value, "frames", sourceName, clipPath);
-                if (!frames.is_array())
+                clip.name = type;
+                clip.frameDuration = clipJson.frameDuration;
+                clip.looping = clipJson.looping;
+                for (const FrameJson& frame : clipJson.frames)
                 {
-                    failJson(sourceName, fieldPath(clipPath, "frames"), "expected an array");
-                }
-                for (std::size_t frame = 0; frame < frames.size(); ++frame)
-                {
-                    const std::string framePath = indexPath(fieldPath(clipPath, "frames"), frame);
-                    checkJsonFields(frames[frame], {"position", "size"}, sourceName, framePath);
-                    clip.frames.push_back(jsonSpriteRegion(frames[frame], sourceName, framePath));
+                    clip.frames.push_back({frame.position, frame.size});
                 }
                 set.clips.push_back(clip);
             }
-            catalog.emplace(entry.key(), set);
+            catalog.emplace(name, set);
         }
         validateInFile(sourceName, [&] { validateAnimationCatalog(catalog); });
         return catalog;
