@@ -12,7 +12,7 @@
 namespace
 {
     constexpr advanced_platformer::ActorId FirstActor{1};
-    const advanced_platformer::LuaNpcActivity Activity{"example", "decide"};
+    const advanced_platformer::NpcActivity Activity{"example", "decide"};
 }
 
 TEST_CASE("A failing Lua update reports its context and asks for nothing", "[lua][npc]")

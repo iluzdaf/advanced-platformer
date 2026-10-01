@@ -11,13 +11,13 @@
 namespace
 {
     using advanced_platformer::ActorId;
-    using advanced_platformer::LuaNpcActivity;
     using advanced_platformer::LuaNpcScripts;
+    using advanced_platformer::NpcActivity;
     using advanced_platformer::NpcActivitySnapshot;
 
     constexpr ActorId FirstActor{1};
     constexpr ActorId SecondActor{2};
-    const LuaNpcActivity Activity{"example", "decide"};
+    const NpcActivity Activity{"example", "decide"};
 }
 
 TEST_CASE("Snapshot positions are vec2 values with glm's arithmetic", "[lua][npc][vec2]")
@@ -76,7 +76,7 @@ TEST_CASE("A Lua script cannot change vec2 for others", "[lua][npc][vec2]")
         end}}}
     )");
     const NpcActivitySnapshot snapshot;
-    const LuaNpcActivity breaker{"breaker", "decide"};
+    const NpcActivity breaker{"breaker", "decide"};
     scripts.enter(FirstActor, breaker, snapshot);
     scripts.update(FirstActor, breaker, snapshot, 0.1F);
     REQUIRE(scripts.diagnostics().size() == 1);

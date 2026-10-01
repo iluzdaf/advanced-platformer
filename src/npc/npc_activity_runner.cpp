@@ -1,4 +1,4 @@
-#include "advanced_platformer/npc/npc_scripted_activity.hpp"
+#include "advanced_platformer/npc/npc_activity_runner.hpp"
 
 #include <stdexcept>
 #include <vector>
@@ -78,7 +78,7 @@ namespace advanced_platformer
         {
             if (update.scripts == nullptr)
             {
-                throw std::logic_error("A scripted NPC activity needs the scripting runtime");
+                throw std::logic_error("An NPC activity needs the scripting runtime");
             }
             return *update.scripts;
         }
@@ -114,13 +114,13 @@ namespace advanced_platformer
         }
     }
 
-    void enterScriptedActivity(
+    void enterNpcActivity(
         const NpcUpdate& update,
         const Actor& actor,
         const NpcBrain& brain,
         PathFollower& follower,
         const Actor* target,
-        const LuaNpcActivity& activity,
+        const NpcActivity& activity,
         const NpcFacts& facts)
     {
         clearPath(follower);
@@ -128,13 +128,13 @@ namespace advanced_platformer
             actor.id, activity, activitySnapshot(update, actor, brain, follower, target, facts));
     }
 
-    void updateScriptedActivity(
+    void updateNpcActivity(
         const NpcUpdate& update,
         Actor& actor,
         const NpcBrain& brain,
         PathFollower& follower,
         const Actor* target,
-        const LuaNpcActivity& activity,
+        const NpcActivity& activity,
         const NpcFacts& facts)
     {
         const NpcActivityCommand command = requiredScripts(update).update(
@@ -145,20 +145,20 @@ namespace advanced_platformer
         applyScriptCommand(update, actor, follower, command);
     }
 
-    void exitScriptedActivity(
+    void exitNpcActivity(
         const NpcUpdate& update,
         const Actor& actor,
         const NpcBrain& brain,
         const PathFollower& follower,
         const Actor* target,
-        const LuaNpcActivity& activity,
+        const NpcActivity& activity,
         const NpcFacts& facts)
     {
         requiredScripts(update).exit(
             actor.id, activity, activitySnapshot(update, actor, brain, follower, target, facts));
     }
 
-    void forgetScriptedActivities(const std::vector<ActorId>& actors, NpcActivityScripts& scripts)
+    void forgetNpcActivities(const std::vector<ActorId>& actors, NpcActivityScripts& scripts)
     {
         for (const ActorId actor : actors)
         {

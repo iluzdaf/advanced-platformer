@@ -4,7 +4,7 @@
 #include "advanced_platformer/actor/lifecycle.hpp"
 #include "advanced_platformer/combat/attack_system.hpp"
 #include "advanced_platformer/combat/projectile_system.hpp"
-#include "advanced_platformer/npc/npc_scripted_activity.hpp"
+#include "advanced_platformer/npc/npc_activity_runner.hpp"
 #include "advanced_platformer/npc/npc_senses.hpp"
 #include "advanced_platformer/navigation/navigation_fill.hpp"
 #include "advanced_platformer/npc/npc_system.hpp"
@@ -70,7 +70,7 @@ namespace advanced_platformer
             {
                 if (scripts != nullptr)
                 {
-                    forgetScriptedActivities(requests.actorsToRemove(), *scripts);
+                    forgetNpcActivities(requests.actorsToRemove(), *scripts);
                 }
                 applyWorldRequests(world, requests);
             });

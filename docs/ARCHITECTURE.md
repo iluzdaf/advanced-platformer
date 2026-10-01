@@ -474,7 +474,7 @@ regression tests cover this case.
 
 ### Lua activity boundary
 
-The scripting target provides the protected Lua runtime used by scripted machine activities.
+The scripting target provides the protected Lua runtime that runs NPC activities.
 The core-facing boundary contains no Lua types. `NpcActivitySnapshot` is a copied,
 read-only-in-effect view of the NPC's feet and body centre, its target's known and last
 known feet and body centre, its patrol ends and heading, a walker's footing to either

@@ -22,7 +22,7 @@ TEST_CASE(
     REQUIRE(machine.name == "test");
     REQUIRE(machine.states.size() == 2);
     REQUIRE(machine.states[1].name == "hunt");
-    REQUIRE(machine.states[1].does == advanced_platformer::LuaNpcActivity{"test", "chase"});
+    REQUIRE(machine.states[1].does == advanced_platformer::NpcActivity{"test", "chase"});
     REQUIRE(machine.transitions.size() == 2);
     REQUIRE(machine.transitions[0].after == 0.0F);
     REQUIRE(machine.transitions[1].from == "hunt");

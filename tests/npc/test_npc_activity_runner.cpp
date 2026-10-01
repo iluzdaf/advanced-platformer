@@ -21,7 +21,7 @@
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_activity.hpp"
 #include "advanced_platformer/npc/npc_activity_scripts.hpp"
-#include "advanced_platformer/npc/npc_scripted_activity.hpp"
+#include "advanced_platformer/npc/npc_activity_runner.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "advanced_platformer/npc/npc_system.hpp"
 #include "advanced_platformer/npc/npc_senses.hpp"
@@ -78,7 +78,7 @@ TEST_CASE("A scripted route follows a climbing path", "[npc][lua][climb]")
             .thinking({})
             .running(
                 tests::NpcMachineBuilder::named("climber").state(
-                    "route", advanced_platformer::LuaNpcActivity{"climber", "route"}));
+                    "route", advanced_platformer::NpcActivity{"climber", "route"}));
     tests::platformerMovement(npc).grounded = true;
     const advanced_platformer::ActorId npcId = world.addActor(npc);
     tests::RecordingNpcScripts scripts;
@@ -99,19 +99,17 @@ TEST_CASE("A scripted route follows a climbing path", "[npc][lua][climb]")
     REQUIRE(reachedCeiling);
 }
 
-TEST_CASE(
-    "A scripted machine activity receives snapshots and returns engine commands",
-    "[npc][lua]")
+TEST_CASE("An NPC activity receives snapshots and returns engine commands", "[npc][lua]")
 {
     const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"........", "........", "........", "########"});
     advanced_platformer::World world;
-    const advanced_platformer::ActorId npcId = world.addActor(
-        makeNpc({24.0F, 32.0F})
-            .running(
-                tests::NpcMachineBuilder::named("scripted")
-                    .state("roam", advanced_platformer::LuaNpcActivity{"rat", "roam"}))
-            .patrolling({24.0F, 32.0F}, {72.0F, 32.0F}));
+    const advanced_platformer::ActorId npcId =
+        world.addActor(makeNpc({24.0F, 32.0F})
+                           .running(
+                               tests::NpcMachineBuilder::named("scripted")
+                                   .state("roam", advanced_platformer::NpcActivity{"rat", "roam"}))
+                           .patrolling({24.0F, 32.0F}, {72.0F, 32.0F}));
     tests::RecordingNpcScripts scripts;
     scripts.command.routeTo = glm::vec2{72.0F, 32.0F};
     scripts.command.aimAt = glm::vec2{80.0F, 16.0F};
@@ -123,7 +121,7 @@ TEST_CASE(
     REQUIRE(scripts.calls[0].hook == "enter");
     REQUIRE(scripts.calls[1].hook == "update");
     REQUIRE(scripts.calls[0].actor == npcId);
-    REQUIRE(scripts.calls[0].activity == advanced_platformer::LuaNpcActivity{"rat", "roam"});
+    REQUIRE(scripts.calls[0].activity == advanced_platformer::NpcActivity{"rat", "roam"});
     REQUIRE(scripts.calls[0].snapshot.feet == glm::vec2{24.0F, 32.0F});
     REQUIRE(scripts.calls[0].snapshot.facts.stateElapsed == 0.0F);
     REQUIRE(scripts.calls[1].snapshot.facts.stateElapsed == 0.0F);
@@ -156,8 +154,8 @@ TEST_CASE("A scripted machine exits and enters around a transition", "[npc][lua]
         makeNpc({24.0F, 32.0F})
             .running(
                 tests::NpcMachineBuilder::named("scripted")
-                    .state("waiting", advanced_platformer::LuaNpcActivity{"rat", "wait"})
-                    .state("moving", advanced_platformer::LuaNpcActivity{"rat", "move"})
+                    .state("waiting", advanced_platformer::NpcActivity{"rat", "wait"})
+                    .state("moving", advanced_platformer::NpcActivity{"rat", "move"})
                     .transition("waiting", "moving")
                     .when("targetKnown", true)));
     tests::RecordingNpcScripts scripts;
@@ -184,22 +182,21 @@ TEST_CASE("A scripted machine exits and enters around a transition", "[npc][lua]
     REQUIRE(advanced_platformer::activeNpcMachineState(machine(world, npcId)).name == "moving");
 }
 
-TEST_CASE("A scripted machine activity requires a scripting runtime", "[npc][lua][validation]")
+TEST_CASE("An NPC activity requires a scripting runtime", "[npc][lua][validation]")
 {
     const advanced_platformer::TileMap map = tests::TileMapBuilder({"...", "...", "###"});
     advanced_platformer::World world;
-    world.addActor(
-        makeNpc({24.0F, 32.0F})
-            .running(
-                tests::NpcMachineBuilder::named("scripted")
-                    .state("waiting", advanced_platformer::LuaNpcActivity{"rat", "wait"})));
+    world.addActor(makeNpc({24.0F, 32.0F})
+                       .running(
+                           tests::NpcMachineBuilder::named("scripted")
+                               .state("waiting", advanced_platformer::NpcActivity{"rat", "wait"})));
 
     REQUIRE_THROWS_WITH(
         advanced_platformer::updateNpcBehaviour(map, world, 0.1F),
-        "A scripted NPC activity needs the scripting runtime");
+        "An NPC activity needs the scripting runtime");
 }
 
-TEST_CASE("Removing an actor forgets its scripted activity state", "[npc][lua][lifecycle]")
+TEST_CASE("Removing an actor forgets its activity state", "[npc][lua][lifecycle]")
 {
     advanced_platformer::World world;
     const advanced_platformer::ActorId npcId = world.addActor(makeNpc({24.0F, 32.0F}));
@@ -207,7 +204,7 @@ TEST_CASE("Removing an actor forgets its scripted activity state", "[npc][lua][l
     requests.remove(npcId);
     tests::RecordingNpcScripts scripts;
 
-    advanced_platformer::forgetScriptedActivities(requests.actorsToRemove(), scripts);
+    advanced_platformer::forgetNpcActivities(requests.actorsToRemove(), scripts);
     REQUIRE(world.findActor(npcId) != nullptr);
     advanced_platformer::applyWorldRequests(world, requests);
 
@@ -215,7 +212,7 @@ TEST_CASE("Removing an actor forgets its scripted activity state", "[npc][lua][l
     REQUIRE(world.findActor(npcId) == nullptr);
 }
 
-TEST_CASE("The engine fills a scripted activity's snapshot from the world", "[npc][lua]")
+TEST_CASE("The engine fills an activity's snapshot from the world", "[npc][lua]")
 {
     // The walker stands at a ledge: there is floor to its left and none to its right.
     advanced_platformer::TileMap map = tests::TileMapBuilder({"........", "........", "##......"});
@@ -230,7 +227,7 @@ TEST_CASE("The engine fills a scripted activity's snapshot from the world", "[np
             .thinking({64.0F, 1.0F})
             .running(
                 tests::NpcMachineBuilder::named("test").state(
-                    "acting", advanced_platformer::LuaNpcActivity{"fixture", "act"})));
+                    "acting", advanced_platformer::NpcActivity{"fixture", "act"})));
     tests::RecordingNpcScripts scripts;
 
     advanced_platformer::updateNpcSenses(map, world, tests::FixedStepSeconds);
@@ -253,11 +250,11 @@ TEST_CASE("A flyer has no footing, and the last known target feet outlast the ta
 {
     advanced_platformer::TileMap map = tests::TileMapBuilder({"........", "........", "########"});
     advanced_platformer::World world;
-    const advanced_platformer::ActorId npc = world.addActor(
-        makeNpc({24.0F, 16.0F})
-            .running(
-                tests::NpcMachineBuilder::named("test").state(
-                    "acting", advanced_platformer::LuaNpcActivity{"fixture", "act"})));
+    const advanced_platformer::ActorId npc =
+        world.addActor(makeNpc({24.0F, 16.0F})
+                           .running(
+                               tests::NpcMachineBuilder::named("test").state(
+                                   "acting", advanced_platformer::NpcActivity{"fixture", "act"})));
     brain(world, npc).lastKnownTargetFeet = {72.0F, 32.0F};
     tests::RecordingNpcScripts scripts;
 
@@ -282,7 +279,7 @@ TEST_CASE("A script can turn its NPC's patrol round", "[npc][lua]")
             .thinking({64.0F, 1.0F})
             .running(
                 tests::NpcMachineBuilder::named("test").state(
-                    "acting", advanced_platformer::LuaNpcActivity{"fixture", "act"})));
+                    "acting", advanced_platformer::NpcActivity{"fixture", "act"})));
     tests::RecordingNpcScripts scripts;
     scripts.command.turnPatrol = true;
 

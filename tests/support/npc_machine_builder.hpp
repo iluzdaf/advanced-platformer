@@ -10,7 +10,7 @@ namespace tests
 {
     // An activity for a test machine; tests answer it with RecordingNpcScripts or an inline
     // fixture script.
-    inline advanced_platformer::LuaNpcActivity testActivity(std::string activity)
+    inline advanced_platformer::NpcActivity testActivity(std::string activity)
     {
         return {"test", std::move(activity)};
     }
@@ -52,7 +52,7 @@ namespace tests
             return builder;
         }
 
-        Stated state(std::string name, advanced_platformer::LuaNpcActivity does) &&;
+        Stated state(std::string name, advanced_platformer::NpcActivity does) &&;
 
     private:
         NpcMachineBuilder() = default;
@@ -62,7 +62,7 @@ namespace tests
     class NpcMachineBuilder::Stated : public NpcMachineDraft
     {
     public:
-        Stated state(std::string name, advanced_platformer::LuaNpcActivity does) &&
+        Stated state(std::string name, advanced_platformer::NpcActivity does) &&
         {
             built.states.push_back({std::move(name), std::move(does)});
             return std::move(*this);
@@ -125,7 +125,7 @@ namespace tests
 
     inline NpcMachineBuilder::Stated NpcMachineBuilder::state(
         std::string name,
-        advanced_platformer::LuaNpcActivity does) &&
+        advanced_platformer::NpcActivity does) &&
     {
         built.states.push_back({std::move(name), std::move(does)});
         return Stated(std::move(built));

@@ -11,7 +11,7 @@
 namespace
 {
     constexpr advanced_platformer::ActorId FirstActor{1};
-    const advanced_platformer::LuaNpcActivity Activity{"example", "decide"};
+    const advanced_platformer::NpcActivity Activity{"example", "decide"};
 }
 
 TEST_CASE("A Lua script that cannot be read is reported by its full path", "[lua][npc]")
@@ -27,7 +27,7 @@ TEST_CASE("A Lua script can be loaded from an asset file", "[lua][npc]")
 {
     advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScript("fixture", "tests/fixtures/scripts/example_npc.lua");
-    const advanced_platformer::LuaNpcActivity activity{"fixture", "idle"};
+    const advanced_platformer::NpcActivity activity{"fixture", "idle"};
     advanced_platformer::NpcActivitySnapshot snapshot;
     snapshot.facts.targetKnown = true;
     snapshot.tuning["direction"] = 4.0F;

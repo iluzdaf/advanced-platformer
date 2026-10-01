@@ -13,7 +13,7 @@ using Catch::Matchers::ContainsSubstring;
 
 namespace
 {
-    advanced_platformer::MachineCatalog catalogWith(advanced_platformer::LuaNpcActivity activity)
+    advanced_platformer::MachineCatalog catalogWith(advanced_platformer::NpcActivity activity)
     {
         advanced_platformer::NpcStateMachine machine;
         machine.name = "test";

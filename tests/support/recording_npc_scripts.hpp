@@ -13,7 +13,7 @@ namespace tests
     {
         std::string hook;
         advanced_platformer::ActorId actor;
-        advanced_platformer::LuaNpcActivity activity;
+        advanced_platformer::NpcActivity activity;
         advanced_platformer::NpcActivitySnapshot snapshot;
     };
 
@@ -24,7 +24,7 @@ namespace tests
     public:
         void enter(
             advanced_platformer::ActorId actor,
-            const advanced_platformer::LuaNpcActivity& activity,
+            const advanced_platformer::NpcActivity& activity,
             const advanced_platformer::NpcActivitySnapshot& snapshot) override
         {
             calls.push_back({"enter", actor, activity, snapshot});
@@ -32,7 +32,7 @@ namespace tests
 
         advanced_platformer::NpcActivityCommand update(
             advanced_platformer::ActorId actor,
-            const advanced_platformer::LuaNpcActivity& activity,
+            const advanced_platformer::NpcActivity& activity,
             const advanced_platformer::NpcActivitySnapshot& snapshot,
             float deltaTime) override
         {
@@ -43,7 +43,7 @@ namespace tests
 
         void exit(
             advanced_platformer::ActorId actor,
-            const advanced_platformer::LuaNpcActivity& activity,
+            const advanced_platformer::NpcActivity& activity,
             const advanced_platformer::NpcActivitySnapshot& snapshot) override
         {
             calls.push_back({"exit", actor, activity, snapshot});

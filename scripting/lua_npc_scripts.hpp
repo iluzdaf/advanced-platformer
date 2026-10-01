@@ -41,21 +41,17 @@ namespace advanced_platformer
             std::string_view source,
             std::string sourceName = "Lua script");
         bool hasScript(std::string_view script) const;
-        bool hasActivity(const LuaNpcActivity& activity) const;
+        bool hasActivity(const NpcActivity& activity) const;
 
-        void enter(
-            ActorId actor,
-            const LuaNpcActivity& activity,
-            const NpcActivitySnapshot& snapshot) override;
+        void enter(ActorId actor, const NpcActivity& activity, const NpcActivitySnapshot& snapshot)
+            override;
         NpcActivityCommand update(
             ActorId actor,
-            const LuaNpcActivity& activity,
+            const NpcActivity& activity,
             const NpcActivitySnapshot& snapshot,
             float deltaTime) override;
-        void exit(
-            ActorId actor,
-            const LuaNpcActivity& activity,
-            const NpcActivitySnapshot& snapshot) override;
+        void exit(ActorId actor, const NpcActivity& activity, const NpcActivitySnapshot& snapshot)
+            override;
         void forget(ActorId actor) override;
 
         const std::vector<LuaScriptDiagnostic>& diagnostics() const;

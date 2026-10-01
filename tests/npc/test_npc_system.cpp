@@ -78,24 +78,23 @@ TEST_CASE("A machine reacts to landing and blocked walking facts", "[npc][machin
     advanced_platformer::World world;
     const auto playerId = tests::addPlayer(world, makePlayer({56.0F, 32.0F}));
     actor(world, playerId).team = advanced_platformer::Team::Player;
-    auto charger =
-        tests::ActorBuilder::sized({12.0F, 12.0F})
-            .atFeet({24.0F, 32.0F})
-            .platforming()
-            .onTeam(advanced_platformer::Team::Enemy)
-            .thinking({80.0F, 1.0F})
-            .running(
-                tests::NpcMachineBuilder::named("charger")
-                    .state("sleep", advanced_platformer::LuaNpcActivity{"test", "rest"})
-                    .state("charge", advanced_platformer::LuaNpcActivity{"test", "walk"})
-                    .state("stunned", advanced_platformer::LuaNpcActivity{"test", "rest"})
-                    .transition("sleep", "charge")
-                    .when("heardLanding", true)
-                    .when("targetOnSameRun", true)
-                    .when("targetWithinNoticeDistance", true)
-                    .transition("charge", "stunned")
-                    .when("movementBlocked", true))
-            .withContactDamage();
+    auto charger = tests::ActorBuilder::sized({12.0F, 12.0F})
+                       .atFeet({24.0F, 32.0F})
+                       .platforming()
+                       .onTeam(advanced_platformer::Team::Enemy)
+                       .thinking({80.0F, 1.0F})
+                       .running(
+                           tests::NpcMachineBuilder::named("charger")
+                               .state("sleep", advanced_platformer::NpcActivity{"test", "rest"})
+                               .state("charge", advanced_platformer::NpcActivity{"test", "walk"})
+                               .state("stunned", advanced_platformer::NpcActivity{"test", "rest"})
+                               .transition("sleep", "charge")
+                               .when("heardLanding", true)
+                               .when("targetOnSameRun", true)
+                               .when("targetWithinNoticeDistance", true)
+                               .transition("charge", "stunned")
+                               .when("movementBlocked", true))
+                       .withContactDamage();
     const auto npcId = world.addActor(std::move(charger));
     tests::platformerMovement(actor(world, npcId)).grounded = true;
     tests::platformerMovement(actor(world, playerId)).grounded = true;
