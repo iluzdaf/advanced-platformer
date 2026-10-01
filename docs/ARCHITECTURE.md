@@ -82,7 +82,7 @@ simulation tick, and inspect the result without needing a window or graphics con
 Third-party libraries are git submodules under `external/`, each pinned to one upstream
 commit so everyone builds against the same source. The current dependencies include GLFW,
 glad, GLM, ImGui, ImPlot for the debug overlay's plots, imgui-node-editor for its machine
-window, Catch2, stb image loading, nlohmann/json and Glaze, Lua, and sol2. Lua and sol2
+window, Catch2, stb image loading, Glaze, Lua, and sol2. Lua and sol2
 are private to the scripting target rather than leaking through public headers.
 
 ### Application folders
@@ -1054,11 +1054,11 @@ end-to-end test.
 Validation has three boundaries:
 
 1. **JSON shape:** reading a file checks its types and required fields, and rejects unknown
-   fields to catch misspellings. Catalogs are read with Glaze, through `content_glaze`, into
-   structs that mirror each file: the structs are the shape, and Glaze rejects unknown
-   keys, missing required members, and wrong types, reporting the line and column. Level
-   files, whose legends, map rows and name references do not map onto structs, are read
-   with nlohmann/json through the `content_json` helpers, which report a field path.
+   fields to catch misspellings. Every content file is read with Glaze, through
+   `content_glaze`, into structs that mirror it: the structs are the shape, and Glaze
+   rejects unknown keys, missing required members, and wrong types, reporting the line and
+   column. Shapes a struct cannot state, such as a level legend's per-type fields, are
+   checked by the reader after reading and reported by field path.
    `content_diagnostics` builds the field paths and raises the errors, and carries no JSON
    dependency so the C++ validators can use it too.
 2. **Application content:** plain C++ validators check authoring rules.

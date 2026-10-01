@@ -2,7 +2,11 @@
 #include "content_diagnostics.hpp"
 #include <algorithm>
 #include <cstddef>
+#include <filesystem>
 #include <format>
+#include <fstream>
+#include <iterator>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <glaze/glaze.hpp>
@@ -83,6 +87,18 @@ namespace advanced_platformer
             }
             return codeName(error);
         }
+    }
+
+    std::string loadContentText(const std::filesystem::path& path)
+    {
+        std::ifstream file(path);
+        if (!file)
+        {
+            throw std::invalid_argument(
+                std::format(
+                    "Could not open content file '{}'", std::filesystem::absolute(path).string()));
+        }
+        return {std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
     }
 
     Sprite spriteFrom(const SpriteJson& json)

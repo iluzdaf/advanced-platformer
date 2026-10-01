@@ -34,7 +34,7 @@ namespace advanced_platformer
     // Authoring rules shared by JSON loading and C++ content construction.
     // These validators throw invalid_argument. A JSON loader passes sourceName so the
     // filename appears in the message; C++ callers leave it off, which is why sourceName
-    // is the trailing argument here, unlike in content_json.
+    // is the trailing argument here, unlike in failJson.
 
     // Checks positive quantity, not spatial placement or whether the item exists.
     void validatePickupSettings(

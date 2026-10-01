@@ -1,15 +1,15 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
-#include <nlohmann/json.hpp>
 #include <glm/vec2.hpp>
 #include <string>
 #include "content/hud_catalog.hpp"
+#include "support/json_document.hpp"
 
 namespace
 {
-    nlohmann::json hudData()
+    tests::Json hudData()
     {
-        return nlohmann::json::parse(R"({
+        return tests::parseJson(R"({
             "fullHeart": {"position": [96, 192], "size": [16, 16]},
             "emptyHeart": {"position": [112, 192], "size": [16, 16]},
             "bag": {"position": [64, 216], "size": [12, 14]}
@@ -20,7 +20,7 @@ namespace
 TEST_CASE("HUD icons name their atlas regions", "[app][content][hud]")
 {
     const advanced_platformer::HudIcons icons =
-        advanced_platformer::parseHudIcons(hudData().dump(), "hud.json");
+        advanced_platformer::parseHudIcons(tests::dumpJson(hudData()), "hud.json");
 
     REQUIRE(icons.fullHeart.position == glm::vec2{96.0F, 192.0F});
     REQUIRE(icons.emptyHeart.position == glm::vec2{112.0F, 192.0F});
@@ -38,11 +38,11 @@ TEST_CASE("HUD icons load from a catalog file", "[app][content][hud]")
 
 TEST_CASE("HUD icons reject missing, unknown, and unusable regions", "[app][content][hud]")
 {
-    nlohmann::json data = hudData();
+    tests::Json data = hudData();
     std::string expected;
     SECTION("A missing icon")
     {
-        data.erase("bag");
+        tests::eraseKey(data, "bag");
         expected = "bag";
     }
     SECTION("An unknown icon")
@@ -52,16 +52,16 @@ TEST_CASE("HUD icons reject missing, unknown, and unusable regions", "[app][cont
     }
     SECTION("A negative position")
     {
-        data["fullHeart"]["position"] = {-1, 192};
+        data["fullHeart"]["position"] = tests::numbers({-1, 192});
         expected = "fullHeart";
     }
     SECTION("An empty size")
     {
-        data["emptyHeart"]["size"] = {16, 0};
+        data["emptyHeart"]["size"] = tests::numbers({16, 0});
         expected = "emptyHeart";
     }
     REQUIRE_THROWS_WITH(
-        advanced_platformer::parseHudIcons(data.dump(), "hud.json"),
+        advanced_platformer::parseHudIcons(tests::dumpJson(data), "hud.json"),
         Catch::Matchers::ContainsSubstring("hud.json") &&
             Catch::Matchers::ContainsSubstring(expected));
 }
