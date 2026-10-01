@@ -153,6 +153,5 @@ TEST_CASE("The overlay shows only navigation cells near the camera", "[app][debu
     const std::vector<advanced_platformer::NavigationCellDebugInfo>& cells = navigation.cells;
     REQUIRE(cells.size() == 21);
     REQUIRE(cells.front().bounds.topLeft == glm::vec2{0.0F, 0.0F});
-    // As for actors, one tile beyond the camera's edge is shown; the rest are not.
     REQUIRE(cells.back().bounds.topLeft == glm::vec2{320.0F, 0.0F});
 }

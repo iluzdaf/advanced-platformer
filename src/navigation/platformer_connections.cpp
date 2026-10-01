@@ -34,27 +34,17 @@ namespace advanced_platformer
         struct BuiltPlatformerConnections
         {
             std::vector<RouteConnection> connections;
-            // Conservative rectangle covering the tiles probed or swept by simulation.
             CellRange footprint;
             std::vector<WalkSimulationResult> walksToCache;
-            // Movement ticks simulated for this build; reused walks add none.
             int simulatedTicks = 0;
         };
 
-        // A traversal must land and stop within this many updates to become a
-        // connection. Its duration in seconds depends on the caller's step.
         constexpr int MaximumConnectionSimulationTicks = 120;
-        // A climb crosses at most one cell at the climb speed, which may be slow.
         constexpr int MaximumClimbSimulationTicks = 240;
-        // In pixels: a climb ends with the body this close to its destination's resting
-        // bounds.
         constexpr float ClimbArrivalDistance = 0.02F;
         constexpr float FloorArrivalDistance = 1.0F;
-        // In pixels per second: a climber stepping onto the floor has stopped below this.
         constexpr float SettledSpeed = 0.02F;
 
-        // Airborne simulation leaves climbing, ledge avoidance, and contact damage off,
-        // so only its recorded intention fields need comparing when ticks are merged.
         bool sameIntentions(const InputIntentions& first, const InputIntentions& second)
         {
             return first.direction == second.direction &&
@@ -63,8 +53,6 @@ namespace advanced_platformer
                    first.primaryAttackPressed == second.primaryAttackPressed;
         }
 
-        // Extends the last step while the intentions hold, so a program is a few long
-        // steps rather than one per tick.
         void recordSimulationInput(
             InputProgram& program,
             const InputIntentions& intentions,
@@ -78,8 +66,6 @@ namespace advanced_platformer
             program.push_back({stepSeconds, intentions});
         }
 
-        // Include one tile around the bounds because collision and support checks read
-        // tiles beside the body as well as under it.
         void includeCellsAroundBounds(CellRange& accumulatedCells, int tileSize, const Aabb& bounds)
         {
             const glm::vec2 margin{static_cast<float>(tileSize), static_cast<float>(tileSize)};
@@ -87,10 +73,6 @@ namespace advanced_platformer
             accumulatedCells = unionOf(accumulatedCells, cellsCovered(tileSize, around));
         }
 
-        // Simulates a complete start-to-stop walk using the real path follower, movement,
-        // and collision code. Returns its fixed-update cost, or no cost when the actor
-        // cannot reach and stop at the destination within the connection simulation
-        // limit, with the cells it swept as offsets from the start.
         WalkSimulationResult simulateWalk(
             const TileMap& map,
             Cell start,
@@ -133,7 +115,6 @@ namespace advanced_platformer
                    (direction > 0.0F && rightOf(bounds) >= map.pixelWidth() - EdgeTolerance);
         }
 
-        // A walk, fall, or jump to simulate from a floor.
         struct TraversalAttempt
         {
             Traversal traversal;
@@ -141,8 +122,6 @@ namespace advanced_platformer
             int jumpHoldTicks = 0;
         };
 
-        // The inputs of a fall or a jump at this tick: pushing one way until landed, and
-        // for a jump, pressing on the first tick and holding for as many as asked.
         InputIntentions makeTraversalIntentions(
             Traversal traversal,
             float direction,
@@ -182,9 +161,6 @@ namespace advanced_platformer
             CellRange footprint;
         };
 
-        // Simulates leaving the ground, landing on another standable cell, and braking
-        // to a stop. An unsuccessful attempt has no landing, but still reports its
-        // simulated ticks and footprint.
         AirborneSimulationResult simulateAirborneTraversal(
             const TileMap& map,
             Cell start,
@@ -267,8 +243,6 @@ namespace advanced_platformer
             CellRange footprint;
         };
 
-        // The policy decides which traversals to try; simulation later determines
-        // whether they succeed and where they end.
         ConnectionPlan planPlatformerConnections(const TileMap& map, Cell start, glm::vec2 bodySize)
         {
             const int tileSize = map.tileSize();
@@ -302,7 +276,6 @@ namespace advanced_platformer
             return plan;
         }
 
-        // The adjacent cell has already passed the standability check.
         BuiltPlatformerConnections buildWalkConnections(
             const TileMap& map,
             Cell start,
@@ -331,7 +304,6 @@ namespace advanced_platformer
                      {start.x + walk.sweep.last.x, start.y + walk.sweep.last.y}});
                 if (!walk.cost.has_value())
                 {
-                    // A failed walk ends this direction's search; farther cells are not tried.
                     break;
                 }
                 result.connections.push_back(
@@ -364,8 +336,6 @@ namespace advanced_platformer
             return result;
         }
 
-        // A climber settles on its surface at the destination's resting bounds. One
-        // stepping off to the floor stands stopped there, as a walk ends.
         bool climbArrived(
             const Body& body,
             const PlatformerMovement& movement,
@@ -387,8 +357,6 @@ namespace advanced_platformer
             return !toFloor || (movement.grounded && std::abs(body.velocity.x) <= SettledSpeed);
         }
 
-        // From the floor the body walks until it touches the wall. On a surface it
-        // travels that surface's axis first, then the other to round a corner.
         InputIntentions climbToward(
             const TileMap& map,
             const Body& body,
@@ -409,7 +377,6 @@ namespace advanced_platformer
             }
             else
             {
-                // A ceiling is travelled sideways, a wall up or down.
                 const glm::length_t alongSurface = from.surface == ClimbSurface::Ceiling ? 0 : 1;
                 const glm::length_t acrossSurface = 1 - alongSurface;
                 if (std::abs(offset[alongSurface]) > ClimbArrivalDistance)
@@ -425,9 +392,6 @@ namespace advanced_platformer
             return intentions;
         }
 
-        // Simulates one climb with the real climbing, movement, and collision code. An
-        // unsuccessful attempt has no connection, but still reports its simulated ticks
-        // and footprint.
         BuiltPlatformerConnections buildClimbConnection(
             const TileMap& map,
             RouteLocation from,
@@ -461,7 +425,6 @@ namespace advanced_platformer
             {
                 if (climbArrived(body, movement, climb, target, destination.surface))
                 {
-                    // A climb that starts where it ends is no connection.
                     if (tick > 0)
                     {
                         result.connections.push_back(
@@ -474,7 +437,6 @@ namespace advanced_platformer
                 InputIntentions intentions;
                 if (toFloor)
                 {
-                    // Getting down lets go of the wall and walks onto the floor.
                     intentions =
                         followPlatformerPath(body, movement, walkToFloor, profile.stepSeconds);
                     intentions.climbGrip = ClimbGrip::Release;
@@ -489,14 +451,11 @@ namespace advanced_platformer
                         target,
                         climbConfig.speed * profile.stepSeconds);
                 }
-                // One step a tick. A climb ends at an exact position, and the summed
-                // duration of merged ticks can round to a tick more on replay.
                 inputs.push_back({profile.stepSeconds, intentions});
                 updateSurfaceClimbMovement(
                     map, body, movement, climb, intentions, profile.stepSeconds);
                 includeCellsAroundBounds(result.footprint, tileSize, body.bounds);
                 ++result.simulatedTicks;
-                // A climber that lets go between two surfaces has fallen off the route.
                 if (from.surface != ClimbSurface::None && !toFloor &&
                     climb.surface == ClimbSurface::None)
                 {
@@ -506,9 +465,6 @@ namespace advanced_platformer
             return result;
         }
 
-        // Where a climb from the location may lead: onto the walls beside the floor,
-        // along a wall or ceiling to the next cell, around the corner between them, and
-        // off a wall onto the floor. Simulation decides which of them succeed.
         std::vector<RouteLocation> climbDestinationsFrom(RouteLocation from)
         {
             const Cell cell = from.cell;
@@ -533,7 +489,6 @@ namespace advanced_platformer
             return {};
         }
 
-        // Climbs leaving every location the body can rest at in the cell.
         BuiltPlatformerConnections buildClimbConnections(
             const TileMap& map,
             Cell cell,

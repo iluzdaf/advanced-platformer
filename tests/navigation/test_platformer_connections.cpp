@@ -270,15 +270,12 @@ TEST_CASE(
     REQUIRE(climbs(ClimbSurface::None, besideWall, ClimbSurface::LeftWall));
     REQUIRE(climbs(ClimbSurface::LeftWall, besideWall, ClimbSurface::None));
     REQUIRE(climbs(ClimbSurface::LeftWall, {2, 3}, ClimbSurface::LeftWall));
-    // No wall stands to the right, and the floor lies below.
     REQUIRE_FALSE(climbs(ClimbSurface::None, besideWall, ClimbSurface::RightWall));
     REQUIRE_FALSE(climbs(ClimbSurface::LeftWall, {2, 5}, ClimbSurface::LeftWall));
-    // The walks, falls, and jumps from the floor are the walker's.
     REQUIRE(hasConnection(climbing.connections, {3, 4}, Traversal::Walk));
     REQUIRE(climbing.simulatedTicks > walking.simulatedTicks);
     REQUIRE(advanced_platformer::contains(climbing.footprint, {1, 3}));
 
-    // A cell in the air beside the wall holds climbs though nothing can stand in it.
     const tests::CellConnections upTheWall = tests::connectionsFrom(map, {2, 2}, climber);
     REQUIRE_FALSE(upTheWall.connections.empty());
     REQUIRE(

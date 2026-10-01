@@ -21,7 +21,6 @@ namespace advanced_platformer
 {
     namespace
     {
-        // Account for cache writes even when a cell needs no movement simulation.
         constexpr int CacheWriteCostTicks = 3;
 
         int fillPlatformerConnections(
@@ -110,8 +109,6 @@ namespace advanced_platformer
         }
         cache.applyRecordedTileBreaks(map, frameProfile);
         const std::vector<PlatformerTraversalProfile> profiles = cache.knownProfiles();
-        // The step's budget is shared among profiles with cells waiting. A profile
-        // without pending cells costs nothing.
         const auto waiting = static_cast<int>(std::ranges::count_if(
             profiles,
             [&cache](const PlatformerTraversalProfile& profile)

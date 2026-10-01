@@ -226,7 +226,6 @@ TEST_CASE(
     const advanced_platformer::RouteConnection& jump =
         tests::connectionWith(connections, advanced_platformer::Traversal::Jump);
 
-    // The same jump, but its waypoint claims a row above where it really lands.
     advanced_platformer::NavigationPath path = tests::floorPath({2, 2}, {jump.step});
     path.waypoints.front().feet.y -= static_cast<float>(tests::TileSize);
     advanced_platformer::PathFollower follower;

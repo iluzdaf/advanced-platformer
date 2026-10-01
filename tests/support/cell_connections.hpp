@@ -13,7 +13,6 @@
 
 namespace tests
 {
-    // What caching one cell into an empty cache stored, and the ticks it simulated.
     struct CellConnections
     {
         std::vector<advanced_platformer::RouteConnection> connections;
@@ -21,7 +20,6 @@ namespace tests
         int simulatedTicks = 0;
     };
 
-    // The connections leaving a cell, simulated with no walks to reuse.
     inline CellConnections connectionsFrom(
         const advanced_platformer::TileMap& map,
         advanced_platformer::Cell cell,
