@@ -236,11 +236,9 @@ target_compile_features(header_self_containment PRIVATE cxx_std_17)
 target_link_libraries(header_self_containment PRIVATE advanced_platformer_core)
 enable_project_warnings(header_self_containment)
 
-if(NOT MSVC)
-    target_compile_options(
-        header_self_containment
-        PRIVATE
-        -Wno-pragma-once-outside-header
-        -Wno-unused-const-variable
-    )
-endif()
+target_compile_options(
+    header_self_containment
+    PRIVATE
+    -Wno-pragma-once-outside-header
+    -Wno-unused-const-variable
+)
