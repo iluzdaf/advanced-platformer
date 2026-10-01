@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <map>
 #include <memory>
@@ -179,7 +180,8 @@ namespace advanced_platformer
         if (!input)
         {
             throw std::invalid_argument(
-                "Cannot read Lua script '" + std::filesystem::absolute(path).string() + "'");
+                std::format(
+                    "Cannot read Lua script '{}'", std::filesystem::absolute(path).string()));
         }
         std::ostringstream source;
         source << input.rdbuf();
@@ -246,7 +248,7 @@ namespace advanced_platformer
             names.insert(name);
             const sol::table activity = activityObject.as<sol::table>();
             rejectUnknownFields(
-                activity, {"enter", "update", "exit"}, "Lua activity '" + name + "'");
+                activity, {"enter", "update", "exit"}, std::format("Lua activity '{}'", name));
             if (!activity.get<sol::object>("update").is<sol::function>())
             {
                 fail(activityDescription(script, name, sourceName), " needs an update function");

@@ -4,6 +4,7 @@
 #include "content_validation.hpp"
 #include "advanced_platformer/inventory/item.hpp"
 #include <cstddef>
+#include <format>
 #include <nlohmann/json.hpp>
 #include <filesystem>
 #include <set>
@@ -80,7 +81,7 @@ namespace advanced_platformer
                 failJson(
                     sourceName,
                     fieldPath(path, "effect"),
-                    "unknown effect '" + effect + "'; expected heal or none");
+                    std::format("unknown effect '{}'; expected heal or none", effect));
             }
             readOptionalInteger(value, "effectAmount", item.effectAmount, sourceName, path);
             catalog.definitions.emplace(entry.key(), item);
@@ -99,7 +100,7 @@ namespace advanced_platformer
         const auto found = catalog.definitions.find(name);
         if (found == catalog.definitions.end())
         {
-            throw std::invalid_argument("unknown item '" + name + "'");
+            throw std::invalid_argument(std::format("unknown item '{}'", name));
         }
         return found->second;
     }

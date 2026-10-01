@@ -1,6 +1,7 @@
 #include "lua_activity_values.hpp"
 
 #include <cmath>
+#include <format>
 #include <initializer_list>
 #include <limits>
 #include <optional>
@@ -27,14 +28,14 @@ namespace advanced_platformer
         {
             if (object.get_type() != sol::type::number)
             {
-                throw std::invalid_argument(std::string(field) + " must be a number");
+                throw std::invalid_argument(std::format("{} must be a number", field));
             }
             const double value = object.as<double>();
             if (!std::isfinite(value) ||
                 value < -static_cast<double>(std::numeric_limits<float>::max()) ||
                 value > static_cast<double>(std::numeric_limits<float>::max()))
             {
-                throw std::invalid_argument(std::string(field) + " must be finite");
+                throw std::invalid_argument(std::format("{} must be finite", field));
             }
             return static_cast<float>(value);
         }
@@ -43,7 +44,7 @@ namespace advanced_platformer
         {
             if (object.get_type() != sol::type::boolean)
             {
-                throw std::invalid_argument(std::string(field) + " must be true or false");
+                throw std::invalid_argument(std::format("{} must be true or false", field));
             }
             return object.as<bool>();
         }
@@ -68,7 +69,7 @@ namespace advanced_platformer
                 }
             }
             throw std::invalid_argument(
-                std::string(field) + " must be \"keep\", \"hold\" or \"release\"");
+                std::format("{} must be \"keep\", \"hold\" or \"release\"", field));
         }
 
         glm::vec2 vector(const sol::object& object, std::string_view field)
@@ -82,13 +83,13 @@ namespace advanced_platformer
             if (!object.is<sol::table>())
             {
                 throw std::invalid_argument(
-                    std::string(field) + " must be a vec2 or an {x, y} table");
+                    std::format("{} must be a vec2 or an {{x, y}} table", field));
             }
             const sol::table table = object.as<sol::table>();
             rejectUnknownFields(table, {"x", "y"}, field);
             return {
-                number(table.get<sol::object>("x"), std::string(field) + ".x"),
-                number(table.get<sol::object>("y"), std::string(field) + ".y")};
+                number(table.get<sol::object>("x"), std::format("{}.x", field)),
+                number(table.get<sol::object>("y"), std::format("{}.y", field))};
         }
 
         sol::object luaVector(sol::state& lua, glm::vec2 value)
@@ -108,7 +109,7 @@ namespace advanced_platformer
             if (!keyObject.is<std::string>())
             {
                 throw std::invalid_argument(
-                    std::string(subject) + " has a field whose name is not text");
+                    std::format("{} has a field whose name is not text", subject));
             }
             const std::string key = keyObject.as<std::string>();
             bool known = false;
@@ -118,8 +119,7 @@ namespace advanced_platformer
             }
             if (!known)
             {
-                throw std::invalid_argument(
-                    std::string(subject) + " has unknown field '" + key + "'");
+                throw std::invalid_argument(std::format("{} has unknown field '{}'", subject, key));
             }
         }
     }
@@ -204,7 +204,7 @@ namespace advanced_platformer
             const sol::object value = table.get<sol::object>(name);
             if (value.valid() && value.get_type() != sol::type::lua_nil)
             {
-                destination = vector(value, std::string("command.") + std::string(name));
+                destination = vector(value, std::format("command.{}", name));
             }
         };
         const auto readOptionalVector =
@@ -213,7 +213,7 @@ namespace advanced_platformer
             const sol::object value = table.get<sol::object>(name);
             if (value.valid() && value.get_type() != sol::type::lua_nil)
             {
-                destination = vector(value, std::string("command.") + std::string(name));
+                destination = vector(value, std::format("command.{}", name));
             }
         };
         const auto readClimbGrip = [&](std::string_view name, ClimbGrip& destination)
@@ -221,7 +221,7 @@ namespace advanced_platformer
             const sol::object value = table.get<sol::object>(name);
             if (value.valid() && value.get_type() != sol::type::lua_nil)
             {
-                destination = climbGrip(value, std::string("command.") + std::string(name));
+                destination = climbGrip(value, std::format("command.{}", name));
             }
         };
         const auto readBoolean = [&](std::string_view name, bool& destination)
@@ -229,7 +229,7 @@ namespace advanced_platformer
             const sol::object value = table.get<sol::object>(name);
             if (value.valid() && value.get_type() != sol::type::lua_nil)
             {
-                destination = boolean(value, std::string("command.") + std::string(name));
+                destination = boolean(value, std::format("command.{}", name));
             }
         };
 

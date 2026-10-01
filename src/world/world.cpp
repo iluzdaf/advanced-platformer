@@ -4,10 +4,10 @@
 #include <cstddef>
 #include <cmath>
 #include <cstdint>
+#include <format>
 #include <limits>
 #include <optional>
 #include <stdexcept>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -78,7 +78,7 @@ namespace advanced_platformer
         if (time.has_value() &&
             (!std::isfinite(*time) || *time < 0.0 || *time > elapsedSimulationTimeSeconds))
         {
-            throw std::invalid_argument(std::string(what) + " must be within simulation time");
+            throw std::invalid_argument(std::format("{} must be within simulation time", what));
         }
     }
 

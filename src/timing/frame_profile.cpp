@@ -2,10 +2,10 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <format>
 #include <functional>
 #include <limits>
 #include <stdexcept>
-#include <string>
 #include <string_view>
 #include <vector>
 
@@ -59,7 +59,7 @@ namespace advanced_platformer
                 if (std::string_view(phase.category) != category)
                 {
                     throw std::invalid_argument(
-                        std::string("Phase ") + name + " is already charged to " + phase.category);
+                        std::format("Phase {} is already charged to {}", name, phase.category));
                 }
                 phase.seconds += seconds;
                 return;
@@ -76,7 +76,7 @@ namespace advanced_platformer
         }
         if (count < 0)
         {
-            throw std::invalid_argument(std::string("Statistic ") + name + " cannot be negative");
+            throw std::invalid_argument(std::format("Statistic {} cannot be negative", name));
         }
         for (FrameStatistic& statistic : profile->statistics)
         {
@@ -87,12 +87,11 @@ namespace advanced_platformer
             if (std::string_view(statistic.category) != category)
             {
                 throw std::invalid_argument(
-                    std::string("Statistic ") + name + " is already charged to " +
-                    statistic.category);
+                    std::format("Statistic {} is already charged to {}", name, statistic.category));
             }
             if (count > std::numeric_limits<int>::max() - statistic.count)
             {
-                throw std::overflow_error(std::string("Statistic ") + name + " is too large");
+                throw std::overflow_error(std::format("Statistic {} is too large", name));
             }
             statistic.count += count;
             return;

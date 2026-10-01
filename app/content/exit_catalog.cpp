@@ -4,6 +4,7 @@
 #include "content_validation.hpp"
 #include <nlohmann/json.hpp>
 #include <filesystem>
+#include <format>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -74,7 +75,7 @@ namespace advanced_platformer
         const auto found = catalog.find(name);
         if (found == catalog.end())
         {
-            throw std::invalid_argument("unknown exit definition '" + name + "'");
+            throw std::invalid_argument(std::format("unknown exit definition '{}'", name));
         }
         return found->second;
     }

@@ -4,6 +4,7 @@
 #include <array>
 #include <cstddef>
 #include <filesystem>
+#include <format>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -52,10 +53,16 @@ namespace advanced_platformer
             std::string expected;
             for (const ActivityEntry& entry : Activities)
             {
-                expected += (expected.empty() ? "" : ", ") + std::string(entry.name);
+                if (!expected.empty())
+                {
+                    expected += ", ";
+                }
+                expected += entry.name;
             }
             failJson(
-                sourceName, path, "unknown activity '" + name + "'; expected one of " + expected);
+                sourceName,
+                path,
+                std::format("unknown activity '{}'; expected one of {}", name, expected));
         }
 
         LuaNpcActivity jsonLuaActivity(
@@ -223,7 +230,7 @@ namespace advanced_platformer
         const auto found = catalog.find(name);
         if (found == catalog.end())
         {
-            throw std::invalid_argument("unknown state machine '" + name + "'");
+            throw std::invalid_argument(std::format("unknown state machine '{}'", name));
         }
         return found->second;
     }

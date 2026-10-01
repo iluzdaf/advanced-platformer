@@ -9,6 +9,7 @@
 #include "content/level_data.hpp"
 #include "content/tile_catalog.hpp"
 #include <cstdint>
+#include <format>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -113,7 +114,7 @@ namespace advanced_platformer
             catch (const std::invalid_argument& error)
             {
                 throw std::invalid_argument(
-                    path.string() + ": " + reference.first + ": " + error.what());
+                    std::format("{}: {}: {}", path.string(), reference.first, error.what()));
             }
         }
         for (const auto& reference : data.itemReferences)
@@ -125,7 +126,7 @@ namespace advanced_platformer
             catch (const std::invalid_argument& error)
             {
                 throw std::invalid_argument(
-                    path.string() + ": " + reference.first + ": " + error.what());
+                    std::format("{}: {}: {}", path.string(), reference.first, error.what()));
             }
         }
         for (const auto& reference : data.pickupReferences)
@@ -137,7 +138,7 @@ namespace advanced_platformer
             catch (const std::invalid_argument& error)
             {
                 throw std::invalid_argument(
-                    path.string() + ": " + reference.first + ": " + error.what());
+                    std::format("{}: {}: {}", path.string(), reference.first, error.what()));
             }
         }
         for (const auto& reference : data.actorReferences)
@@ -149,7 +150,7 @@ namespace advanced_platformer
             catch (const std::invalid_argument& error)
             {
                 throw std::invalid_argument(
-                    path.string() + ": " + reference.first + ": " + error.what());
+                    std::format("{}: {}: {}", path.string(), reference.first, error.what()));
             }
         }
         TileMap map = composeTileMap(data.mapRows, data.tileLegend, tiles);
@@ -171,7 +172,11 @@ namespace advanced_platformer
             catch (const std::invalid_argument& error)
             {
                 throw std::invalid_argument(
-                    path.string() + ": actor '" + placement.definitionName + "': " + error.what());
+                    std::format(
+                        "{}: actor '{}': {}",
+                        path.string(),
+                        placement.definitionName,
+                        error.what()));
             }
         }
         for (const auto& placement : data.pickups)

@@ -1,6 +1,7 @@
 #include "level_data.hpp"
 #include "content_diagnostics.hpp"
 #include "content_json.hpp"
+#include <format>
 #include <initializer_list>
 #include "content_validation.hpp"
 
@@ -50,8 +51,7 @@ namespace advanced_platformer
                 failJson(
                     sourceName,
                     path,
-                    "supply exactly one of '" + std::string(cellKey) + "' or '" +
-                        std::string(feetKey) + "'");
+                    std::format("supply exactly one of '{}' or '{}'", cellKey, feetKey));
             }
             if (cell != object.end())
             {
@@ -287,8 +287,9 @@ namespace advanced_platformer
                     failJson(
                         sourceName,
                         fieldPath(path, "type"),
-                        "unknown object type '" + type +
-                            "'; expected player, actor, pickup, or exit");
+                        std::format(
+                            "unknown object type '{}'; expected player, actor, pickup, or exit",
+                            type));
                 }
             }
         }
@@ -494,7 +495,7 @@ namespace advanced_platformer
         // Give library errors from expansion the same source context as parser errors.
         catch (const Json::exception& exception)
         {
-            failJson(sourceName, {}, std::string("invalid JSON: ") + exception.what());
+            failJson(sourceName, {}, std::format("invalid JSON: {}", exception.what()));
         }
     }
 

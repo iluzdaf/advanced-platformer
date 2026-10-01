@@ -5,6 +5,7 @@
 
 #include <cstddef>
 #include <filesystem>
+#include <format>
 #include <map>
 #include <string>
 #include <string_view>
@@ -87,7 +88,7 @@ namespace advanced_platformer
             const auto target = result.ids.find(entry.second);
             if (target == result.ids.end())
             {
-                failJson(sourceName, path, "unknown tile name '" + entry.second + "'");
+                failJson(sourceName, path, std::format("unknown tile name '{}'", entry.second));
             }
             const auto broken = static_cast<std::size_t>(result.ids.at(entry.first));
             result.definitions[broken].breaksIntoTileId = target->second;

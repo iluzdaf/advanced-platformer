@@ -1,5 +1,6 @@
 #include "content_diagnostics.hpp"
 #include <cstddef>
+#include <format>
 #include <functional>
 #include <stdexcept>
 #include <string>
@@ -25,19 +26,12 @@ namespace advanced_platformer
         {
             return std::string(key);
         }
-        std::string result(path);
-        result += '.';
-        result += key;
-        return result;
+        return std::format("{}.{}", path, key);
     }
 
     std::string indexPath(std::string_view path, std::size_t index)
     {
-        std::string result(path);
-        result += '[';
-        result += std::to_string(index);
-        result += ']';
-        return result;
+        return std::format("{}[{}]", path, index);
     }
 
     void failJson(std::string_view sourceName, std::string_view path, std::string_view message)
@@ -45,12 +39,12 @@ namespace advanced_platformer
         std::string prefix;
         if (!sourceName.empty())
         {
-            prefix += std::string(sourceName) + ": ";
+            prefix += std::format("{}: ", sourceName);
         }
         if (!path.empty())
         {
-            prefix += std::string(path) + ": ";
+            prefix += std::format("{}: ", path);
         }
-        throw std::invalid_argument(prefix + std::string(message));
+        throw std::invalid_argument(std::format("{}{}", prefix, message));
     }
 }

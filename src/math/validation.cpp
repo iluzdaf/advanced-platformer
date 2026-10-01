@@ -1,8 +1,8 @@
 #include "advanced_platformer/math/validation.hpp"
 
 #include <cmath>
+#include <format>
 #include <stdexcept>
-#include <string>
 
 #include <glm/vec2.hpp>
 
@@ -37,7 +37,7 @@ namespace advanced_platformer
     {
         if (!isFinite(value))
         {
-            throw std::invalid_argument(std::string(what) + " must be finite");
+            throw std::invalid_argument(std::format("{} must be finite", what));
         }
     }
 
@@ -46,7 +46,7 @@ namespace advanced_platformer
         if (!isFiniteNonNegative(seconds))
         {
             throw std::invalid_argument(
-                std::string(what) + " must be a finite, non-negative number of seconds");
+                std::format("{} must be a finite, non-negative number of seconds", what));
         }
     }
 
@@ -54,7 +54,7 @@ namespace advanced_platformer
     {
         if (!isFinitePositive(seconds))
         {
-            throw std::invalid_argument(std::string(what) + " must be finite and positive");
+            throw std::invalid_argument(std::format("{} must be finite and positive", what));
         }
     }
 }

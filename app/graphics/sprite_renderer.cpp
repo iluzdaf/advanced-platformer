@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstddef>
 #include <filesystem>
+#include <format>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -74,7 +75,7 @@ namespace advanced_platformer
             glGetShaderInfoLog(shader, static_cast<int>(message.size()), nullptr, message.data());
             glDeleteShader(shader);
             throw std::runtime_error(
-                "OpenGL shader compilation failed: " + std::string(message.data()));
+                std::format("OpenGL shader compilation failed: {}", message.data()));
         }
 
         unsigned int createShaderProgram()
@@ -131,7 +132,7 @@ namespace advanced_platformer
             glGetProgramInfoLog(program, static_cast<int>(message.size()), nullptr, message.data());
             glDeleteProgram(program);
             throw std::runtime_error(
-                "OpenGL shader linking failed: " + std::string(message.data()));
+                std::format("OpenGL shader linking failed: {}", message.data()));
         }
     }
 
@@ -217,8 +218,10 @@ namespace advanced_platformer
         if (pixels == nullptr)
         {
             throw std::runtime_error(
-                "Could not load texture '" + std::filesystem::absolute(path).string() +
-                "': " + stbi_failure_reason());
+                std::format(
+                    "Could not load texture '{}': {}",
+                    std::filesystem::absolute(path).string(),
+                    stbi_failure_reason()));
         }
 
         Texture texture;

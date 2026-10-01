@@ -1,6 +1,7 @@
 #include "level_catalog.hpp"
 #include "content_diagnostics.hpp"
 #include "content_json.hpp"
+#include <format>
 #include <initializer_list>
 
 #include <algorithm>
@@ -76,8 +77,10 @@ namespace advanced_platformer
                 failJson(
                     sourceName,
                     "cameraDeadZone",
-                    "expected a positive size that fits in the " + std::to_string(InternalWidth) +
-                        " by " + std::to_string(InternalHeight) + " view");
+                    std::format(
+                        "expected a positive size that fits in the {} by {} view",
+                        InternalWidth,
+                        InternalHeight));
             }
             result.levelDirectory = levelDirectory;
 
@@ -142,7 +145,7 @@ namespace advanced_platformer
         // Raw member access in the catalog reader can still raise a nlohmann error of its own.
         catch (const Json::exception& exception)
         {
-            failJson(sourceName, {}, std::string("invalid JSON: ") + exception.what());
+            failJson(sourceName, {}, std::format("invalid JSON: {}", exception.what()));
         }
     }
 
@@ -159,8 +162,7 @@ namespace advanced_platformer
             [levelNumber](const LevelCatalogEntry& entry) { return entry.number == levelNumber; });
         if (found == catalog.levels.end())
         {
-            throw std::invalid_argument(
-                "Level " + std::to_string(levelNumber) + " is not in the catalog");
+            throw std::invalid_argument(std::format("Level {} is not in the catalog", levelNumber));
         }
         return catalog.levelDirectory / found->relativeFile;
     }

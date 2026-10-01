@@ -2,6 +2,7 @@
 #include "content_diagnostics.hpp"
 
 #include <cstddef>
+#include <format>
 #include <map>
 #include <set>
 #include <stdexcept>
@@ -42,8 +43,7 @@ namespace advanced_platformer
             failJson(
                 sourceName,
                 path,
-                "region runs past the " + std::to_string(atlasSize.x) + " by " +
-                    std::to_string(atlasSize.y) + " atlas");
+                std::format("region runs past the {} by {} atlas", atlasSize.x, atlasSize.y));
         }
     }
 
@@ -61,7 +61,7 @@ namespace advanced_platformer
             failJson(
                 sourceName,
                 fieldPath(path, "quantity"),
-                "expected a positive integer, got " + std::to_string(placement.stack.quantity));
+                std::format("expected a positive integer, got {}", placement.stack.quantity));
         }
         if (!isFinitePositive(placement.bodySize))
         {
@@ -84,8 +84,8 @@ namespace advanced_platformer
             failJson(
                 sourceName,
                 fieldPath(path, "requirement.quantity"),
-                "expected a positive integer, got " +
-                    std::to_string(placement.requirement->quantity));
+                std::format(
+                    "expected a positive integer, got {}", placement.requirement->quantity));
         }
         if (placement.nextLevel && *placement.nextLevel <= 0)
         {
@@ -106,13 +106,16 @@ namespace advanced_platformer
         {
             const auto& duplicate = origins[1];
             const std::string description =
-                duplicate.marker ? " marker '" + std::string(1, *duplicate.marker) + "'"
-                                 : " placement";
+                duplicate.marker ? std::format(" marker '{}'", *duplicate.marker) : " placement";
             failJson(
                 sourceName,
                 duplicate.path,
-                "second " + std::string(kind) + description + "; " + std::string(kind) +
-                    " already placed at " + origins.front().path);
+                std::format(
+                    "second {}{}; {} already placed at {}",
+                    kind,
+                    description,
+                    kind,
+                    origins.front().path));
         }
     }
 
@@ -140,7 +143,7 @@ namespace advanced_platformer
                 !usedIds.insert(id).second)
             {
                 throw std::invalid_argument(
-                    "invalid or repeated tile ID for '" + entry.first + "'");
+                    std::format("invalid or repeated tile ID for '{}'", entry.first));
             }
             if (id == 0)
             {
@@ -151,22 +154,22 @@ namespace advanced_platformer
             if (definition.climbable && !definition.blocksMovement)
             {
                 throw std::invalid_argument(
-                    "climbable tile '" + entry.first + "' must block movement");
+                    std::format("climbable tile '{}' must block movement", entry.first));
             }
             const auto& sprite = definition.sprite;
             if (!isFiniteNonNegative(sprite.position) || !isFinitePositive(sprite.size))
             {
-                throw std::invalid_argument("invalid sprite region for tile '" + entry.first + "'");
+                throw std::invalid_argument(
+                    std::format("invalid sprite region for tile '{}'", entry.first));
             }
             if (sprite.size != glm::vec2{catalog.tileSize, catalog.tileSize})
             {
-                const std::string side = std::to_string(catalog.tileSize);
-                std::string message = "tile '" + entry.first + "' sprite must be ";
-                message += side;
-                message += " by ";
-                message += side;
-                message += " atlas pixels, the catalog's tileSize";
-                throw std::invalid_argument(message);
+                throw std::invalid_argument(
+                    std::format(
+                        "tile '{}' sprite must be {} by {} atlas pixels, the catalog's tileSize",
+                        entry.first,
+                        catalog.tileSize,
+                        catalog.tileSize));
             }
             const auto& breaksInto =
                 catalog.definitions[static_cast<std::size_t>(id)].breaksIntoTileId;
@@ -175,7 +178,8 @@ namespace advanced_platformer
                  static_cast<std::size_t>(*breaksInto) >= catalog.definitions.size() ||
                  *breaksInto == id))
             {
-                throw std::invalid_argument("invalid breaksInto tile for '" + entry.first + "'");
+                throw std::invalid_argument(
+                    std::format("invalid breaksInto tile for '{}'", entry.first));
             }
         }
         if (usedIds.size() != catalog.definitions.size())
@@ -195,7 +199,7 @@ namespace advanced_platformer
             if (catalog.ids.find(entry.second) == catalog.ids.end())
             {
                 throw std::invalid_argument(
-                    "Unknown tile name '" + entry.second + "' in tileLegend");
+                    std::format("Unknown tile name '{}' in tileLegend", entry.second));
             }
         }
     }
@@ -258,8 +262,7 @@ namespace advanced_platformer
                 failJson(
                     sourceName,
                     path,
-                    "expected " + std::to_string(width) + " columns, got " +
-                        std::to_string(rows[row].size()));
+                    std::format("expected {} columns, got {}", width, rows[row].size()));
             }
             for (std::size_t column = 0; column < width; ++column)
             {
@@ -269,8 +272,9 @@ namespace advanced_platformer
                     failJson(
                         sourceName,
                         indexPath(path, column),
-                        "unknown symbol '" + std::string(1, symbol) +
-                            "'; define it in tileLegend or objectLegend");
+                        std::format(
+                            "unknown symbol '{}'; define it in tileLegend or objectLegend",
+                            symbol));
                 }
             }
         }

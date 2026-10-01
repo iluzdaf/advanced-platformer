@@ -1,5 +1,6 @@
 #include "advanced_platformer/world/level_validation.hpp"
 
+#include <format>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -53,8 +54,7 @@ namespace advanced_platformer
 
         std::string actorLocation(int level, ActorId actor, std::string_view place)
         {
-            return "Level " + std::to_string(level) + " actor " + std::to_string(actor.value) +
-                   " " + std::string(place);
+            return std::format("Level {} actor {} {}", level, actor.value, place);
         }
 
         void validatePlacement(
@@ -68,11 +68,11 @@ namespace advanced_platformer
             const std::string location = actorLocation(level, actor.id, place);
             if (!hasClearance(map, bounds))
             {
-                throw std::invalid_argument(location + " overlaps a blocked tile");
+                throw std::invalid_argument(std::format("{} overlaps a blocked tile", location));
             }
             if (needsGround && !hasGroundSupport(map, bounds))
             {
-                throw std::invalid_argument(location + " has no ground support");
+                throw std::invalid_argument(std::format("{} has no ground support", location));
             }
         }
 
