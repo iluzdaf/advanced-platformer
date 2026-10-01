@@ -16,22 +16,22 @@ runs:
     - name: Install LLVM ${{ inputs.version }}
       shell: bash
       env:
-        VERSION: ${{ inputs.version }}
-        TOOLS: ${{ inputs.tools }}
+        LLVM_VERSION: ${{ inputs.version }}
+        LLVM_TOOLS: ${{ inputs.tools }}
       run: |
-        . /etc/os-release
+        codename=$(. /etc/os-release && echo "$VERSION_CODENAME")
         curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key \
           | sudo gpg --dearmor -o /etc/apt/keyrings/apt.llvm.org.gpg
         echo "deb [signed-by=/etc/apt/keyrings/apt.llvm.org.gpg]" \
-          "https://apt.llvm.org/$VERSION_CODENAME/ llvm-toolchain-$VERSION_CODENAME-$VERSION main" \
+          "https://apt.llvm.org/$codename/ llvm-toolchain-$codename-$LLVM_VERSION main" \
           | sudo tee /etc/apt/sources.list.d/apt.llvm.org.list
         sudo apt-get update -qq
-        packages="clang-$VERSION"
-        for tool in $TOOLS; do
-          packages="$packages $tool-$VERSION"
+        packages="clang-$LLVM_VERSION"
+        for tool in $LLVM_TOOLS; do
+          packages="$packages $tool-$LLVM_VERSION"
         done
         sudo apt-get install -y -qq --no-install-recommends $packages
-        clang-$VERSION --version
-        for tool in $TOOLS; do
-          "$tool-$VERSION" --version
+        clang-$LLVM_VERSION --version
+        for tool in $LLVM_TOOLS; do
+          "$tool-$LLVM_VERSION" --version
         done
