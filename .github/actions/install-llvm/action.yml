@@ -1,0 +1,37 @@
+name: Install LLVM
+description: Installs clang and the named LLVM tools for one LLVM major version from apt.llvm.org.
+
+inputs:
+  version:
+    description: The LLVM major version.
+    required: true
+  tools:
+    description: Space-separated LLVM tools to install beside clang, such as clang-format.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Install LLVM ${{ inputs.version }}
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        TOOLS: ${{ inputs.tools }}
+      run: |
+        . /etc/os-release
+        curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key \
+          | sudo gpg --dearmor -o /etc/apt/keyrings/apt.llvm.org.gpg
+        echo "deb [signed-by=/etc/apt/keyrings/apt.llvm.org.gpg]" \
+          "https://apt.llvm.org/$VERSION_CODENAME/ llvm-toolchain-$VERSION_CODENAME-$VERSION main" \
+          | sudo tee /etc/apt/sources.list.d/apt.llvm.org.list
+        sudo apt-get update -qq
+        packages="clang-$VERSION"
+        for tool in $TOOLS; do
+          packages="$packages $tool-$VERSION"
+        done
+        sudo apt-get install -y -qq --no-install-recommends $packages
+        clang-$VERSION --version
+        for tool in $TOOLS; do
+          "$tool-$VERSION" --version
+        done
