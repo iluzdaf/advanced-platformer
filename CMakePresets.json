@@ -32,6 +32,27 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "linux",
+      "hidden": true,
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "BUILD_TESTING": true,
+        "CMAKE_C_COMPILER": "/usr/lib/llvm-23/bin/clang",
+        "CMAKE_CXX_COMPILER": "/usr/lib/llvm-23/bin/clang++",
+        "GLFW_BUILD_X11": false,
+        "GLFW_BUILD_WAYLAND": false
+      }
+    },
+    {
+      "name": "linux-debug",
+      "displayName": "Linux Debug (headless, for CI)",
+      "inherits": "linux",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
     }
   ],
   "buildPresets": [
@@ -42,12 +63,16 @@
     {
       "name": "mac-release",
       "configurePreset": "mac-release"
+    },
+    {
+      "name": "linux-debug",
+      "configurePreset": "linux-debug"
     }
   ],
   "testPresets": [
     {
       "$comment": "An empty jobs runs one test per processor.",
-      "name": "mac",
+      "name": "defaults",
       "hidden": true,
       "output": {
         "outputOnFailure": true
@@ -59,12 +84,17 @@
     {
       "name": "mac-debug",
       "configurePreset": "mac-debug",
-      "inherits": "mac"
+      "inherits": "defaults"
     },
     {
       "name": "mac-release",
       "configurePreset": "mac-release",
-      "inherits": "mac"
+      "inherits": "defaults"
+    },
+    {
+      "name": "linux-debug",
+      "configurePreset": "linux-debug",
+      "inherits": "defaults"
     }
   ]
 }

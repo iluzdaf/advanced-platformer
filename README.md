@@ -34,7 +34,8 @@ git clone --recurse-submodules https://github.com/iluzdaf/advanced-platformer.gi
 In a checkout made without them, run `git submodule update --init`. Run it again after
 pulling a change that moves a submodule.
 
-macOS is the only supported platform, for development, graphical testing, and CI.
+macOS is the only supported platform for development and graphical testing. CI runs on
+Linux, headless, with the same LLVM major version.
 
 ## macOS: configure, build, and test
 
@@ -131,18 +132,20 @@ GitHub Actions runs the jobs below. The names are the ones shown on a pull reque
 
 | Job                          | Runner         | What it does                                                                                                                                          | Runs on                            |
 | ---------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| Build and test               | `macos-latest` | Configures, builds, and runs the whole test suite.                                                                                                    | pushes to `main` and pull requests |
-| Formatting                   | `macos-latest` | Checks the formatting of C++, JSON, YAML, Markdown, Python, and Lua, lints the Python and Lua, and runs the tests for the repository's tools.         | pull requests only                 |
-| Headers stand alone          | `macos-latest` | Compiles every public header on its own.                                                                                                              | pull requests only                 |
-| Static analysis (1/3 to 3/3) | `macos-latest` | Runs clang-tidy, with warnings as errors, on the files the pull request affects (see [Static analysis](#static-analysis)), split across three shards. | pull requests only                 |
-| Static analysis              | `macos-latest` | Passes only if every static analysis shard passed. This is the check branch protection requires.                                                      | pull requests only                 |
+| Build and test               | `ubuntu-24.04` | Configures, builds, and runs the whole test suite.                                                                                                    | pushes to `main` and pull requests |
+| Formatting                   | `ubuntu-24.04` | Checks the formatting of C++, JSON, YAML, Markdown, Python, and Lua, lints the Python and Lua, and runs the tests for the repository's tools.         | pull requests only                 |
+| Headers stand alone          | `ubuntu-24.04` | Compiles every public header on its own.                                                                                                              | pull requests only                 |
+| Static analysis (1/3 to 3/3) | `ubuntu-24.04` | Runs clang-tidy, with warnings as errors, on the files the pull request affects (see [Static analysis](#static-analysis)), split across three shards. | pull requests only                 |
+| Static analysis              | `ubuntu-24.04` | Passes only if every static analysis shard passed. This is the check branch protection requires.                                                      | pull requests only                 |
 
 The jobs other than build and test are skipped on pushes because branch protection
 already ran them on the pull request.
 
-Every job runs on macOS and installs the same toolchain through
+Every job runs on Linux and installs the same toolchain through
 [`install-toolchain`](.github/actions/install-toolchain/action.yml): CMake 4.4.3 from
-PyPI and LLVM 23 from Homebrew, rather than the runner's own.
+PyPI and LLVM 23 from apt.llvm.org, with its libc++, clang-format and clang-tidy, rather
+than the runner's own. The jobs configure with the `linux-debug` preset, which builds
+GLFW without a display backend, so nothing needs a window.
 
 The build and test job uses a pinned `sccache` release backed by GitHub Actions'
 cache service. Only compiler outputs are cached; generated build directories are not.
