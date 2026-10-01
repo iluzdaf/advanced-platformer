@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <cstddef>
+#include <filesystem>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -157,6 +158,9 @@ namespace advanced_platformer
     };
 
     Sprite spriteFrom(const SpriteJson& json);
+
+    // The whole content file at this path, or an error naming its absolute path.
+    std::string loadContentText(const std::filesystem::path& path);
 
     // Reports a Glaze read error as "source: line L, column C: what was wrong", naming the
     // key or value found there, or "invalid JSON: ..." when the text is not JSON at all.

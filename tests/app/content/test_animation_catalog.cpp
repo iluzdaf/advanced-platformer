@@ -7,7 +7,7 @@
 #include "content/animation_catalog.hpp"
 #include "content/actor_catalog.hpp"
 #include "content/actor_definition.hpp"
-#include "content/content_json.hpp"
+#include "content/content_glaze.hpp"
 #include "advanced_platformer/render/animation.hpp"
 #include "advanced_platformer/render/sprite.hpp"
 #include "support/actor_components.hpp"

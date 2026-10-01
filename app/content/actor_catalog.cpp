@@ -2,7 +2,6 @@
 #include "machine_catalog.hpp"
 #include "content_diagnostics.hpp"
 #include "content_glaze.hpp"
-#include "content_json.hpp"
 #include "content_validation.hpp"
 #include "animation_catalog.hpp"
 #include "content/actor_definition.hpp"

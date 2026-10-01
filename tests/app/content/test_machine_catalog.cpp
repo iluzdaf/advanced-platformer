@@ -2,7 +2,7 @@
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
-#include "content/content_json.hpp"
+#include "content/content_glaze.hpp"
 #include "content/machine_catalog.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_activity.hpp"
