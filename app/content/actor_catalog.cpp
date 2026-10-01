@@ -11,6 +11,7 @@
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include <filesystem>
+#include <format>
 #include <initializer_list>
 #include <optional>
 #include <stdexcept>
@@ -42,7 +43,7 @@ namespace advanced_platformer
             failJson(
                 sourceName,
                 path,
-                "unknown team '" + team + "'; expected player, enemy, or neutral");
+                std::format("unknown team '{}'; expected player, enemy, or neutral", team));
         }
 
         NpcTactic jsonNpcTactic(
@@ -62,7 +63,7 @@ namespace advanced_platformer
             failJson(
                 sourceName,
                 path,
-                "unknown tactic '" + tactic + "'; expected pursuer or keepDistance");
+                std::format("unknown tactic '{}'; expected pursuer or keepDistance", tactic));
         }
 
         Facing jsonFacing(const Json& value, std::string_view sourceName, std::string_view path)
@@ -76,7 +77,10 @@ namespace advanced_platformer
             {
                 return Facing::Right;
             }
-            failJson(sourceName, path, "unknown facing '" + facing + "'; expected left or right");
+            failJson(
+                sourceName,
+                path,
+                std::format("unknown facing '{}'; expected left or right", facing));
         }
 
         // Each component reader starts from the C++ defaults and takes only the fields the
@@ -478,7 +482,7 @@ namespace advanced_platformer
         const auto found = catalog.definitions.find(name);
         if (found == catalog.definitions.end())
         {
-            throw std::invalid_argument("unknown actor definition '" + name + "'");
+            throw std::invalid_argument(std::format("unknown actor definition '{}'", name));
         }
         return found->second;
     }

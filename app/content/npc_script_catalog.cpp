@@ -3,6 +3,7 @@
 #include "machine_catalog.hpp"
 
 #include <filesystem>
+#include <format>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -23,7 +24,8 @@ namespace advanced_platformer
                 name.filename() != name || name.has_extension())
             {
                 throw std::invalid_argument(
-                    "Lua NPC script name '" + script + "' must be a file stem, not a path");
+                    std::format(
+                        "Lua NPC script name '{}' must be a file stem, not a path", script));
             }
         }
     }
@@ -57,9 +59,12 @@ namespace advanced_platformer
                 if (activity != nullptr && !scripts.hasActivity(*activity))
                 {
                     throw std::invalid_argument(
-                        "State '" + state.name + "' in machine '" + machineName +
-                        "' references unknown Lua activity '" + activity->script + "." +
-                        activity->activity + "'");
+                        std::format(
+                            "State '{}' in machine '{}' references unknown Lua activity '{}.{}'",
+                            state.name,
+                            machineName,
+                            activity->script,
+                            activity->activity));
                 }
             }
         }

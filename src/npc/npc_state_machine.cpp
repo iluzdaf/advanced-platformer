@@ -1,6 +1,7 @@
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 
 #include <cstddef>
+#include <format>
 #include <map>
 #include <optional>
 #include <set>
@@ -21,7 +22,8 @@ namespace advanced_platformer
     {
         std::string describe(const NpcMachineTransition& transition)
         {
-            return "the transition from \"" + transition.from + "\" to \"" + transition.to + "\"";
+            return std::format(
+                "the transition from \"{}\" to \"{}\"", transition.from, transition.to);
         }
 
         bool hasState(const NpcStateMachine& machine, std::string_view name)
@@ -45,7 +47,8 @@ namespace advanced_platformer
                 if (row == nullptr)
                 {
                     throw std::logic_error(
-                        "A condition asks about \"" + fact + "\", and there is no such fact");
+                        std::format(
+                            "A condition asks about \"{}\", and there is no such fact", fact));
                 }
                 if (row->holds(facts) != asked)
                 {
@@ -71,19 +74,20 @@ namespace advanced_platformer
             }
             if (!names.insert(state.name).second)
             {
-                throw std::invalid_argument("The state \"" + state.name + "\" is declared twice");
+                throw std::invalid_argument(
+                    std::format("The state \"{}\" is declared twice", state.name));
             }
             if (const auto* scripted = std::get_if<LuaNpcActivity>(&state.does))
             {
                 if (scripted->script.empty())
                 {
                     throw std::invalid_argument(
-                        "The state \"" + state.name + "\" needs a Lua script name");
+                        std::format("The state \"{}\" needs a Lua script name", state.name));
                 }
                 if (scripted->activity.empty())
                 {
                     throw std::invalid_argument(
-                        "The state \"" + state.name + "\" needs a Lua activity name");
+                        std::format("The state \"{}\" needs a Lua activity name", state.name));
                 }
             }
         }
@@ -92,26 +96,29 @@ namespace advanced_platformer
             if (!hasState(machine, transition.from))
             {
                 throw std::invalid_argument(
-                    describe(transition) + " starts from a state the machine lacks");
+                    std::format("{} starts from a state the machine lacks", describe(transition)));
             }
             if (!hasState(machine, transition.to))
             {
                 throw std::invalid_argument(
-                    describe(transition) + " leads to a state the machine lacks");
+                    std::format("{} leads to a state the machine lacks", describe(transition)));
             }
             for (const auto& [fact, asked] : transition.when)
             {
                 if (npcFactRow(fact) == nullptr)
                 {
                     throw std::invalid_argument(
-                        describe(transition) + " asks about \"" + fact +
-                        "\", and there is no such fact");
+                        std::format(
+                            "{} asks about \"{}\", and there is no such fact",
+                            describe(transition),
+                            fact));
                 }
             }
             if (!isFiniteNonNegative(transition.after))
             {
                 throw std::invalid_argument(
-                    describe(transition) + " must hold for a finite, non-negative time");
+                    std::format(
+                        "{} must hold for a finite, non-negative time", describe(transition)));
             }
         }
     }
@@ -125,7 +132,7 @@ namespace advanced_platformer
                 return index;
             }
         }
-        throw std::invalid_argument("The machine has no state \"" + std::string(name) + "\"");
+        throw std::invalid_argument(std::format("The machine has no state \"{}\"", name));
     }
 
     NpcMachine startNpcMachine(NpcStateMachine definition)

@@ -5,6 +5,7 @@
 #include <array>
 #include <cstddef>
 #include <filesystem>
+#include <format>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -113,7 +114,8 @@ namespace advanced_platformer
         {
             if (names.count(entry.type) == 0)
             {
-                throw std::invalid_argument(std::string(entry.name) + ": required clip is missing");
+                throw std::invalid_argument(
+                    std::format("{}: required clip is missing", entry.name));
             }
         }
     }
@@ -189,7 +191,7 @@ namespace advanced_platformer
         const auto found = catalog.find(name);
         if (found == catalog.end())
         {
-            throw std::invalid_argument("unknown animation set '" + name + "'");
+            throw std::invalid_argument(std::format("unknown animation set '{}'", name));
         }
         return found->second;
     }

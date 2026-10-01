@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstddef>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <iterator>
 #include <limits>
@@ -40,7 +41,7 @@ namespace advanced_platformer
         {
             if (std::find(allowed.begin(), allowed.end(), entry.key()) == allowed.end())
             {
-                failJson(sourceName, path, "unknown field '" + entry.key() + "'");
+                failJson(sourceName, path, std::format("unknown field '{}'", entry.key()));
             }
         }
     }
@@ -65,7 +66,7 @@ namespace advanced_platformer
         const nlohmann::json* found = optionalJsonMember(object, key, sourceName, path);
         if (found == nullptr)
         {
-            failJson(sourceName, path, "missing '" + std::string(key) + "'");
+            failJson(sourceName, path, std::format("missing '{}'", key));
         }
         return *found;
     }
@@ -133,7 +134,7 @@ namespace advanced_platformer
         std::string name = jsonText(value, sourceName, path);
         if (name.empty())
         {
-            failJson(sourceName, path, std::string(description) + " cannot be empty");
+            failJson(sourceName, path, std::format("{} cannot be empty", description));
         }
         return name;
     }
@@ -160,7 +161,7 @@ namespace advanced_platformer
     {
         if (!value.is_array() || value.size() != 2)
         {
-            failJson(sourceName, path, std::string("expected ") + std::string(shape));
+            failJson(sourceName, path, std::format("expected {}", shape));
         }
     }
 
@@ -327,7 +328,7 @@ namespace advanced_platformer
             failJson(
                 sourceName,
                 fieldPath(path, key),
-                "unknown sprite anchor '" + anchor + "'; expected feet or center");
+                std::format("unknown sprite anchor '{}'; expected feet or center", anchor));
         }
     }
 
@@ -390,7 +391,8 @@ namespace advanced_platformer
         if (!file)
         {
             throw std::invalid_argument(
-                "Could not open content file '" + std::filesystem::absolute(path).string() + "'");
+                std::format(
+                    "Could not open content file '{}'", std::filesystem::absolute(path).string()));
         }
         return {std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
     }
@@ -420,8 +422,8 @@ namespace advanced_platformer
             }
             failJson(
                 sourceName,
-                "line " + std::to_string(line) + ", column " + std::to_string(column),
-                std::string("invalid JSON: ") + error.what());
+                std::format("line {}, column {}", line, column),
+                std::format("invalid JSON: {}", error.what()));
         }
     }
 }

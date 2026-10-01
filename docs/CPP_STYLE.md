@@ -31,6 +31,9 @@ The project uses C++26. Before reading the engine, it helps to be comfortable wi
   such as `PlatformerTraversalProfile{.size = BodySize, .stepSeconds = step}`, which
   name each field they set and leave the rest at their defaults. They work on structs
   with no constructors of their own, and the fields must come in declaration order.
+- [`std::format`](https://en.cppreference.com/w/cpp/utility/format/format), for error
+  messages, such as `std::format("unknown item '{}'", name)`, rather than joining
+  strings with `+`. Each `{}` takes the next argument, and `{{` and `}}` write a brace.
 
 Positions, sizes and velocities are [GLM](https://github.com/g-truc/glm) `glm::vec2`.
 Tests use [Catch2](https://github.com/catchorg/Catch2). Lua scripting goes through
