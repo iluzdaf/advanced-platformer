@@ -3,7 +3,21 @@
   "overrides": [
     {
       "files": "*.json",
-      "options": { "parser": "json" }
+      "options": {
+        "parser": "json"
+      }
+    },
+    {
+      "files": ".prettierrc",
+      "options": {
+        "parser": "json"
+      }
+    },
+    {
+      "files": ".gersemirc",
+      "options": {
+        "parser": "yaml"
+      }
     }
   ]
 }

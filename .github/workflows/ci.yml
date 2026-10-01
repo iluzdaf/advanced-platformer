@@ -6,8 +6,6 @@ on:
       - main
   pull_request:
 
-# Every job builds on macOS with the same pinned CMake and Homebrew LLVM, the only
-# toolchain the project supports.
 env:
   CMAKE: 4.4.3
   LLVM: 23
@@ -15,15 +13,14 @@ env:
 jobs:
   formatting:
     name: Formatting
-    # Strict branch protection runs this job, the header check, and static analysis before
-    # a pull request can merge. Do not repeat them on the resulting push to main.
     if: github.event_name != 'push'
-    runs-on: macos-latest
+    runs-on: ubuntu-24.04
     env:
       PRETTIER: 3.9.8
       RUFF: 0.16.8
       STYLUA: 2.5.2
-      HOMEBREW_NO_INSTALL_CLEANUP: "1"
+      LUACHECK: 1.2.0
+      GERSEMI: 0.29.2
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -48,38 +45,45 @@ jobs:
         with:
           version: ${{ env.RUFF }}
           args: --version
-      - name: Install Luacheck
+      - name: Install the pinned Luacheck
         run: |
-          brew install luacheck
+          sudo apt-get install -y -qq --no-install-recommends luarocks
+          sudo luarocks install luacheck "$LUACHECK"
           luacheck --version
+      - name: Install the pinned gersemi
+        run: |
+          pipx install "gersemi==$GERSEMI"
+          echo "GERSEMI_BIN=$(pipx environment --value PIPX_BIN_DIR)/gersemi" >> "$GITHUB_ENV"
+          "$(pipx environment --value PIPX_BIN_DIR)/gersemi" --version
       - name: Configure
         run: >
-          cmake --preset mac-debug
-          -DCMAKE_C_COMPILER="$LLVM_ROOT/bin/clang"
-          -DCMAKE_CXX_COMPILER="$LLVM_ROOT/bin/clang++"
+          cmake --preset linux-debug
           -DPRETTIER_EXECUTABLE="$PRETTIER_BIN"
           -DSTYLUA_EXECUTABLE="$STYLUA_BIN"
+          -DGERSEMI_EXECUTABLE="$GERSEMI_BIN"
       - name: Check formatting
-        run: cmake --build --preset mac-debug --target format-check
+        run: cmake --build --preset linux-debug --target format-check
+      - name: Check CMake formatting
+        run: cmake --build --preset linux-debug --target format-cmake-check
       - name: Check JSON formatting
-        run: cmake --build --preset mac-debug --target format-json-check
+        run: cmake --build --preset linux-debug --target format-json-check
       - name: Check YAML formatting
-        run: cmake --build --preset mac-debug --target format-yaml-check
+        run: cmake --build --preset linux-debug --target format-yaml-check
       - name: Check Markdown formatting
-        run: cmake --build --preset mac-debug --target format-markdown-check
+        run: cmake --build --preset linux-debug --target format-markdown-check
       - name: Check Python formatting and lint
-        run: cmake --build --preset mac-debug --target format-python-check lint-python
+        run: cmake --build --preset linux-debug --target format-python-check lint-python
       - name: Test repository tooling
         run: python3 -m unittest discover -s tools -p 'test_*.py'
       - name: Check Lua formatting
-        run: cmake --build --preset mac-debug --target format-lua-check
+        run: cmake --build --preset linux-debug --target format-lua-check
       - name: Check Lua lint
-        run: cmake --build --preset mac-debug --target lint-lua
+        run: cmake --build --preset linux-debug --target lint-lua
 
   headers:
     name: Headers stand alone
     if: github.event_name != 'push'
-    runs-on: macos-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -92,20 +96,16 @@ jobs:
           llvm: ${{ env.LLVM }}
       - name: Configure
         run: >
-          cmake --preset mac-debug
-          -DCMAKE_C_COMPILER="$LLVM_ROOT/bin/clang"
-          -DCMAKE_CXX_COMPILER="$LLVM_ROOT/bin/clang++"
+          cmake --preset linux-debug
       - name: Check headers stand alone
         run: >
-          cmake --build --preset mac-debug --target header_self_containment
-          --parallel "$(sysctl -n hw.ncpu)"
+          cmake --build --preset linux-debug --target header_self_containment
+          --parallel "$(nproc)"
 
   static-analysis:
     name: Static analysis (${{ matrix.shard }}/3)
-    # Header changes bring their transitive includers with them. Three shards keep
-    # broad changes and full-tree fallbacks from returning to one long-running job.
     if: github.event_name != 'push'
-    runs-on: macos-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -122,7 +122,6 @@ jobs:
           BASE_REF: origin/${{ github.base_ref }}
           SHARD: ${{ matrix.shard }}
         run: |
-          # Deal the files out in turn, so each shard gets every third one.
           targets="$RUNNER_TEMP/tidy-targets.txt"
           python3 tools/tidy_targets.py --since "$BASE_REF" \
             | awk -v shard="$SHARD" '(NR - 1) % 3 + 1 == shard' > "$targets"
@@ -143,33 +142,29 @@ jobs:
       - name: Configure
         if: steps.targets.outputs.has_files == 'true'
         run: >
-          cmake --preset mac-debug
-          -DCMAKE_C_COMPILER="$LLVM_ROOT/bin/clang"
-          -DCMAKE_CXX_COMPILER="$LLVM_ROOT/bin/clang++"
+          cmake --preset linux-debug
       - name: Run static analysis
         if: steps.targets.outputs.has_files == 'true'
         run: |
-          xargs -P"$(sysctl -n hw.ncpu)" -n1 \
+          xargs -P"$(nproc)" -n1 \
             "$LLVM_ROOT/bin/clang-tidy" \
-            -p build/mac-debug \
+            -p build/linux-debug \
             --warnings-as-errors='*' \
             --quiet \
             < "$RUNNER_TEMP/tidy-targets.txt"
 
   static-analysis-result:
     name: Static analysis
-    # The check branch protection requires, so it doesn't name each shard. A skipped job
-    # would count as passing, so this one always runs and fails unless every shard succeeded.
     if: always() && github.event_name != 'push'
     needs: static-analysis
-    runs-on: macos-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Require every static analysis shard
         run: test "${{ needs.static-analysis.result }}" = success
 
   build-and-test:
     name: Build and test
-    runs-on: macos-latest
+    runs-on: ubuntu-24.04
     env:
       SCCACHE_GHA_ENABLED: "true"
     steps:
@@ -188,14 +183,12 @@ jobs:
           version: v0.17.0
       - name: Configure
         run: >
-          cmake --preset mac-debug
-          -DCMAKE_C_COMPILER="$LLVM_ROOT/bin/clang"
-          -DCMAKE_CXX_COMPILER="$LLVM_ROOT/bin/clang++"
+          cmake --preset linux-debug
           -DCMAKE_C_COMPILER_LAUNCHER="$SCCACHE_PATH"
           -DCMAKE_CXX_COMPILER_LAUNCHER="$SCCACHE_PATH"
       - name: Build
-        run: cmake --build --preset mac-debug --parallel 3
+        run: cmake --build --preset linux-debug --parallel 3
       - name: Show compiler cache statistics
         run: '"$SCCACHE_PATH" --show-stats'
       - name: Test
-        run: ctest --preset mac-debug
+        run: ctest --preset linux-debug

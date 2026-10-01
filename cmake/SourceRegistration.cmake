@@ -1,13 +1,6 @@
 function(verify_project_source_registration)
-    set(project_targets
-        advanced_platformer_core
-        advanced_platformer_scripting
-        advanced_platformer
-    )
-    set(project_source_patterns
-        ${PROJECT_SOURCE_DIR}/app/*.cpp
-        ${PROJECT_SOURCE_DIR}/src/*.cpp
-    )
+    set(project_targets advanced_platformer_core advanced_platformer_scripting advanced_platformer)
+    set(project_source_patterns ${PROJECT_SOURCE_DIR}/app/*.cpp ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
     if(BUILD_TESTING)
         list(APPEND project_targets advanced_platformer_tests)
@@ -34,11 +27,7 @@ function(verify_project_source_registration)
     endforeach()
     list(REMOVE_DUPLICATES registered_sources)
 
-    file(
-        GLOB_RECURSE discovered_sources
-        CONFIGURE_DEPENDS
-        ${project_source_patterns}
-    )
+    file(GLOB_RECURSE discovered_sources CONFIGURE_DEPENDS ${project_source_patterns})
 
     set(unregistered_sources)
     foreach(source IN LISTS discovered_sources)

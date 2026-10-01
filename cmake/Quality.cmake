@@ -1,9 +1,9 @@
-# clang-format and clang-tidy come from the compiler's own LLVM, so they match its version.
 find_program(CLANG_FORMAT_EXECUTABLE NAMES clang-format HINTS "${LLVM_BIN_DIR}")
 find_program(PRETTIER_EXECUTABLE NAMES prettier)
 find_program(RUFF_EXECUTABLE NAMES ruff)
 find_program(STYLUA_EXECUTABLE NAMES stylua)
 find_program(LUACHECK_EXECUTABLE NAMES luacheck)
+find_program(GERSEMI_EXECUTABLE NAMES gersemi)
 find_program(CLANG_TIDY_EXECUTABLE NAMES clang-tidy HINTS "${LLVM_BIN_DIR}")
 
 file(
@@ -24,12 +24,7 @@ file(
     ${PROJECT_SOURCE_DIR}/tests/*.hpp
 )
 
-file(
-    GLOB_RECURSE PROJECT_PUBLIC_HEADERS
-    CONFIGURE_DEPENDS
-    ${PROJECT_SOURCE_DIR}/include/*.hpp
-)
-# The scripting target's interface. Its other headers use sol2, which is private to it.
+file(GLOB_RECURSE PROJECT_PUBLIC_HEADERS CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/include/*.hpp)
 list(APPEND PROJECT_PUBLIC_HEADERS ${PROJECT_SOURCE_DIR}/scripting/lua_npc_scripts.hpp)
 
 file(
@@ -37,6 +32,13 @@ file(
     CONFIGURE_DEPENDS
     ${PROJECT_SOURCE_DIR}/assets/*.json
     ${PROJECT_SOURCE_DIR}/tests/fixtures/*.json
+    ${PROJECT_SOURCE_DIR}/.vscode/*.json
+)
+list(
+    APPEND PROJECT_JSON_FILES
+    ${PROJECT_SOURCE_DIR}/CMakePresets.json
+    ${PROJECT_SOURCE_DIR}/.luarc.json
+    ${PROJECT_SOURCE_DIR}/.prettierrc
 )
 
 file(
@@ -45,26 +47,24 @@ file(
     ${PROJECT_SOURCE_DIR}/.github/*.yml
     ${PROJECT_SOURCE_DIR}/.github/*.yaml
 )
-
-file(
-    GLOB PROJECT_ROOT_MARKDOWN_FILES
-    CONFIGURE_DEPENDS
-    ${PROJECT_SOURCE_DIR}/*.md
+list(
+    APPEND PROJECT_YAML_FILES
+    ${PROJECT_SOURCE_DIR}/.clang-format
+    ${PROJECT_SOURCE_DIR}/.clang-tidy
+    ${PROJECT_SOURCE_DIR}/.clangd
+    ${PROJECT_SOURCE_DIR}/.gersemirc
 )
 
-file(
-    GLOB_RECURSE PROJECT_DOC_MARKDOWN_FILES
-    CONFIGURE_DEPENDS
-    ${PROJECT_SOURCE_DIR}/docs/*.md
-)
+file(GLOB_RECURSE PROJECT_CMAKE_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/cmake/*.cmake)
+list(APPEND PROJECT_CMAKE_FILES ${PROJECT_SOURCE_DIR}/CMakeLists.txt)
+
+file(GLOB PROJECT_ROOT_MARKDOWN_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/*.md)
+
+file(GLOB_RECURSE PROJECT_DOC_MARKDOWN_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/docs/*.md)
 
 set(PROJECT_MARKDOWN_FILES ${PROJECT_ROOT_MARKDOWN_FILES} ${PROJECT_DOC_MARKDOWN_FILES})
 
-file(
-    GLOB_RECURSE PROJECT_PYTHON_FILES
-    CONFIGURE_DEPENDS
-    ${PROJECT_SOURCE_DIR}/tools/*.py
-)
+file(GLOB_RECURSE PROJECT_PYTHON_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/tools/*.py)
 
 file(
     GLOB_RECURSE PROJECT_LUA_FILES
@@ -84,8 +84,7 @@ if(CLANG_FORMAT_EXECUTABLE)
     add_custom_target(
         format-check
         COMMAND
-            ${CLANG_FORMAT_EXECUTABLE} --dry-run --Werror ${PROJECT_CPP_FILES}
-            ${PROJECT_HEADERS}
+            ${CLANG_FORMAT_EXECUTABLE} --dry-run --Werror ${PROJECT_CPP_FILES} ${PROJECT_HEADERS}
         COMMENT "Checking first-party C++ formatting"
         VERBATIM
     )
@@ -164,6 +163,26 @@ else()
     message(STATUS "ruff not found; Python quality targets are unavailable")
 endif()
 
+if(GERSEMI_EXECUTABLE)
+    add_custom_target(
+        format-cmake
+        COMMAND ${GERSEMI_EXECUTABLE} --in-place ${PROJECT_CMAKE_FILES}
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        COMMENT "Formatting first-party CMake"
+        VERBATIM
+    )
+
+    add_custom_target(
+        format-cmake-check
+        COMMAND ${GERSEMI_EXECUTABLE} --check ${PROJECT_CMAKE_FILES}
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        COMMENT "Checking first-party CMake formatting"
+        VERBATIM
+    )
+else()
+    message(STATUS "gersemi not found; CMake format targets are unavailable")
+endif()
+
 if(STYLUA_EXECUTABLE)
     add_custom_target(
         format-lua
@@ -200,8 +219,8 @@ if(CLANG_TIDY_EXECUTABLE)
     add_custom_target(
         tidy
         COMMAND
-            ${CLANG_TIDY_EXECUTABLE} -p ${CMAKE_BINARY_DIR} --warnings-as-errors=*
-            --quiet ${PROJECT_CPP_FILES} ${PROJECT_HEADERS}
+            ${CLANG_TIDY_EXECUTABLE} -p ${CMAKE_BINARY_DIR} --warnings-as-errors=* --quiet
+            ${PROJECT_CPP_FILES} ${PROJECT_HEADERS}
         COMMENT "Checking first-party C++ source with clang-tidy"
         VERBATIM
     )
@@ -217,7 +236,5 @@ enable_project_warnings(header_self_containment)
 
 target_compile_options(
     header_self_containment
-    PRIVATE
-    -Wno-pragma-once-outside-header
-    -Wno-unused-const-variable
+    PRIVATE -Wno-pragma-once-outside-header -Wno-unused-const-variable
 )

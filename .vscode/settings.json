@@ -13,6 +13,9 @@
   "[cpp]": {
     "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
   },
+  "[cmake]": {
+    "editor.defaultFormatter": "loopj.vscode-gersemi"
+  },
   "[json][jsonc]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },

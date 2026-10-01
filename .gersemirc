@@ -1,0 +1,5 @@
+definitions:
+  - cmake
+  - external/catch2/extras/Catch.cmake
+indent: 4
+line_length: 100

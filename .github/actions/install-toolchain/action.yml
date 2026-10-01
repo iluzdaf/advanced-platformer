@@ -1,7 +1,8 @@
 name: Install toolchain
 description: >
-  Installs the pinned CMake from PyPI and one LLVM major version from Homebrew, puts CMake
-  first on the PATH, and sets LLVM_ROOT to the LLVM installation.
+  Installs the pinned CMake from PyPI and one LLVM major version from apt.llvm.org (Clang,
+  libc++, clang-format and clang-tidy), puts CMake first on the PATH, and sets LLVM_ROOT to
+  the LLVM installation.
 
 inputs:
   cmake:
@@ -27,10 +28,21 @@ runs:
       shell: bash
       env:
         LLVM_VERSION: ${{ inputs.llvm }}
-        HOMEBREW_NO_INSTALL_CLEANUP: "1"
-        HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: "1"
       run: |
-        brew install "llvm@$LLVM_VERSION"
-        root=$(brew --prefix "llvm@$LLVM_VERSION")
+        codename=$(. /etc/os-release && echo "$VERSION_CODENAME")
+        curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key \
+          | sudo gpg --dearmor -o /etc/apt/keyrings/apt.llvm.org.gpg
+        echo "deb [signed-by=/etc/apt/keyrings/apt.llvm.org.gpg]" \
+          "https://apt.llvm.org/$codename/ llvm-toolchain-$codename-$LLVM_VERSION main" \
+          | sudo tee /etc/apt/sources.list.d/apt.llvm.org.list
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq --no-install-recommends \
+          "clang-$LLVM_VERSION" \
+          "libc++-$LLVM_VERSION-dev" \
+          "libc++abi-$LLVM_VERSION-dev" \
+          "clang-format-$LLVM_VERSION" \
+          "clang-tidy-$LLVM_VERSION"
+        root="/usr/lib/llvm-$LLVM_VERSION"
         "$root/bin/clang++" --version
+        "$root/bin/clang-format" --version
         echo "LLVM_ROOT=$root" >> "$GITHUB_ENV"
