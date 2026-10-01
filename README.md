@@ -21,7 +21,7 @@ New to the project? Start with [START_HERE.md](docs/START_HERE.md).
 
 ## Requirements
 
-- CMake 3.25 or newer
+- CMake 4.4 or newer (`brew install cmake`)
 - A C++26 compiler: Apple Clang supplied with current Xcode
 
 Third-party libraries are git submodules under `external/` (see
@@ -141,6 +141,9 @@ GitHub Actions runs the jobs below. The names are the ones shown on a pull reque
 
 The Linux jobs are skipped on pushes because branch protection already ran them on the
 pull request.
+
+Every job installs the same pinned CMake, 4.4.3, from PyPI rather than using the
+runner's own.
 
 The build and test job uses a pinned `sccache` release backed by GitHub Actions'
 cache service. Only compiler outputs are cached; generated build directories are not.
