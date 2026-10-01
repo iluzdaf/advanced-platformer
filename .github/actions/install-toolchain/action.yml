@@ -1,0 +1,36 @@
+name: Install toolchain
+description: >
+  Installs the pinned CMake from PyPI and one LLVM major version from Homebrew, puts CMake
+  first on the PATH, and sets LLVM_ROOT to the LLVM installation.
+
+inputs:
+  cmake:
+    description: The CMake version.
+    required: true
+  llvm:
+    description: The LLVM major version.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Install CMake ${{ inputs.cmake }}
+      shell: bash
+      env:
+        CMAKE_VERSION: ${{ inputs.cmake }}
+      run: |
+        pipx install "cmake==$CMAKE_VERSION"
+        bin=$(pipx environment --value PIPX_BIN_DIR)
+        "$bin/cmake" --version
+        echo "$bin" >> "$GITHUB_PATH"
+    - name: Install LLVM ${{ inputs.llvm }}
+      shell: bash
+      env:
+        LLVM_VERSION: ${{ inputs.llvm }}
+        HOMEBREW_NO_INSTALL_CLEANUP: "1"
+        HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: "1"
+      run: |
+        brew install "llvm@$LLVM_VERSION"
+        root=$(brew --prefix "llvm@$LLVM_VERSION")
+        "$root/bin/clang++" --version
+        echo "LLVM_ROOT=$root" >> "$GITHUB_ENV"

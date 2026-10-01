@@ -1,13 +1,10 @@
-find_program(CLANG_FORMAT_EXECUTABLE NAMES clang-format)
+# clang-format and clang-tidy come from the compiler's own LLVM, so they match its version.
+find_program(CLANG_FORMAT_EXECUTABLE NAMES clang-format HINTS "${LLVM_BIN_DIR}")
 find_program(PRETTIER_EXECUTABLE NAMES prettier)
 find_program(RUFF_EXECUTABLE NAMES ruff)
 find_program(STYLUA_EXECUTABLE NAMES stylua)
 find_program(LUACHECK_EXECUTABLE NAMES luacheck)
-find_program(
-    CLANG_TIDY_EXECUTABLE
-    NAMES clang-tidy
-    HINTS /opt/homebrew/opt/llvm/bin /usr/local/opt/llvm/bin
-)
+find_program(CLANG_TIDY_EXECUTABLE NAMES clang-tidy HINTS "${LLVM_BIN_DIR}")
 
 file(
     GLOB_RECURSE PROJECT_CPP_FILES
@@ -199,30 +196,12 @@ else()
     message(STATUS "luacheck not found; Lua lint target is unavailable")
 endif()
 
-set(CLANG_TIDY_EXTRA_ARGUMENTS)
-
-if(CLANG_TIDY_EXECUTABLE AND CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
-    execute_process(
-        COMMAND xcrun --show-sdk-path
-        OUTPUT_VARIABLE MACOS_SDK_PATH
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        COMMAND_ERROR_IS_FATAL ANY
-    )
-    list(
-        APPEND CLANG_TIDY_EXTRA_ARGUMENTS
-        --extra-arg=-isysroot
-        --extra-arg=${MACOS_SDK_PATH}
-        --extra-arg=-isystem
-        --extra-arg=${MACOS_SDK_PATH}/usr/include/c++/v1
-    )
-endif()
-
 if(CLANG_TIDY_EXECUTABLE)
     add_custom_target(
         tidy
         COMMAND
             ${CLANG_TIDY_EXECUTABLE} -p ${CMAKE_BINARY_DIR} --warnings-as-errors=*
-            --quiet ${CLANG_TIDY_EXTRA_ARGUMENTS} ${PROJECT_CPP_FILES} ${PROJECT_HEADERS}
+            --quiet ${PROJECT_CPP_FILES} ${PROJECT_HEADERS}
         COMMENT "Checking first-party C++ source with clang-tidy"
         VERBATIM
     )

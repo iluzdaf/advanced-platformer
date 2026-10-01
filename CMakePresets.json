@@ -12,7 +12,9 @@
       "generator": "Unix Makefiles",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
-        "BUILD_TESTING": true
+        "BUILD_TESTING": true,
+        "CMAKE_C_COMPILER": "/opt/homebrew/opt/llvm/bin/clang",
+        "CMAKE_CXX_COMPILER": "/opt/homebrew/opt/llvm/bin/clang++"
       }
     },
     {
@@ -30,16 +32,6 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
-    },
-    {
-      "name": "mac-llvm",
-      "displayName": "macOS Debug with Homebrew LLVM",
-      "inherits": "mac",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_C_COMPILER": "/opt/homebrew/opt/llvm/bin/clang",
-        "CMAKE_CXX_COMPILER": "/opt/homebrew/opt/llvm/bin/clang++"
-      }
     }
   ],
   "buildPresets": [
@@ -50,10 +42,6 @@
     {
       "name": "mac-release",
       "configurePreset": "mac-release"
-    },
-    {
-      "name": "mac-llvm",
-      "configurePreset": "mac-llvm"
     }
   ],
   "testPresets": [
@@ -76,11 +64,6 @@
     {
       "name": "mac-release",
       "configurePreset": "mac-release",
-      "inherits": "mac"
-    },
-    {
-      "name": "mac-llvm",
-      "configurePreset": "mac-llvm",
       "inherits": "mac"
     }
   ]
