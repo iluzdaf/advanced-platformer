@@ -22,16 +22,13 @@ New to the project? Start with [START_HERE.md](docs/START_HERE.md).
 ## Requirements
 
 - CMake 3.21 or newer
-- A C++17 compiler:
-  - Apple Clang supplied with current Xcode on macOS
-  - Visual Studio 2022 with the **Desktop development with C++** workload on Windows
-- **C++ CMake tools for Windows** when installing Visual Studio
+- Apple Clang supplied with current Xcode
 
 All third-party source required by the project is vendored under `external/`.
 
-The supported development platforms are macOS and Windows, where development and
-graphical testing take place. Linux is used solely for CI quality checks and is not a
-supported local development workflow.
+macOS is the supported development platform, where development and graphical testing
+take place. Linux is used solely for CI quality checks and is not a supported local
+development workflow.
 
 ## macOS: configure, build, and test
 
@@ -61,38 +58,7 @@ cmake --build --preset mac-release
 build/mac-release/advanced_platformer
 ```
 
-On Windows, choose the **Release** configuration in Visual Studio, or run
-`cmake --build --preset windows-release` after `setup-windows.bat` has generated the
-solution. The game is then at `build\windows-vs\Release\advanced_platformer.exe`.
-
-## Windows: create and use the Visual Studio solution
-
-Install Visual Studio 2022 with **Desktop development with C++** and **C++ CMake
-tools for Windows** selected in the Visual Studio Installer. Then double-click:
-
-```text
-setup-windows.bat
-```
-
-The script finds CMake, generates `build/windows-vs/AdvancedPlatformer.sln`, and opens
-the solution. The `advanced_platformer` project is already selected as the startup
-project, so build the solution and press **F5** to run the game.
-
-To run the tests, build the `run_tests` project; the results appear in the Output
-window. To debug them, set `advanced_platformer_tests` as the startup project and press
-**F5**, then set `advanced_platformer` back to run the game.
-
-The solution is generated from `CMakeLists.txt` and `CMakePresets.json`. It belongs in
-the ignored `build/` directory and should not be committed. Run `setup-windows.bat`
-again after changing the CMake configuration.
-
-The Windows executable is:
-
-```text
-build\windows-vs\Debug\advanced_platformer.exe
-```
-
-`CMakePresets.json` contains the shared macOS and Windows configurations.
+`CMakePresets.json` contains the shared macOS configurations.
 `CMakeUserPresets.json` is ignored and is available for personal configuration that
 should not be shared with version control.
 
@@ -106,9 +72,6 @@ ctest --preset mac-debug -N
 # Omit -R "Pickup" to run the complete suite.
 ctest --preset mac-debug -R "Pickup" --output-on-failure
 ```
-
-On Windows, use the `windows-debug` test preset. Use your personal preset name if
-configured.
 
 ## Playing the example game
 
@@ -160,22 +123,20 @@ Timings are only meaningful from a release build.
 
 GitHub Actions runs the jobs below. The names are the ones shown on a pull request.
 
-| Job                          | Runner         | What it does                                                                                                                                                        | Runs on                            |
-| ---------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| macOS / Apple Clang          | `macos-latest` | Configures, builds, and runs the whole test suite.                                                                                                                  | pushes to `main` and pull requests |
-| Windows / Visual Studio 2022 | `windows-2022` | Generates the same solution as `setup-windows.bat`, builds it with MSBuild, and runs the tests through `run_tests`, then again from where the debugger starts them. | pushes to `main` and pull requests |
-| Formatting                   | `ubuntu-24.04` | Checks the formatting of C++, JSON, YAML, Markdown, Python, and Lua, lints the Python and Lua, and runs the tests for the repository's tools.                       | pull requests only                 |
-| Headers stand alone          | `ubuntu-24.04` | Compiles every public header on its own.                                                                                                                            | pull requests only                 |
-| Static analysis (1/3 to 3/3) | `ubuntu-24.04` | Runs clang-tidy, with warnings as errors, on the files the pull request affects (see [Static analysis](#static-analysis)), split across three shards.               | pull requests only                 |
-| Static analysis              | `ubuntu-24.04` | Passes only if every static analysis shard passed. This is the check branch protection requires.                                                                    | pull requests only                 |
+| Job                          | Runner         | What it does                                                                                                                                          | Runs on                            |
+| ---------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| macOS / Apple Clang          | `macos-latest` | Configures, builds, and runs the whole test suite.                                                                                                    | pushes to `main` and pull requests |
+| Formatting                   | `ubuntu-24.04` | Checks the formatting of C++, JSON, YAML, Markdown, Python, and Lua, lints the Python and Lua, and runs the tests for the repository's tools.         | pull requests only                 |
+| Headers stand alone          | `ubuntu-24.04` | Compiles every public header on its own.                                                                                                              | pull requests only                 |
+| Static analysis (1/3 to 3/3) | `ubuntu-24.04` | Runs clang-tidy, with warnings as errors, on the files the pull request affects (see [Static analysis](#static-analysis)), split across three shards. | pull requests only                 |
+| Static analysis              | `ubuntu-24.04` | Passes only if every static analysis shard passed. This is the check branch protection requires.                                                      | pull requests only                 |
 
 The Linux jobs are skipped on pushes because branch protection already ran them on the
 pull request.
 
-The macOS and Windows jobs use a pinned `sccache` release backed by GitHub Actions'
-cache service. Only compiler outputs are cached; generated build directories are not.
-On Windows, only `cl.exe` is replaced with a cache wrapper; the solution itself is still
-built as generated. None of this affects local builds.
+The macOS job uses a pinned `sccache` release backed by GitHub Actions' cache service.
+Only compiler outputs are cached; generated build directories are not. None of this
+affects local builds.
 
 ## Formatting
 
@@ -185,18 +146,17 @@ while `.luacheckrc` limits linted globals to the libraries exposed by the protec
 runtime. `.luarc.json` configures LuaLS for Lua 5.4 and leaves formatting to StyLua.
 `.editorconfig` supplies shared whitespace rules.
 
-|           | Config          | Tool                            | VS Code                                 | Visual Studio                            |
-| --------- | --------------- | ------------------------------- | --------------------------------------- | ---------------------------------------- |
-| C and C++ | `.clang-format` | clang-format 18                 | on save, through clangd                 | **Format Document** (`Ctrl+K`, `Ctrl+D`) |
-| JSON      | `.prettierrc`   | Prettier 3.9.8                  | on save, through the Prettier extension | not supported, use the command line      |
-| YAML      | `.prettierrc`   | Prettier 3.9.8                  | on save, through the Prettier extension | not supported, use the command line      |
-| Markdown  | `.prettierrc`   | Prettier 3.9.8                  | on save, through the Prettier extension | not supported, use the command line      |
-| Python    | Ruff defaults   | Ruff 0.16.8                     | on save, through the Ruff extension     | not supported, use the command line      |
-| Lua       | `.stylua.toml`  | StyLua 2.5.2 and Luacheck 1.2.0 | on save, through the StyLua extension   | not supported, use the command line      |
+|           | Config          | Tool                            | VS Code                                 |
+| --------- | --------------- | ------------------------------- | --------------------------------------- |
+| C and C++ | `.clang-format` | clang-format 18                 | on save, through clangd                 |
+| JSON      | `.prettierrc`   | Prettier 3.9.8                  | on save, through the Prettier extension |
+| YAML      | `.prettierrc`   | Prettier 3.9.8                  | on save, through the Prettier extension |
+| Markdown  | `.prettierrc`   | Prettier 3.9.8                  | on save, through the Prettier extension |
+| Python    | Ruff defaults   | Ruff 0.16.8                     | on save, through the Ruff extension     |
+| Lua       | `.stylua.toml`  | StyLua 2.5.2 and Luacheck 1.2.0 | on save, through the StyLua extension   |
 
-Both editors read `.clang-format` and `.editorconfig` without an extension. Visual
-Studio does not read the other formatter configs, so those files are formatted from
-the command line or caught by CI. VS Code also recommends LuaLS for Lua diagnostics.
+VS Code reads `.clang-format` and `.editorconfig` without an extension. It also
+recommends LuaLS for Lua diagnostics.
 
 On macOS, install the Lua command-line tools with:
 

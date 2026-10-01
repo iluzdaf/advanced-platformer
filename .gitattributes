@@ -12,8 +12,6 @@
 *.yaml text eol=lf
 CMakeLists.txt text eol=lf
 
-/setup-windows.bat text eol=crlf
-
 *.gif binary
 *.jpg binary
 *.jpeg binary

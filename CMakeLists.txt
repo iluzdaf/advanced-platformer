@@ -63,11 +63,6 @@ add_custom_target(
     VERBATIM
 )
 add_dependencies(advanced_platformer game_assets)
-set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT advanced_platformer)
-set_target_properties(
-    advanced_platformer
-    PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:advanced_platformer>"
-)
 
 include(cmake/Quality.cmake)
 
@@ -107,10 +102,6 @@ if(BUILD_TESTING)
         VERBATIM
     )
     add_dependencies(advanced_platformer_tests game_assets test_fixtures)
-    set_target_properties(
-        advanced_platformer_tests
-        PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:advanced_platformer_tests>"
-    )
 
     if(
         CMAKE_CXX_COMPILER_ID MATCHES "Clang"
@@ -124,15 +115,6 @@ if(BUILD_TESTING)
     catch_discover_tests(
         advanced_platformer_tests
         WORKING_DIRECTORY $<TARGET_FILE_DIR:advanced_platformer_tests>
-    )
-
-    add_custom_target(
-        run_tests
-        COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -C $<CONFIG>
-        DEPENDS advanced_platformer_tests
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        COMMENT "Building and running all tests"
-        USES_TERMINAL
     )
 endif()
 
