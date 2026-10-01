@@ -9,19 +9,17 @@ endif()
 add_library(advanced_platformer_glm INTERFACE)
 target_include_directories(
     advanced_platformer_glm
-    SYSTEM INTERFACE
-    ${PROJECT_SOURCE_DIR}/external/glm
+    SYSTEM
+    INTERFACE ${PROJECT_SOURCE_DIR}/external/glm
 )
 
 add_library(advanced_platformer_json INTERFACE)
 target_include_directories(
     advanced_platformer_json
-    SYSTEM INTERFACE
-    ${PROJECT_SOURCE_DIR}/external/glaze/include
+    SYSTEM
+    INTERFACE ${PROJECT_SOURCE_DIR}/external/glaze/include
 )
 
-# The Lua repository has no build of its own for CMake, so the library is listed here:
-# every source except the interpreter, the single-file build, and the test harness.
 set(LUA_SOURCE_DIR ${PROJECT_SOURCE_DIR}/external/lua)
 add_library(
     advanced_platformer_lua
@@ -66,8 +64,8 @@ target_link_libraries(advanced_platformer_lua PRIVATE m)
 add_library(advanced_platformer_sol2 INTERFACE)
 target_include_directories(
     advanced_platformer_sol2
-    SYSTEM INTERFACE
-    ${PROJECT_SOURCE_DIR}/external/sol2/include
+    SYSTEM
+    INTERFACE ${PROJECT_SOURCE_DIR}/external/sol2/include
 )
 target_link_libraries(advanced_platformer_sol2 INTERFACE advanced_platformer_lua)
 
@@ -80,16 +78,12 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/external/glfw external/glfw EXCLUDE_FROM_
 add_library(advanced_platformer_glad ${PROJECT_SOURCE_DIR}/external/glad/src/glad.c)
 target_include_directories(
     advanced_platformer_glad
-    SYSTEM PUBLIC
-    ${PROJECT_SOURCE_DIR}/external/glad/include
+    SYSTEM
+    PUBLIC ${PROJECT_SOURCE_DIR}/external/glad/include
 )
 
 add_library(advanced_platformer_stb ${PROJECT_SOURCE_DIR}/external/stb_image.cpp)
-target_include_directories(
-    advanced_platformer_stb
-    SYSTEM PUBLIC
-    ${PROJECT_SOURCE_DIR}/external/stb
-)
+target_include_directories(advanced_platformer_stb SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/external/stb)
 
 add_library(
     advanced_platformer_imgui
@@ -109,16 +103,15 @@ add_library(
 target_compile_features(advanced_platformer_imgui PUBLIC cxx_std_17)
 target_include_directories(
     advanced_platformer_imgui
-    SYSTEM PUBLIC
-    ${PROJECT_SOURCE_DIR}/external/imgui
-    ${PROJECT_SOURCE_DIR}/external/imgui/backends
-    ${PROJECT_SOURCE_DIR}/external/implot
-    ${PROJECT_SOURCE_DIR}/external/imgui-node-editor
+    SYSTEM
+    PUBLIC
+        ${PROJECT_SOURCE_DIR}/external/imgui
+        ${PROJECT_SOURCE_DIR}/external/imgui/backends
+        ${PROJECT_SOURCE_DIR}/external/implot
+        ${PROJECT_SOURCE_DIR}/external/imgui-node-editor
 )
 target_link_libraries(advanced_platformer_imgui PUBLIC glfw)
 target_compile_definitions(advanced_platformer_imgui PRIVATE GLFW_INCLUDE_NONE)
-# crude_json.cpp calls std::terminate without including <exception>, which LLVM's libc++
-# does not bring in through its other headers.
 set_source_files_properties(
     ${PROJECT_SOURCE_DIR}/external/imgui-node-editor/crude_json.cpp
     PROPERTIES COMPILE_OPTIONS "-include;exception"

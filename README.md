@@ -133,7 +133,7 @@ GitHub Actions runs the jobs below. The names are the ones shown on a pull reque
 | Job                          | Runner         | What it does                                                                                                                                          | Runs on                            |
 | ---------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
 | Build and test               | `ubuntu-24.04` | Configures, builds, and runs the whole test suite.                                                                                                    | pushes to `main` and pull requests |
-| Formatting                   | `ubuntu-24.04` | Checks the formatting of C++, JSON, YAML, Markdown, Python, and Lua, lints the Python and Lua, and runs the tests for the repository's tools.         | pull requests only                 |
+| Formatting                   | `ubuntu-24.04` | Checks the formatting of C++, CMake, JSON, YAML, Markdown, Python, and Lua, lints the Python and Lua, and runs the tests for the repository's tools.  | pull requests only                 |
 | Headers stand alone          | `ubuntu-24.04` | Compiles every public header on its own.                                                                                                              | pull requests only                 |
 | Static analysis (1/3 to 3/3) | `ubuntu-24.04` | Runs clang-tidy, with warnings as errors, on the files the pull request affects (see [Static analysis](#static-analysis)), split across three shards. | pull requests only                 |
 | Static analysis              | `ubuntu-24.04` | Passes only if every static analysis shard passed. This is the check branch protection requires.                                                      | pull requests only                 |
@@ -153,8 +153,8 @@ None of this affects local builds.
 
 ## Formatting
 
-`.clang-format` defines the C and C++ style; `.prettierrc` covers JSON, YAML, and
-Markdown. Ruff formats and checks first-party Python. `.stylua.toml` formats Lua 5.4,
+`.clang-format` defines the C and C++ style; `.gersemirc` defines the CMake style;
+`.prettierrc` covers JSON, YAML, and Markdown. Ruff formats and checks first-party Python. `.stylua.toml` formats Lua 5.4,
 while `.luacheckrc` limits linted globals to the libraries exposed by the protected
 runtime. `.luarc.json` configures LuaLS for Lua 5.4 and leaves formatting to StyLua.
 `.editorconfig` supplies shared whitespace rules.
@@ -162,6 +162,7 @@ runtime. `.luarc.json` configures LuaLS for Lua 5.4 and leaves formatting to Sty
 |           | Config          | Tool                            | VS Code                                 |
 | --------- | --------------- | ------------------------------- | --------------------------------------- |
 | C and C++ | `.clang-format` | clang-format 23                 | on save, through clangd                 |
+| CMake     | `.gersemirc`    | gersemi 0.29.2                  | not set up                              |
 | JSON      | `.prettierrc`   | Prettier 3.9.8                  | on save, through the Prettier extension |
 | YAML      | `.prettierrc`   | Prettier 3.9.8                  | on save, through the Prettier extension |
 | Markdown  | `.prettierrc`   | Prettier 3.9.8                  | on save, through the Prettier extension |
@@ -171,10 +172,21 @@ runtime. `.luarc.json` configures LuaLS for Lua 5.4 and leaves formatting to Sty
 VS Code reads `.clang-format` and `.editorconfig` without an extension. It also
 recommends LuaLS for Lua diagnostics.
 
-On macOS, install the Lua command-line tools with:
+On macOS, install the Lua command-line tools and the pinned gersemi with:
 
 ```sh
 brew install stylua luacheck
+uv tool install gersemi==0.29.2
+```
+
+`pipx install gersemi==0.29.2` works as well. Configure again afterwards so CMake finds it,
+or pass `-DGERSEMI_EXECUTABLE=`.
+
+Format first-party CMake, or check it without changing files:
+
+```sh
+cmake --build --preset mac-debug --target format-cmake
+cmake --build --preset mac-debug --target format-cmake-check
 ```
 
 Format first-party C++, or check it without changing files:
@@ -230,16 +242,18 @@ lists the allowed globals, and `openSandbox` in
 [`scripting/lua_sandbox.cpp`](scripting/lua_sandbox.cpp) opens the same libraries at run
 time. Keep the two in step.
 
-The C++ targets skip `external/`; the JSON targets cover `assets/` and
-`tests/fixtures/`; the YAML targets cover `.github/`; the Markdown targets cover the
+The C++ targets skip `external/`; the CMake targets cover `CMakeLists.txt` and `cmake/`;
+the JSON targets cover `assets/`, `tests/fixtures/`, `.vscode/`, `CMakePresets.json`,
+`.luarc.json` and `.prettierrc`; the YAML targets cover `.github/`, `.clang-format`,
+`.clang-tidy`, `.clangd` and `.gersemirc`; the Markdown targets cover the
 root documentation and `docs/`; the Python targets cover `tools/`; and the Lua targets
 cover `assets/` and `tests/fixtures/`. CMake reports any unavailable tool while
 configuring and omits only its targets. Use `-DCLANG_FORMAT_EXECUTABLE=`,
-`-DPRETTIER_EXECUTABLE=`, `-DRUFF_EXECUTABLE=`, `-DSTYLUA_EXECUTABLE=`, or
-`-DLUACHECK_EXECUTABLE=` to choose a specific one.
+`-DPRETTIER_EXECUTABLE=`, `-DRUFF_EXECUTABLE=`, `-DSTYLUA_EXECUTABLE=`,
+`-DLUACHECK_EXECUTABLE=`, or `-DGERSEMI_EXECUTABLE=` to choose a specific one.
 
-CI runs clang-format from LLVM 23, Prettier 3.9.8, Ruff 0.16.8, StyLua 2.5.2, and
-Luacheck 1.2.0, and a pull request cannot merge until their checks pass. clang-format
+CI runs clang-format from LLVM 23, gersemi 0.29.2, Prettier 3.9.8, Ruff 0.16.8, StyLua
+2.5.2, and Luacheck 1.2.0, and a pull request cannot merge until their checks pass. clang-format
 comes from your LLVM, so it matches CI when your LLVM does; the other tools need not.
 If yours format differently, CI fails and you reformat with the commands above.
 

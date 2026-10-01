@@ -1,17 +1,15 @@
-# ImGui, ImPlot, and Lua define their flags as signed ints, so bugprone-signed-bitwise
-# would flag every combination of them.
-Checks: '-*,clang-analyzer-*,-clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-*,-bugprone-easily-swappable-parameters,-bugprone-signed-bitwise,-bugprone-throwing-static-initialization,misc-include-cleaner,performance-*,-performance-enum-size,readability-identifier-naming'
-HeaderFilterRegex: '.*/(app|scripting|include/advanced_platformer)/.*'
+Checks: "-*,clang-analyzer-*,-clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-*,-bugprone-easily-swappable-parameters,-bugprone-signed-bitwise,-bugprone-throwing-static-initialization,misc-include-cleaner,performance-*,-performance-enum-size,readability-identifier-naming"
+HeaderFilterRegex: ".*/(app|scripting|include/advanced_platformer)/.*"
 CheckOptions:
   - key: bugprone-narrowing-conversions.WarnOnIntegerToFloatingPointNarrowingConversion
-    value: 'false'
+    value: "false"
 
   - key: misc-include-cleaner.MissingIncludes
-    value: 'true'
+    value: "true"
   - key: misc-include-cleaner.UnusedIncludes
-    value: 'true'
+    value: "true"
   - key: misc-include-cleaner.IgnoreHeaders
-    value: 'glm/.*;catch2/.*;glaze/.*'
+    value: "glm/.*;catch2/.*;glaze/.*"
 
   - key: readability-identifier-naming.ClassCase
     value: CamelCase

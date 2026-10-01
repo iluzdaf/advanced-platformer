@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 4.4)
 
-project(
-    AdvancedPlatformer
-    VERSION 0.1.0
-    LANGUAGES C CXX
-)
+project(AdvancedPlatformer VERSION 0.1.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -14,11 +10,7 @@ include(cmake/Dependencies.cmake)
 
 add_library(advanced_platformer_core)
 include(cmake/sources/Core.cmake)
-target_include_directories(
-    advanced_platformer_core
-    PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
+target_include_directories(advanced_platformer_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_features(advanced_platformer_core PUBLIC cxx_std_26)
 target_link_libraries(advanced_platformer_core PUBLIC advanced_platformer_glm)
 enable_project_warnings(advanced_platformer_core)
@@ -27,8 +19,7 @@ add_library(advanced_platformer_scripting)
 include(cmake/sources/Scripting.cmake)
 target_include_directories(
     advanced_platformer_scripting
-    PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/scripting
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/scripting
 )
 target_compile_features(advanced_platformer_scripting PUBLIC cxx_std_26)
 target_link_libraries(
@@ -45,12 +36,12 @@ target_include_directories(advanced_platformer PRIVATE ${CMAKE_CURRENT_SOURCE_DI
 target_link_libraries(
     advanced_platformer
     PRIVATE
-    advanced_platformer_scripting
-    advanced_platformer_glad
-    advanced_platformer_imgui
-    advanced_platformer_json
-    advanced_platformer_stb
-    glfw
+        advanced_platformer_scripting
+        advanced_platformer_glad
+        advanced_platformer_imgui
+        advanced_platformer_json
+        advanced_platformer_stb
+        glfw
 )
 enable_project_warnings(advanced_platformer)
 
@@ -82,15 +73,11 @@ if(BUILD_TESTING)
     target_compile_features(advanced_platformer_tests PRIVATE cxx_std_26)
     target_include_directories(
         advanced_platformer_tests
-        PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/app
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app ${CMAKE_CURRENT_SOURCE_DIR}/tests
+    )
     target_link_libraries(
         advanced_platformer_tests
-        PRIVATE
-        advanced_platformer_scripting
-        advanced_platformer_json
-        Catch2::Catch2WithMain
+        PRIVATE advanced_platformer_scripting advanced_platformer_json Catch2::Catch2WithMain
     )
     enable_project_warnings(advanced_platformer_tests)
     add_custom_target(

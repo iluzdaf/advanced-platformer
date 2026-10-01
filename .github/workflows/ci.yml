@@ -6,9 +6,6 @@ on:
       - main
   pull_request:
 
-# Every job runs on Linux with the same pinned CMake and LLVM major version, from
-# apt.llvm.org: upstream Clang with its libc++, clang-format and clang-tidy, the toolchain
-# the project supports.
 env:
   CMAKE: 4.4.3
   LLVM: 23
@@ -16,8 +13,6 @@ env:
 jobs:
   formatting:
     name: Formatting
-    # Strict branch protection runs this job, the header check, and static analysis before
-    # a pull request can merge. Do not repeat them on the resulting push to main.
     if: github.event_name != 'push'
     runs-on: ubuntu-24.04
     env:
@@ -25,6 +20,7 @@ jobs:
       RUFF: 0.16.8
       STYLUA: 2.5.2
       LUACHECK: 1.2.0
+      GERSEMI: 0.29.2
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -54,13 +50,21 @@ jobs:
           sudo apt-get install -y -qq --no-install-recommends luarocks
           sudo luarocks install luacheck "$LUACHECK"
           luacheck --version
+      - name: Install the pinned gersemi
+        run: |
+          pipx install "gersemi==$GERSEMI"
+          echo "GERSEMI_BIN=$(pipx environment --value PIPX_BIN_DIR)/gersemi" >> "$GITHUB_ENV"
+          "$(pipx environment --value PIPX_BIN_DIR)/gersemi" --version
       - name: Configure
         run: >
           cmake --preset linux-debug
           -DPRETTIER_EXECUTABLE="$PRETTIER_BIN"
           -DSTYLUA_EXECUTABLE="$STYLUA_BIN"
+          -DGERSEMI_EXECUTABLE="$GERSEMI_BIN"
       - name: Check formatting
         run: cmake --build --preset linux-debug --target format-check
+      - name: Check CMake formatting
+        run: cmake --build --preset linux-debug --target format-cmake-check
       - name: Check JSON formatting
         run: cmake --build --preset linux-debug --target format-json-check
       - name: Check YAML formatting
@@ -100,8 +104,6 @@ jobs:
 
   static-analysis:
     name: Static analysis (${{ matrix.shard }}/3)
-    # Header changes bring their transitive includers with them. Three shards keep
-    # broad changes and full-tree fallbacks from returning to one long-running job.
     if: github.event_name != 'push'
     runs-on: ubuntu-24.04
     strategy:
@@ -120,7 +122,6 @@ jobs:
           BASE_REF: origin/${{ github.base_ref }}
           SHARD: ${{ matrix.shard }}
         run: |
-          # Deal the files out in turn, so each shard gets every third one.
           targets="$RUNNER_TEMP/tidy-targets.txt"
           python3 tools/tidy_targets.py --since "$BASE_REF" \
             | awk -v shard="$SHARD" '(NR - 1) % 3 + 1 == shard' > "$targets"
@@ -154,8 +155,6 @@ jobs:
 
   static-analysis-result:
     name: Static analysis
-    # The check branch protection requires, so it doesn't name each shard. A skipped job
-    # would count as passing, so this one always runs and fails unless every shard succeeded.
     if: always() && github.event_name != 'push'
     needs: static-analysis
     runs-on: ubuntu-24.04
