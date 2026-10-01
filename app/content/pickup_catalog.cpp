@@ -2,7 +2,11 @@
 #include "content_diagnostics.hpp"
 #include "content_json.hpp"
 #include "content_validation.hpp"
-#include <nlohmann/json.hpp>
+#include "content_glaze.hpp"
+#include <map>
+#include <optional>
+#include <glaze/glaze.hpp>
+#include <glm/vec2.hpp>
 #include <filesystem>
 #include <format>
 #include <stdexcept>
@@ -14,6 +18,21 @@
 
 namespace advanced_platformer
 {
+    // pickups.json as written: its member names are the file's keys. Glaze reflects only
+    // types with linkage, so these cannot go in an anonymous namespace.
+    struct PickupJson
+    {
+        std::string item;
+        int quantity = 0;
+        glm::vec2 bodySize{};
+        std::optional<SpriteJson> sprite;
+    };
+
+    struct PickupsJson
+    {
+        std::map<std::string, PickupJson> pickups;
+    };
+
     void validatePickupDefinition(const PickupDefinition& definition, const ItemCatalog& items)
     {
         Pickup pickup;
@@ -51,23 +70,18 @@ namespace advanced_platformer
         std::string_view sourceName,
         const ItemCatalog& items)
     {
-        const auto root = parseContentRoot(text, sourceName);
-        checkJsonFields(root, {"pickups"}, sourceName, "root");
-        const auto& definitions = requiredJsonMember(root, "pickups", sourceName, "root");
-        checkJsonObject(definitions, sourceName, "pickups");
+        const auto file = readContent<PickupsJson>(text, sourceName);
         PickupCatalog catalog;
-        for (const auto& entry : definitions.items())
+        for (const auto& [name, json] : file.pickups)
         {
-            const std::string path = fieldPath("pickups", entry.key());
-            const auto& value = entry.value();
-            checkJsonFields(value, {"item", "quantity", "bodySize", "sprite"}, sourceName, path);
             PickupDefinition definition;
-            definition.stack = {
-                readText(value, "item", sourceName, path),
-                readInteger(value, "quantity", sourceName, path)};
-            definition.bodySize = readVector(value, "bodySize", sourceName, path);
-            readOptionalSprite(value, "sprite", definition.sprite, sourceName, path);
-            catalog.emplace(entry.key(), definition);
+            definition.stack = {json.item, json.quantity};
+            definition.bodySize = json.bodySize;
+            if (json.sprite.has_value())
+            {
+                definition.sprite = spriteFrom(*json.sprite);
+            }
+            catalog.emplace(name, definition);
         }
         validateInFile(sourceName, [&] { validatePickupCatalog(catalog, items); });
         return catalog;
