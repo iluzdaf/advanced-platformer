@@ -1,6 +1,6 @@
 # Future work
 
-These are proposals, not implemented features or requirements for ordinary project work.
+These are proposals, not implemented features.
 For the current design, use [ARCHITECTURE.md](ARCHITECTURE.md); for editing game data,
 use [CONTENT.md](CONTENT.md).
 

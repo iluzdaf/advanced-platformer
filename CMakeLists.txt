@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.25)
 
 project(
     AdvancedPlatformer
@@ -19,7 +19,7 @@ target_include_directories(
     PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
-target_compile_features(advanced_platformer_core PUBLIC cxx_std_17)
+target_compile_features(advanced_platformer_core PUBLIC cxx_std_26)
 target_link_libraries(advanced_platformer_core PUBLIC advanced_platformer_glm)
 enable_project_warnings(advanced_platformer_core)
 
@@ -30,7 +30,7 @@ target_include_directories(
     PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/scripting
 )
-target_compile_features(advanced_platformer_scripting PUBLIC cxx_std_17)
+target_compile_features(advanced_platformer_scripting PUBLIC cxx_std_26)
 target_link_libraries(
     advanced_platformer_scripting
     PUBLIC advanced_platformer_core
@@ -40,7 +40,7 @@ enable_project_warnings(advanced_platformer_scripting)
 
 add_executable(advanced_platformer)
 include(cmake/sources/Application.cmake)
-target_compile_features(advanced_platformer PRIVATE cxx_std_17)
+target_compile_features(advanced_platformer PRIVATE cxx_std_26)
 target_include_directories(advanced_platformer PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
 target_link_libraries(
     advanced_platformer
@@ -79,7 +79,7 @@ if(BUILD_TESTING)
 
     add_executable(advanced_platformer_tests)
     include(cmake/sources/Tests.cmake)
-    target_compile_features(advanced_platformer_tests PRIVATE cxx_std_17)
+    target_compile_features(advanced_platformer_tests PRIVATE cxx_std_26)
     target_include_directories(
         advanced_platformer_tests
         PRIVATE

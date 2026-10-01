@@ -16,9 +16,9 @@ There are two routes through this document:
 
 - If you are new to the engine, follow the
   [recommended reading route](#recommended-reading-route) first.
-- If you are starting a project requirement, use the
-  [platformer gameplay](#platformer-gameplay-requirements) or
-  [enemy behaviour](#enemy-behaviour-requirements) starting points.
+- If you are extending the game, use the
+  [platformer gameplay](#platformer-gameplay) or
+  [enemy behaviour](#enemy-behaviour) starting points.
 
 ## Everyday development loop
 
@@ -59,16 +59,16 @@ Game::buildScene()
 
 This separation lets most game behaviour run in tests without opening a window.
 
-## Starting project work
+## Extending the game
 
 Platformer mechanics and enemy behaviour share the same movement, collision, combat, and
 input systems: an NPC produces the same `InputIntentions` that the application produces
-for the player. Each requirement below names the steps of the
+for the player. Each area below names the steps of the
 [reading route](#recommended-reading-route) it needs, what to change without code, and
-the [ARCHITECTURE.md](ARCHITECTURE.md#extension-recipes-for-project-work) recipe to
+the [ARCHITECTURE.md](ARCHITECTURE.md#extension-recipes) recipe to
 follow when you extend the engine.
 
-### Platformer gameplay requirements
+### Platformer gameplay
 
 ```text
 keyboard and mouse
@@ -93,7 +93,7 @@ keyboard and mouse
 
 Movement work does not require reading NPC or navigation code.
 
-### Enemy behaviour requirements
+### Enemy behaviour
 
 ```text
 senses and memory
@@ -200,7 +200,7 @@ intentions instead of reading a keyboard. Follow this route:
 7. [`projectile_system.cpp`](../src/combat/projectile_system.cpp)
 8. [`lifecycle.cpp`](../src/actor/lifecycle.cpp)
 
-The enum-and-switch code teaches the built-in decision flow. Combat then applies the
+The enum-and-switch code holds the built-in decision flow. Combat then applies the
 requested attacks and contact damage.
 
 ### 7. Read navigation last

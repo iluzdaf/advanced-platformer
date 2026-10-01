@@ -232,7 +232,7 @@ endif()
 
 set_source_files_properties(${PROJECT_PUBLIC_HEADERS} PROPERTIES LANGUAGE CXX)
 add_library(header_self_containment OBJECT EXCLUDE_FROM_ALL ${PROJECT_PUBLIC_HEADERS})
-target_compile_features(header_self_containment PRIVATE cxx_std_17)
+target_compile_features(header_self_containment PRIVATE cxx_std_26)
 target_link_libraries(header_self_containment PRIVATE advanced_platformer_core)
 enable_project_warnings(header_self_containment)
 

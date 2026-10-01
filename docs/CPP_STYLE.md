@@ -6,7 +6,7 @@ the rest.
 
 ## Language and libraries
 
-The project uses C++17. Before reading the engine, it helps to be comfortable with:
+The project uses C++26. Before reading the engine, it helps to be comfortable with:
 
 - [`std::optional`](https://en.cppreference.com/w/cpp/utility/optional), for a value
   that may be absent, such as an actor's optional components.
