@@ -97,7 +97,7 @@ TEST_CASE("Game debug data retains actor definition names", "[app][debug]")
     REQUIRE(player->definitionName == "test_player");
 }
 
-TEST_CASE("Game debug data names a climbing NPC's navigation profile", "[app][debug]")
+TEST_CASE("Debug overlay data names a climbing NPC's navigation profile", "[app][debug]")
 {
     // A climber's profile includes how it climbs, so the name is only found when the
     // named profile includes it too.
