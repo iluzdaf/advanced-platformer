@@ -24,13 +24,13 @@ Use this as a reference when working on a particular feature:
 |                           | [Combat, projectiles, and life cycle](#combat-projectiles-and-life-cycle) | Attacks and death.                                                                                                                            |
 |                           | [Inventory, pickups, and levels](#inventory-pickups-and-levels)           | The level loop and the [data-driven boundary](#data-driven-level-boundary). [CONTENT.md](CONTENT.md) is the file-by-file authoring reference. |
 | Presentation and practice | [Presentation](#presentation)                                             | Animation, rendering, camera, and UI.                                                                                                         |
-|                           | [Extension recipes](#extension-recipes-for-project-work)                  | Where to make a gameplay change.                                                                                                              |
+|                           | [Extension recipes](#extension-recipes)                                   | Where to make a gameplay change.                                                                                                              |
 |                           | [Error handling and validation](#error-handling-and-validation)           | Which layer rejects what.                                                                                                                     |
 |                           | [Testing and quality checks](#testing-and-quality-checks)                 | How to verify it.                                                                                                                             |
 
 ## Purpose and scope
 
-Advanced Platformer is a small C++26 teaching engine with a complete example game. It
+Advanced Platformer is a small C++26 engine with a complete example game. It
 keeps the code explicit enough to trace in a debugger and separates gameplay rules
 from graphics so the major paths can be tested without opening a window.
 
@@ -942,9 +942,9 @@ The inventory UI is an example presentation, not an engine rule. It derives its 
 from the configured slot count, uses at most three columns, pauses simulation while
 open, and emits item use requests instead of changing the world directly.
 
-## Extension recipes for project work
+## Extension recipes
 
-These recipes identify the existing boundaries a project feature should follow. They
+These recipes identify the existing boundaries a new feature should follow. They
 are routes through the current code, not requirements for a generic plugin system.
 
 ### Adding a movement ability

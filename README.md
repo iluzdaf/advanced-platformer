@@ -1,6 +1,6 @@
 # Advanced Platformer
 
-Advanced Platformer is a C++26 teaching engine and example game built from independently
+Advanced Platformer is a C++26 engine and example game built from independently
 testable systems. The current implementation includes platformer movement, tile collision,
 scrolling, composed actors, NPC state machines with Lua activities, flying and platformer
 pathfinding, projectiles, animation, inventory, automatic pickups, a three-level game
