@@ -46,6 +46,14 @@ namespace advanced_platformer
             return rest.substr(0, rest.find_first_of(",}] \t\r\n"));
         }
 
+        // Glaze's name for the error, in words: "unexpected end", "expected comma".
+        std::string codeName(const glz::error_ctx& error)
+        {
+            std::string name(glz::meta<glz::error_code>::keys[static_cast<std::size_t>(error.ec)]);
+            std::ranges::replace(name, '_', ' ');
+            return name;
+        }
+
         std::string describe(const glz::error_ctx& error, std::string_view token)
         {
             switch (error.ec)
@@ -55,13 +63,15 @@ namespace advanced_platformer
             case glz::error_code::missing_key:
                 return std::format("missing '{}'", error.custom_error_message);
             case glz::error_code::unexpected_enum:
-                return std::format("unknown value '{}'", token);
+                return std::format("unknown value '{}'; {}", token, error.custom_error_message);
             case glz::error_code::expected_quote:
                 return std::format("expected text, found '{}'", token);
             case glz::error_code::parse_number_failure:
                 return std::format("invalid number '{}'", token);
             case glz::error_code::expected_brace:
                 return std::format("expected an object, found '{}'", token);
+            case glz::error_code::no_matching_variant_type:
+                return std::format("unexpected '{}', which is not a form this field takes", token);
             case glz::error_code::expected_bracket:
                 return std::format("expected a list, found '{}'", token);
             default:
@@ -71,9 +81,7 @@ namespace advanced_platformer
             {
                 return std::string(error.custom_error_message);
             }
-            std::string name(glz::meta<glz::error_code>::keys[static_cast<std::size_t>(error.ec)]);
-            std::ranges::replace(name, '_', ' ');
-            return name;
+            return codeName(error);
         }
     }
 
@@ -89,8 +97,13 @@ namespace advanced_platformer
     void failContentRead(
         std::string_view text,
         std::string_view sourceName,
-        const glz::error_ctx& error)
+        const glz::error_ctx& readError)
     {
+        // Text that is not JSON at all is a syntax error, reported where the syntax breaks,
+        // rather than a shape error at wherever the read gave up.
+        const glz::error_ctx syntaxError = glz::validate_json(text);
+        const bool isSyntaxError = bool(syntaxError);
+        const glz::error_ctx& error = isSyntaxError ? syntaxError : readError;
         const std::size_t offset = tokenStart(text, std::min(error.count, text.size()));
         const std::string_view before = text.substr(0, offset);
         const std::size_t line = 1 + static_cast<std::size_t>(std::ranges::count(before, '\n'));
@@ -100,6 +113,7 @@ namespace advanced_platformer
         failJson(
             sourceName,
             std::format("line {}, column {}", line, column),
-            describe(error, tokenAt(text, offset)));
+            isSyntaxError ? std::format("invalid JSON: {}", codeName(error))
+                          : describe(error, tokenAt(text, offset)));
     }
 }

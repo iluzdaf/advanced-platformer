@@ -2,7 +2,10 @@
 #include "content_diagnostics.hpp"
 #include "content_json.hpp"
 #include "content_validation.hpp"
-#include <nlohmann/json.hpp>
+#include "content_glaze.hpp"
+#include <map>
+#include <glaze/glaze.hpp>
+#include <glm/vec2.hpp>
 #include <filesystem>
 #include <format>
 #include <stdexcept>
@@ -14,6 +17,19 @@
 
 namespace advanced_platformer
 {
+    // exits.json as written: its member names are the file's keys. Glaze reflects only types
+    // with linkage, so these cannot go in an anonymous namespace.
+    struct ExitJson
+    {
+        glm::vec2 bodySize{};
+        SpriteJson sprite;
+    };
+
+    struct ExitsJson
+    {
+        std::map<std::string, ExitJson> exits;
+    };
+
     void validateExitDefinition(const ExitDefinition& definition)
     {
         LevelExit exit;
@@ -43,23 +59,11 @@ namespace advanced_platformer
 
     ExitCatalog parseExitCatalog(std::string_view text, std::string_view sourceName)
     {
-        const auto root = parseContentRoot(text, sourceName);
-        checkJsonFields(root, {"exits"}, sourceName, "root");
-        const auto& definitions = requiredJsonMember(root, "exits", sourceName, "root");
-        checkJsonObject(definitions, sourceName, "exits");
+        const auto file = readContent<ExitsJson>(text, sourceName);
         ExitCatalog catalog;
-        for (const auto& entry : definitions.items())
+        for (const auto& [name, json] : file.exits)
         {
-            const std::string path = fieldPath("exits", entry.key());
-            const auto& value = entry.value();
-            checkJsonFields(value, {"bodySize", "sprite"}, sourceName, path);
-            ExitDefinition definition;
-            definition.bodySize = readVector(value, "bodySize", sourceName, path);
-            definition.sprite = jsonSprite(
-                requiredJsonMember(value, "sprite", sourceName, path),
-                sourceName,
-                fieldPath(path, "sprite"));
-            catalog.emplace(entry.key(), definition);
+            catalog.emplace(name, ExitDefinition{json.bodySize, spriteFrom(json.sprite)});
         }
         validateInFile(sourceName, [&] { validateExitCatalog(catalog); });
         return catalog;

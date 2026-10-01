@@ -1,6 +1,7 @@
 #include "actor_catalog.hpp"
 #include "machine_catalog.hpp"
 #include "content_diagnostics.hpp"
+#include "content_glaze.hpp"
 #include "content_json.hpp"
 #include "content_validation.hpp"
 #include "animation_catalog.hpp"
@@ -10,399 +11,208 @@
 #include "advanced_platformer/movement/flying_movement.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/render/sprite.hpp"
 #include <filesystem>
 #include <format>
-#include <initializer_list>
+#include <array>
+#include <map>
+#include <utility>
 #include <optional>
 #include <stdexcept>
-#include <nlohmann/json.hpp>
+#include <glaze/glaze.hpp>
+#include <glm/vec2.hpp>
 #include <string_view>
 #include <string>
 
 namespace advanced_platformer
 {
+    template <> struct ContentNames<Team>
+    {
+        static constexpr std::array Names{
+            std::pair{std::string_view{"player"}, Team::Player},
+            std::pair{std::string_view{"enemy"}, Team::Enemy},
+            std::pair{std::string_view{"neutral"}, Team::Neutral}};
+    };
+
+    template <> struct ContentNames<Facing>
+    {
+        static constexpr std::array Names{
+            std::pair{std::string_view{"left"}, Facing::Left},
+            std::pair{std::string_view{"right"}, Facing::Right}};
+    };
+
+    template <> struct ContentNames<NpcTactic>
+    {
+        static constexpr std::array Names{
+            std::pair{std::string_view{"pursuer"}, NpcTactic::Pursuer},
+            std::pair{std::string_view{"keepDistance"}, NpcTactic::KeepDistance}};
+    };
+}
+
+template <>
+struct glz::from<glz::JSON, advanced_platformer::Team>
+    : advanced_platformer::NamedEnumReader<advanced_platformer::Team>
+{
+};
+
+template <>
+struct glz::from<glz::JSON, advanced_platformer::Facing>
+    : advanced_platformer::NamedEnumReader<advanced_platformer::Facing>
+{
+};
+
+template <>
+struct glz::from<glz::JSON, advanced_platformer::NpcTactic>
+    : advanced_platformer::NamedEnumReader<advanced_platformer::NpcTactic>
+{
+};
+
+namespace advanced_platformer
+{
+    // actors.json as written: its member names are the file's keys. Glaze reflects only types
+    // with linkage, so these cannot go in an anonymous namespace. The movement and senses
+    // configs are read as they are, keeping C++ defaults for what a file leaves out; the attack
+    // components also hold runtime state, which a file must not set, so they have their own
+    // structs of optional settings.
+    struct BiteJson
+    {
+        std::optional<int> damage;
+        std::optional<glm::vec2> hitboxSize;
+        std::optional<float> reach;
+        std::optional<float> windupDuration;
+        std::optional<float> activeDuration;
+        std::optional<float> recoveryDuration;
+    };
+
+    struct ContactDamageJson
+    {
+        std::optional<int> damage;
+    };
+
+    struct RangedJson
+    {
+        std::optional<int> damage;
+        std::optional<glm::vec2> projectileSize;
+        std::optional<float> projectileSpeed;
+        std::optional<float> projectileLifetime;
+        std::optional<float> shootDuration;
+        std::optional<float> recoveryDuration;
+        std::optional<bool> breaksTiles;
+        std::optional<SpriteJson> sprite;
+    };
+
+    struct ActorJson
+    {
+        glm::vec2 bodySize{};
+        std::optional<Team> team;
+        std::optional<Facing> facing;
+        std::optional<SpriteAnchor> spriteAnchor;
+        std::optional<std::string> animations;
+        std::optional<int> health;
+        std::optional<int> inventorySlots;
+        std::optional<WithDefaults<PlatformerMovementConfig>> platformer;
+        std::optional<WithDefaults<FlyingMovement>> flying;
+        std::optional<WithDefaults<SurfaceClimbConfig>> surfaceClimb;
+        std::optional<WithDefaults<NpcSenses>> senses;
+        std::optional<NpcTactic> tactic;
+        std::optional<std::string> machine;
+        std::optional<BiteJson> bite;
+        std::optional<ContactDamageJson> contactDamage;
+        std::optional<RangedJson> ranged;
+    };
+
+    struct ActorsJson
+    {
+        std::string player;
+        std::map<std::string, ActorJson> actors;
+    };
+
     namespace
     {
-        using Json = nlohmann::json;
-
-        Team jsonTeam(const Json& value, std::string_view sourceName, std::string_view path)
+        // Sets the field when the file gives a value, and otherwise keeps its C++ default.
+        template <class T> void setIfGiven(T& field, const std::optional<T>& given)
         {
-            const std::string team = jsonText(value, sourceName, path);
-            if (team == "player")
+            if (given.has_value())
             {
-                return Team::Player;
-            }
-            if (team == "enemy")
-            {
-                return Team::Enemy;
-            }
-            if (team == "neutral")
-            {
-                return Team::Neutral;
-            }
-            failJson(
-                sourceName,
-                path,
-                std::format("unknown team '{}'; expected player, enemy, or neutral", team));
-        }
-
-        NpcTactic jsonNpcTactic(
-            const Json& value,
-            std::string_view sourceName,
-            std::string_view path)
-        {
-            const std::string tactic = jsonText(value, sourceName, path);
-            if (tactic == "pursuer")
-            {
-                return NpcTactic::Pursuer;
-            }
-            if (tactic == "keepDistance")
-            {
-                return NpcTactic::KeepDistance;
-            }
-            failJson(
-                sourceName,
-                path,
-                std::format("unknown tactic '{}'; expected pursuer or keepDistance", tactic));
-        }
-
-        Facing jsonFacing(const Json& value, std::string_view sourceName, std::string_view path)
-        {
-            const std::string facing = jsonText(value, sourceName, path);
-            if (facing == "left")
-            {
-                return Facing::Left;
-            }
-            if (facing == "right")
-            {
-                return Facing::Right;
-            }
-            failJson(
-                sourceName,
-                path,
-                std::format("unknown facing '{}'; expected left or right", facing));
-        }
-
-        // Each component reader starts from the C++ defaults and takes only the fields the
-        // file names, so an empty object means "this component, as configured in code".
-
-        PlatformerMovementConfig jsonPlatformerConfig(
-            const Json& value,
-            std::string_view sourceName,
-            const std::string& path)
-        {
-            checkJsonFields(
-                value,
-                {"maximumSpeed",
-                 "groundAcceleration",
-                 "airAcceleration",
-                 "groundDeceleration",
-                 "jumpSpeed",
-                 "gravity",
-                 "jumpReleaseGravity",
-                 "maximumFallSpeed",
-                 "coyoteDuration",
-                 "jumpBufferDuration"},
-                sourceName,
-                path);
-            PlatformerMovementConfig config;
-            const auto number = [&](std::string_view key, float& field)
-            { readOptionalNumber(value, key, field, sourceName, path); };
-            number("maximumSpeed", config.maximumSpeed);
-            number("groundAcceleration", config.groundAcceleration);
-            number("airAcceleration", config.airAcceleration);
-            number("groundDeceleration", config.groundDeceleration);
-            number("jumpSpeed", config.jumpSpeed);
-            number("gravity", config.gravity);
-            number("jumpReleaseGravity", config.jumpReleaseGravity);
-            number("maximumFallSpeed", config.maximumFallSpeed);
-            number("coyoteDuration", config.coyoteDuration);
-            number("jumpBufferDuration", config.jumpBufferDuration);
-            return config;
-        }
-
-        FlyingMovement jsonFlyingMovement(
-            const Json& value,
-            std::string_view sourceName,
-            const std::string& path)
-        {
-            checkJsonFields(value, {"speed"}, sourceName, path);
-            FlyingMovement config;
-            readOptionalNumber(value, "speed", config.speed, sourceName, path);
-            return config;
-        }
-
-        SurfaceClimbConfig jsonSurfaceClimbConfig(
-            const Json& value,
-            std::string_view sourceName,
-            const std::string& path)
-        {
-            checkJsonFields(value, {"speed"}, sourceName, path);
-            SurfaceClimbConfig config;
-            readOptionalNumber(value, "speed", config.speed, sourceName, path);
-            return config;
-        }
-
-        NpcSenses jsonNpcSenses(
-            const Json& value,
-            std::string_view sourceName,
-            const std::string& path)
-        {
-            checkJsonFields(
-                value,
-                {"noticeDistance", "standoffDistance", "targetMemoryDuration", "searchDuration"},
-                sourceName,
-                path);
-            NpcSenses config;
-            readOptionalNumber(value, "noticeDistance", config.noticeDistance, sourceName, path);
-            readOptionalNumber(
-                value, "standoffDistance", config.standoffDistance, sourceName, path);
-            readOptionalNumber(
-                value, "targetMemoryDuration", config.targetMemoryDuration, sourceName, path);
-            readOptionalNumber(value, "searchDuration", config.searchDuration, sourceName, path);
-            return config;
-        }
-
-        BiteAttack jsonBite(const Json& value, std::string_view sourceName, const std::string& path)
-        {
-            checkJsonFields(
-                value,
-                {"damage",
-                 "hitboxSize",
-                 "reach",
-                 "windupDuration",
-                 "activeDuration",
-                 "recoveryDuration"},
-                sourceName,
-                path);
-            BiteAttack config;
-            const auto number = [&](std::string_view key, float& field)
-            { readOptionalNumber(value, key, field, sourceName, path); };
-            readOptionalInteger(value, "damage", config.damage, sourceName, path);
-            readOptionalVector(value, "hitboxSize", config.hitboxSize, sourceName, path);
-            number("reach", config.reach);
-            number("windupDuration", config.windupDuration);
-            number("activeDuration", config.activeDuration);
-            number("recoveryDuration", config.recoveryDuration);
-            return config;
-        }
-
-        ContactDamage jsonContactDamage(
-            const Json& value,
-            std::string_view sourceName,
-            const std::string& path)
-        {
-            checkJsonFields(value, {"damage"}, sourceName, path);
-            ContactDamage config;
-            readOptionalInteger(value, "damage", config.damage, sourceName, path);
-            return config;
-        }
-
-        RangedWeapon jsonRangedWeapon(
-            const Json& value,
-            std::string_view sourceName,
-            const std::string& path)
-        {
-            checkJsonFields(
-                value,
-                {"damage",
-                 "projectileSize",
-                 "projectileSpeed",
-                 "projectileLifetime",
-                 "shootDuration",
-                 "recoveryDuration",
-                 "breaksTiles",
-                 "sprite"},
-                sourceName,
-                path);
-            RangedWeapon config;
-            const auto number = [&](std::string_view key, float& field)
-            { readOptionalNumber(value, key, field, sourceName, path); };
-            readOptionalInteger(value, "damage", config.damage, sourceName, path);
-            readOptionalVector(value, "projectileSize", config.projectileSize, sourceName, path);
-            number("projectileSpeed", config.projectileSpeed);
-            number("projectileLifetime", config.projectileLifetime);
-            number("shootDuration", config.shootDuration);
-            number("recoveryDuration", config.recoveryDuration);
-            readOptionalBoolean(value, "breaksTiles", config.breaksTiles, sourceName, path);
-            readOptionalSprite(value, "sprite", config.projectileSprite, sourceName, path);
-            return config;
-        }
-
-        void readOptionalTeam(
-            const Json& object,
-            std::string_view key,
-            Team& result,
-            std::string_view sourceName,
-            const std::string& path)
-        {
-            if (const Json* found = optionalJsonMember(object, key, sourceName, path))
-            {
-                result = jsonTeam(*found, sourceName, fieldPath(path, key));
+                field = *given;
             }
         }
 
-        void readOptionalNpcTactic(
-            const Json& object,
-            std::string_view key,
-            NpcTactic& result,
-            std::string_view sourceName,
-            const std::string& path)
+        // Each component starts from the C++ defaults and takes only the fields the file
+        // names, so an empty object means "this component, as configured in code".
+        BiteAttack biteFrom(const BiteJson& json)
         {
-            if (const Json* found = optionalJsonMember(object, key, sourceName, path))
-            {
-                result = jsonNpcTactic(*found, sourceName, fieldPath(path, key));
-            }
+            BiteAttack bite;
+            setIfGiven(bite.damage, json.damage);
+            setIfGiven(bite.hitboxSize, json.hitboxSize);
+            setIfGiven(bite.reach, json.reach);
+            setIfGiven(bite.windupDuration, json.windupDuration);
+            setIfGiven(bite.activeDuration, json.activeDuration);
+            setIfGiven(bite.recoveryDuration, json.recoveryDuration);
+            return bite;
         }
 
-        void readOptionalFacing(
-            const Json& object,
-            std::string_view key,
-            Facing& result,
-            std::string_view sourceName,
-            const std::string& path)
+        ContactDamage contactDamageFrom(const ContactDamageJson& json)
         {
-            if (const Json* found = optionalJsonMember(object, key, sourceName, path))
-            {
-                result = jsonFacing(*found, sourceName, fieldPath(path, key));
-            }
+            ContactDamage contact;
+            setIfGiven(contact.damage, json.damage);
+            return contact;
         }
 
-        void readOptionalPlatformerConfig(
-            const Json& object,
-            std::string_view key,
-            std::optional<PlatformerMovementConfig>& result,
-            std::string_view sourceName,
-            const std::string& path)
+        RangedWeapon rangedFrom(const RangedJson& json)
         {
-            if (const Json* found = optionalJsonMember(object, key, sourceName, path))
+            RangedWeapon ranged;
+            setIfGiven(ranged.damage, json.damage);
+            setIfGiven(ranged.projectileSize, json.projectileSize);
+            setIfGiven(ranged.projectileSpeed, json.projectileSpeed);
+            setIfGiven(ranged.projectileLifetime, json.projectileLifetime);
+            setIfGiven(ranged.shootDuration, json.shootDuration);
+            setIfGiven(ranged.recoveryDuration, json.recoveryDuration);
+            setIfGiven(ranged.breaksTiles, json.breaksTiles);
+            if (json.sprite.has_value())
             {
-                result = jsonPlatformerConfig(*found, sourceName, fieldPath(path, key));
+                ranged.projectileSprite = spriteFrom(*json.sprite);
             }
+            return ranged;
         }
 
-        void readOptionalFlyingMovement(
-            const Json& object,
-            std::string_view key,
-            std::optional<FlyingMovement>& result,
-            std::string_view sourceName,
-            const std::string& path)
+        template <class T> std::optional<T> configFrom(const std::optional<WithDefaults<T>>& json)
         {
-            if (const Json* found = optionalJsonMember(object, key, sourceName, path))
+            if (!json.has_value())
             {
-                result = jsonFlyingMovement(*found, sourceName, fieldPath(path, key));
+                return std::nullopt;
             }
+            return json->get();
         }
 
-        void readOptionalSurfaceClimbConfig(
-            const Json& object,
-            std::string_view key,
-            std::optional<SurfaceClimbConfig>& result,
-            std::string_view sourceName,
-            const std::string& path)
+        ActorDefinition definitionFrom(const ActorJson& json)
         {
-            if (const Json* found = optionalJsonMember(object, key, sourceName, path))
-            {
-                result = jsonSurfaceClimbConfig(*found, sourceName, fieldPath(path, key));
-            }
-        }
-
-        void readOptionalNpcSenses(
-            const Json& object,
-            std::string_view key,
-            std::optional<NpcSenses>& result,
-            std::string_view sourceName,
-            const std::string& path)
-        {
-            if (const Json* found = optionalJsonMember(object, key, sourceName, path))
-            {
-                result = jsonNpcSenses(*found, sourceName, fieldPath(path, key));
-            }
-        }
-
-        void readOptionalBite(
-            const Json& object,
-            std::string_view key,
-            std::optional<BiteAttack>& result,
-            std::string_view sourceName,
-            const std::string& path)
-        {
-            if (const Json* found = optionalJsonMember(object, key, sourceName, path))
-            {
-                result = jsonBite(*found, sourceName, fieldPath(path, key));
-            }
-        }
-
-        void readOptionalContactDamage(
-            const Json& object,
-            std::string_view key,
-            std::optional<ContactDamage>& result,
-            std::string_view sourceName,
-            const std::string& path)
-        {
-            if (const Json* found = optionalJsonMember(object, key, sourceName, path))
-            {
-                result = jsonContactDamage(*found, sourceName, fieldPath(path, key));
-            }
-        }
-
-        void readOptionalRangedWeapon(
-            const Json& object,
-            std::string_view key,
-            std::optional<RangedWeapon>& result,
-            std::string_view sourceName,
-            const std::string& path)
-        {
-            if (const Json* found = optionalJsonMember(object, key, sourceName, path))
-            {
-                result = jsonRangedWeapon(*found, sourceName, fieldPath(path, key));
-            }
-        }
-
-        ActorDefinition jsonActorDefinition(
-            const Json& value,
-            std::string_view sourceName,
-            const std::string& path)
-        {
-            checkJsonFields(
-                value,
-                {"bodySize",
-                 "team",
-                 "facing",
-                 "spriteAnchor",
-                 "animations",
-                 "health",
-                 "inventorySlots",
-                 "platformer",
-                 "flying",
-                 "surfaceClimb",
-                 "senses",
-                 "tactic",
-                 "machine",
-                 "bite",
-                 "contactDamage",
-                 "ranged"},
-                sourceName,
-                path);
             ActorDefinition result;
-            result.bodySize = readVector(value, "bodySize", sourceName, path);
-            readOptionalText(value, "animations", result.animations, sourceName, path);
-            readOptionalSpriteAnchor(value, "spriteAnchor", result.spriteAnchor, sourceName, path);
-            readOptionalTeam(value, "team", result.team, sourceName, path);
-            readOptionalFacing(value, "facing", result.facing, sourceName, path);
-            readOptionalInteger(value, "health", result.health, sourceName, path);
-            readOptionalInteger(value, "inventorySlots", result.inventorySlots, sourceName, path);
-            readOptionalPlatformerConfig(value, "platformer", result.platformer, sourceName, path);
-            readOptionalFlyingMovement(value, "flying", result.flying, sourceName, path);
-            readOptionalSurfaceClimbConfig(
-                value, "surfaceClimb", result.surfaceClimb, sourceName, path);
-            readOptionalNpcSenses(value, "senses", result.senses, sourceName, path);
-            readOptionalNpcTactic(value, "tactic", result.tactic, sourceName, path);
-            readOptionalText(value, "machine", result.machine, sourceName, path);
-            readOptionalBite(value, "bite", result.bite, sourceName, path);
-            readOptionalContactDamage(
-                value, "contactDamage", result.contactDamage, sourceName, path);
-            readOptionalRangedWeapon(value, "ranged", result.ranged, sourceName, path);
+            result.bodySize = json.bodySize;
+            setIfGiven(result.team, json.team);
+            setIfGiven(result.facing, json.facing);
+            setIfGiven(result.spriteAnchor, json.spriteAnchor);
+            setIfGiven(result.animations, json.animations);
+            result.health = json.health;
+            result.inventorySlots = json.inventorySlots;
+            result.platformer = configFrom(json.platformer);
+            result.flying = configFrom(json.flying);
+            result.surfaceClimb = configFrom(json.surfaceClimb);
+            result.senses = configFrom(json.senses);
+            setIfGiven(result.tactic, json.tactic);
+            setIfGiven(result.machine, json.machine);
+            if (json.bite.has_value())
+            {
+                result.bite = biteFrom(*json.bite);
+            }
+            if (json.contactDamage.has_value())
+            {
+                result.contactDamage = contactDamageFrom(*json.contactDamage);
+            }
+            if (json.ranged.has_value())
+            {
+                result.ranged = rangedFrom(*json.ranged);
+            }
             return result;
         }
     }
@@ -413,25 +223,20 @@ namespace advanced_platformer
         const AnimationCatalog& animations,
         const MachineCatalog& machines)
     {
-        const auto root = parseContentRoot(text, sourceName);
-        checkJsonFields(root, {"player", "actors"}, sourceName, "root");
+        const auto file = readContent<ActorsJson>(text, sourceName);
         ActorCatalog result;
-        result.player = readText(root, "player", sourceName, "root");
-        const auto& definitions = requiredJsonMember(root, "actors", sourceName, "root");
-        checkJsonObject(definitions, sourceName, "actors");
-        if (definitions.empty())
+        result.player = file.player;
+        if (file.actors.empty())
         {
             failJson(sourceName, "actors", "expected a nonempty object");
         }
-        for (const auto& entry : definitions.items())
+        for (const auto& [name, json] : file.actors)
         {
-            if (entry.key().empty())
+            if (name.empty())
             {
                 failJson(sourceName, "actors", "actor name cannot be empty");
             }
-            result.definitions.emplace(
-                entry.key(),
-                jsonActorDefinition(entry.value(), sourceName, fieldPath("actors", entry.key())));
+            result.definitions.emplace(name, definitionFrom(json));
         }
         validateInFile(sourceName, [&] { validateActorCatalog(result, animations, machines); });
         return result;

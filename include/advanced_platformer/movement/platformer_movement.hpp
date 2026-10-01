@@ -14,6 +14,8 @@ namespace advanced_platformer
         Right
     };
 
+    // Its member names are the keys of an actor's "platformer" object in actors.json, so
+    // renaming one renames the key.
     struct PlatformerMovementConfig
     {
         float maximumSpeed = 100.0F;

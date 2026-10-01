@@ -25,6 +25,8 @@ namespace advanced_platformer
         Down
     };
 
+    // Its member names are the keys of an actor's "surfaceClimb" object in actors.json, so
+    // renaming one renames the key.
     struct SurfaceClimbConfig
     {
         float speed = 60.0F;

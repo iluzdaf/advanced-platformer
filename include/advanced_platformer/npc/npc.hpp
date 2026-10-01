@@ -53,6 +53,8 @@ namespace advanced_platformer
         bool heardLanding = false;
     };
 
+    // Its member names are the keys of an actor's "senses" object in actors.json, so
+    // renaming one renames the key.
     struct NpcSenses
     {
         float noticeDistance = 96.0F;

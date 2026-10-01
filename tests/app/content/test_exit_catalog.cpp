@@ -3,6 +3,7 @@
 #include <nlohmann/json.hpp>
 #include <limits>
 #include <stdexcept>
+#include <string>
 #include "content/exit_catalog.hpp"
 #include "content/content_validation.hpp"
 #include "content/level_data.hpp"
@@ -42,8 +43,11 @@ TEST_CASE(
     "Exit catalog validates unused definitions and rejects placement settings",
     "[app][exits][json]")
 {
+    // Shape errors name a line and column; rule errors name the definition.
     auto exitJson = exitData();
     auto& definition = exitJson["exits"]["gate"];
+    std::string start = "exits.json: exits.gate";
+    std::string end;
     SECTION("Invalid bounds")
     {
         definition["bodySize"] = {0, 24};
@@ -55,30 +59,42 @@ TEST_CASE(
     SECTION("Missing sprite")
     {
         definition.erase("sprite");
+        start = "exits.json: line 1, column ";
+        end = "missing 'sprite'";
     }
     SECTION("Missing bounds")
     {
         definition.erase("bodySize");
+        start = "exits.json: line 1, column ";
+        end = "missing 'bodySize'";
     }
     SECTION("Malformed vector")
     {
         definition["bodySize"] = {12};
+        start = "exits.json: line 1, column ";
+        end = "expected two numbers, [x, y]";
     }
     SECTION("Destination belongs to placement")
     {
         definition["nextLevel"] = 2;
+        start = "exits.json: line 1, column ";
+        end = "unknown field 'nextLevel'";
     }
     SECTION("Requirement belongs to placement")
     {
         definition["requirement"] = {{"item", "key"}, {"quantity", 1}};
+        start = "exits.json: line 1, column ";
+        end = "unknown field 'requirement'";
     }
     SECTION("Consumption belongs to placement")
     {
         definition["consumeItem"] = true;
+        start = "exits.json: line 1, column ";
+        end = "unknown field 'consumeItem'";
     }
     REQUIRE_THROWS_WITH(
         advanced_platformer::parseExitCatalog(exitJson.dump(), "exits.json"),
-        Catch::Matchers::ContainsSubstring("exits.json: exits.gate"));
+        Catch::Matchers::StartsWith(start) && Catch::Matchers::EndsWith(end));
 }
 
 TEST_CASE("Exit definitions and placement names validate without JSON", "[app][exits][validation]")

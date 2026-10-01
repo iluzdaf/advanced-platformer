@@ -9,6 +9,8 @@ namespace advanced_platformer
     struct InputIntentions;
     enum class Facing;
 
+    // Its member names are the keys of an actor's "flying" object in actors.json, so
+    // renaming one renames the key.
     struct FlyingMovement
     {
         float speed = 60.0F;

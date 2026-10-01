@@ -3,6 +3,7 @@
 #include <nlohmann/json.hpp>
 #include <limits>
 #include <stdexcept>
+#include <string>
 #include "content/item_catalog.hpp"
 #include "content/pickup_catalog.hpp"
 #include "advanced_platformer/math/aabb.hpp"
@@ -34,13 +35,18 @@ TEST_CASE("Pickup definitions compose bounds and optional world sprites", "[app]
 
 TEST_CASE("Pickup JSON validates every definition including unused entries", "[app][pickups][json]")
 {
+    // Shape errors name a line and column; rule errors name the definition.
     const auto items = advanced_platformer::loadItemCatalog("tests/fixtures/catalogs/items.json");
     auto pickupJson = nlohmann::json::parse(
         R"({"pickups":{"unused":{"item":"key","quantity":1,"bodySize":[10,12]}}})");
     auto& definition = pickupJson["pickups"]["unused"];
+    std::string start = "pickups.json: pickups.unused";
+    std::string end;
     SECTION("Missing body size")
     {
         definition.erase("bodySize");
+        start = "pickups.json: line 1, column ";
+        end = "missing 'bodySize'";
     }
     SECTION("Unknown item")
     {
@@ -53,6 +59,8 @@ TEST_CASE("Pickup JSON validates every definition including unused entries", "[a
     SECTION("Fractional quantity")
     {
         definition["quantity"] = 0.5;
+        start = "pickups.json: line 1, column ";
+        end = "invalid number '0.5'";
     }
     SECTION("Invalid bounds")
     {
@@ -61,10 +69,14 @@ TEST_CASE("Pickup JSON validates every definition including unused entries", "[a
     SECTION("Wrong vector shape")
     {
         definition["bodySize"] = {12};
+        start = "pickups.json: line 1, column ";
+        end = "expected two numbers, [x, y]";
     }
     SECTION("Unknown field")
     {
         definition["bodySze"] = {12, 12};
+        start = "pickups.json: line 1, column ";
+        end = "unknown field 'bodySze'";
     }
     SECTION("Invalid sprite")
     {
@@ -72,7 +84,7 @@ TEST_CASE("Pickup JSON validates every definition including unused entries", "[a
     }
     REQUIRE_THROWS_WITH(
         advanced_platformer::parsePickupCatalog(pickupJson.dump(), "pickups.json", items),
-        Catch::Matchers::ContainsSubstring("pickups.json: pickups.unused"));
+        Catch::Matchers::StartsWith(start) && Catch::Matchers::EndsWith(end));
 }
 
 TEST_CASE("Pickup definitions reject invalid C++ data without JSON", "[app][pickups][validation]")

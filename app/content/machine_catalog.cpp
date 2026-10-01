@@ -1,25 +1,63 @@
 #include "machine_catalog.hpp"
 #include "content_diagnostics.hpp"
+#include "content_glaze.hpp"
 #include "content_json.hpp"
 #include <array>
 #include <cstddef>
 #include <filesystem>
 #include <format>
+#include <map>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <variant>
 #include <vector>
-#include <nlohmann/json.hpp>
+#include <glaze/glaze.hpp>
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_activity.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 
 namespace advanced_platformer
 {
+    // machines.json as written: its member names are the file's keys. Glaze reflects only types
+    // with linkage, so these cannot go in an anonymous namespace.
+    struct LuaActivityJson
+    {
+        std::string kind;
+        std::string script;
+        std::string activity;
+    };
+
+    struct MachineStateJson
+    {
+        std::string name;
+        // A built-in activity's name, or a Lua activity.
+        std::variant<std::string, LuaActivityJson> does;
+    };
+
+    struct MachineTransitionJson
+    {
+        // One state name, or a list of them: one transition per name, in order.
+        std::variant<std::string, std::vector<std::string>> from;
+        std::string to;
+        std::map<std::string, bool> when;
+        std::optional<float> after;
+    };
+
+    struct MachineJson
+    {
+        std::vector<MachineStateJson> states;
+        std::vector<MachineTransitionJson> transitions;
+    };
+
+    struct MachinesJson
+    {
+        std::map<std::string, MachineJson> machines;
+    };
+
     namespace
     {
-        using Json = nlohmann::json;
-
         struct ActivityEntry
         {
             std::string_view name;
@@ -37,12 +75,24 @@ namespace advanced_platformer
              {"retreat", NpcState::Retreat},
              {"watch", NpcState::Watch}}};
 
-        BuiltInNpcActivity jsonBuiltInActivity(
-            const Json& value,
+        std::string requireName(
+            const std::string& name,
+            std::string_view description,
+            std::string_view sourceName,
+            std::string_view path)
+        {
+            if (name.empty())
+            {
+                failJson(sourceName, path, std::format("{} cannot be empty", description));
+            }
+            return name;
+        }
+
+        BuiltInNpcActivity builtInActivity(
+            const std::string& name,
             std::string_view sourceName,
             const std::string& path)
         {
-            const std::string name = jsonText(value, sourceName, path);
             for (const ActivityEntry& entry : Activities)
             {
                 if (entry.name == name)
@@ -65,114 +115,84 @@ namespace advanced_platformer
                 std::format("unknown activity '{}'; expected one of {}", name, expected));
         }
 
-        LuaNpcActivity jsonLuaActivity(
-            const Json& value,
+        LuaNpcActivity luaActivity(
+            const LuaActivityJson& json,
             std::string_view sourceName,
             const std::string& path)
         {
-            checkJsonFields(value, {"kind", "script", "activity"}, sourceName, path);
-            const std::string kind = readName(value, "kind", "activity kind", sourceName, path);
-            if (kind != "lua")
+            requireName(json.kind, "activity kind", sourceName, fieldPath(path, "kind"));
+            if (json.kind != "lua")
             {
                 failJson(sourceName, fieldPath(path, "kind"), "expected 'lua'");
             }
             return {
-                readName(value, "script", "script name", sourceName, path),
-                readName(value, "activity", "activity name", sourceName, path)};
+                requireName(json.script, "script name", sourceName, fieldPath(path, "script")),
+                requireName(
+                    json.activity, "activity name", sourceName, fieldPath(path, "activity"))};
         }
 
-        NpcActivity jsonActivity(
-            const Json& value,
-            std::string_view sourceName,
-            const std::string& path)
-        {
-            if (value.is_string())
-            {
-                return jsonBuiltInActivity(value, sourceName, path);
-            }
-            return jsonLuaActivity(value, sourceName, path);
-        }
-
-        // A transition's `from` is one state name or a list of them; a list becomes one
-        // transition per name, in order.
-        std::vector<std::string> jsonSources(
-            const Json& value,
-            std::string_view sourceName,
-            const std::string& path)
-        {
-            std::vector<std::string> sources;
-            if (value.is_array())
-            {
-                for (std::size_t index = 0; index < value.size(); ++index)
-                {
-                    sources.push_back(
-                        jsonName(value[index], "state name", sourceName, indexPath(path, index)));
-                }
-                if (sources.empty())
-                {
-                    failJson(sourceName, path, "expected at least one state name");
-                }
-                return sources;
-            }
-            sources.push_back(jsonName(value, "state name", sourceName, path));
-            return sources;
-        }
-
-        NpcStateMachine jsonMachine(
-            const Json& value,
+        NpcStateMachine machineFrom(
+            const MachineJson& json,
             const std::string& name,
             std::string_view sourceName,
             const std::string& path)
         {
-            checkJsonFields(value, {"states", "transitions"}, sourceName, path);
             NpcStateMachine machine;
             machine.name = name;
 
             const std::string statesPath = fieldPath(path, "states");
-            const Json& states = requiredJsonMember(value, "states", sourceName, path);
-            if (!states.is_array())
+            for (std::size_t index = 0; index < json.states.size(); ++index)
             {
-                failJson(sourceName, statesPath, "expected an array");
-            }
-            for (std::size_t index = 0; index < states.size(); ++index)
-            {
+                const MachineStateJson& stateJson = json.states[index];
                 const std::string statePath = indexPath(statesPath, index);
-                checkJsonFields(states[index], {"name", "does"}, sourceName, statePath);
                 NpcMachineState state;
-                state.name = readName(states[index], "name", "state name", sourceName, statePath);
-                state.does = jsonActivity(
-                    requiredJsonMember(states[index], "does", sourceName, statePath),
-                    sourceName,
-                    fieldPath(statePath, "does"));
+                state.name = requireName(
+                    stateJson.name, "state name", sourceName, fieldPath(statePath, "name"));
+                const std::string doesPath = fieldPath(statePath, "does");
+                if (const auto* builtIn = std::get_if<std::string>(&stateJson.does))
+                {
+                    state.does = builtInActivity(*builtIn, sourceName, doesPath);
+                }
+                else
+                {
+                    state.does = luaActivity(
+                        std::get<LuaActivityJson>(stateJson.does), sourceName, doesPath);
+                }
                 machine.states.push_back(state);
             }
 
             const std::string transitionsPath = fieldPath(path, "transitions");
-            const Json& transitions = requiredJsonMember(value, "transitions", sourceName, path);
-            if (!transitions.is_array())
+            for (std::size_t index = 0; index < json.transitions.size(); ++index)
             {
-                failJson(sourceName, transitionsPath, "expected an array");
-            }
-            for (std::size_t index = 0; index < transitions.size(); ++index)
-            {
+                const MachineTransitionJson& entry = json.transitions[index];
                 const std::string transitionPath = indexPath(transitionsPath, index);
-                const Json& entry = transitions[index];
-                checkJsonFields(entry, {"from", "to", "when", "after"}, sourceName, transitionPath);
                 NpcMachineTransition transition;
-                transition.to = readName(entry, "to", "state name", sourceName, transitionPath);
-                const std::string whenPath = fieldPath(transitionPath, "when");
-                const Json& when = requiredJsonMember(entry, "when", sourceName, transitionPath);
-                checkJsonObject(when, sourceName, whenPath);
-                for (const auto& condition : when.items())
+                transition.to = requireName(
+                    entry.to, "state name", sourceName, fieldPath(transitionPath, "to"));
+                transition.when = entry.when;
+                if (entry.after.has_value())
                 {
-                    transition.when[condition.key()] = jsonBoolean(
-                        condition.value(), sourceName, fieldPath(whenPath, condition.key()));
+                    transition.after = *entry.after;
                 }
-                readOptionalNumber(entry, "after", transition.after, sourceName, transitionPath);
-                const std::vector<std::string> sources = jsonSources(
-                    requiredJsonMember(entry, "from", sourceName, transitionPath),
-                    sourceName,
-                    fieldPath(transitionPath, "from"));
+                const std::string fromPath = fieldPath(transitionPath, "from");
+                std::vector<std::string> sources;
+                if (const auto* single = std::get_if<std::string>(&entry.from))
+                {
+                    sources.push_back(requireName(*single, "state name", sourceName, fromPath));
+                }
+                else
+                {
+                    const auto& list = std::get<std::vector<std::string>>(entry.from);
+                    if (list.empty())
+                    {
+                        failJson(sourceName, fromPath, "expected at least one state name");
+                    }
+                    for (std::size_t source = 0; source < list.size(); ++source)
+                    {
+                        sources.push_back(requireName(
+                            list[source], "state name", sourceName, indexPath(fromPath, source)));
+                    }
+                }
                 for (const std::string& from : sources)
                 {
                     transition.from = from;
@@ -204,17 +224,11 @@ namespace advanced_platformer
 
     MachineCatalog parseMachineCatalog(std::string_view text, std::string_view sourceName)
     {
-        const auto root = parseContentRoot(text, sourceName);
-        checkJsonFields(root, {"machines"}, sourceName, "root");
-        const auto& definitions = requiredJsonMember(root, "machines", sourceName, "root");
-        checkJsonObject(definitions, sourceName, "machines");
+        const auto file = readContent<MachinesJson>(text, sourceName);
         MachineCatalog catalog;
-        for (const auto& entry : definitions.items())
+        for (const auto& [name, json] : file.machines)
         {
-            catalog.emplace(
-                entry.key(),
-                jsonMachine(
-                    entry.value(), entry.key(), sourceName, fieldPath("machines", entry.key())));
+            catalog.emplace(name, machineFrom(json, name, sourceName, fieldPath("machines", name)));
         }
         validateInFile(sourceName, [&] { validateMachineCatalog(catalog); });
         return catalog;

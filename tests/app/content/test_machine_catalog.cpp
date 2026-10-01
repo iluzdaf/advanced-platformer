@@ -84,7 +84,7 @@ TEST_CASE("Machine JSON rejects what the engine cannot run, naming where", "[app
     SECTION("A tagged activity without a script")
     {
         machine["states"][0]["does"] = {{"kind", "lua"}, {"activity", "flee"}};
-        expected = "states[0].does";
+        expected = "missing 'script'";
     }
     SECTION("Unknown fact")
     {
@@ -99,7 +99,7 @@ TEST_CASE("Machine JSON rejects what the engine cannot run, naming where", "[app
     SECTION("A condition that is not a boolean")
     {
         machine["transitions"][0]["when"]["targetKnown"] = 1;
-        expected = "transitions[0].when.targetKnown";
+        expected = "expected true or false";
     }
     SECTION("An empty from list")
     {
@@ -109,7 +109,7 @@ TEST_CASE("Machine JSON rejects what the engine cannot run, naming where", "[app
     SECTION("Unknown field")
     {
         machine["start"] = "rest";
-        expected = "machines.test_machine";
+        expected = "unknown field 'start'";
     }
     REQUIRE_THROWS_WITH(
         advanced_platformer::parseMachineCatalog(machineJson.dump(), "machines.json"),

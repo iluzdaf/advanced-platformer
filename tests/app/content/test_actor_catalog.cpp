@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
+#include <string>
 
 #include <optional>
 #include <stdexcept>
@@ -10,6 +11,8 @@
 #include "content/actor_definition.hpp"
 #include "content/animation_catalog.hpp"
 #include "content/machine_catalog.hpp"
+#include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
@@ -90,6 +93,9 @@ TEST_CASE("Climbing requires platformer movement and positive speed", "[app][act
     SECTION("Runtime attachment state")
     {
         actorJson["actors"]["hero"]["surfaceClimb"]["surface"] = "ceiling";
+        REQUIRE_THROWS_WITH(
+            advanced_platformer::parseActorCatalog(actorJson.dump(), "actors.json", {}),
+            Catch::Matchers::EndsWith("unknown field 'surface'"));
     }
 
     REQUIRE_THROWS_WITH(
@@ -103,13 +109,19 @@ TEST_CASE(
 {
     auto actorJson = nlohmann::json::parse(
         R"({"player":"hero","actors":{"hero":{"bodySize":[12,20],"platformer":{},"health":3,"inventorySlots":2}}})");
+    // Shape errors name a line and column; rule errors name the actor.
+    std::string start = "actors.json: actors.";
+    std::string end;
     SECTION("Missing body size")
     {
         actorJson["actors"]["hero"].erase("bodySize");
+        start = "actors.json: line 1, column ";
+        end = "missing 'bodySize'";
     }
     SECTION("Missing player reference")
     {
         actorJson["player"] = "missing";
+        start = "actors.json: ";
     }
     SECTION("Unknown animation")
     {
@@ -117,34 +129,80 @@ TEST_CASE(
     }
     SECTION("Unused actor references an unknown animation")
     {
-        actorJson["actors"]["unused"] = {{"flying", {{"speed", 25}}}, {"animations", "missing"}};
+        actorJson["actors"]["unused"] = {
+            {"bodySize", {8, 8}}, {"flying", {{"speed", 25}}}, {"animations", "missing"}};
     }
     SECTION("Fractional health")
     {
         actorJson["actors"]["hero"]["health"] = 1.5;
+        start = "actors.json: line 1, column ";
+        end = "invalid number '1.5'";
     }
     SECTION("Boolean speed")
     {
         actorJson["actors"]["hero"]["platformer"]["maximumSpeed"] = true;
+        start = "actors.json: line 1, column ";
+        end = "invalid number 'true'";
     }
     SECTION("Unknown field")
     {
         actorJson["actors"]["hero"]["heath"] = 3;
+        start = "actors.json: line 1, column ";
+        end = "unknown field 'heath'";
     }
     SECTION("Runtime state")
     {
-        actorJson["actors"]["hero"]["brain"] = {};
+        actorJson["actors"]["hero"]["brain"] = nlohmann::json::object();
+        start = "actors.json: line 1, column ";
+        end = "unknown field 'brain'";
+    }
+    SECTION("Runtime attack state")
+    {
+        actorJson["actors"]["hero"]["bite"] = {{"phase", "active"}};
+        start = "actors.json: line 1, column ";
+        end = "unknown field 'phase'";
     }
     SECTION("Unknown tactic")
     {
-        actorJson["actors"]["hero"]["senses"] = {};
+        actorJson["actors"]["hero"]["senses"] = nlohmann::json::object();
         actorJson["actors"]["hero"]["tactic"] = "ambusher";
+        start = "actors.json: line 1, column ";
+        end = "unknown value 'ambusher'; expected pursuer or keepDistance";
+    }
+    SECTION("Unknown team")
+    {
+        actorJson["actors"]["hero"]["team"] = "pirates";
+        start = "actors.json: line 1, column ";
+        end = "unknown value 'pirates'; expected player, enemy or neutral";
     }
     SECTION("Unused definition")
     {
-        actorJson["actors"]["unused"] = {{"flying", {{"speed", -1}}}};
+        actorJson["actors"]["unused"] = {{"bodySize", {8, 8}}, {"flying", {{"speed", -1}}}};
     }
     REQUIRE_THROWS_WITH(
         advanced_platformer::parseActorCatalog(actorJson.dump(), "actors.json", {}),
-        Catch::Matchers::ContainsSubstring("actors.json:"));
+        Catch::Matchers::StartsWith(start) && Catch::Matchers::EndsWith(end));
+}
+
+TEST_CASE("Actor JSON keeps the C++ defaults a component leaves out", "[app][actors][json]")
+{
+    const auto catalog = advanced_platformer::parseActorCatalog(
+        R"({"player":"hero","actors":{
+        "hero":{"bodySize":[12,20],"platformer":{},"health":3,"inventorySlots":2},
+        "guard":{"bodySize":[12,20],"team":"enemy","health":2,
+        "platformer":{"maximumSpeed":60},"senses":{"noticeDistance":80},"bite":{"damage":2}}}})",
+        "actors.json",
+        {});
+    const auto& guard = advanced_platformer::actorDefinition(catalog, "guard");
+    const advanced_platformer::PlatformerMovementConfig movementDefaults;
+    const advanced_platformer::NpcSenses sensesDefaults;
+    const advanced_platformer::BiteAttack biteDefaults;
+    REQUIRE(guard.platformer.has_value());
+    REQUIRE(guard.platformer.value_or(movementDefaults).maximumSpeed == 60.0F);
+    REQUIRE(guard.platformer.value_or(movementDefaults).gravity == movementDefaults.gravity);
+    REQUIRE(guard.senses.value_or(sensesDefaults).noticeDistance == 80.0F);
+    REQUIRE(guard.senses.value_or(sensesDefaults).searchDuration == sensesDefaults.searchDuration);
+    REQUIRE(guard.bite.value_or(biteDefaults).damage == 2);
+    REQUIRE(guard.bite.value_or(biteDefaults).reach == biteDefaults.reach);
+    REQUIRE_FALSE(guard.flying.has_value());
 }
