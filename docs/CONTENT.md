@@ -304,6 +304,11 @@ that always holds. `after` is optional and is how many seconds every condition m
 hold before the transition fires. Among the transitions from one state, the first in
 the array whose conditions have held long enough wins.
 
+`assets/scripts/common.lua` provides `idle`, `patrol`, `chase`, `bite`, `shoot`, `search`,
+`retreat` and `watch` as Lua activities, which any machine can use, such as
+`{"kind":"lua","script":"common","activity":"chase"}`. Every shipped machine uses them in
+place of the built-in names.
+
 A Lua reference named `"script": "rat"` loads `assets/scripts/rat.lua`. The script
 returns an `activities` table; each referenced activity needs an `update` function,
 while `enter` and `exit` are optional. Loading rejects missing scripts or activities.
@@ -321,6 +326,26 @@ as `direction`, `aimAt`, and `routeTo`, take a `vec2` or an `{x, y}` table. A co
 `climbGrip` is `"hold"`, `"release"` or `"keep"`; leaving it out keeps the grip, so a
 climber that stops stays on its wall or ceiling.
 
+A snapshot holds:
+
+| Field                 | Meaning                                                                                               |
+| --------------------- | ----------------------------------------------------------------------------------------------------- |
+| `feet`, `center`      | The NPC's feet and the centre of its body.                                                            |
+| `targetFeet`          | Where the target is known to be, only while it is known.                                              |
+| `lastKnownTargetFeet` | Where the target was last seen or heard, kept after it is forgotten; `{0, 0}` before any.             |
+| `targetCenter`        | The centre of the living target's body, where it is now; absent without a living target.              |
+| `patrol`              | `firstFeet`, `secondFeet`, and `headingToSecond`, the end it is walking to; absent without.           |
+| `footing`             | For a walker, `left` and `right`: whether it could stand one body width that way. Absent for a flyer. |
+| `facts`               | The facts in the table below.                                                                         |
+| `stateElapsed`        | Seconds in the current state.                                                                         |
+| `hasRoute`            | Whether the engine holds a route, being followed or followed to its end.                              |
+| `routeComplete`       | Whether the route last asked for has been followed to its end.                                        |
+
+A command may set the intentions `direction`, `aimDirection`, `jumpPressed`, `jumpHeld`,
+`primaryAttackPressed`, `climbGrip`, `avoidLedges` and `contactDamage`, and ask the
+engine to `routeTo` a point, `aimAt` a point, `clearRoute`, or `turnPatrol`, which turns
+the patrol round to head for its other end.
+
 The engine supplies these boolean facts to machine `when` conditions:
 
 | Fact                           | True when                                                                              | Position or timing                                                                           |
@@ -336,6 +361,7 @@ The engine supplies these boolean facts to machine `when` conditions:
 | `targetWithinNoticeDistance`   | The living remembered target is within `noticeDistance`.                               | Compares current feet, regardless of ground or visibility; inclusive `<=`.                   |
 | `movementBlocked`              | Movement hit a wall or the ledge guard stopped the NPC.                                | Reports the previous movement update.                                                        |
 | `hasPatrol`                    | The NPC has a patrol component.                                                        | Independent of its current state.                                                            |
+| `searches`                     | The NPC searches for a lost target: its `searchDuration` is positive.                  | Independent of its current state.                                                            |
 | `searchTimeUp`                 | Time in the current state is at least `searchDuration`.                                | True immediately when the duration is zero.                                                  |
 
 The two run and notice-distance facts are independent; policy decides how to combine

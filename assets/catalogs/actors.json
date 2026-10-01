@@ -22,7 +22,8 @@
       "health": 3,
       "platformer": { "maximumSpeed": 60 },
       "senses": { "noticeDistance": 80 },
-      "bite": { "windupDuration": 0.3, "activeDuration": 0.1, "recoveryDuration": 0.6 }
+      "bite": { "windupDuration": 0.3, "activeDuration": 0.1, "recoveryDuration": 0.6 },
+      "machine": "pursuer"
     },
     "bat": {
       "bodySize": [12, 8],
@@ -33,7 +34,8 @@
       "health": 1,
       "flying": {},
       "senses": { "noticeDistance": 56, "targetMemoryDuration": 0.5 },
-      "bite": {}
+      "bite": {},
+      "machine": "pursuer"
     },
     "rat": {
       "bodySize": [8, 8],

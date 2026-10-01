@@ -1,5 +1,54 @@
 {
   "machines": {
+    "pursuer": {
+      "states": [
+        { "name": "idle", "does": { "kind": "lua", "script": "common", "activity": "idle" } },
+        { "name": "patrol", "does": { "kind": "lua", "script": "common", "activity": "patrol" } },
+        { "name": "chase", "does": { "kind": "lua", "script": "common", "activity": "chase" } },
+        { "name": "bite", "does": { "kind": "lua", "script": "common", "activity": "bite" } },
+        { "name": "shoot", "does": { "kind": "lua", "script": "common", "activity": "shoot" } },
+        { "name": "search", "does": { "kind": "lua", "script": "common", "activity": "search" } }
+      ],
+      "transitions": [
+        {
+          "from": ["idle", "patrol", "search"],
+          "to": "bite",
+          "when": { "targetInBiteRange": true }
+        },
+        { "from": ["idle", "patrol", "search"], "to": "shoot", "when": { "targetInSights": true } },
+        { "from": ["idle", "patrol", "search"], "to": "chase", "when": { "targetKnown": true } },
+        { "from": "idle", "to": "patrol", "when": { "hasPatrol": true } },
+        {
+          "from": ["chase", "shoot"],
+          "to": "search",
+          "when": { "targetKnown": false, "searches": true }
+        },
+        {
+          "from": ["chase", "shoot"],
+          "to": "patrol",
+          "when": { "targetKnown": false, "hasPatrol": true }
+        },
+        { "from": ["chase", "shoot"], "to": "idle", "when": { "targetKnown": false } },
+        { "from": "chase", "to": "bite", "when": { "targetInBiteRange": true } },
+        { "from": "chase", "to": "shoot", "when": { "targetInSights": true } },
+        { "from": "shoot", "to": "bite", "when": { "targetInBiteRange": true } },
+        { "from": "shoot", "to": "chase", "when": { "targetInSights": false } },
+        { "from": "bite", "to": "chase", "when": { "biteReady": true, "targetKnown": true } },
+        {
+          "from": "bite",
+          "to": "search",
+          "when": { "biteReady": true, "targetKnown": false, "searches": true }
+        },
+        {
+          "from": "bite",
+          "to": "patrol",
+          "when": { "biteReady": true, "targetKnown": false, "hasPatrol": true }
+        },
+        { "from": "bite", "to": "idle", "when": { "biteReady": true, "targetKnown": false } },
+        { "from": "search", "to": "patrol", "when": { "searchTimeUp": true, "hasPatrol": true } },
+        { "from": "search", "to": "idle", "when": { "searchTimeUp": true } }
+      ]
+    },
     "spider": {
       "states": [
         { "name": "patrol", "does": { "kind": "lua", "script": "spider", "activity": "patrol" } },
@@ -49,9 +98,9 @@
     },
     "rat": {
       "states": [
-        { "name": "patrol", "does": "patrol" },
+        { "name": "patrol", "does": { "kind": "lua", "script": "common", "activity": "patrol" } },
         { "name": "flee", "does": { "kind": "lua", "script": "rat", "activity": "flee" } },
-        { "name": "bite", "does": "bite" }
+        { "name": "bite", "does": { "kind": "lua", "script": "common", "activity": "bite" } }
       ],
       "transitions": [
         {
@@ -71,12 +120,12 @@
     },
     "keep_distance": {
       "states": [
-        { "name": "idle", "does": "idle" },
-        { "name": "patrol", "does": "patrol" },
-        { "name": "retreat", "does": "retreat" },
-        { "name": "shoot", "does": "shoot" },
-        { "name": "chase", "does": "chase" },
-        { "name": "watch", "does": "watch" }
+        { "name": "idle", "does": { "kind": "lua", "script": "common", "activity": "idle" } },
+        { "name": "patrol", "does": { "kind": "lua", "script": "common", "activity": "patrol" } },
+        { "name": "retreat", "does": { "kind": "lua", "script": "common", "activity": "retreat" } },
+        { "name": "shoot", "does": { "kind": "lua", "script": "common", "activity": "shoot" } },
+        { "name": "chase", "does": { "kind": "lua", "script": "common", "activity": "chase" } },
+        { "name": "watch", "does": { "kind": "lua", "script": "common", "activity": "watch" } }
       ],
       "transitions": [
         {
