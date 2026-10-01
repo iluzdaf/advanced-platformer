@@ -59,7 +59,7 @@ TEST_CASE("Item JSON names where a malformed file goes wrong", "[app][items][jso
     SECTION("Unknown effect")
     {
         item["effect"] = "magic";
-        expected = "unknown value 'magic'";
+        expected = "unknown value 'magic'; expected none or heal";
     }
     SECTION("Wrong name type")
     {

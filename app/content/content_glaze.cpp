@@ -55,7 +55,7 @@ namespace advanced_platformer
             case glz::error_code::missing_key:
                 return std::format("missing '{}'", error.custom_error_message);
             case glz::error_code::unexpected_enum:
-                return std::format("unknown value '{}'", token);
+                return std::format("unknown value '{}'; {}", token, error.custom_error_message);
             case glz::error_code::expected_quote:
                 return std::format("expected text, found '{}'", token);
             case glz::error_code::parse_number_failure:

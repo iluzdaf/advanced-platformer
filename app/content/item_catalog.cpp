@@ -4,6 +4,7 @@
 #include "content_json.hpp"
 #include "content_validation.hpp"
 #include "advanced_platformer/inventory/item.hpp"
+#include <array>
 #include <cstddef>
 #include <format>
 #include <filesystem>
@@ -14,15 +15,21 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 #include <glaze/glaze.hpp>
 
-// An item's effect is written as "none" or "heal".
-template <> struct glz::meta<advanced_platformer::ItemEffect>
+template <> struct advanced_platformer::ContentNames<advanced_platformer::ItemEffect>
 {
-    using enum advanced_platformer::ItemEffect;
-    // NOLINTNEXTLINE(readability-identifier-naming): Glaze looks this member up by name.
-    static constexpr auto value = glz::enumerate("none", None, "heal", Heal);
+    static constexpr std::array Names{
+        std::pair{std::string_view{"none"}, ItemEffect::None},
+        std::pair{std::string_view{"heal"}, ItemEffect::Heal}};
+};
+
+template <>
+struct glz::from<glz::JSON, advanced_platformer::ItemEffect>
+    : advanced_platformer::NamedEnumReader<advanced_platformer::ItemEffect>
+{
 };
 
 namespace advanced_platformer
