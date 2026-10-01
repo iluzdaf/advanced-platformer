@@ -186,7 +186,7 @@ TEST_CASE("An NPC's search after a break waits for the fill and asks again", "[n
             .thinking({64.0F, 1.0F}));
     tests::prepareNavigationCache(map, world);
     const advanced_platformer::PlatformerTraversalProfile profile{
-        {12.0F, 12.0F}, advanced_platformer::PlatformerMovementConfig{}, tests::FixedStepSeconds};
+        .size = {12.0F, 12.0F}, .stepSeconds = tests::FixedStepSeconds};
     REQUIRE(world.platformerConnections().cachedConnections({2, 1}, profile) != nullptr);
 
     REQUIRE(map.breakTile({2, 2}));

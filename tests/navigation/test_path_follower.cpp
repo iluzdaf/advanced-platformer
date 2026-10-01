@@ -83,7 +83,7 @@ TEST_CASE(
             map,
             {2, 2},
             advanced_platformer::PlatformerTraversalProfile{
-                bodySize, config, tests::FixedStepSeconds})
+                .size = bodySize, .movement = config, .stepSeconds = tests::FixedStepSeconds})
             .connections;
     const advanced_platformer::RouteConnection& jump =
         tests::connectionWith(connections, advanced_platformer::Traversal::Jump);
@@ -123,7 +123,7 @@ TEST_CASE(
             map,
             {2, 2},
             advanced_platformer::PlatformerTraversalProfile{
-                bodySize, config, tests::FixedStepSeconds})
+                .size = bodySize, .movement = config, .stepSeconds = tests::FixedStepSeconds})
             .connections;
     const advanced_platformer::RouteConnection& jump =
         tests::connectionWith(connections, advanced_platformer::Traversal::Jump);
@@ -172,7 +172,7 @@ TEST_CASE(
             map,
             {2, 2},
             advanced_platformer::PlatformerTraversalProfile{
-                bodySize, config, tests::FixedStepSeconds})
+                .size = bodySize, .movement = config, .stepSeconds = tests::FixedStepSeconds})
             .connections;
     const advanced_platformer::RouteConnection& jump =
         tests::connectionWith(connections, advanced_platformer::Traversal::Jump);
@@ -220,7 +220,7 @@ TEST_CASE(
             map,
             {2, 2},
             advanced_platformer::PlatformerTraversalProfile{
-                bodySize, config, tests::FixedStepSeconds})
+                .size = bodySize, .movement = config, .stepSeconds = tests::FixedStepSeconds})
             .connections;
     const advanced_platformer::RouteConnection& jump =
         tests::connectionWith(connections, advanced_platformer::Traversal::Jump);

@@ -41,7 +41,8 @@ TEST_CASE("Built connections enter the cache only when stored", "[navigation][ca
         tests::TileMapBuilder({"........", "........", "........", "###..###", "########"});
     const Cell cell{1, 2};
     PlatformerConnectionCache cache;
-    const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
+    const PlatformerTraversalProfile profile{
+        .size = BodySize, .stepSeconds = tests::FixedStepSeconds};
 
     BuiltPlatformerConnections built =
         advanced_platformer::buildPlatformerConnections(map, cell, profile, &cache);
@@ -72,7 +73,8 @@ TEST_CASE("Connections are cached separately for each profile", "[navigation][ca
         tests::TileMapBuilder({"........", "........", "########"});
     const Cell cell{3, 1};
     PlatformerConnectionCache cache;
-    const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
+    const PlatformerTraversalProfile profile{
+        .size = BodySize, .stepSeconds = tests::FixedStepSeconds};
     BuiltPlatformerConnections initial =
         advanced_platformer::buildPlatformerConnections(map, cell, profile);
     advanced_platformer::storePlatformerConnections(cache, cell, profile, std::move(initial));
@@ -124,7 +126,8 @@ TEST_CASE("A non-standable cell is cached with no connections", "[navigation][ca
     const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"........", "........", "########"});
     PlatformerConnectionCache cache;
-    const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
+    const PlatformerTraversalProfile profile{
+        .size = BodySize, .stepSeconds = tests::FixedStepSeconds};
     BuiltPlatformerConnections built =
         advanced_platformer::buildPlatformerConnections(map, {3, 0}, profile, &cache);
     advanced_platformer::storePlatformerConnections(cache, {3, 0}, profile, std::move(built));
@@ -147,7 +150,8 @@ TEST_CASE(
     { return RouteConnection{{{{1, 0}}, Traversal::Climb, {}}, cost, surface}; };
 
     PlatformerConnectionCache cache;
-    const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
+    const PlatformerTraversalProfile profile{
+        .size = BodySize, .stepSeconds = tests::FixedStepSeconds};
     cache.storeConnections(
         {0, 0},
         profile,
@@ -173,8 +177,10 @@ TEST_CASE(
 TEST_CASE("A walk is cached per length and profile, and a break leaves it", "[navigation][cache]")
 {
     PlatformerConnectionCache cache;
-    const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
-    const PlatformerTraversalProfile taller{{12.0F, 20.0F}, {}, tests::FixedStepSeconds};
+    const PlatformerTraversalProfile profile{
+        .size = BodySize, .stepSeconds = tests::FixedStepSeconds};
+    const PlatformerTraversalProfile taller{
+        .size = {12.0F, 20.0F}, .stepSeconds = tests::FixedStepSeconds};
     REQUIRE(cache.cachedWalk(3, profile) == nullptr);
     REQUIRE(cache.cachedWalkCount(profile) == 0);
 
@@ -213,7 +219,8 @@ TEST_CASE("Cached walks change nothing but the ticks simulated", "[navigation][c
     const std::string floor(40, '#');
     const advanced_platformer::TileMap map = tests::TileMapBuilder({open, open, floor});
     PlatformerConnectionCache cache;
-    const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
+    const PlatformerTraversalProfile profile{
+        .size = BodySize, .stepSeconds = tests::FixedStepSeconds};
     const Cell first{20, 1};
     const Cell second{25, 1};
 
@@ -266,8 +273,9 @@ TEST_CASE("Cached walks change nothing but the ticks simulated", "[navigation][c
 TEST_CASE("The cache rejects an invalid profile", "[navigation][cache][validation]")
 {
     PlatformerConnectionCache cache;
-    const PlatformerTraversalProfile flat{{12.0F, 0.0F}, {}, tests::FixedStepSeconds};
-    const PlatformerTraversalProfile stopped{BodySize, {}, 0.0F};
+    const PlatformerTraversalProfile flat{
+        .size = {12.0F, 0.0F}, .stepSeconds = tests::FixedStepSeconds};
+    const PlatformerTraversalProfile stopped{.size = BodySize, .stepSeconds = 0.0F};
     REQUIRE_THROWS_AS(
         cache.storeConnections({0, 0}, flat, {}, {{0, 0}, {0, 0}}), std::invalid_argument);
     REQUIRE_THROWS_AS(

@@ -27,6 +27,10 @@ The project uses C++26. Before reading the engine, it helps to be comfortable wi
   order. `!=` comes with `==`. Configs such as `PlatformerTraversalProfile` compare this
   way. That comparison decides which actors share cached connections, and a field added
   later can't be left out of it.
+- [Designated initializers](https://en.cppreference.com/w/cpp/language/aggregate_initialization#Designated_initializers),
+  such as `PlatformerTraversalProfile{.size = BodySize, .stepSeconds = step}`, which
+  name each field they set and leave the rest at their defaults. They work on structs
+  with no constructors of their own, and the fields must come in declaration order.
 
 Positions, sizes and velocities are [GLM](https://github.com/g-truc/glm) `glm::vec2`.
 Tests use [Catch2](https://github.com/catchorg/Catch2). Lua scripting goes through

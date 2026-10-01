@@ -97,6 +97,28 @@ TEST_CASE("Game debug data retains actor definition names", "[app][debug]")
     REQUIRE(player->definitionName == "test_player");
 }
 
+TEST_CASE("Debug overlay data names a climbing NPC's navigation profile", "[app][debug]")
+{
+    // A climber's profile includes how it climbs, so the name is only found when the
+    // named profile includes it too.
+    const auto levels = advanced_platformer::parseLevelCatalog(
+        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"climber_placement.json"}]})",
+        "test catalog",
+        "tests/fixtures/levels");
+    advanced_platformer::Game game(
+        0,
+        levels,
+        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
+        advanced_platformer::LuaNpcScripts{},
+        tests::FixedStepSeconds);
+
+    const advanced_platformer::DebugOverlay debug = game.debugOverlay(128.0F, std::nullopt, 0);
+    REQUIRE(debug.navigationCache.has_value());
+    REQUIRE(
+        debug.navigationCache.value_or(advanced_platformer::NavigationCacheDebugInfo{}).actorName ==
+        "test_climber");
+}
+
 TEST_CASE("Debug overlay data marks a breakable tile under the cursor", "[app][debug]")
 {
     const advanced_platformer::TileMap map =

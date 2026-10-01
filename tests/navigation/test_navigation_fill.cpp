@@ -24,13 +24,11 @@ namespace
 
     constexpr glm::vec2 BodySize{12.0F, 12.0F};
     const PlatformerTraversalProfile Small{
-        BodySize,
-        advanced_platformer::PlatformerMovementConfig{},
-        tests::FixedStepSeconds};
+        .size = BodySize,
+        .stepSeconds = tests::FixedStepSeconds};
     const PlatformerTraversalProfile Tall{
-        {12.0F, 20.0F},
-        advanced_platformer::PlatformerMovementConfig{},
-        tests::FixedStepSeconds};
+        .size = {12.0F, 20.0F},
+        .stepSeconds = tests::FixedStepSeconds};
 }
 
 TEST_CASE(
@@ -135,7 +133,8 @@ TEST_CASE("A fill caches queued cells until its budget is spent", "[navigation][
             .platforming()
             .thinking({64.0F, 1.0F}));
     PlatformerConnectionCache& cache = world.platformerConnections();
-    const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
+    const PlatformerTraversalProfile profile{
+        .size = BodySize, .stepSeconds = tests::FixedStepSeconds};
     const std::size_t cells =
         static_cast<std::size_t>(map.width()) * static_cast<std::size_t>(map.height());
     const auto fill = [&](int tickBudget, advanced_platformer::FrameProfile& frame)

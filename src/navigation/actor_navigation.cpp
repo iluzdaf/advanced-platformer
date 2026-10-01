@@ -371,12 +371,12 @@ namespace advanced_platformer
                 "A platformer traversal profile requires platformer movement");
         }
         return {
-            actor.body.bounds.size,
-            actor.platformerMovement->config,
-            stepSeconds,
-            actor.surfaceClimb.has_value()
-                ? std::optional<SurfaceClimbConfig>{actor.surfaceClimb->config}
-                : std::nullopt};
+            .size = actor.body.bounds.size,
+            .movement = actor.platformerMovement->config,
+            .stepSeconds = stepSeconds,
+            .climb = actor.surfaceClimb.has_value()
+                         ? std::optional<SurfaceClimbConfig>{actor.surfaceClimb->config}
+                         : std::nullopt};
     }
 
     std::optional<NavigationPathResult> findActorPath(
