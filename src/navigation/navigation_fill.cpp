@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <optional>
 #include <stdexcept>
-#include <utility>
 #include <vector>
 
 #include "advanced_platformer/actor/actor.hpp"
@@ -22,7 +21,6 @@ namespace advanced_platformer
 {
     namespace
     {
-        // Account for cache writes even when a cell needs no movement simulation.
         constexpr int CacheWriteCostTicks = 3;
 
         int fillPlatformerConnections(
@@ -42,11 +40,8 @@ namespace advanced_platformer
                 {
                     break;
                 }
-                const Cell cell = next.value();
-                BuiltPlatformerConnections built =
-                    buildPlatformerConnections(map, cell, profile, &cache);
-                const int ticksForCell = built.simulatedTicks;
-                storePlatformerConnections(cache, cell, profile, std::move(built));
+                const int ticksForCell =
+                    cachePlatformerConnections(map, cache, next.value(), profile);
                 ++cellsCached;
                 simulatedTicks += ticksForCell;
                 budgetSpent += ticksForCell + CacheWriteCostTicks;
@@ -114,8 +109,6 @@ namespace advanced_platformer
         }
         cache.applyRecordedTileBreaks(map, frameProfile);
         const std::vector<PlatformerTraversalProfile> profiles = cache.knownProfiles();
-        // The step's budget is shared among profiles with cells waiting. A profile
-        // without pending cells costs nothing.
         const auto waiting = static_cast<int>(std::ranges::count_if(
             profiles,
             [&cache](const PlatformerTraversalProfile& profile)

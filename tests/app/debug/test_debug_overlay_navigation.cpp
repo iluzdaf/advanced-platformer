@@ -21,6 +21,7 @@
 #include "advanced_platformer/world/world.hpp"
 #include "advanced_platformer/world/pickup.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
+#include "support/cell_connections.hpp"
 #include "support/actor_builder.hpp"
 #include "support/tile_map_builder.hpp"
 #include "support/tile_size.hpp"
@@ -90,7 +91,7 @@ TEST_CASE("Debug overlay data samples the simulated jump curve", "[app][debug]")
         tests::TileMapBuilder({"..........", "....##....", "..........", "##########"});
     const advanced_platformer::PlatformerMovementConfig movementConfig;
     const std::vector<advanced_platformer::RouteConnection> connections =
-        advanced_platformer::buildPlatformerConnections(
+        tests::connectionsFrom(
             map,
             {2, 2},
             advanced_platformer::PlatformerTraversalProfile{
@@ -152,6 +153,5 @@ TEST_CASE("The overlay shows only navigation cells near the camera", "[app][debu
     const std::vector<advanced_platformer::NavigationCellDebugInfo>& cells = navigation.cells;
     REQUIRE(cells.size() == 21);
     REQUIRE(cells.front().bounds.topLeft == glm::vec2{0.0F, 0.0F});
-    // As for actors, one tile beyond the camera's edge is shown; the rest are not.
     REQUIRE(cells.back().bounds.topLeft == glm::vec2{320.0F, 0.0F});
 }

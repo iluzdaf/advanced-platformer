@@ -23,6 +23,7 @@
 #include "advanced_platformer/navigation/traversal.hpp"
 #include "advanced_platformer/physics/body.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
+#include "support/cell_connections.hpp"
 #include "support/fixed_step.hpp"
 #include "support/navigation_paths.hpp"
 #include "support/route_connections.hpp"
@@ -59,7 +60,7 @@ TEST_CASE("Walk connections reach every cell on the floor", "[navigation][platfo
         .size = SmallBody, .stepSeconds = tests::FixedStepSeconds};
     const advanced_platformer::TileMap floor = tests::TileMapBuilder({"......", "######"});
     const std::vector<RouteConnection> walks =
-        advanced_platformer::buildPlatformerConnections(floor, {1, 0}, profile).connections;
+        tests::connectionsFrom(floor, {1, 0}, profile).connections;
     REQUIRE(
         std::ranges::count_if(
             walks,
@@ -75,11 +76,11 @@ TEST_CASE("A direct walk costs less than stopping along the way", "[navigation][
         .size = SmallBody, .stepSeconds = tests::FixedStepSeconds};
     const advanced_platformer::TileMap floor = tests::TileMapBuilder({"......", "######"});
     const std::vector<RouteConnection> walks =
-        advanced_platformer::buildPlatformerConnections(floor, {1, 0}, profile).connections;
+        tests::connectionsFrom(floor, {1, 0}, profile).connections;
     const RouteConnection& direct = tests::connectionWith(walks, {3, 0}, Traversal::Walk);
     const RouteConnection& first = tests::connectionWith(walks, {2, 0}, Traversal::Walk);
     const std::vector<RouteConnection> onward =
-        advanced_platformer::buildPlatformerConnections(floor, {2, 0}, profile).connections;
+        tests::connectionsFrom(floor, {2, 0}, profile).connections;
     const RouteConnection& second = tests::connectionWith(onward, {3, 0}, Traversal::Walk);
     REQUIRE(direct.cost < first.cost + second.cost);
 }
@@ -91,7 +92,7 @@ TEST_CASE("A fall from a ledge records inputs", "[navigation][platformer]")
     const PlatformerTraversalProfile profile{
         .size = SmallBody, .stepSeconds = tests::FixedStepSeconds};
     const std::vector<RouteConnection> offTheEdge =
-        advanced_platformer::buildPlatformerConnections(ledge, {2, 0}, profile).connections;
+        tests::connectionsFrom(ledge, {2, 0}, profile).connections;
     const RouteConnection& fall = tests::connectionWith(offTheEdge, Traversal::Fall);
     REQUIRE(fall.step.destination.cell.y > 0);
     REQUIRE_FALSE(fall.step.inputs.empty());
@@ -104,7 +105,7 @@ TEST_CASE("A jump reaches the platform above and records inputs", "[navigation][
     const PlatformerTraversalProfile profile{
         .size = SmallBody, .stepSeconds = tests::FixedStepSeconds};
     const std::vector<RouteConnection> beside =
-        advanced_platformer::buildPlatformerConnections(platform, {2, 2}, profile).connections;
+        tests::connectionsFrom(platform, {2, 2}, profile).connections;
     const RouteConnection& jump = tests::jumpUpFrom(beside, 2);
     REQUIRE_FALSE(jump.step.inputs.empty());
 }
@@ -117,7 +118,7 @@ TEST_CASE("A recorded jump replays to the landing it promised", "[navigation][pl
     const PlatformerTraversalProfile profile{
         .size = SmallBody, .movement = config, .stepSeconds = tests::FixedStepSeconds};
     const std::vector<RouteConnection> connections =
-        advanced_platformer::buildPlatformerConnections(map, {2, 2}, profile).connections;
+        tests::connectionsFrom(map, {2, 2}, profile).connections;
     const RouteConnection& jump = tests::connectionWith(connections, Traversal::Jump);
 
     advanced_platformer::Body body{
@@ -147,8 +148,7 @@ TEST_CASE("Failed airborne attempts still count their simulated ticks", "[naviga
     const PlatformerTraversalProfile profile{
         .size = SmallBody, .stepSeconds = tests::FixedStepSeconds};
 
-    const advanced_platformer::BuiltPlatformerConnections built =
-        advanced_platformer::buildPlatformerConnections(map, {2, 0}, profile);
+    const tests::CellConnections built = tests::connectionsFrom(map, {2, 0}, profile);
 
     REQUIRE(built.connections.empty());
     REQUIRE(built.simulatedTicks > 0);
@@ -161,7 +161,7 @@ TEST_CASE("A walk connection costs the ticks its follower takes", "[navigation][
         .size = SmallBody, .movement = config, .stepSeconds = tests::FixedStepSeconds};
     const advanced_platformer::TileMap walkMap = tests::TileMapBuilder({"....", "####"});
     const std::vector<RouteConnection> walkConnections =
-        advanced_platformer::buildPlatformerConnections(walkMap, {1, 0}, profile).connections;
+        tests::connectionsFrom(walkMap, {1, 0}, profile).connections;
     const RouteConnection& walk = tests::connectionWith(walkConnections, Traversal::Walk);
     advanced_platformer::PathFollower follower;
     advanced_platformer::setPath(follower, tests::floorPath({1, 0}, {walk.step}));
@@ -195,7 +195,7 @@ TEST_CASE("Airborne connection costs use the recorded program's ticks", "[naviga
         const advanced_platformer::TileMap map =
             tests::TileMapBuilder({"..........", "....##....", "..........", "##########"});
         const std::vector<RouteConnection> connections =
-            advanced_platformer::buildPlatformerConnections(map, {2, 2}, profile).connections;
+            tests::connectionsFrom(map, {2, 2}, profile).connections;
         const RouteConnection& jump = tests::connectionWith(connections, Traversal::Jump);
         REQUIRE_THAT(
             advanced_platformer::durationOf(jump.step.inputs),
@@ -208,7 +208,7 @@ TEST_CASE("Airborne connection costs use the recorded program's ticks", "[naviga
         const advanced_platformer::TileMap map =
             tests::TileMapBuilder({"........", "###.....", "........", "........", "########"});
         const std::vector<RouteConnection> connections =
-            advanced_platformer::buildPlatformerConnections(map, {2, 0}, profile).connections;
+            tests::connectionsFrom(map, {2, 0}, profile).connections;
         const RouteConnection& fall = tests::connectionWith(connections, Traversal::Fall);
         REQUIRE_THAT(
             advanced_platformer::durationOf(fall.step.inputs),
@@ -225,7 +225,7 @@ TEST_CASE("Platformer connections reject an invalid step", "[navigation][platfor
          {0.0F, -tests::FixedStepSeconds, std::numeric_limits<float>::infinity()})
     {
         REQUIRE_THROWS_AS(
-            advanced_platformer::buildPlatformerConnections(
+            tests::connectionsFrom(
                 map,
                 {0, 0},
                 PlatformerTraversalProfile{
@@ -250,10 +250,8 @@ TEST_CASE(
         .climb = advanced_platformer::SurfaceClimbConfig{.speed = 60.0F}};
     const Cell besideWall{2, 4};
 
-    const advanced_platformer::BuiltPlatformerConnections walking =
-        advanced_platformer::buildPlatformerConnections(map, besideWall, walker);
-    const advanced_platformer::BuiltPlatformerConnections climbing =
-        advanced_platformer::buildPlatformerConnections(map, besideWall, climber);
+    const tests::CellConnections walking = tests::connectionsFrom(map, besideWall, walker);
+    const tests::CellConnections climbing = tests::connectionsFrom(map, besideWall, climber);
     const auto climbs = [&climbing](ClimbSurface from, Cell cell, ClimbSurface surface)
     {
         return std::ranges::any_of(
@@ -272,17 +270,13 @@ TEST_CASE(
     REQUIRE(climbs(ClimbSurface::None, besideWall, ClimbSurface::LeftWall));
     REQUIRE(climbs(ClimbSurface::LeftWall, besideWall, ClimbSurface::None));
     REQUIRE(climbs(ClimbSurface::LeftWall, {2, 3}, ClimbSurface::LeftWall));
-    // No wall stands to the right, and the floor lies below.
     REQUIRE_FALSE(climbs(ClimbSurface::None, besideWall, ClimbSurface::RightWall));
     REQUIRE_FALSE(climbs(ClimbSurface::LeftWall, {2, 5}, ClimbSurface::LeftWall));
-    // The walks, falls, and jumps from the floor are the walker's.
     REQUIRE(hasConnection(climbing.connections, {3, 4}, Traversal::Walk));
     REQUIRE(climbing.simulatedTicks > walking.simulatedTicks);
     REQUIRE(advanced_platformer::contains(climbing.footprint, {1, 3}));
 
-    // A cell in the air beside the wall holds climbs though nothing can stand in it.
-    const advanced_platformer::BuiltPlatformerConnections upTheWall =
-        advanced_platformer::buildPlatformerConnections(map, {2, 2}, climber);
+    const tests::CellConnections upTheWall = tests::connectionsFrom(map, {2, 2}, climber);
     REQUIRE_FALSE(upTheWall.connections.empty());
     REQUIRE(
         std::ranges::all_of(
@@ -292,8 +286,7 @@ TEST_CASE(
                 return connection.step.traversal == Traversal::Climb &&
                        connection.sourceSurface == ClimbSurface::LeftWall;
             }));
-    REQUIRE(
-        advanced_platformer::buildPlatformerConnections(map, {2, 2}, walker).connections.empty());
+    REQUIRE(tests::connectionsFrom(map, {2, 2}, walker).connections.empty());
 }
 
 TEST_CASE("A climber cannot hold an unmarked wall", "[navigation][platformer][climb]")
@@ -306,7 +299,7 @@ TEST_CASE("A climber cannot hold an unmarked wall", "[navigation][platformer][cl
         .climb = advanced_platformer::SurfaceClimbConfig{.speed = 60.0F}};
 
     const std::vector<RouteConnection> connections =
-        advanced_platformer::buildPlatformerConnections(map, {2, 4}, climber).connections;
+        tests::connectionsFrom(map, {2, 4}, climber).connections;
     REQUIRE(hasConnection(connections, {3, 4}, Traversal::Walk));
     REQUIRE(
         std::ranges::none_of(
@@ -329,7 +322,7 @@ TEST_CASE(
         .climb = advanced_platformer::SurfaceClimbConfig{.speed = 60.0F}};
 
     const std::vector<RouteConnection> connections =
-        advanced_platformer::buildPlatformerConnections(map, {2, 1}, tallClimber).connections;
+        tests::connectionsFrom(map, {2, 1}, tallClimber).connections;
     REQUIRE(
         std::ranges::any_of(
             connections,
