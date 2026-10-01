@@ -4,16 +4,16 @@
 #include <stdexcept>
 #include <string>
 #include <glm/vec2.hpp>
-#include <nlohmann/json.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 
 #include "content/tile_catalog.hpp"
 #include "advanced_platformer/physics/segment_cast.hpp"
 #include "advanced_platformer/world/sight.hpp"
+#include "support/json_document.hpp"
 
 TEST_CASE("Tile catalogs reject unknown fields and say where", "[app][tiles]")
 {
-    auto tileJson = nlohmann::json::parse(R"({"tileSize":16,"tiles":{
+    auto tileJson = tests::parseJson(R"({"tileSize":16,"tiles":{
         "empty":{"blocksMovement":false,"blocksSight":false},
         "wall":{"blocksMovement":true,"blocksSight":true,"sprite":{"position":[0,0]}}
     }})");
@@ -30,25 +30,26 @@ TEST_CASE("Tile catalogs reject unknown fields and say where", "[app][tiles]")
     }
     SECTION("Invalid vector")
     {
-        tileJson["tiles"]["wall"]["sprite"]["position"] = {0};
+        tileJson["tiles"]["wall"]["sprite"]["position"] = tests::numbers({0});
         expected = "expected two numbers, [x, y]";
     }
     REQUIRE_THROWS_WITH(
-        advanced_platformer::parseTileCatalog(tileJson.dump(), "tiles.json"),
+        advanced_platformer::parseTileCatalog(tests::dumpJson(tileJson), "tiles.json"),
         Catch::Matchers::StartsWith("tiles.json: line 1, column ") &&
             Catch::Matchers::EndsWith(expected));
 }
 
 TEST_CASE("The empty tile has no sprite, and every other tile has one", "[app][tiles]")
 {
-    auto tileJson = nlohmann::json::parse(R"({"tileSize":16,"tiles":{
+    auto tileJson = tests::parseJson(R"({"tileSize":16,"tiles":{
         "empty":{"blocksMovement":false,"blocksSight":false},
         "wall":{"blocksMovement":true,"blocksSight":true,"sprite":{"position":[0,0]}}
     }})");
     std::string expected;
     SECTION("A sprite on the empty tile")
     {
-        tileJson["tiles"]["empty"]["sprite"] = {{"position", {0, 0}}};
+        tileJson["tiles"]["empty"]["sprite"] =
+            tests::object({{"position", tests::numbers({0, 0})}});
         expected = "tiles.json: tiles.empty: unknown field 'sprite'";
     }
     SECTION("The empty tile breaking")
@@ -58,11 +59,11 @@ TEST_CASE("The empty tile has no sprite, and every other tile has one", "[app][t
     }
     SECTION("A tile without a sprite")
     {
-        tileJson["tiles"]["wall"].erase("sprite");
+        tests::eraseKey(tileJson["tiles"]["wall"], "sprite");
         expected = "tiles.json: tiles.wall: missing 'sprite'";
     }
     REQUIRE_THROWS_WITH(
-        advanced_platformer::parseTileCatalog(tileJson.dump(), "tiles.json"), expected);
+        advanced_platformer::parseTileCatalog(tests::dumpJson(tileJson), "tiles.json"), expected);
 }
 
 TEST_CASE("Tile legends resolve distinct movement and sight properties", "[app][tiles]")

@@ -1,6 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
-#include <nlohmann/json.hpp>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -8,6 +7,7 @@
 #include "content/pickup_catalog.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/render/sprite.hpp"
+#include "support/json_document.hpp"
 
 TEST_CASE("Pickup definitions compose bounds and optional world sprites", "[app][pickups]")
 {
@@ -37,14 +37,14 @@ TEST_CASE("Pickup JSON validates every definition including unused entries", "[a
 {
     // Shape errors name a line and column; rule errors name the definition.
     const auto items = advanced_platformer::loadItemCatalog("tests/fixtures/catalogs/items.json");
-    auto pickupJson = nlohmann::json::parse(
+    auto pickupJson = tests::parseJson(
         R"({"pickups":{"unused":{"item":"key","quantity":1,"bodySize":[10,12]}}})");
     auto& definition = pickupJson["pickups"]["unused"];
     std::string start = "pickups.json: pickups.unused";
     std::string end;
     SECTION("Missing body size")
     {
-        definition.erase("bodySize");
+        tests::eraseKey(definition, "bodySize");
         start = "pickups.json: line 1, column ";
         end = "missing 'bodySize'";
     }
@@ -64,26 +64,27 @@ TEST_CASE("Pickup JSON validates every definition including unused entries", "[a
     }
     SECTION("Invalid bounds")
     {
-        definition["bodySize"] = {0, 12};
+        definition["bodySize"] = tests::numbers({0, 12});
     }
     SECTION("Wrong vector shape")
     {
-        definition["bodySize"] = {12};
+        definition["bodySize"] = tests::numbers({12});
         start = "pickups.json: line 1, column ";
         end = "expected two numbers, [x, y]";
     }
     SECTION("Unknown field")
     {
-        definition["bodySze"] = {12, 12};
+        definition["bodySze"] = tests::numbers({12, 12});
         start = "pickups.json: line 1, column ";
         end = "unknown field 'bodySze'";
     }
     SECTION("Invalid sprite")
     {
-        definition["sprite"] = {{"position", {0, 0}}, {"size", {0, 8}}};
+        definition["sprite"] =
+            tests::object({{"position", tests::numbers({0, 0})}, {"size", tests::numbers({0, 8})}});
     }
     REQUIRE_THROWS_WITH(
-        advanced_platformer::parsePickupCatalog(pickupJson.dump(), "pickups.json", items),
+        advanced_platformer::parsePickupCatalog(tests::dumpJson(pickupJson), "pickups.json", items),
         Catch::Matchers::StartsWith(start) && Catch::Matchers::EndsWith(end));
 }
 

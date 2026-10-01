@@ -3,15 +3,15 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
-#include <nlohmann/json.hpp>
 
 #include "content/level_data.hpp"
+#include "support/json_document.hpp"
 
 namespace
 {
-    nlohmann::json minimalLevel()
+    tests::Json minimalLevel()
     {
-        return nlohmann::json::parse(R"({
+        return tests::parseJson(R"({
             "tileLegend": {".": "empty", "#": "stone"},
             "map": ["....", "####"],
             "playerSpawnCell": [0, 0],
@@ -37,18 +37,18 @@ TEST_CASE(
     }
     SECTION("Pickup quantity")
     {
-        level["pickups"] = nlohmann::json::array(
-            {{{"item", "key"},
-              {"quantity", 4294967297LL},
-              {"bodySize", {8, 8}},
-              {"spawnCell", {1, 0}}}});
+        level["pickups"] = tests::list({tests::object(
+            {{"item", "key"},
+             {"quantity", 4294967297LL},
+             {"bodySize", tests::numbers({8, 8})},
+             {"spawnCell", tests::numbers({1, 0})}})});
     }
     SECTION("Exit destination")
     {
         level["exit"]["nextLevel"] = 4294967297LL;
     }
     REQUIRE_THROWS_AS(
-        advanced_platformer::parseLevelData(level.dump(), "placements.json"),
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "placements.json"),
         std::invalid_argument);
 }
 
@@ -57,30 +57,34 @@ TEST_CASE("Explicit level placements reject unknown fields", "[app][content][jso
     auto level = minimalLevel();
     SECTION("Root")
     {
-        level["actorrs"] = nlohmann::json::array();
+        level["actorrs"] = tests::emptyArray();
     }
     SECTION("Actor")
     {
-        level["actors"] = nlohmann::json::array(
-            {{{"definition", "guard"},
-              {"spawnCell", {1, 0}},
-              {"patroll", nlohmann::json::object()}}});
+        level["actors"] = tests::list({tests::object(
+            {{"definition", "guard"},
+             {"spawnCell", tests::numbers({1, 0})},
+             {"patroll", tests::emptyObject()}})});
     }
     SECTION("Patrol")
     {
-        level["actors"] = nlohmann::json::array(
-            {{{"definition", "guard"},
-              {"spawnCell", {1, 0}},
-              {"patrol", {{"firstCell", {0, 0}}, {"secondCell", {1, 0}}, {"speeed", 1}}}}});
+        level["actors"] = tests::list({tests::object(
+            {{"definition", "guard"},
+             {"spawnCell", tests::numbers({1, 0})},
+             {"patrol",
+              tests::object(
+                  {{"firstCell", tests::numbers({0, 0})},
+                   {"secondCell", tests::numbers({1, 0})},
+                   {"speeed", 1}})}})});
     }
     SECTION("Pickup")
     {
-        level["pickups"] = nlohmann::json::array(
-            {{{"item", "key"},
-              {"quantity", 1},
-              {"bodySize", {8, 8}},
-              {"spawnCell", {2, 0}},
-              {"quantitty", 3}}});
+        level["pickups"] = tests::list({tests::object(
+            {{"item", "key"},
+             {"quantity", 1},
+             {"bodySize", tests::numbers({8, 8})},
+             {"spawnCell", tests::numbers({2, 0})},
+             {"quantitty", 3}})});
     }
     SECTION("Exit")
     {
@@ -88,33 +92,36 @@ TEST_CASE("Explicit level placements reject unknown fields", "[app][content][jso
     }
     SECTION("Exit requirement")
     {
-        level["exit"]["requirement"] = {{"item", "key"}, {"quantity", 1}, {"consumme", true}};
+        level["exit"]["requirement"] =
+            tests::object({{"item", "key"}, {"quantity", 1}, {"consumme", true}});
     }
     REQUIRE_THROWS_AS(
-        advanced_platformer::parseLevelData(level.dump(), "placements.json"),
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "placements.json"),
         std::invalid_argument);
 }
 
 TEST_CASE("Present placement lists must be arrays", "[app][content][json]")
 {
     auto level = minimalLevel();
-    level["actors"] = nlohmann::json::object();
+    level["actors"] = tests::emptyObject();
     REQUIRE_THROWS_WITH(
-        advanced_platformer::parseLevelData(level.dump(), "placements.json"),
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "placements.json"),
         Catch::Matchers::StartsWith("placements.json: line 1, column ") &&
             Catch::Matchers::EndsWith("expected a list, found '{'"));
 
     level = minimalLevel();
     level["pickups"] = "coins";
     REQUIRE_THROWS_WITH(
-        advanced_platformer::parseLevelData(level.dump(), "placements.json"),
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "placements.json"),
         Catch::Matchers::StartsWith("placements.json: line 1, column ") &&
             Catch::Matchers::EndsWith("expected a list, found 'coins'"));
 
     // A null list is read as one left out.
     level = minimalLevel();
     level["pickups"] = nullptr;
-    REQUIRE(advanced_platformer::parseLevelData(level.dump(), "placements.json").pickups.empty());
+    REQUIRE(
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "placements.json")
+            .pickups.empty());
 }
 
 TEST_CASE("Levels without object markers may omit placement arrays", "[app][content][json]")
@@ -138,7 +145,8 @@ TEST_CASE("Tile legend keys must be one character", "[app][content][json]")
     level["tileLegend"]["long"] = "grass";
 
     REQUIRE_THROWS_AS(
-        advanced_platformer::parseLevelData(level.dump(), "bad legend"), std::invalid_argument);
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "bad legend"),
+        std::invalid_argument);
 }
 
 TEST_CASE("Map symbols must be declared in a legend", "[app][content][json]")
@@ -147,7 +155,8 @@ TEST_CASE("Map symbols must be declared in a legend", "[app][content][json]")
     level["map"][0] = ".X..";
 
     REQUIRE_THROWS_AS(
-        advanced_platformer::parseLevelData(level.dump(), "bad symbol"), std::invalid_argument);
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "bad symbol"),
+        std::invalid_argument);
 }
 
 TEST_CASE("Level maps require rectangular rows", "[app][content][json]")
@@ -156,34 +165,39 @@ TEST_CASE("Level maps require rectangular rows", "[app][content][json]")
     level["map"][1] = "###";
 
     REQUIRE_THROWS_AS(
-        advanced_platformer::parseLevelData(level.dump(), "ragged level"), std::invalid_argument);
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "ragged level"),
+        std::invalid_argument);
 }
 
 TEST_CASE("Actor placements need a non-empty definition", "[app][content][json]")
 {
     auto level = minimalLevel();
-    level["actors"] = nlohmann::json::array({{{"definition", ""}, {"spawnCell", {1, 0}}}});
+    level["actors"] =
+        tests::list({tests::object({{"definition", ""}, {"spawnCell", tests::numbers({1, 0})}})});
 
     REQUIRE_THROWS_AS(
-        advanced_platformer::parseLevelData(level.dump(), "empty actor name"),
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "empty actor name"),
         std::invalid_argument);
 }
 
 TEST_CASE("Actor placements choose a cell or feet, not both", "[app][content][json]")
 {
     auto level = minimalLevel();
-    level["actors"] = nlohmann::json::array(
-        {{{"definition", "guard"}, {"spawnCell", {1, 0}}, {"spawnFeet", {24, 16}}}});
+    level["actors"] = tests::list({tests::object(
+        {{"definition", "guard"},
+         {"spawnCell", tests::numbers({1, 0})},
+         {"spawnFeet", tests::numbers({24, 16})}})});
 
     REQUIRE_THROWS_AS(
-        advanced_platformer::parseLevelData(level.dump(), "ambiguous actor"),
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "ambiguous actor"),
         std::invalid_argument);
 }
 
 TEST_CASE("Pickup definitions cannot mix with inline stack fields", "[app][content][json]")
 {
     auto level = minimalLevel();
-    level["pickups"] = nlohmann::json::array({{{"definition", "treasure"}, {"spawnCell", {1, 0}}}});
+    level["pickups"] = tests::list(
+        {tests::object({{"definition", "treasure"}, {"spawnCell", tests::numbers({1, 0})}})});
     SECTION("Item")
     {
         level["pickups"][0]["item"] = "key";
@@ -193,26 +207,29 @@ TEST_CASE("Pickup definitions cannot mix with inline stack fields", "[app][conte
         level["pickups"][0]["quantity"] = 2;
     }
     REQUIRE_THROWS_AS(
-        advanced_platformer::parseLevelData(level.dump(), "placement.json"), std::invalid_argument);
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "placement.json"),
+        std::invalid_argument);
 }
 
 TEST_CASE("Pickup definition names cannot be empty", "[app][content][json]")
 {
     auto level = minimalLevel();
-    level["pickups"] = nlohmann::json::array({{{"definition", ""}, {"spawnCell", {1, 0}}}});
+    level["pickups"] =
+        tests::list({tests::object({{"definition", ""}, {"spawnCell", tests::numbers({1, 0})}})});
 
     REQUIRE_THROWS_AS(
-        advanced_platformer::parseLevelData(level.dump(), "placement.json"), std::invalid_argument);
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "placement.json"),
+        std::invalid_argument);
 }
 
 TEST_CASE("Inline pickup placements require a body size", "[app][content][json]")
 {
     auto level = minimalLevel();
-    level["pickups"] =
-        nlohmann::json::array({{{"item", "key"}, {"quantity", 1}, {"spawnCell", {1, 0}}}});
+    level["pickups"] = tests::list(
+        {tests::object({{"item", "key"}, {"quantity", 1}, {"spawnCell", tests::numbers({1, 0})}})});
 
     REQUIRE_THROWS_WITH(
-        advanced_platformer::parseLevelData(level.dump(), "placement.json"),
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "placement.json"),
         Catch::Matchers::ContainsSubstring("bodySize"));
 }
 
@@ -227,9 +244,9 @@ TEST_CASE("Missing level JSON is rejected at the file boundary", "[app][content]
 TEST_CASE("Level JSON requires a tile legend", "[app][content][json]")
 {
     auto level = minimalLevel();
-    level.erase("tileLegend");
+    tests::eraseKey(level, "tileLegend");
 
     REQUIRE_THROWS_WITH(
-        advanced_platformer::parseLevelData(level.dump(), "no legend"),
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "no legend"),
         Catch::Matchers::ContainsSubstring("tileLegend"));
 }

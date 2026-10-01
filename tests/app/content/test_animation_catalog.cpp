@@ -1,7 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include <string>
-#include <nlohmann/json.hpp>
 #include <limits>
 #include <stdexcept>
 #include "content/animation_catalog.hpp"
@@ -11,17 +10,20 @@
 #include "advanced_platformer/render/animation.hpp"
 #include "advanced_platformer/render/sprite.hpp"
 #include "support/actor_components.hpp"
+#include "support/json_document.hpp"
 
 TEST_CASE("Animation JSON preserves frame order timing and looping", "[app][animations]")
 {
-    auto animationJson = nlohmann::json::parse(
+    auto animationJson = tests::parseJson(
         advanced_platformer::loadContentText("tests/fixtures/catalogs/animations.json"));
     auto& move = animationJson["animations"]["test_actor"]["move"];
-    move["frames"].push_back({{"position", {8, 0}}, {"size", {8, 12}}});
-    move["frames"].push_back({{"position", {0, 0}}, {"size", {8, 12}}});
+    move["frames"].get_array().push_back(
+        tests::object({{"position", tests::numbers({8, 0})}, {"size", tests::numbers({8, 12})}}));
+    move["frames"].get_array().push_back(
+        tests::object({{"position", tests::numbers({0, 0})}, {"size", tests::numbers({8, 12})}}));
     move["frameDuration"] = 0.25;
-    const auto catalog =
-        advanced_platformer::parseAnimationCatalog(animationJson.dump(), "test animations");
+    const auto catalog = advanced_platformer::parseAnimationCatalog(
+        tests::dumpJson(animationJson), "test animations");
     const auto& set = advanced_platformer::animationSet(catalog, "test_actor");
     const auto& clip = advanced_platformer::clipFor(set, advanced_platformer::AnimationName::Move);
     REQUIRE(clip.frames.size() == 3);
@@ -35,7 +37,7 @@ TEST_CASE("Animation JSON preserves frame order timing and looping", "[app][anim
 
 TEST_CASE("Animation catalogs reject invalid content with source context", "[app][animations]")
 {
-    auto animationJson = nlohmann::json::parse(
+    auto animationJson = tests::parseJson(
         advanced_platformer::loadContentText("tests/fixtures/catalogs/animations.json"));
     auto& set = animationJson["animations"]["test_actor"];
     // Shape errors name a line and column; rule errors name the set.
@@ -43,7 +45,7 @@ TEST_CASE("Animation catalogs reject invalid content with source context", "[app
     std::string end;
     SECTION("Missing clip")
     {
-        set.erase("death");
+        tests::eraseKey(set, "death");
         start = "clips.json: line 1, column ";
         end = "missing 'death'";
     }
@@ -55,7 +57,7 @@ TEST_CASE("Animation catalogs reject invalid content with source context", "[app
     }
     SECTION("Empty frames")
     {
-        set["idle"]["frames"] = nlohmann::json::array();
+        set["idle"]["frames"] = tests::emptyArray();
     }
     SECTION("Zero duration")
     {
@@ -75,21 +77,21 @@ TEST_CASE("Animation catalogs reject invalid content with source context", "[app
     }
     SECTION("Invalid rectangle")
     {
-        set["idle"]["frames"][0]["size"] = {0, 12};
+        set["idle"]["frames"][0]["size"] = tests::numbers({0, 12});
     }
     SECTION("Negative position")
     {
-        set["idle"]["frames"][0]["position"] = {-1, 0};
+        set["idle"]["frames"][0]["position"] = tests::numbers({-1, 0});
     }
     SECTION("Vector shape")
     {
-        set["idle"]["frames"][0]["position"] = {1};
+        set["idle"]["frames"][0]["position"] = tests::numbers({1});
         start = "clips.json: line 1, column ";
         end = "expected two numbers, [x, y]";
     }
     SECTION("Mixed sizes")
     {
-        set["move"]["frames"][0]["size"] = {16, 12};
+        set["move"]["frames"][0]["size"] = tests::numbers({16, 12});
     }
     SECTION("Unknown field")
     {
@@ -98,7 +100,7 @@ TEST_CASE("Animation catalogs reject invalid content with source context", "[app
         end = "unknown field 'elapsed'";
     }
     REQUIRE_THROWS_WITH(
-        advanced_platformer::parseAnimationCatalog(animationJson.dump(), "clips.json"),
+        advanced_platformer::parseAnimationCatalog(tests::dumpJson(animationJson), "clips.json"),
         Catch::Matchers::StartsWith(start) && Catch::Matchers::EndsWith(end));
 }
 
@@ -140,20 +142,23 @@ TEST_CASE("Animation loading reports missing files and unknown sets", "[app][ani
 
 TEST_CASE("Animation domain diagnostics identify the clip and frame", "[app][animations]")
 {
-    auto animationJson = nlohmann::json::parse(
+    auto animationJson = tests::parseJson(
         advanced_platformer::loadContentText("tests/fixtures/catalogs/animations.json"));
     SECTION("Duration")
     {
         animationJson["animations"]["test_actor"]["move"]["frameDuration"] = 0;
         REQUIRE_THROWS_WITH(
-            advanced_platformer::parseAnimationCatalog(animationJson.dump(), "clips.json"),
+            advanced_platformer::parseAnimationCatalog(
+                tests::dumpJson(animationJson), "clips.json"),
             Catch::Matchers::ContainsSubstring("animations.test_actor: move.frameDuration:"));
     }
     SECTION("Rectangle")
     {
-        animationJson["animations"]["test_actor"]["move"]["frames"][0]["size"] = {0, 12};
+        animationJson["animations"]["test_actor"]["move"]["frames"][0]["size"] =
+            tests::numbers({0, 12});
         REQUIRE_THROWS_WITH(
-            advanced_platformer::parseAnimationCatalog(animationJson.dump(), "clips.json"),
+            advanced_platformer::parseAnimationCatalog(
+                tests::dumpJson(animationJson), "clips.json"),
             Catch::Matchers::ContainsSubstring("animations.test_actor: move.frames[0]:"));
     }
 }

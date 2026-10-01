@@ -1,27 +1,28 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
-#include <nlohmann/json.hpp>
 #include <stdexcept>
 #include "content/content_glaze.hpp"
 #include "content/machine_catalog.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_activity.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
+#include "support/json_document.hpp"
 
 using Catch::Matchers::ContainsSubstring;
 
 TEST_CASE("Machine JSON keeps state order, expands from lists and reads holds", "[app][machines]")
 {
-    auto machineJson = nlohmann::json::parse(
+    auto machineJson = tests::parseJson(
         advanced_platformer::loadContentText("tests/fixtures/catalogs/machines.json"));
     auto& machine = machineJson["machines"]["test_machine"];
-    machine["states"].push_back({{"name", "flee"}, {"does", "retreat"}});
-    machine["transitions"].push_back(
-        {{"from", {"rest", "hunt"}},
-         {"to", "flee"},
-         {"when", {{"targetWithinStandoffDistance", true}}}});
+    machine["states"].get_array().push_back(tests::object({{"name", "flee"}, {"does", "retreat"}}));
+    machine["transitions"].get_array().push_back(
+        tests::object(
+            {{"from", tests::list({"rest", "hunt"})},
+             {"to", "flee"},
+             {"when", tests::object({{"targetWithinStandoffDistance", true}})}}));
     const auto catalog =
-        advanced_platformer::parseMachineCatalog(machineJson.dump(), "test machines");
+        advanced_platformer::parseMachineCatalog(tests::dumpJson(machineJson), "test machines");
     const advanced_platformer::NpcStateMachine& parsed =
         advanced_platformer::npcStateMachine(catalog, "test_machine");
 
@@ -46,13 +47,13 @@ TEST_CASE("Machine JSON keeps state order, expands from lists and reads holds", 
 
 TEST_CASE("Machine JSON reads explicitly tagged Lua activities", "[app][machines][lua]")
 {
-    auto machineJson = nlohmann::json::parse(
+    auto machineJson = tests::parseJson(
         advanced_platformer::loadContentText("tests/fixtures/catalogs/machines.json"));
-    machineJson["machines"]["test_machine"]["states"][0]["does"] = {
-        {"kind", "lua"}, {"script", "rat"}, {"activity", "flee"}};
+    machineJson["machines"]["test_machine"]["states"][0]["does"] =
+        tests::object({{"kind", "lua"}, {"script", "rat"}, {"activity", "flee"}});
 
     const auto catalog =
-        advanced_platformer::parseMachineCatalog(machineJson.dump(), "machines.json");
+        advanced_platformer::parseMachineCatalog(tests::dumpJson(machineJson), "machines.json");
     const auto& activity = std::get<advanced_platformer::LuaNpcActivity>(
         advanced_platformer::npcStateMachine(catalog, "test_machine").states[0].does);
     REQUIRE(activity.script == "rat");
@@ -61,7 +62,7 @@ TEST_CASE("Machine JSON reads explicitly tagged Lua activities", "[app][machines
 
 TEST_CASE("Machine JSON rejects what the engine cannot run, naming where", "[app][machines]")
 {
-    auto machineJson = nlohmann::json::parse(
+    auto machineJson = tests::parseJson(
         advanced_platformer::loadContentText("tests/fixtures/catalogs/machines.json"));
     auto& machine = machineJson["machines"]["test_machine"];
     const char* expected = "";
@@ -77,13 +78,13 @@ TEST_CASE("Machine JSON rejects what the engine cannot run, naming where", "[app
     }
     SECTION("An unknown tagged activity kind")
     {
-        machine["states"][0]["does"] = {
-            {"kind", "python"}, {"script", "rat"}, {"activity", "flee"}};
+        machine["states"][0]["does"] =
+            tests::object({{"kind", "python"}, {"script", "rat"}, {"activity", "flee"}});
         expected = "states[0].does.kind";
     }
     SECTION("A tagged activity without a script")
     {
-        machine["states"][0]["does"] = {{"kind", "lua"}, {"activity", "flee"}};
+        machine["states"][0]["does"] = tests::object({{"kind", "lua"}, {"activity", "flee"}});
         expected = "missing 'script'";
     }
     SECTION("Unknown fact")
@@ -103,7 +104,7 @@ TEST_CASE("Machine JSON rejects what the engine cannot run, naming where", "[app
     }
     SECTION("An empty from list")
     {
-        machine["transitions"][0]["from"] = nlohmann::json::array();
+        machine["transitions"][0]["from"] = tests::emptyArray();
         expected = "at least one state name";
     }
     SECTION("Unknown field")
@@ -112,6 +113,6 @@ TEST_CASE("Machine JSON rejects what the engine cannot run, naming where", "[app
         expected = "unknown field 'start'";
     }
     REQUIRE_THROWS_WITH(
-        advanced_platformer::parseMachineCatalog(machineJson.dump(), "machines.json"),
+        advanced_platformer::parseMachineCatalog(tests::dumpJson(machineJson), "machines.json"),
         ContainsSubstring("machines.json") && ContainsSubstring(expected));
 }

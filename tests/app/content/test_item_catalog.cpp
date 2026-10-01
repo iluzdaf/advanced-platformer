@@ -1,17 +1,17 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
-#include <nlohmann/json.hpp>
 #include <limits>
 #include <stdexcept>
 #include <string>
 #include "content/item_catalog.hpp"
 #include "advanced_platformer/inventory/item.hpp"
+#include "support/json_document.hpp"
 
 namespace
 {
-    nlohmann::json itemData()
+    tests::Json itemData()
     {
-        return nlohmann::json::parse(R"({"items":{"herb":{
+        return tests::parseJson(R"({"items":{"herb":{
             "name":"Healing herb","maximumStack":4,
             "icon":{"position":[12,8],"size":[8,12]},"effect":"heal","effectAmount":3
         }}})");
@@ -20,7 +20,8 @@ namespace
 
 TEST_CASE("Item JSON resolves custom names to stable runtime IDs", "[app][items][json]")
 {
-    const auto catalog = advanced_platformer::parseItemCatalog(itemData().dump(), "items.json");
+    const auto catalog =
+        advanced_platformer::parseItemCatalog(tests::dumpJson(itemData()), "items.json");
     const auto stack = advanced_platformer::composeItemStack(catalog, {"herb", 2});
     REQUIRE(stack.item > 0);
     REQUIRE(stack.item == advanced_platformer::itemDefinition(catalog, "herb").id);
@@ -73,16 +74,16 @@ TEST_CASE("Item JSON names where a malformed file goes wrong", "[app][items][jso
     }
     SECTION("Bad icon shape")
     {
-        item["icon"]["size"] = {8};
+        item["icon"]["size"] = tests::numbers({8});
         expected = "expected two numbers, [x, y]";
     }
     SECTION("Missing stack size")
     {
-        item.erase("maximumStack");
+        tests::eraseKey(item, "maximumStack");
         expected = "missing 'maximumStack'";
     }
     REQUIRE_THROWS_WITH(
-        advanced_platformer::parseItemCatalog(itemJson.dump(), "items.json"),
+        advanced_platformer::parseItemCatalog(tests::dumpJson(itemJson), "items.json"),
         Catch::Matchers::StartsWith("items.json: line 1, column ") &&
             Catch::Matchers::EndsWith(expected));
 }
@@ -106,20 +107,20 @@ TEST_CASE("Item JSON names the item a rule rejects", "[app][items][json]")
     }
     SECTION("Negative source position")
     {
-        item["icon"]["position"] = {-1, 0};
+        item["icon"]["position"] = tests::numbers({-1, 0});
     }
     SECTION("Zero display size")
     {
-        item["icon"]["displaySize"] = {0, 8};
+        item["icon"]["displaySize"] = tests::numbers({0, 8});
     }
     REQUIRE_THROWS_WITH(
-        advanced_platformer::parseItemCatalog(itemJson.dump(), "items.json"),
+        advanced_platformer::parseItemCatalog(tests::dumpJson(itemJson), "items.json"),
         Catch::Matchers::StartsWith("items.json: items.herb"));
 }
 
 TEST_CASE("Item definitions are validated without JSON", "[app][items][validation]")
 {
-    auto catalog = advanced_platformer::parseItemCatalog(itemData().dump(), "fixture");
+    auto catalog = advanced_platformer::parseItemCatalog(tests::dumpJson(itemData()), "fixture");
     catalog.definitions.at("herb").icon.size.x = std::numeric_limits<float>::infinity();
     REQUIRE_THROWS_AS(advanced_platformer::validateItemCatalog(catalog), std::invalid_argument);
     REQUIRE_THROWS_AS(
@@ -135,7 +136,8 @@ TEST_CASE(
 {
     auto itemJson = itemData();
     itemJson["items"]["other_herb"] = itemJson["items"]["herb"];
-    const auto catalog = advanced_platformer::parseItemCatalog(itemJson.dump(), "items.json");
+    const auto catalog =
+        advanced_platformer::parseItemCatalog(tests::dumpJson(itemJson), "items.json");
     const auto& first = advanced_platformer::itemDefinition(catalog, "herb");
     const auto& second = advanced_platformer::itemDefinition(catalog, "other_herb");
     REQUIRE(first.id > 0);

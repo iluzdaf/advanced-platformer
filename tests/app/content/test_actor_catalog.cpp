@@ -5,8 +5,6 @@
 #include <optional>
 #include <stdexcept>
 
-#include <nlohmann/json.hpp>
-
 #include "content/actor_catalog.hpp"
 #include "content/actor_definition.hpp"
 #include "content/animation_catalog.hpp"
@@ -18,6 +16,7 @@
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/render/sprite.hpp"
 #include "support/actor_components.hpp"
+#include "support/json_document.hpp"
 
 TEST_CASE("Actor JSON accepts custom names and configures component choices", "[app][actors][json]")
 {
@@ -78,13 +77,13 @@ TEST_CASE("Actor JSON configures climbing without exposing attachment state", "[
 
 TEST_CASE("Climbing requires platformer movement and positive speed", "[app][actors][json]")
 {
-    auto actorJson = nlohmann::json::parse(
+    auto actorJson = tests::parseJson(
         R"({"player":"hero","actors":{"hero":{"bodySize":[12,12],"platformer":{},
         "surfaceClimb":{"speed":75},"health":2,"inventorySlots":1}}})");
     SECTION("Flying actor")
     {
-        actorJson["actors"]["hero"].erase("platformer");
-        actorJson["actors"]["hero"]["flying"] = {{"speed", 60}};
+        tests::eraseKey(actorJson["actors"]["hero"], "platformer");
+        actorJson["actors"]["hero"]["flying"] = tests::object({{"speed", 60}});
     }
     SECTION("Invalid speed")
     {
@@ -94,12 +93,12 @@ TEST_CASE("Climbing requires platformer movement and positive speed", "[app][act
     {
         actorJson["actors"]["hero"]["surfaceClimb"]["surface"] = "ceiling";
         REQUIRE_THROWS_WITH(
-            advanced_platformer::parseActorCatalog(actorJson.dump(), "actors.json", {}),
+            advanced_platformer::parseActorCatalog(tests::dumpJson(actorJson), "actors.json", {}),
             Catch::Matchers::EndsWith("unknown field 'surface'"));
     }
 
     REQUIRE_THROWS_WITH(
-        advanced_platformer::parseActorCatalog(actorJson.dump(), "actors.json", {}),
+        advanced_platformer::parseActorCatalog(tests::dumpJson(actorJson), "actors.json", {}),
         Catch::Matchers::ContainsSubstring("actors.json:"));
 }
 
@@ -107,14 +106,14 @@ TEST_CASE(
     "Actor JSON rejects malformed and invalid definitions including unused ones",
     "[app][actors][json]")
 {
-    auto actorJson = nlohmann::json::parse(
+    auto actorJson = tests::parseJson(
         R"({"player":"hero","actors":{"hero":{"bodySize":[12,20],"platformer":{},"health":3,"inventorySlots":2}}})");
     // Shape errors name a line and column; rule errors name the actor.
     std::string start = "actors.json: actors.";
     std::string end;
     SECTION("Missing body size")
     {
-        actorJson["actors"]["hero"].erase("bodySize");
+        tests::eraseKey(actorJson["actors"]["hero"], "bodySize");
         start = "actors.json: line 1, column ";
         end = "missing 'bodySize'";
     }
@@ -129,8 +128,10 @@ TEST_CASE(
     }
     SECTION("Unused actor references an unknown animation")
     {
-        actorJson["actors"]["unused"] = {
-            {"bodySize", {8, 8}}, {"flying", {{"speed", 25}}}, {"animations", "missing"}};
+        actorJson["actors"]["unused"] = tests::object(
+            {{"bodySize", tests::numbers({8, 8})},
+             {"flying", tests::object({{"speed", 25}})},
+             {"animations", "missing"}});
     }
     SECTION("Fractional health")
     {
@@ -152,19 +153,19 @@ TEST_CASE(
     }
     SECTION("Runtime state")
     {
-        actorJson["actors"]["hero"]["brain"] = nlohmann::json::object();
+        actorJson["actors"]["hero"]["brain"] = tests::emptyObject();
         start = "actors.json: line 1, column ";
         end = "unknown field 'brain'";
     }
     SECTION("Runtime attack state")
     {
-        actorJson["actors"]["hero"]["bite"] = {{"phase", "active"}};
+        actorJson["actors"]["hero"]["bite"] = tests::object({{"phase", "active"}});
         start = "actors.json: line 1, column ";
         end = "unknown field 'phase'";
     }
     SECTION("Unknown tactic")
     {
-        actorJson["actors"]["hero"]["senses"] = nlohmann::json::object();
+        actorJson["actors"]["hero"]["senses"] = tests::emptyObject();
         actorJson["actors"]["hero"]["tactic"] = "ambusher";
         start = "actors.json: line 1, column ";
         end = "unknown value 'ambusher'; expected pursuer or keepDistance";
@@ -177,10 +178,11 @@ TEST_CASE(
     }
     SECTION("Unused definition")
     {
-        actorJson["actors"]["unused"] = {{"bodySize", {8, 8}}, {"flying", {{"speed", -1}}}};
+        actorJson["actors"]["unused"] = tests::object(
+            {{"bodySize", tests::numbers({8, 8})}, {"flying", tests::object({{"speed", -1}})}});
     }
     REQUIRE_THROWS_WITH(
-        advanced_platformer::parseActorCatalog(actorJson.dump(), "actors.json", {}),
+        advanced_platformer::parseActorCatalog(tests::dumpJson(actorJson), "actors.json", {}),
         Catch::Matchers::StartsWith(start) && Catch::Matchers::EndsWith(end));
 }
 

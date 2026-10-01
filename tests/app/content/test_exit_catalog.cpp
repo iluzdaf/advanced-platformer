@@ -1,6 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
-#include <nlohmann/json.hpp>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -9,12 +8,13 @@
 #include "content/level_data.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/render/sprite.hpp"
+#include "support/json_document.hpp"
 
 namespace
 {
-    nlohmann::json exitData()
+    tests::Json exitData()
     {
-        return nlohmann::json::parse(R"({"exits":{"gate":{
+        return tests::parseJson(R"({"exits":{"gate":{
             "bodySize":[12,24],"sprite":{"position":[8,16],"size":[8,12],"displaySize":[16,24],"anchor":"center"}
         }}})");
     }
@@ -22,7 +22,8 @@ namespace
 
 TEST_CASE("Exit definitions compose independent bounds and sprites", "[app][exits]")
 {
-    const auto catalog = advanced_platformer::parseExitCatalog(exitData().dump(), "exits.json");
+    const auto catalog =
+        advanced_platformer::parseExitCatalog(tests::dumpJson(exitData()), "exits.json");
     const auto exit = advanced_platformer::composeExit(
         advanced_platformer::exitDefinition(catalog, "gate"), 7, {40, 48});
     REQUIRE(exit.bounds.size == glm::vec2{12, 24});
@@ -50,27 +51,27 @@ TEST_CASE(
     std::string end;
     SECTION("Invalid bounds")
     {
-        definition["bodySize"] = {0, 24};
+        definition["bodySize"] = tests::numbers({0, 24});
     }
     SECTION("Invalid sprite")
     {
-        definition["sprite"]["size"] = {-1, 12};
+        definition["sprite"]["size"] = tests::numbers({-1, 12});
     }
     SECTION("Missing sprite")
     {
-        definition.erase("sprite");
+        tests::eraseKey(definition, "sprite");
         start = "exits.json: line 1, column ";
         end = "missing 'sprite'";
     }
     SECTION("Missing bounds")
     {
-        definition.erase("bodySize");
+        tests::eraseKey(definition, "bodySize");
         start = "exits.json: line 1, column ";
         end = "missing 'bodySize'";
     }
     SECTION("Malformed vector")
     {
-        definition["bodySize"] = {12};
+        definition["bodySize"] = tests::numbers({12});
         start = "exits.json: line 1, column ";
         end = "expected two numbers, [x, y]";
     }
@@ -82,7 +83,7 @@ TEST_CASE(
     }
     SECTION("Requirement belongs to placement")
     {
-        definition["requirement"] = {{"item", "key"}, {"quantity", 1}};
+        definition["requirement"] = tests::object({{"item", "key"}, {"quantity", 1}});
         start = "exits.json: line 1, column ";
         end = "unknown field 'requirement'";
     }
@@ -93,13 +94,13 @@ TEST_CASE(
         end = "unknown field 'consumeItem'";
     }
     REQUIRE_THROWS_WITH(
-        advanced_platformer::parseExitCatalog(exitJson.dump(), "exits.json"),
+        advanced_platformer::parseExitCatalog(tests::dumpJson(exitJson), "exits.json"),
         Catch::Matchers::StartsWith(start) && Catch::Matchers::EndsWith(end));
 }
 
 TEST_CASE("Exit definitions and placement names validate without JSON", "[app][exits][validation]")
 {
-    auto catalog = advanced_platformer::parseExitCatalog(exitData().dump(), "fixture");
+    auto catalog = advanced_platformer::parseExitCatalog(tests::dumpJson(exitData()), "fixture");
     catalog.at("gate").bodySize.x = std::numeric_limits<float>::infinity();
     REQUIRE_THROWS_AS(advanced_platformer::validateExitCatalog(catalog), std::invalid_argument);
     advanced_platformer::ExitPlacement placement;

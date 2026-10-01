@@ -2,14 +2,14 @@
 
 #include <filesystem>
 #include <stdexcept>
-#include <nlohmann/json.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include <glm/vec2.hpp>
 #include "content/level_catalog.hpp"
+#include "support/json_document.hpp"
 
 TEST_CASE("Level catalog numbers reject narrowing and fields reject typos", "[app][content][json]")
 {
-    auto levelCatalogJson = nlohmann::json::parse(
+    auto levelCatalogJson = tests::parseJson(
         R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"one.json"}]})");
     SECTION("Above int range")
     {
@@ -28,7 +28,7 @@ TEST_CASE("Level catalog numbers reject narrowing and fields reject typos", "[ap
         levelCatalogJson["levels"][0]["fille"] = "two.json";
     }
     REQUIRE_THROWS_WITH(
-        advanced_platformer::parseLevelCatalog(levelCatalogJson.dump(), "levels.json"),
+        advanced_platformer::parseLevelCatalog(tests::dumpJson(levelCatalogJson), "levels.json"),
         Catch::Matchers::ContainsSubstring("levels.json:"));
 }
 
@@ -103,25 +103,25 @@ TEST_CASE(
     "A level catalog's camera dead zone is positive and fits in the view",
     "[app][content][json]")
 {
-    auto levelCatalogJson = nlohmann::json::parse(
+    auto levelCatalogJson = tests::parseJson(
         R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"one.json"}]})");
     SECTION("Missing")
     {
-        levelCatalogJson.erase("cameraDeadZone");
+        tests::eraseKey(levelCatalogJson, "cameraDeadZone");
     }
     SECTION("Empty")
     {
-        levelCatalogJson["cameraDeadZone"] = {0, 45};
+        levelCatalogJson["cameraDeadZone"] = tests::numbers({0, 45});
     }
     SECTION("Wider than the view")
     {
-        levelCatalogJson["cameraDeadZone"] = {321, 45};
+        levelCatalogJson["cameraDeadZone"] = tests::numbers({321, 45});
     }
     SECTION("Taller than the view")
     {
-        levelCatalogJson["cameraDeadZone"] = {80, 181};
+        levelCatalogJson["cameraDeadZone"] = tests::numbers({80, 181});
     }
     REQUIRE_THROWS_WITH(
-        advanced_platformer::parseLevelCatalog(levelCatalogJson.dump(), "levels.json"),
+        advanced_platformer::parseLevelCatalog(tests::dumpJson(levelCatalogJson), "levels.json"),
         Catch::Matchers::ContainsSubstring("cameraDeadZone"));
 }
