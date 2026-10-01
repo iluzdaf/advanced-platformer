@@ -13,6 +13,6 @@ namespace advanced_platformer
         TileMap& map,
         World& world,
         float deltaTime,
-        FrameProfile* profile = nullptr,
-        NpcActivityScripts* scripts = nullptr);
+        NpcActivityScripts& scripts,
+        FrameProfile* profile = nullptr);
 }

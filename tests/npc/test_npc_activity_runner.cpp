@@ -88,8 +88,7 @@ TEST_CASE("A scripted route follows a climbing path", "[npc][lua][climb]")
     bool reachedCeiling = false;
     for (int tick = 0; tick < 1500 && !reachedCeiling; ++tick)
     {
-        advanced_platformer::updateWorldSimulation(
-            map, world, tests::FixedStepSeconds, nullptr, &scripts);
+        advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
         requestedClimb = requestedClimb || actor(world, npcId).intentions.climbGrip ==
                                                advanced_platformer::ClimbGrip::Hold;
         reachedCeiling =
@@ -115,7 +114,7 @@ TEST_CASE("An NPC activity receives snapshots and returns engine commands", "[np
     scripts.command.aimAt = glm::vec2{80.0F, 16.0F};
     scripts.command.intentions.primaryAttackPressed = true;
 
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, &scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
 
     REQUIRE(scripts.calls.size() == 2);
     REQUIRE(scripts.calls[0].hook == "enter");
@@ -138,7 +137,7 @@ TEST_CASE("An NPC activity receives snapshots and returns engine commands", "[np
     REQUIRE(actor(world, npcId).intentions.primaryAttackPressed);
     REQUIRE(machine(world, npcId).stateElapsed == 0.1F);
 
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, &scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
     REQUIRE(scripts.calls.size() == 3);
     REQUIRE(scripts.calls.back().hook == "update");
     REQUIRE(scripts.calls.back().snapshot.facts.stateElapsed == 0.1F);
@@ -160,11 +159,11 @@ TEST_CASE("A scripted machine exits and enters around a transition", "[npc][lua]
                     .when("targetKnown", true)));
     tests::RecordingNpcScripts scripts;
 
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, &scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
     brain(world, npcId).target = playerId;
     brain(world, npcId).lastKnownTargetFeet = {56.0F, 32.0F};
     tests::perception(world, npcId).targetVisible = true;
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, &scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
 
     REQUIRE(scripts.calls.size() == 5);
     REQUIRE(scripts.calls[0].hook == "enter");
@@ -180,20 +179,6 @@ TEST_CASE("A scripted machine exits and enters around a transition", "[npc][lua]
     REQUIRE(scripts.calls[4].hook == "update");
     REQUIRE(scripts.calls[4].snapshot.facts.stateElapsed == 0.0F);
     REQUIRE(advanced_platformer::activeNpcMachineState(machine(world, npcId)).name == "moving");
-}
-
-TEST_CASE("An NPC activity requires a scripting runtime", "[npc][lua][validation]")
-{
-    const advanced_platformer::TileMap map = tests::TileMapBuilder({"...", "...", "###"});
-    advanced_platformer::World world;
-    world.addActor(makeNpc({24.0F, 32.0F})
-                       .running(
-                           tests::NpcMachineBuilder::named("scripted")
-                               .state("waiting", advanced_platformer::NpcActivity{"rat", "wait"})));
-
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::updateNpcBehaviour(map, world, 0.1F),
-        "An NPC activity needs the scripting runtime");
 }
 
 TEST_CASE("Removing an actor forgets its activity state", "[npc][lua][lifecycle]")
@@ -231,7 +216,7 @@ TEST_CASE("The engine fills an activity's snapshot from the world", "[npc][lua]"
     tests::RecordingNpcScripts scripts;
 
     advanced_platformer::updateNpcSenses(map, world, tests::FixedStepSeconds);
-    advanced_platformer::updateNpcBehaviour(map, world, tests::FixedStepSeconds, &scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, tests::FixedStepSeconds, scripts);
 
     REQUIRE(scripts.calls.size() == 2);
     const advanced_platformer::NpcActivitySnapshot& snapshot = scripts.calls.back().snapshot;
@@ -258,7 +243,7 @@ TEST_CASE("A flyer has no footing, and the last known target feet outlast the ta
     brain(world, npc).lastKnownTargetFeet = {72.0F, 32.0F};
     tests::RecordingNpcScripts scripts;
 
-    advanced_platformer::updateNpcBehaviour(map, world, tests::FixedStepSeconds, &scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, tests::FixedStepSeconds, scripts);
 
     const advanced_platformer::NpcActivitySnapshot& snapshot = scripts.calls.back().snapshot;
     REQUIRE_FALSE(snapshot.footing.has_value());
@@ -283,13 +268,13 @@ TEST_CASE("A script can turn its NPC's patrol round", "[npc][lua]")
     tests::RecordingNpcScripts scripts;
     scripts.command.turnPatrol = true;
 
-    advanced_platformer::updateNpcBehaviour(map, world, tests::FixedStepSeconds, &scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, tests::FixedStepSeconds, scripts);
     REQUIRE(scripts.calls.back()
                 .snapshot.patrol.value_or(advanced_platformer::Patrol{})
                 .headingToSecond);
     REQUIRE_FALSE(tests::patrol(world, npc).headingToSecond);
 
-    advanced_platformer::updateNpcBehaviour(map, world, tests::FixedStepSeconds, &scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, tests::FixedStepSeconds, scripts);
     REQUIRE_FALSE(scripts.calls.back()
                       .snapshot.patrol.value_or(advanced_platformer::Patrol{})
                       .headingToSecond);

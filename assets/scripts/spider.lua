@@ -1,33 +1,36 @@
 -- Lua chooses patrolling, pursuit, and biting; the engine follows routes, including climbs.
 -- Commands leave out climbGrip, so a spider that stops on a wall or ceiling stays on it.
 
+local function patrolGoal(patrol, headingToSecond)
+    return headingToSecond and patrol.secondFeet or patrol.firstFeet
+end
+
 return {
     activities = {
         patrol = {
-            enter = function(self, snapshot)
-                local patrol = snapshot.patrol
-                if patrol == nil then
-                    return
-                end
-                -- Resume from the nearer end; arriving there turns the spider round.
-                self.headingToSecond = snapshot.feet:distanceSquared(patrol.secondFeet)
-                    < snapshot.feet:distanceSquared(patrol.firstFeet)
-            end,
             update = function(self, snapshot)
                 local patrol = snapshot.patrol
                 if patrol == nil then
                     return { clearRoute = true }
                 end
 
+                -- Resume towards the nearer end; arriving there turns the spider round.
+                if not self.resumed then
+                    self.resumed = true
+                    local nearerIsSecond = snapshot.feet:distanceSquared(patrol.secondFeet)
+                        < snapshot.feet:distanceSquared(patrol.firstFeet)
+                    if nearerIsSecond ~= patrol.headingToSecond then
+                        return { turnPatrol = true, routeTo = patrolGoal(patrol, nearerIsSecond) }
+                    end
+                end
+
                 -- Entering the state cleared the route, so a finished route is this patrol's.
                 -- A route that ends short of an unreachable end also turns it round.
                 if snapshot.routeComplete then
-                    self.headingToSecond = not self.headingToSecond
-                    return { clearRoute = true }
+                    return { turnPatrol = true, clearRoute = true }
                 end
 
-                local destination = self.headingToSecond and patrol.secondFeet or patrol.firstFeet
-                return { routeTo = destination }
+                return { routeTo = patrolGoal(patrol, patrol.headingToSecond) }
             end,
         },
         pursue = {

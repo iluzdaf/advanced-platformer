@@ -26,6 +26,7 @@
 #include "support/actor_components.hpp"
 #include "support/pursuer_npc.hpp"
 #include "lua_npc_scripts.hpp"
+#include "support/recording_npc_scripts.hpp"
 #include "support/tile_map_builder.hpp"
 #include "support/add_player.hpp"
 #include "support/fixed_step.hpp"
@@ -34,14 +35,15 @@ TEST_CASE("World simulation advances its shared clock once per update", "[world]
 {
     advanced_platformer::TileMap map = tests::TileMapBuilder({"."});
     advanced_platformer::World world;
+    tests::RecordingNpcScripts scripts;
 
-    advanced_platformer::updateWorldSimulation(map, world, 0.25F);
-    advanced_platformer::updateWorldSimulation(map, world, 0.25F);
+    advanced_platformer::updateWorldSimulation(map, world, 0.25F, scripts);
+    advanced_platformer::updateWorldSimulation(map, world, 0.25F, scripts);
 
     REQUIRE(world.simulationTimeSeconds() == 0.5F);
 
     world.completeLevel();
-    advanced_platformer::updateWorldSimulation(map, world, 0.25F);
+    advanced_platformer::updateWorldSimulation(map, world, 0.25F, scripts);
 
     REQUIRE(world.simulationTimeSeconds() == 0.5F);
 }
@@ -58,15 +60,16 @@ TEST_CASE("World simulation spawns a projectile after projectile movement", "[wo
     player.intentions.aimDirection = {1.0F, 0.0F};
     player.intentions.primaryAttackPressed = true;
     const advanced_platformer::ActorId playerId = world.addActor(player);
+    tests::RecordingNpcScripts scripts;
 
-    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds);
+    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
 
     REQUIRE(world.projectiles().size() == 1);
     const float spawnPosition = world.projectiles().front().bounds.topLeft.x;
 
     advanced_platformer::Actor& storedPlayer = tests::actor(world, playerId);
     storedPlayer.intentions.primaryAttackPressed = false;
-    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds);
+    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
 
     REQUIRE(world.projectiles().size() == 1);
     REQUIRE(world.projectiles().front().bounds.topLeft.x > spawnPosition);
@@ -80,10 +83,11 @@ TEST_CASE("World simulation lets a pickup fall onto the tile below", "[world][si
     pickup.body.bounds = {{4.0F, 4.0F}, {8.0F, 8.0F}};
     pickup.stack = {1, 1};
     world.addPickup(pickup);
+    tests::RecordingNpcScripts scripts;
 
     for (int step = 0; step < 12; ++step)
     {
-        advanced_platformer::updateWorldSimulation(map, world, 0.1F);
+        advanced_platformer::updateWorldSimulation(map, world, 0.1F, scripts);
     }
 
     REQUIRE(world.pickups().front().body.bounds.topLeft.y == 24.0F);
@@ -123,9 +127,9 @@ TEST_CASE(
     for (int tick = 0; tick < 30; ++tick)
     {
         advanced_platformer::updateWorldSimulation(
-            timedMap, timed, tests::FixedStepSeconds, &profile, &scripts);
+            timedMap, timed, tests::FixedStepSeconds, scripts, &profile);
         advanced_platformer::updateWorldSimulation(
-            plainMap, plain, tests::FixedStepSeconds, nullptr, &scripts);
+            plainMap, plain, tests::FixedStepSeconds, scripts);
     }
 
     REQUIRE(timed.simulationTimeSeconds() == plain.simulationTimeSeconds());

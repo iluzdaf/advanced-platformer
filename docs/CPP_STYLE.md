@@ -11,7 +11,8 @@ The project uses C++26. Before reading the engine, it helps to be comfortable wi
 - [`std::optional`](https://en.cppreference.com/w/cpp/utility/optional), for a value
   that may be absent, such as an actor's optional components.
 - [`std::variant`](https://en.cppreference.com/w/cpp/utility/variant), for a value that
-  is one of a few types, such as an NPC activity that is either built in or scripted.
+  is one of a few types, such as a transition's `from` in machine JSON, which is one
+  state name or a list of them.
 - [`std::function`](https://en.cppreference.com/w/cpp/utility/functional/function) and
   [lambdas](https://en.cppreference.com/w/cpp/language/lambda), for callbacks such as
   the connections a search asks for.

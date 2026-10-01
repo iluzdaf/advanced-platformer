@@ -21,8 +21,8 @@ namespace advanced_platformer
         TileMap& map,
         World& world,
         float deltaTime,
-        FrameProfile* profile,
-        NpcActivityScripts* scripts)
+        NpcActivityScripts& scripts,
+        FrameProfile* profile)
     {
         if (world.levelComplete())
         {
@@ -68,10 +68,7 @@ namespace advanced_platformer
             "World requests",
             [&]
             {
-                if (scripts != nullptr)
-                {
-                    forgetNpcActivities(requests.actorsToRemove(), *scripts);
-                }
+                forgetNpcActivities(requests.actorsToRemove(), scripts);
                 applyWorldRequests(world, requests);
             });
         phase("World", "Level exit", [&] { updateLevelExit(world); });

@@ -76,8 +76,7 @@ TEST_CASE("A climbing NPC patrols over a wall and ceiling", "[npc][navigation][c
     bool reachedSecondFloor = false;
     for (int tick = 0; tick < 2000 && !reachedSecondFloor; ++tick)
     {
-        advanced_platformer::updateWorldSimulation(
-            map, world, tests::FixedStepSeconds, nullptr, &scripts);
+        advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
         climbedCeiling = climbedCeiling || tests::surfaceClimb(world, npcId).surface ==
                                                advanced_platformer::ClimbSurface::Ceiling;
         reachedSecondFloor = !tests::patrol(world, npcId).headingToSecond;
@@ -110,8 +109,7 @@ TEST_CASE("A climbing NPC holds the ceiling at the end of its patrol", "[npc][na
     bool reachedCeilingEnd = false;
     for (int tick = 0; tick < 2000 && !reachedCeilingEnd; ++tick)
     {
-        advanced_platformer::updateWorldSimulation(
-            map, world, tests::FixedStepSeconds, nullptr, &scripts);
+        advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
         reachedCeilingEnd = !tests::patrol(world, npcId).headingToSecond;
     }
     REQUIRE(reachedCeilingEnd);
@@ -121,8 +119,7 @@ TEST_CASE("A climbing NPC holds the ceiling at the end of its patrol", "[npc][na
     // Turning back for the floor starts along the ceiling, not by letting go.
     for (int tick = 0; tick < 10; ++tick)
     {
-        advanced_platformer::updateWorldSimulation(
-            map, world, tests::FixedStepSeconds, nullptr, &scripts);
+        advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
         REQUIRE(
             tests::surfaceClimb(world, npcId).surface ==
             advanced_platformer::ClimbSurface::Ceiling);
@@ -146,7 +143,7 @@ namespace
     {
         advanced_platformer::FrameProfile profile;
         advanced_platformer::updateNpcBehaviour(
-            map, world, tests::FixedStepSeconds, &scripts, &profile);
+            map, world, tests::FixedStepSeconds, scripts, &profile);
         return profile;
     }
 
@@ -303,7 +300,7 @@ TEST_CASE("An unreachable patrol heads as close as it can without retrying", "[n
     const advanced_platformer::ActorId npcId =
         world.addActor(makeNpc({24.0F, 32.0F}).patrolling({24.0F, 32.0F}, {120.0F, 32.0F}));
 
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, &scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
     const advanced_platformer::PathFollower& follower = tests::pathFollower(world, npcId);
     REQUIRE(follower.path.has_value());
     const glm::vec2 closest = advanced_platformer::feetInCell(tests::TileSize, {3, 1});
@@ -314,7 +311,7 @@ TEST_CASE("An unreachable patrol heads as close as it can without retrying", "[n
     REQUIRE(tests::actor(world, npcId).intentions.direction.x > 0.0F);
 
     // The path still serves the same goal, so the NPC keeps following it.
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, &scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
     REQUIRE(follower.path.has_value());
     REQUIRE(follower.nextStep == 0);
     REQUIRE(
@@ -333,16 +330,16 @@ TEST_CASE("A patrol goal that moves is planned for at once", "[npc][navigation]"
     const advanced_platformer::ActorId npcId =
         world.addActor(makeNpc({24.0F, 32.0F}).patrolling({24.0F, 32.0F}, {120.0F, 32.0F}));
 
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, &scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
     const advanced_platformer::PathFollower& follower = tests::pathFollower(world, npcId);
     REQUIRE(follower.goal == advanced_platformer::feetInCell(tests::TileSize, {7, 1}));
 
     // A few pixels is not worth planning again; half a tile is.
     tests::patrol(world, npcId).secondFeet = {124.0F, 32.0F};
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, &scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
     REQUIRE(follower.goal == advanced_platformer::feetInCell(tests::TileSize, {7, 1}));
 
     tests::patrol(world, npcId).secondFeet = {88.0F, 32.0F};
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, &scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
     REQUIRE(follower.goal == advanced_platformer::feetInCell(tests::TileSize, {5, 1}));
 }

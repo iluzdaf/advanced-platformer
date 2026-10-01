@@ -37,7 +37,7 @@ TEST_CASE("An NPC machine invokes a loaded Lua activity", "[lua][npc][integratio
                 tests::NpcMachineBuilder::named("fixture").state(
                     "fleeing", advanced_platformer::NpcActivity{"fixture", "flee"})));
 
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, &scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
 
     REQUIRE(tests::actor(world, npc).intentions.direction == glm::vec2{-1.0F, 0.0F});
     REQUIRE(tests::actor(world, npc).intentions.jumpHeld);
@@ -82,7 +82,7 @@ TEST_CASE(
     tests::platformerMovement(tests::actor(world, npc)).grounded = true;
     constexpr float StepSeconds = 0.05F;
 
-    advanced_platformer::updateWorldSimulation(map, world, StepSeconds, nullptr, &scripts);
+    advanced_platformer::updateWorldSimulation(map, world, StepSeconds, scripts);
     REQUIRE(
         advanced_platformer::activeNpcMachineState(tests::machine(world, npc)).name == "moving");
     REQUIRE_NEAR(tests::actor(world, npc).body.velocity.x, 40.0F);
@@ -93,7 +93,7 @@ TEST_CASE(
     while (stepsToRest < MaxStepsToRest &&
            advanced_platformer::activeNpcMachineState(tests::machine(world, npc)).name == "moving")
     {
-        advanced_platformer::updateWorldSimulation(map, world, StepSeconds, nullptr, &scripts);
+        advanced_platformer::updateWorldSimulation(map, world, StepSeconds, scripts);
         ++stepsToRest;
     }
     CAPTURE(stepsToRest);
