@@ -39,7 +39,9 @@ class TidyTargetSelectionTests(unittest.TestCase):
 
     def test_removed_header_selects_everything(self):
         self.assertEqual(
-            selected_paths(self.paths, [Path("include/advanced_platformer/removed.hpp")]),
+            selected_paths(
+                self.paths, [Path("include/advanced_platformer/removed.hpp")]
+            ),
             self.paths,
         )
 
