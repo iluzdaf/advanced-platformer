@@ -26,7 +26,7 @@ namespace advanced_platformer
             return std::string(key);
         }
         std::string result(path);
-        result += ".";
+        result += '.';
         result += key;
         return result;
     }
@@ -34,9 +34,9 @@ namespace advanced_platformer
     std::string indexPath(std::string_view path, std::size_t index)
     {
         std::string result(path);
-        result += "[";
+        result += '[';
         result += std::to_string(index);
-        result += "]";
+        result += ']';
         return result;
     }
 
