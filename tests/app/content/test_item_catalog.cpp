@@ -3,6 +3,7 @@
 #include <nlohmann/json.hpp>
 #include <limits>
 #include <stdexcept>
+#include <string>
 #include "content/item_catalog.hpp"
 #include "advanced_platformer/inventory/item.hpp"
 
@@ -38,21 +39,62 @@ TEST_CASE("Item JSON resolves custom names to stable runtime IDs", "[app][items]
         advanced_platformer::composeItemStack(catalog, {"herb", 0}), std::invalid_argument);
 }
 
-TEST_CASE("Item JSON rejects malformed and invalid definitions", "[app][items][json]")
+TEST_CASE("Item JSON names where a malformed file goes wrong", "[app][items][json]")
 {
+    // Shape errors come from reading the file, so they name a line and column and quote the
+    // key or value found there.
     auto itemJson = itemData();
     auto& item = itemJson["items"]["herb"];
+    std::string expected;
     SECTION("Authored IDs are not supported")
     {
         item["id"] = 17;
+        expected = "unknown field 'id'";
     }
-    SECTION("Zero capacity")
+    SECTION("Unknown field")
     {
-        item["maximumStack"] = 0;
+        item["maximimStack"] = 1;
+        expected = "unknown field 'maximimStack'";
     }
     SECTION("Unknown effect")
     {
         item["effect"] = "magic";
+        expected = "unknown value 'magic'";
+    }
+    SECTION("Wrong name type")
+    {
+        item["name"] = 1;
+        expected = "expected text, found '1'";
+    }
+    SECTION("Fractional stack size")
+    {
+        item["maximumStack"] = 4.5;
+        expected = "invalid number '4.5'";
+    }
+    SECTION("Bad icon shape")
+    {
+        item["icon"]["size"] = {8};
+        expected = "expected two numbers, [x, y]";
+    }
+    SECTION("Missing stack size")
+    {
+        item.erase("maximumStack");
+        expected = "missing 'maximumStack'";
+    }
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::parseItemCatalog(itemJson.dump(), "items.json"),
+        Catch::Matchers::StartsWith("items.json: line 1, column ") &&
+            Catch::Matchers::EndsWith(expected));
+}
+
+TEST_CASE("Item JSON names the item a rule rejects", "[app][items][json]")
+{
+    // Rule errors come from validating what was read, so they name the item's path.
+    auto itemJson = itemData();
+    auto& item = itemJson["items"]["herb"];
+    SECTION("Zero capacity")
+    {
+        item["maximumStack"] = 0;
     }
     SECTION("No healing")
     {
@@ -62,14 +104,6 @@ TEST_CASE("Item JSON rejects malformed and invalid definitions", "[app][items][j
     {
         item["effect"] = "none";
     }
-    SECTION("Unknown field")
-    {
-        item["maximimStack"] = 1;
-    }
-    SECTION("Bad icon shape")
-    {
-        item["icon"]["size"] = {8};
-    }
     SECTION("Negative source position")
     {
         item["icon"]["position"] = {-1, 0};
@@ -78,13 +112,9 @@ TEST_CASE("Item JSON rejects malformed and invalid definitions", "[app][items][j
     {
         item["icon"]["displaySize"] = {0, 8};
     }
-    SECTION("Wrong name type")
-    {
-        item["name"] = 1;
-    }
     REQUIRE_THROWS_WITH(
         advanced_platformer::parseItemCatalog(itemJson.dump(), "items.json"),
-        Catch::Matchers::ContainsSubstring("items.json: items."));
+        Catch::Matchers::StartsWith("items.json: items.herb"));
 }
 
 TEST_CASE("Item definitions are validated without JSON", "[app][items][validation]")

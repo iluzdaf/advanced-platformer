@@ -9,6 +9,7 @@ fetched.
 | ---------------------------- | -------------------------- | ------------------------------------- | ------------------------------------------------------- |
 | `external/catch2`            | Catch2 3.8.1               | `github.com/catchorg/Catch2`          | tag `v3.8.1`                                            |
 | `external/glfw`              | GLFW 3.4                   | `github.com/glfw/glfw`                | tag `3.4`                                               |
+| `external/glaze`             | Glaze 9.0.0                | `github.com/stephenberry/glaze`       | tag `v9.0.0`                                            |
 | `external/glm`               | GLM 1.0.1                  | `github.com/g-truc/glm`               | tag `1.0.1`                                             |
 | `external/imgui`             | Dear ImGui 1.91.8          | `github.com/ocornut/imgui`            | tag `v1.91.8`                                           |
 | `external/implot`            | ImPlot 1.1 WIP             | `github.com/epezent/implot`           | `master` at `7eeb9168d2e5e6b14e266d8782ecf7e649dfc3a4`  |
@@ -35,6 +36,6 @@ stb_image implementation. The Lua repository has no CMake build, so
 Each dependency retains its upstream licence or licensing notice in its source tree.
 The core uses GLM for vector mathematics, and the tests use Catch2.
 The application uses GLFW for its window and input, GLAD to load OpenGL functions,
-stb_image for texture loading, ImGui for UI, and JSON for Modern C++ to read level
-files and content catalogs. Lua and sol2 provide the protected NPC activity scripting
+stb_image for texture loading, ImGui for UI, and JSON for Modern C++ and Glaze to read
+level files and content catalogs. Lua and sol2 provide the protected NPC activity scripting
 boundary. JSON parsing stays in `app/game`, outside the core.

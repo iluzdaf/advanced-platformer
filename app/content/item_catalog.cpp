@@ -1,21 +1,48 @@
 #include "item_catalog.hpp"
 #include "content_diagnostics.hpp"
+#include "content_glaze.hpp"
 #include "content_json.hpp"
 #include "content_validation.hpp"
 #include "advanced_platformer/inventory/item.hpp"
 #include <cstddef>
 #include <format>
-#include <nlohmann/json.hpp>
 #include <filesystem>
+#include <map>
+#include <optional>
 #include <set>
 #include <limits>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
+#include <glaze/glaze.hpp>
+
+// An item's effect is written as "none" or "heal".
+template <> struct glz::meta<advanced_platformer::ItemEffect>
+{
+    using enum advanced_platformer::ItemEffect;
+    // NOLINTNEXTLINE(readability-identifier-naming): Glaze looks this member up by name.
+    static constexpr auto value = glz::enumerate("none", None, "heal", Heal);
+};
 
 namespace advanced_platformer
 {
+    // items.json as written: its member names are the file's keys. Glaze reflects only types
+    // with linkage, so these cannot go in an anonymous namespace.
+    struct ItemJson
+    {
+        std::string name;
+        SpriteJson icon;
+        int maximumStack = 1;
+        std::optional<ItemEffect> effect;
+        std::optional<int> effectAmount;
+    };
+
+    struct ItemsJson
+    {
+        std::map<std::string, ItemJson> items;
+    };
+
     void validateItemCatalog(const ItemCatalog& catalog)
     {
         std::set<ItemId> ids;
@@ -43,48 +70,23 @@ namespace advanced_platformer
 
     ItemCatalog parseItemCatalog(std::string_view text, std::string_view sourceName)
     {
-        const auto root = parseContentRoot(text, sourceName);
-        checkJsonFields(root, {"items"}, sourceName, "root");
-        const auto& definitions = requiredJsonMember(root, "items", sourceName, "root");
-        checkJsonObject(definitions, sourceName, "items");
-        ItemCatalog catalog;
-        if (definitions.size() > static_cast<std::size_t>(std::numeric_limits<ItemId>::max()))
+        const auto file = readContent<ItemsJson>(text, sourceName);
+        if (file.items.size() > static_cast<std::size_t>(std::numeric_limits<ItemId>::max()))
         {
             failJson(sourceName, "items", "too many item definitions");
         }
-        for (const auto& entry : definitions.items())
+        ItemCatalog catalog;
+        for (const auto& [key, json] : file.items)
         {
-            const std::string path = fieldPath("items", entry.key());
-            const auto& value = entry.value();
-            checkJsonFields(
-                value,
-                {"name", "icon", "maximumStack", "effect", "effectAmount"},
-                sourceName,
-                path);
             ItemDefinition item;
-            // Assign deterministic session-local IDs in JSON key order; new names can shift them.
+            // Assign deterministic session-local IDs in key order; new names can shift them.
             item.id = static_cast<ItemId>(catalog.definitions.size() + 1);
-            item.name = readText(value, "name", sourceName, path);
-            item.icon = jsonSprite(
-                requiredJsonMember(value, "icon", sourceName, path),
-                sourceName,
-                fieldPath(path, "icon"));
-            item.maximumStack = readInteger(value, "maximumStack", sourceName, path);
-            std::string effect = "none";
-            readOptionalText(value, "effect", effect, sourceName, path);
-            if (effect == "heal")
-            {
-                item.effect = ItemEffect::Heal;
-            }
-            else if (effect != "none")
-            {
-                failJson(
-                    sourceName,
-                    fieldPath(path, "effect"),
-                    std::format("unknown effect '{}'; expected heal or none", effect));
-            }
-            readOptionalInteger(value, "effectAmount", item.effectAmount, sourceName, path);
-            catalog.definitions.emplace(entry.key(), item);
+            item.name = json.name;
+            item.icon = spriteFrom(json.icon);
+            item.maximumStack = json.maximumStack;
+            item.effect = json.effect.value_or(ItemEffect::None);
+            item.effectAmount = json.effectAmount.value_or(0);
+            catalog.definitions.emplace(key, item);
         }
         validateInFile(sourceName, [&] { validateItemCatalog(catalog); });
         return catalog;

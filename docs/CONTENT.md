@@ -561,6 +561,15 @@ of those. A `json` function receives a value; a `read` function finds one by key
 | `optionalJsonMember`                                  | an object and a key                 | the member, or `nullptr` when the key is absent | The lookup every `readOptional...` and `requiredJsonMember` is built on. Parsers use those; only a new `readOptional...` calls this directly.                   |
 | `parseContentRoot`                                    | the file text                       | the JSON document                               | The single place a syntax error is reported with its line and column.                                                                                           |
 
+[`content_glaze.hpp`](../app/content/content_glaze.hpp) is the other way to read a file,
+used for `items.json`. The file is described by plain structs whose member names are its
+keys, and `readContent<T>(text, sourceName)` fills one with Glaze. Every key must be a
+member, and every member must be present unless it is a `std::optional`. Enums read from
+their names through a `glz::meta` declaration, and `glm::vec2` from `[x, y]`. A shape error
+is reported as `source: line L, column C: message`, quoting the key or value found there,
+such as `items.json: line 5, column 7: unknown field 'maximimStack'`. The catalog then
+converts the structs to engine types, and its validator checks the values as before.
+
 The catalogs and [`level_data.cpp`](../app/content/level_data.cpp) build on those with a
 second set of verbs.
 
