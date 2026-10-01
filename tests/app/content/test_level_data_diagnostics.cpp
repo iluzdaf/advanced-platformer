@@ -74,7 +74,8 @@ TEST_CASE("Object-template diagnostics name authored legend fields", "[app][cont
         level["objectLegend"]["E"]["consumeItem"] = 1;
         REQUIRE_THROWS_WITH(
             advanced_platformer::parseLevelData(level.dump(), "level.json"),
-            "level.json: objectLegend.E.consumeItem: expected true or false");
+            Catch::Matchers::StartsWith("level.json: line 1, column ") &&
+                Catch::Matchers::EndsWith("expected true or false"));
     }
     SECTION("Missing exit definition")
     {

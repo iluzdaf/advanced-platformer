@@ -101,13 +101,20 @@ TEST_CASE("Present placement lists must be arrays", "[app][content][json]")
     level["actors"] = nlohmann::json::object();
     REQUIRE_THROWS_WITH(
         advanced_platformer::parseLevelData(level.dump(), "placements.json"),
-        Catch::Matchers::ContainsSubstring("actors: expected an array"));
+        Catch::Matchers::StartsWith("placements.json: line 1, column ") &&
+            Catch::Matchers::EndsWith("expected a list, found '{'"));
 
     level = minimalLevel();
-    level["pickups"] = nullptr;
+    level["pickups"] = "coins";
     REQUIRE_THROWS_WITH(
         advanced_platformer::parseLevelData(level.dump(), "placements.json"),
-        Catch::Matchers::ContainsSubstring("pickups: expected an array"));
+        Catch::Matchers::StartsWith("placements.json: line 1, column ") &&
+            Catch::Matchers::EndsWith("expected a list, found 'coins'"));
+
+    // A null list is read as one left out.
+    level = minimalLevel();
+    level["pickups"] = nullptr;
+    REQUIRE(advanced_platformer::parseLevelData(level.dump(), "placements.json").pickups.empty());
 }
 
 TEST_CASE("Levels without object markers may omit placement arrays", "[app][content][json]")
