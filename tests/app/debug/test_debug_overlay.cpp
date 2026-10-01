@@ -59,7 +59,7 @@ TEST_CASE("Debug overlay data supports actors without presentation components", 
     REQUIRE(debug.actors.front().collider.size == actor.body.bounds.size);
     REQUIRE_FALSE(debug.actors.front().sprite.has_value());
     REQUIRE_FALSE(debug.actors.front().animation.has_value());
-    REQUIRE_FALSE(debug.actors.front().npcState.has_value());
+    REQUIRE_FALSE(debug.actors.front().machineState.has_value());
     REQUIRE_FALSE(debug.actors.front().pathFollower.has_value());
     REQUIRE_FALSE(debug.actors.front().sensor.has_value());
     REQUIRE_FALSE(debug.actors.front().patrol.has_value());
@@ -185,7 +185,6 @@ TEST_CASE("Debug overlay data reports player presentation and NPC state", "[app]
 
     advanced_platformer::Actor npc =
         tests::ActorBuilder::sized({12.0F, 12.0F}).at({80.0F, 196.0F}).platforming().thinking({});
-    tests::brain(npc).state = advanced_platformer::NpcState::Chase;
 
     advanced_platformer::World world;
     tests::addPlayer(world, player);
@@ -212,9 +211,7 @@ TEST_CASE("Debug overlay data reports player presentation and NPC state", "[app]
     const advanced_platformer::ActorDebugInfo& npcDebug = debug.actors.back();
     REQUIRE(npcDebug.id == npcId);
     REQUIRE(npcDebug.kind == advanced_platformer::ActorDebugKind::Npc);
-    REQUIRE(npcDebug.npcState == advanced_platformer::NpcState::Chase);
-    REQUIRE(npcDebug.npcTactic == advanced_platformer::NpcTactic::Pursuer);
-    REQUIRE_FALSE(npcDebug.machineState.has_value());
+    REQUIRE(npcDebug.machineState == "idle");
     REQUIRE(npcDebug.pathFollower.has_value());
     const advanced_platformer::PathFollowerDebugInfo emptyPath =
         npcDebug.pathFollower.value_or(advanced_platformer::PathFollowerDebugInfo{});

@@ -181,9 +181,7 @@ namespace advanced_platformer
             return nullptr;
         }
 
-        const Actor* nearestNpcWithMachine(
-            const std::vector<const Actor*>& shown,
-            const Aabb& nearTo)
+        const Actor* nearestNpc(const std::vector<const Actor*>& shown, const Aabb& nearTo)
         {
             const Actor* nearest = nullptr;
             for (const Actor* actor : shown)
@@ -279,17 +277,9 @@ namespace advanced_platformer
             {
                 info.animation = actor.animator->current;
             }
-            if (actor.brain.has_value() && !actor.machine.has_value())
-            {
-                info.npcState = actor.brain->state;
-            }
             if (actor.machine.has_value())
             {
                 info.machineState = activeNpcMachineState(*actor.machine).name;
-            }
-            else if (actor.brain.has_value())
-            {
-                info.npcTactic = actor.brain->tactic;
             }
             if (actor.pathFollower.has_value())
             {
@@ -348,8 +338,8 @@ namespace advanced_platformer
         }
         else
         {
-            followed = nearestNpcWithMachine(
-                shown, player != nullptr ? player->body.bounds : scene.cameraBounds);
+            followed =
+                nearestNpc(shown, player != nullptr ? player->body.bounds : scene.cameraBounds);
         }
         if (followed != nullptr)
         {

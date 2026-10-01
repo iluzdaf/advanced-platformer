@@ -13,10 +13,12 @@
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/render/animation.hpp"
 #include "advanced_platformer/render/sprite.hpp"
+#include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "advanced_platformer/world/world.hpp"
 #include "support/actor_builder.hpp"
 #include "support/actor_components.hpp"
 #include "support/fixed_step.hpp"
+#include "support/npc_machine_builder.hpp"
 #include "support/require_near.hpp"
 
 namespace
@@ -188,6 +190,8 @@ TEST_CASE("NPC composition does not require a bite attack", "[world][actor]")
     npc.perception = advanced_platformer::NpcPerception{};
     npc.senses = advanced_platformer::NpcSenses{};
     npc.pathFollower = advanced_platformer::PathFollower{};
+    npc.machine = advanced_platformer::startNpcMachine(
+        tests::NpcMachineBuilder::named("test").state("rest", tests::testActivity("idle")));
 
     const advanced_platformer::ActorId npcId = world.addActor(npc);
 

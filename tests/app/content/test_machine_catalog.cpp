@@ -3,7 +3,6 @@
 #include <stdexcept>
 #include "content/content_glaze.hpp"
 #include "content/machine_catalog.hpp"
-#include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_activity.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "support/json_document.hpp"
@@ -15,7 +14,10 @@ TEST_CASE("Machine JSON keeps state order, expands from lists and reads holds", 
     auto machineJson = tests::parseJson(
         advanced_platformer::loadContentText("tests/fixtures/catalogs/machines.json"));
     auto& machine = machineJson["machines"]["test_machine"];
-    machine["states"].get_array().push_back(tests::object({{"name", "flee"}, {"does", "retreat"}}));
+    machine["states"].get_array().push_back(
+        tests::object(
+            {{"name", "flee"},
+             {"does", tests::object({{"script", "rat"}, {"activity", "flee"}})}}));
     machine["transitions"].get_array().push_back(
         tests::object(
             {{"from", tests::list({"rest", "hunt"})},
@@ -29,12 +31,8 @@ TEST_CASE("Machine JSON keeps state order, expands from lists and reads holds", 
     REQUIRE(parsed.name == "test_machine");
     REQUIRE(parsed.states.size() == 3);
     REQUIRE(parsed.states[0].name == "rest");
-    REQUIRE(
-        std::get<advanced_platformer::BuiltInNpcActivity>(parsed.states[0].does).state ==
-        advanced_platformer::NpcState::Idle);
-    REQUIRE(
-        std::get<advanced_platformer::BuiltInNpcActivity>(parsed.states[2].does).state ==
-        advanced_platformer::NpcState::Retreat);
+    REQUIRE(parsed.states[0].does == advanced_platformer::LuaNpcActivity{"test", "idle"});
+    REQUIRE(parsed.states[2].does == advanced_platformer::LuaNpcActivity{"rat", "flee"});
     REQUIRE(parsed.transitions.size() == 4);
     REQUIRE(parsed.transitions[1].after == 0.5F);
     REQUIRE(parsed.transitions[1].when.at("targetKnown") == false);
@@ -45,47 +43,31 @@ TEST_CASE("Machine JSON keeps state order, expands from lists and reads holds", 
         advanced_platformer::npcStateMachine(catalog, "missing"), std::invalid_argument);
 }
 
-TEST_CASE("Machine JSON reads explicitly tagged Lua activities", "[app][machines][lua]")
-{
-    auto machineJson = tests::parseJson(
-        advanced_platformer::loadContentText("tests/fixtures/catalogs/machines.json"));
-    machineJson["machines"]["test_machine"]["states"][0]["does"] =
-        tests::object({{"kind", "lua"}, {"script", "rat"}, {"activity", "flee"}});
-
-    const auto catalog =
-        advanced_platformer::parseMachineCatalog(tests::dumpJson(machineJson), "machines.json");
-    const auto& activity = std::get<advanced_platformer::LuaNpcActivity>(
-        advanced_platformer::npcStateMachine(catalog, "test_machine").states[0].does);
-    REQUIRE(activity.script == "rat");
-    REQUIRE(activity.activity == "flee");
-}
-
 TEST_CASE("Machine JSON rejects what the engine cannot run, naming where", "[app][machines]")
 {
     auto machineJson = tests::parseJson(
         advanced_platformer::loadContentText("tests/fixtures/catalogs/machines.json"));
     auto& machine = machineJson["machines"]["test_machine"];
     const char* expected = "";
-    SECTION("Unknown activity")
+    SECTION("An activity named by a string")
     {
-        machine["states"][0]["does"] = "sleep";
-        expected = "machines.test_machine.states[0].does";
+        machine["states"][0]["does"] = "idle";
+        expected = "expected an object, found 'idle'";
     }
     SECTION("An empty state name")
     {
         machine["states"][0]["name"] = "";
         expected = "machines.test_machine.states[0].name";
     }
-    SECTION("An unknown tagged activity kind")
+    SECTION("An activity without a script")
     {
-        machine["states"][0]["does"] =
-            tests::object({{"kind", "python"}, {"script", "rat"}, {"activity", "flee"}});
-        expected = "states[0].does.kind";
-    }
-    SECTION("A tagged activity without a script")
-    {
-        machine["states"][0]["does"] = tests::object({{"kind", "lua"}, {"activity", "flee"}});
+        machine["states"][0]["does"] = tests::object({{"activity", "flee"}});
         expected = "missing 'script'";
+    }
+    SECTION("An activity with an unknown field")
+    {
+        machine["states"][0]["does"]["kind"] = "lua";
+        expected = "unknown field 'kind'";
     }
     SECTION("Unknown fact")
     {

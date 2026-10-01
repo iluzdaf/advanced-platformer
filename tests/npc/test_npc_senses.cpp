@@ -9,6 +9,7 @@
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_senses.hpp"
+#include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
 #include "advanced_platformer/world/world.hpp"
 #include "support/require_near.hpp"
@@ -105,7 +106,7 @@ TEST_CASE("A landing is heard once by a ground NPC on the same run", "[npc][sens
     REQUIRE_FALSE(tests::perception(world, npcId).heardLanding);
 }
 
-TEST_CASE("Perception refreshes without clearing brain memory or decision state", "[npc][senses]")
+TEST_CASE("Perception refreshes without clearing brain memory or machine state", "[npc][senses]")
 {
     const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"............", "............", "...c........", "############"})
@@ -119,8 +120,7 @@ TEST_CASE("Perception refreshes without clearing brain memory or decision state"
             .onTeam(advanced_platformer::Team::Enemy)
             .thinking({64.0F, 1.0F}));
     tests::platformerMovement(actor(world, npcId)).grounded = true;
-    brain(world, npcId).state = advanced_platformer::NpcState::Watch;
-    brain(world, npcId).stateElapsed = 0.25F;
+    tests::machine(world, npcId).stateElapsed = 0.25F;
     world.emitNoise({playerId, {72.0F, 48.0F}, advanced_platformer::NoiseKind::Landing});
 
     advanced_platformer::updateNpcSenses(map, world, 0.1F);
@@ -136,8 +136,9 @@ TEST_CASE("Perception refreshes without clearing brain memory or decision state"
     REQUIRE(brain(world, npcId).target == playerId);
     REQUIRE(brain(world, npcId).lastKnownTargetFeet == rememberedFeet);
     REQUIRE_NEAR(brain(world, npcId).targetMemoryRemaining, memoryRemaining - 0.1F);
-    REQUIRE(brain(world, npcId).state == advanced_platformer::NpcState::Watch);
-    REQUIRE(brain(world, npcId).stateElapsed == 0.25F);
+    REQUIRE(
+        advanced_platformer::activeNpcMachineState(tests::machine(world, npcId)).name == "idle");
+    REQUIRE(tests::machine(world, npcId).stateElapsed == 0.25F);
 }
 
 TEST_CASE("A landing across a broken run is not heard", "[npc][senses][noise]")

@@ -158,6 +158,9 @@ namespace tests
         built.perception = advanced_platformer::NpcPerception{};
         built.senses = senses;
         built.pathFollower = advanced_platformer::PathFollower{};
+        // Every NPC runs a machine; one that is not given one stands idle.
+        built.machine =
+            advanced_platformer::startNpcMachine({"idle", {{"idle", {"test", "idle"}}}, {}});
         return Thinking(std::move(built));
     }
 

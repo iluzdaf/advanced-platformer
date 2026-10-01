@@ -81,11 +81,9 @@ target_sources(
     ${PROJECT_SOURCE_DIR}/tests/npc/test_npc_senses.cpp
     ${PROJECT_SOURCE_DIR}/tests/npc/test_npc_state_machine.cpp
     ${PROJECT_SOURCE_DIR}/tests/npc/test_npc_system.cpp
-    ${PROJECT_SOURCE_DIR}/tests/npc/test_npc_built_in_activity.cpp
     ${PROJECT_SOURCE_DIR}/tests/npc/test_npc_facts.cpp
     ${PROJECT_SOURCE_DIR}/tests/npc/test_npc_navigation.cpp
     ${PROJECT_SOURCE_DIR}/tests/npc/test_npc_scripted_activity.cpp
-    ${PROJECT_SOURCE_DIR}/tests/npc/test_npc_transitions.cpp
     ${PROJECT_SOURCE_DIR}/tests/physics/test_body.cpp
     ${PROJECT_SOURCE_DIR}/tests/physics/test_collision.cpp
     ${PROJECT_SOURCE_DIR}/tests/physics/test_segment_cast.cpp

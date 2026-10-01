@@ -2,7 +2,6 @@
 
 #include <optional>
 #include <stdexcept>
-#include <variant>
 
 #include <glm/geometric.hpp>
 #include <glm/vec2.hpp>
@@ -16,7 +15,6 @@
 #include "advanced_platformer/navigation/path_follower.hpp"
 #include "advanced_platformer/navigation/platformer_cells.hpp"
 #include "advanced_platformer/npc/npc.hpp"
-#include "advanced_platformer/npc/npc_built_in_activity.hpp"
 #include "advanced_platformer/npc/npc_activity.hpp"
 #include "advanced_platformer/npc/npc_activity_scripts.hpp"
 #include "advanced_platformer/npc/npc_facts.hpp"
@@ -24,7 +22,6 @@
 #include "advanced_platformer/npc/npc_scripted_activity.hpp"
 #include "advanced_platformer/npc/npc_senses.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
-#include "advanced_platformer/npc/npc_transitions.hpp"
 #include "advanced_platformer/npc/npc_update.hpp"
 #include "advanced_platformer/timing/frame_profile.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
@@ -34,76 +31,8 @@ namespace advanced_platformer
 {
     namespace
     {
-        void enterNpcState(Actor& actor, NpcBrain& brain, PathFollower& follower, NpcState state)
-        {
-            brain.state = state;
-            brain.stateElapsed = 0.0F;
-            enterBuiltInActivity(actor, follower, state);
-        }
-
-        void enterMachineActivity(
-            const NpcUpdate& update,
-            Actor& actor,
-            NpcBrain& brain,
-            PathFollower& follower,
-            const Actor* target,
-            NpcMachine& machine,
-            const NpcFacts& facts)
-        {
-            const NpcActivity& activity = activeNpcMachineState(machine).does;
-            if (const auto* builtIn = std::get_if<BuiltInNpcActivity>(&activity))
-            {
-                enterBuiltInActivity(actor, follower, builtIn->state);
-            }
-            else
-            {
-                enterScriptedActivity(
-                    update,
-                    actor,
-                    brain,
-                    follower,
-                    target,
-                    std::get<LuaNpcActivity>(activity),
-                    facts);
-            }
-            machine.activityEntered = true;
-        }
-
-        void exitMachineActivity(
-            const NpcUpdate& update,
-            Actor& actor,
-            const NpcBrain& brain,
-            const PathFollower& follower,
-            const Actor* target,
-            const NpcActivity& activity,
-            const NpcFacts& facts)
-        {
-            if (const auto* scripted = std::get_if<LuaNpcActivity>(&activity))
-            {
-                exitScriptedActivity(update, actor, brain, follower, target, *scripted, facts);
-            }
-        }
-
-        void updateMachineActivity(
-            const NpcUpdate& update,
-            Actor& actor,
-            NpcBrain& brain,
-            PathFollower& follower,
-            const Actor* target,
-            NpcMachine& machine,
-            const NpcFacts& facts)
-        {
-            const NpcActivity& activity = activeNpcMachineState(machine).does;
-            if (const auto* builtIn = std::get_if<BuiltInNpcActivity>(&activity))
-            {
-                updateBuiltInActivity(
-                    update, actor, brain, follower, target, builtIn->state, facts.stateElapsed);
-                return;
-            }
-            updateScriptedActivity(
-                update, actor, brain, follower, target, std::get<LuaNpcActivity>(activity), facts);
-        }
-
+        // A transition exits the old state's activity, then the new state's activity is
+        // entered and updated on the same tick.
         void updateMachineState(
             const NpcUpdate& update,
             Actor& actor,
@@ -114,11 +43,11 @@ namespace advanced_platformer
             NpcMachine& machine,
             const NpcFacts& facts)
         {
-            const NpcActivity previous = activeNpcMachineState(machine).does;
+            const LuaNpcActivity previous = activeNpcMachineState(machine).does;
             const bool fired = advanceNpcMachine(machine, facts, update.deltaTime).has_value();
             if (fired && machine.activityEntered)
             {
-                exitMachineActivity(update, actor, brain, follower, target, previous, facts);
+                exitScriptedActivity(update, actor, brain, follower, target, previous, facts);
                 machine.activityEntered = false;
             }
 
@@ -128,54 +57,33 @@ namespace advanced_platformer
                 activeFacts = gatherNpcFacts(
                     update.map, actor, brain, perception, target, machine.stateElapsed);
             }
+            const LuaNpcActivity& activity = activeNpcMachineState(machine).does;
             if (!machine.activityEntered)
             {
-                enterMachineActivity(update, actor, brain, follower, target, machine, activeFacts);
+                enterScriptedActivity(
+                    update, actor, brain, follower, target, activity, activeFacts);
+                machine.activityEntered = true;
             }
-            updateMachineActivity(update, actor, brain, follower, target, machine, activeFacts);
-        }
-
-        void updateTacticState(
-            const NpcUpdate& update,
-            Actor& actor,
-            NpcBrain& brain,
-            PathFollower& follower,
-            const Actor* target,
-            const NpcFacts& facts)
-        {
-            if (const std::optional<NpcState> next = nextNpcState(brain.tactic, brain.state, facts))
-            {
-                enterNpcState(actor, brain, follower, *next);
-            }
-            updateBuiltInActivity(
-                update, actor, brain, follower, target, brain.state, brain.stateElapsed);
+            updateScriptedActivity(update, actor, brain, follower, target, activity, activeFacts);
         }
 
         // Which state comes next is decided once, from the facts, before the state acts.
         void updateNpcState(const NpcUpdate& update, Actor& actor)
         {
             if (!actor.brain.has_value() || !actor.perception.has_value() ||
-                !actor.pathFollower.has_value())
+                !actor.pathFollower.has_value() || !actor.machine.has_value())
             {
                 throw std::logic_error("An NPC is missing behaviour components");
             }
             NpcBrain& brain = *actor.brain;
             const NpcPerception& perception = *actor.perception;
             PathFollower& follower = *actor.pathFollower;
+            NpcMachine& machine = *actor.machine;
             const Actor* target = livingTarget(update.world, brain);
-            const float stateElapsed =
-                actor.machine.has_value() ? actor.machine->stateElapsed : brain.stateElapsed;
             const NpcFacts facts =
-                gatherNpcFacts(update.map, actor, brain, perception, target, stateElapsed);
-            if (actor.machine.has_value())
-            {
-                updateMachineState(
-                    update, actor, brain, perception, follower, target, *actor.machine, facts);
-            }
-            else
-            {
-                updateTacticState(update, actor, brain, follower, target, facts);
-            }
+                gatherNpcFacts(update.map, actor, brain, perception, target, machine.stateElapsed);
+            updateMachineState(update, actor, brain, perception, follower, target, machine, facts);
+            machine.stateElapsed += update.deltaTime;
         }
     }
 
@@ -201,18 +109,9 @@ namespace advanced_platformer
             }
 
             actor.intentions = {};
-            NpcBrain& brain = *actor.brain;
             if (actor.life == LifeState::Alive)
             {
                 updateNpcState(update, actor);
-                if (actor.machine.has_value())
-                {
-                    actor.machine->stateElapsed += deltaTime;
-                }
-                else
-                {
-                    brain.stateElapsed += deltaTime;
-                }
             }
         }
     }

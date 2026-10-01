@@ -61,23 +61,19 @@ namespace advanced_platformer
         }
         if (definition.senses)
         {
+            if (definition.machine.empty())
+            {
+                throw std::invalid_argument("An NPC with senses requires a state machine");
+            }
             actor.brain = NpcBrain{};
             actor.perception = NpcPerception{};
-            actor.brain->tactic = definition.tactic;
             actor.senses = definition.senses;
             actor.pathFollower = PathFollower{};
-        }
-        else if (definition.tactic != NpcTactic::Pursuer)
-        {
-            throw std::invalid_argument("A tactic requires senses");
-        }
-        if (!definition.machine.empty())
-        {
-            if (!actor.brain)
-            {
-                throw std::invalid_argument("A state machine requires senses");
-            }
             actor.machine = startNpcMachine(npcStateMachine(machines, definition.machine));
+        }
+        else if (!definition.machine.empty())
+        {
+            throw std::invalid_argument("A state machine requires senses");
         }
         actor.patrol = patrol;
         actor.bite = definition.bite;

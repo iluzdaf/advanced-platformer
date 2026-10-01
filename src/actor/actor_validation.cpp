@@ -122,24 +122,22 @@ namespace advanced_platformer
 
         void validateNpc(const Actor& actor)
         {
-            const bool hasAnyNpcComponent = actor.brain.has_value() || actor.senses.has_value() ||
-                                            actor.perception.has_value() ||
-                                            actor.patrol.has_value() ||
-                                            actor.pathFollower.has_value();
+            const bool hasAnyNpcComponent =
+                actor.brain.has_value() || actor.senses.has_value() ||
+                actor.perception.has_value() || actor.patrol.has_value() ||
+                actor.pathFollower.has_value() || actor.machine.has_value();
             const bool hasRequiredNpcComponents =
                 actor.brain.has_value() && actor.perception.has_value() &&
-                actor.senses.has_value() && actor.pathFollower.has_value();
+                actor.senses.has_value() && actor.pathFollower.has_value() &&
+                actor.machine.has_value();
             if (hasAnyNpcComponent && !hasRequiredNpcComponents)
             {
                 throw std::invalid_argument(
-                    "NPC actors require a brain, perception, senses, and path follower");
+                    "NPC actors require a brain, perception, senses, a path follower, and a state "
+                    "machine");
             }
             if (actor.machine.has_value())
             {
-                if (!actor.brain.has_value())
-                {
-                    throw std::invalid_argument("An NPC state machine requires a brain");
-                }
                 validateNpcStateMachine(actor.machine->definition);
                 if (actor.machine->active >= actor.machine->definition.states.size() ||
                     actor.machine->heldFor.size() != actor.machine->definition.transitions.size())
@@ -150,7 +148,6 @@ namespace advanced_platformer
             }
             if (actor.brain.has_value())
             {
-                requireSeconds(actor.brain->stateElapsed, "NPC state elapsed");
                 requireSeconds(actor.brain->targetMemoryRemaining, "NPC target memory remaining");
                 if (!isFinite(actor.brain->lastKnownTargetFeet))
                 {

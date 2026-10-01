@@ -6,7 +6,6 @@
 #include <fstream>
 #include <ios>
 #include <stdexcept>
-#include <variant>
 #include <vector>
 
 #include <glm/vec2.hpp>
@@ -19,7 +18,6 @@
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/npc/npc.hpp"
-#include "advanced_platformer/npc/npc_activity.hpp"
 #include "advanced_platformer/npc/npc_activity_scripts.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "lua_npc_scripts.hpp"
@@ -140,17 +138,12 @@ TEST_CASE("Every shipped Lua activity runs without errors", "[app][content][lua]
     {
         for (const advanced_platformer::NpcMachineState& state : machine.states)
         {
-            const auto* activity = std::get_if<advanced_platformer::LuaNpcActivity>(&state.does);
-            if (activity == nullptr)
-            {
-                continue;
-            }
             for (const advanced_platformer::NpcActivitySnapshot& snapshot : situations)
             {
                 const advanced_platformer::ActorId actor{nextActor++};
-                scripts.enter(actor, *activity, snapshot);
-                scripts.update(actor, *activity, snapshot, 1.0F / 120.0F);
-                scripts.exit(actor, *activity, snapshot);
+                scripts.enter(actor, state.does, snapshot);
+                scripts.update(actor, state.does, snapshot, 1.0F / 120.0F);
+                scripts.exit(actor, state.does, snapshot);
             }
             INFO(machineName << " " << state.name);
             REQUIRE(scripts.diagnostics().empty());

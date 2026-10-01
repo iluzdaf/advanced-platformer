@@ -5,7 +5,6 @@
 #include "debug_ui_layout.hpp"
 #include "navigation_debug.hpp"
 #include "navigation_debug_ui.hpp"
-#include "npc_names.hpp"
 #include "graphics/display_viewport.hpp"
 
 #include <cstddef>
@@ -318,12 +317,6 @@ namespace advanced_platformer
                 drawShadowedText(
                     drawList, labelPosition, WorldLabelColour, nameOf(actor.animation.value()));
             }
-            if (actor.npcState.has_value())
-            {
-                labelPosition.y += lineHeight;
-                drawShadowedText(
-                    drawList, labelPosition, WorldLabelColour, nameOf(actor.npcState.value()));
-            }
             if (actor.machineState.has_value())
             {
                 labelPosition.y += lineHeight;
@@ -419,11 +412,6 @@ namespace advanced_platformer
                 drawTextLine(drawList, position, text, TextDetailColour, Indentation);
             }
 
-            if (actor.npcTactic.has_value())
-            {
-                std::snprintf(text, sizeof(text), "tactic: %s", nameOf(actor.npcTactic.value()));
-                drawTextLine(drawList, position, text, TextDetailColour, Indentation);
-            }
             position.y += ActorTextGap;
         }
 

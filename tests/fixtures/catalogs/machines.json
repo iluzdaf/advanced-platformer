@@ -2,8 +2,8 @@
   "machines": {
     "test_machine": {
       "states": [
-        { "name": "rest", "does": "idle" },
-        { "name": "hunt", "does": "chase" }
+        { "name": "rest", "does": { "script": "test", "activity": "idle" } },
+        { "name": "hunt", "does": { "script": "test", "activity": "chase" } }
       ],
       "transitions": [
         { "from": "rest", "to": "hunt", "when": { "targetKnown": true } },

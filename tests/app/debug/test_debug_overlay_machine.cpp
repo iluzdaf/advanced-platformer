@@ -11,7 +11,6 @@
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
-#include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "advanced_platformer/render/camera.hpp"
 #include "advanced_platformer/world/world.hpp"
@@ -25,7 +24,7 @@
 #include "support/add_player.hpp"
 #include "support/fixed_step.hpp"
 
-TEST_CASE("The overlay shows a machine state in place of the built-in state", "[app][debug]")
+TEST_CASE("The overlay shows an NPC's machine state", "[app][debug]")
 {
     advanced_platformer::World world;
     world.addActor(
@@ -35,7 +34,7 @@ TEST_CASE("The overlay shows a machine state in place of the built-in state", "[
             .thinking({})
             .running(
                 tests::NpcMachineBuilder::named("test").state(
-                    "rest", advanced_platformer::NpcState::Idle)));
+                    "rest", tests::testActivity("idle"))));
     const advanced_platformer::TileMap map = tests::TileMapBuilder({"......", "######"});
     const advanced_platformer::CameraController cameraController{
         advanced_platformer::Camera{}, {80.0F, 40.0F}};
@@ -45,8 +44,6 @@ TEST_CASE("The overlay shows a machine state in place of the built-in state", "[
 
     REQUIRE(debug.actors.size() == 1);
     REQUIRE(debug.actors.front().machineState == "rest");
-    REQUIRE_FALSE(debug.actors.front().npcState.has_value());
-    REQUIRE_FALSE(debug.actors.front().npcTactic.has_value());
 }
 
 namespace
@@ -60,8 +57,8 @@ namespace
             .thinking({})
             .running(
                 tests::NpcMachineBuilder::named("test")
-                    .state("rest", advanced_platformer::NpcState::Idle)
-                    .state("hunt", advanced_platformer::NpcState::Chase)
+                    .state("rest", tests::testActivity("idle"))
+                    .state("hunt", tests::testActivity("chase"))
                     .transition("rest", "hunt")
                     .when("targetKnown", true));
     }
@@ -98,14 +95,11 @@ namespace
     }
 }
 
-TEST_CASE("The machine window follows the NPC with a machine nearest the player", "[app][debug]")
+TEST_CASE("The machine window follows the NPC nearest the player", "[app][debug]")
 {
     advanced_platformer::World world;
     tests::addPlayer(
         world, tests::ActorBuilder::sized({12.0F, 12.0F}).at({100.0F, 20.0F}).platforming());
-    // The nearest NPC has no machine, so the nearer of the two that do is followed.
-    world.addActor(
-        tests::ActorBuilder::sized({12.0F, 12.0F}).at({110.0F, 20.0F}).platforming().thinking({}));
     world.addActor(machineNpc({200.0F, 20.0F}));
     const advanced_platformer::ActorId nearer = world.addActor(machineNpc({60.0F, 20.0F}));
 
@@ -133,10 +127,7 @@ TEST_CASE("The machine window follows the NPC under the cursor instead", "[app][
     const advanced_platformer::DebugOverlay underCursor =
         overlayOf(world, glm::vec2{206.0F, 26.0F});
     REQUIRE(followedBy(underCursor) == further);
-    // The cursor over an NPC without a machine, or over nothing, changes nothing.
-    world.addActor(
-        tests::ActorBuilder::sized({12.0F, 12.0F}).at({150.0F, 20.0F}).platforming().thinking({}));
-    REQUIRE(followedBy(overlayOf(world, glm::vec2{156.0F, 26.0F})) != further);
+    // The cursor over nothing changes nothing.
     REQUIRE(followedBy(overlayOf(world, glm::vec2{10.0F, 10.0F})) != further);
 }
 

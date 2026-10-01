@@ -2,12 +2,12 @@
   "machines": {
     "pursuer": {
       "states": [
-        { "name": "idle", "does": { "kind": "lua", "script": "common", "activity": "idle" } },
-        { "name": "patrol", "does": { "kind": "lua", "script": "common", "activity": "patrol" } },
-        { "name": "chase", "does": { "kind": "lua", "script": "common", "activity": "chase" } },
-        { "name": "bite", "does": { "kind": "lua", "script": "common", "activity": "bite" } },
-        { "name": "shoot", "does": { "kind": "lua", "script": "common", "activity": "shoot" } },
-        { "name": "search", "does": { "kind": "lua", "script": "common", "activity": "search" } }
+        { "name": "idle", "does": { "script": "common", "activity": "idle" } },
+        { "name": "patrol", "does": { "script": "common", "activity": "patrol" } },
+        { "name": "chase", "does": { "script": "common", "activity": "chase" } },
+        { "name": "bite", "does": { "script": "common", "activity": "bite" } },
+        { "name": "shoot", "does": { "script": "common", "activity": "shoot" } },
+        { "name": "search", "does": { "script": "common", "activity": "search" } }
       ],
       "transitions": [
         {
@@ -51,8 +51,8 @@
     },
     "spider": {
       "states": [
-        { "name": "patrol", "does": { "kind": "lua", "script": "spider", "activity": "patrol" } },
-        { "name": "pursue", "does": { "kind": "lua", "script": "spider", "activity": "pursue" } }
+        { "name": "patrol", "does": { "script": "spider", "activity": "patrol" } },
+        { "name": "pursue", "does": { "script": "spider", "activity": "pursue" } }
       ],
       "transitions": [
         { "from": "patrol", "to": "pursue", "when": { "targetVisible": true } },
@@ -66,9 +66,9 @@
     },
     "boar": {
       "states": [
-        { "name": "sleep", "does": { "kind": "lua", "script": "boar", "activity": "sleep" } },
-        { "name": "charge", "does": { "kind": "lua", "script": "boar", "activity": "charge" } },
-        { "name": "stunned", "does": { "kind": "lua", "script": "boar", "activity": "stunned" } }
+        { "name": "sleep", "does": { "script": "boar", "activity": "sleep" } },
+        { "name": "charge", "does": { "script": "boar", "activity": "charge" } },
+        { "name": "stunned", "does": { "script": "boar", "activity": "stunned" } }
       ],
       "transitions": [
         {
@@ -98,9 +98,9 @@
     },
     "rat": {
       "states": [
-        { "name": "patrol", "does": { "kind": "lua", "script": "common", "activity": "patrol" } },
-        { "name": "flee", "does": { "kind": "lua", "script": "rat", "activity": "flee" } },
-        { "name": "bite", "does": { "kind": "lua", "script": "common", "activity": "bite" } }
+        { "name": "patrol", "does": { "script": "common", "activity": "patrol" } },
+        { "name": "flee", "does": { "script": "rat", "activity": "flee" } },
+        { "name": "bite", "does": { "script": "common", "activity": "bite" } }
       ],
       "transitions": [
         {
@@ -120,12 +120,12 @@
     },
     "keep_distance": {
       "states": [
-        { "name": "idle", "does": { "kind": "lua", "script": "common", "activity": "idle" } },
-        { "name": "patrol", "does": { "kind": "lua", "script": "common", "activity": "patrol" } },
-        { "name": "retreat", "does": { "kind": "lua", "script": "common", "activity": "retreat" } },
-        { "name": "shoot", "does": { "kind": "lua", "script": "common", "activity": "shoot" } },
-        { "name": "chase", "does": { "kind": "lua", "script": "common", "activity": "chase" } },
-        { "name": "watch", "does": { "kind": "lua", "script": "common", "activity": "watch" } }
+        { "name": "idle", "does": { "script": "common", "activity": "idle" } },
+        { "name": "patrol", "does": { "script": "common", "activity": "patrol" } },
+        { "name": "retreat", "does": { "script": "common", "activity": "retreat" } },
+        { "name": "shoot", "does": { "script": "common", "activity": "shoot" } },
+        { "name": "chase", "does": { "script": "common", "activity": "chase" } },
+        { "name": "watch", "does": { "script": "common", "activity": "watch" } }
       ],
       "transitions": [
         {

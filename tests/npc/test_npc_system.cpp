@@ -58,132 +58,17 @@ TEST_CASE("NPC behaviour rejects invalid timing", "[npc][validation]")
         advanced_platformer::updateNpcBehaviour(map, world, -0.1F), std::invalid_argument);
 }
 
-TEST_CASE("A chasing NPC searches for a lost target, then patrols again", "[npc][fsm]")
+TEST_CASE("An NPC without a state machine cannot act", "[npc][validation]")
 {
-    const advanced_platformer::TileMap map =
-        tests::TileMapBuilder({"............", "............", "............", "############"});
+    const advanced_platformer::TileMap map = tests::TileMapBuilder({"...", "...", "###"});
     advanced_platformer::World world;
-    const advanced_platformer::ActorId npcId =
-        world.addActor(makeNpc({22.0F, 28.0F}).patrolling({24.0F, 32.0F}, {72.0F, 32.0F}));
-    brain(world, npcId).state = advanced_platformer::NpcState::Chase;
-    brain(world, npcId).lastKnownTargetFeet = {22.0F, 28.0F};
-    tests::senses(actor(world, npcId)).searchDuration = 0.25F;
+    const advanced_platformer::ActorId npcId = world.addActor(makeNpc({8.0F, 28.0F}));
+    actor(world, npcId).machine.reset();
+    tests::RecordingNpcScripts scripts;
 
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F);
-    REQUIRE(brain(world, npcId).state == advanced_platformer::NpcState::Search);
-
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F);
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F);
-    REQUIRE(brain(world, npcId).state == advanced_platformer::NpcState::Search);
-
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F);
-    REQUIRE(brain(world, npcId).state == advanced_platformer::NpcState::Patrol);
-}
-
-TEST_CASE("A chasing NPC that does not search patrols again at once", "[npc][fsm]")
-{
-    const advanced_platformer::TileMap map =
-        tests::TileMapBuilder({"............", "............", "............", "############"});
-    advanced_platformer::World world;
-    const advanced_platformer::ActorId npcId =
-        world.addActor(makeNpc({22.0F, 28.0F}).patrolling({24.0F, 32.0F}, {72.0F, 32.0F}));
-    brain(world, npcId).state = advanced_platformer::NpcState::Chase;
-    tests::senses(actor(world, npcId)).searchDuration = 0.0F;
-
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F);
-    REQUIRE(brain(world, npcId).state == advanced_platformer::NpcState::Patrol);
-}
-
-TEST_CASE("A KeepDistance NPC shoots once its target is at its standoff", "[npc][fsm]")
-{
-    const advanced_platformer::TileMap map =
-        tests::TileMapBuilder({"........", "........", "########"});
-    advanced_platformer::World world;
-    const advanced_platformer::ActorId playerId =
-        tests::addPlayer(world, makePlayer({24.0F, 32.0F}));
-    const advanced_platformer::ActorId npcId =
-        world.addActor(makeNpc({88.0F, 32.0F}).onTeam(advanced_platformer::Team::Enemy).shooting());
-    brain(world, npcId).tactic = advanced_platformer::NpcTactic::KeepDistance;
-    tests::senses(actor(world, npcId)).standoffDistance = 48.0F;
-    brain(world, npcId).state = advanced_platformer::NpcState::Retreat;
-    brain(world, npcId).target = playerId;
-    brain(world, npcId).lastKnownTargetFeet = {24.0F, 32.0F};
-    tests::perception(world, npcId).targetVisible = true;
-
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F);
-    REQUIRE(brain(world, npcId).state == advanced_platformer::NpcState::Shoot);
-    REQUIRE(actor(world, npcId).intentions.direction == glm::vec2{0.0F, 0.0F});
-    REQUIRE(actor(world, npcId).intentions.primaryAttackPressed);
-}
-
-TEST_CASE("An NPC with a machine takes its activity from the machine, not its tactic", "[npc][fsm]")
-{
-    const advanced_platformer::TileMap map =
-        tests::TileMapBuilder({"........", "........", "########"});
-    advanced_platformer::World world;
-    const advanced_platformer::ActorId playerId =
-        tests::addPlayer(world, makePlayer({70.0F, 28.0F}));
-    const advanced_platformer::ActorId npcId =
-        world.addActor(makeNpc({24.0F, 32.0F})
-                           .running(
-                               tests::NpcMachineBuilder::named("test")
-                                   .state("nap", advanced_platformer::NpcState::Watch)
-                                   .state("hunt", advanced_platformer::NpcState::Chase)
-                                   .transition("nap", "hunt")
-                                   .when("targetKnown", true)));
-    brain(world, npcId).tactic = advanced_platformer::NpcTactic::KeepDistance;
-
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F);
-    REQUIRE(advanced_platformer::activeNpcMachineState(machine(world, npcId)).name == "nap");
-    REQUIRE(actor(world, npcId).intentions.aimDirection.x != 0.0F);
-
-    // This target is close enough for the KeepDistance tactic to retreat, but the machine
-    // enters Chase and moves towards it instead.
-    brain(world, npcId).target = playerId;
-    brain(world, npcId).lastKnownTargetFeet = {70.0F, 28.0F};
-    tests::perception(world, npcId).targetVisible = true;
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F);
-    REQUIRE(
-        advanced_platformer::activeNpcMachineState(
-            actor(world, npcId).machine.value_or(advanced_platformer::NpcMachine{}))
-            .name == "hunt");
-    REQUIRE(actor(world, npcId).intentions.direction.x > 0.0F);
-}
-
-TEST_CASE("A machine-controlled NPC does not copy its activity into the enum brain", "[npc][fsm]")
-{
-    const advanced_platformer::TileMap map =
-        tests::TileMapBuilder({"........", "........", "########"});
-    advanced_platformer::World world;
-    const advanced_platformer::ActorId npcId =
-        world.addActor(makeNpc({24.0F, 32.0F})
-                           .running(
-                               tests::NpcMachineBuilder::named("test").state(
-                                   "watch", advanced_platformer::NpcState::Watch)));
-    brain(world, npcId).lastKnownTargetFeet = {70.0F, 32.0F};
-
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F);
-
-    REQUIRE(actor(world, npcId).intentions.aimDirection.x > 0.0F);
-    REQUIRE(brain(world, npcId).state == advanced_platformer::NpcState::Idle);
-}
-
-TEST_CASE("An NPC without a bite continues chasing at close range", "[npc][fsm]")
-{
-    const advanced_platformer::TileMap map = tests::TileMapBuilder({".....", ".....", "#####"});
-    advanced_platformer::World world;
-    const advanced_platformer::ActorId playerId =
-        tests::addPlayer(world, makePlayer({38.0F, 28.0F}));
-    const advanced_platformer::ActorId npcId = world.addActor(makeNpc({22.0F, 28.0F}));
-    brain(world, npcId).target = playerId;
-    brain(world, npcId).lastKnownTargetFeet = {38.0F, 28.0F};
-    tests::perception(world, npcId).targetVisible = true;
-
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F);
-
-    REQUIRE(brain(world, npcId).state == advanced_platformer::NpcState::Chase);
-    REQUIRE_FALSE(actor(world, npcId).intentions.primaryAttackPressed);
-    REQUIRE(actor(world, npcId).intentions.direction.x > 0.0F);
+    REQUIRE_THROWS_AS(
+        advanced_platformer::updateNpcBehaviour(map, world, 0.1F, &scripts), std::logic_error);
+    REQUIRE(scripts.calls.empty());
 }
 
 TEST_CASE("A machine reacts to landing and blocked walking facts", "[npc][machine][movement]")

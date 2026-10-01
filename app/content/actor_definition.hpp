@@ -32,11 +32,11 @@ namespace advanced_platformer
         std::optional<PlatformerMovementConfig> platformer;
         std::optional<FlyingMovement> flying;
         std::optional<SurfaceClimbConfig> surfaceClimb;
-        // Presence creates the brain, perception, and path follower with these senses.
+        // Presence creates the brain, perception, and path follower with these senses, and
+        // requires a machine.
         std::optional<NpcSenses> senses;
-        NpcTactic tactic = NpcTactic::Pursuer;
-        // A data-driven machine in the machine catalog, run instead of the tactic. Empty
-        // for none.
+        // The machine in the machine catalog that decides what the NPC does. Every NPC has
+        // one, and only an NPC: it requires senses.
         std::string machine;
         // Reuse the engine's attack settings. Composition resets their phase/timer state;
         // JSON exposes only configuration fields, never those runtime fields.

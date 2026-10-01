@@ -9,7 +9,6 @@
 #include <string>
 #include <string_view>
 #include <utility>
-#include <variant>
 
 #include "advanced_platformer/math/validation.hpp"
 #include "advanced_platformer/npc/npc_activity.hpp"
@@ -77,18 +76,15 @@ namespace advanced_platformer
                 throw std::invalid_argument(
                     std::format("The state \"{}\" is declared twice", state.name));
             }
-            if (const auto* scripted = std::get_if<LuaNpcActivity>(&state.does))
+            if (state.does.script.empty())
             {
-                if (scripted->script.empty())
-                {
-                    throw std::invalid_argument(
-                        std::format("The state \"{}\" needs a Lua script name", state.name));
-                }
-                if (scripted->activity.empty())
-                {
-                    throw std::invalid_argument(
-                        std::format("The state \"{}\" needs a Lua activity name", state.name));
-                }
+                throw std::invalid_argument(
+                    std::format("The state \"{}\" needs a Lua script name", state.name));
+            }
+            if (state.does.activity.empty())
+            {
+                throw std::invalid_argument(
+                    std::format("The state \"{}\" needs a Lua activity name", state.name));
             }
         }
         for (const NpcMachineTransition& transition : machine.transitions)

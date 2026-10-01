@@ -42,7 +42,7 @@ The current example includes:
 - scrolling maps and a dead-zone camera
 - actors assembled by composition
 - player and NPC control through the same `InputIntentions`
-- enum-and-switch NPC state machines, sensing, and target memory
+- data-driven NPC state machines running Lua activities, sensing, and target memory
 - flying and platformer pathfinding
 - 360-degree projectiles and a timed bite attack
 - health, death, respawning, pickups, inventory, and three connected levels
@@ -250,15 +250,14 @@ components supply its capabilities.
 
 ### Composition recipe
 
-| Capability     | Components                                               | Rule                                                                    |
-| -------------- | -------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Movement       | `PlatformerMovement` or `FlyingMovement`                 | Exactly one is required.                                                |
-| Climbing       | `SurfaceClimb`                                           | Optional; requires `PlatformerMovement`.                                |
-| NPC control    | `NpcBrain`, `NpcPerception`, `NpcSenses`, `PathFollower` | Add these together; a `Patrol` is optional.                             |
-| Machine policy | `NpcMachine`                                             | Requires NPC control; chooses activities instead of the brain's tactic. |
-| Primary attack | `BiteAttack` or `RangedWeapon`                           | At most one is configured.                                              |
-| Contact attack | `ContactDamage`                                          | Can coexist with either primary attack and is requested separately.     |
-| Presentation   | `Sprite` and `Animator`                                  | An animator needs a sprite and a complete animation set.                |
+| Capability     | Components                                                             | Rule                                                                |
+| -------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Movement       | `PlatformerMovement` or `FlyingMovement`                               | Exactly one is required.                                            |
+| Climbing       | `SurfaceClimb`                                                         | Optional; requires `PlatformerMovement`.                            |
+| NPC control    | `NpcBrain`, `NpcPerception`, `NpcSenses`, `PathFollower`, `NpcMachine` | Add these together; a `Patrol` is optional.                         |
+| Primary attack | `BiteAttack` or `RangedWeapon`                                         | At most one is configured.                                          |
+| Contact attack | `ContactDamage`                                                        | Can coexist with either primary attack and is requested separately. |
+| Presentation   | `Sprite` and `Animator`                                                | An animator needs a sprite and a complete animation set.            |
 
 The application writes player intentions; NPC activities write the same structure.
 An attacking actor needs a non-neutral team for opponent filtering. Health and
@@ -407,7 +406,7 @@ location.
 
 `NpcSenses` holds configuration. `NpcPerception` holds transient sensing results
 (`targetVisible` and `heardLanding`), replaced on every sensing update. `NpcBrain`
-holds decision state and persistent target memory. Behaviour assembles `NpcFacts`
+holds persistent target memory, and `NpcMachine` the decision state. Behaviour assembles `NpcFacts`
 from perception, memory, and other actor components; facts are a policy snapshot,
 not another store of sensing state. Debug visibility reads the same perception.
 
@@ -438,65 +437,36 @@ endpoints are goals in the same way.
 Sensing only records observations. It does not decide whether to patrol, chase, bite,
 or shoot. This keeps perception and decisions separately testable.
 
-### Explicit state machine
+### State machine
 
-Built-in states are declared in [`npc.hpp`](../include/advanced_platformer/npc/npc.hpp).
-`NpcTactic` selects Pursuer or KeepDistance policy. An update has three steps:
+Every NPC runs an `NpcMachine`, built from a machine in `machines.json`. Each named state
+runs a named Lua activity, and transitions have a `from`, a `to`, a `when` and an
+`after`. An update has three steps:
 
 1. `gatherNpcFacts` in `npc_facts.cpp` collects sensing, target memory, movement,
-   attacks, and state time into `NpcFacts`. [CONTENT.md](CONTENT.md#state-machines) defines the machine-visible
-   facts and their timing.
-2. `nextNpcState` in `npc_transitions.cpp` is the transition table: a switch over the
-   current state that returns the state to enter, or nothing to stay. It reads only the
-   tactic and the facts, so a test hands it those and expects a state. An NPC makes at
-   most one transition an update. A known target is pursued from whichever state
-   notices it, and a lost one leaves the NPC where the brain's [tactic](#tactics)
-   answers.
-3. Entering a state resets its time and route. The activity, in `npc_built_in_activity.cpp`,
-   then requests a goal, aim, or attack through `InputIntentions`. For example, Chase follows a path to the
-   last known target position, while Retreat moves away from it and requests an attack.
-   Movement and combat execute those requests later in the same simulation step.
+   attacks, and state time into `NpcFacts`. [CONTENT.md](CONTENT.md#state-machines)
+   defines the machine-visible facts and their timing.
+2. `advanceNpcMachine` chooses the state. `when` is a map of fact names to the value
+   each must hold, answered by the rows in `npc_fact_rows.cpp`. `after` is how long every
+   condition must hold before the transition fires; the hold restarts when a condition
+   drops. Among the transitions from the active state, the first whose conditions have
+   held long enough fires, so a transition's position in the data is its priority, and
+   at most one fires an update.
+3. A transition exits the old state's activity, resets the state's time, clears the
+   route and enters the new activity. The active activity then updates, and its command
+   requests a route, aim, or attack through `InputIntentions`. For example, a chase
+   routes to the last known target position, while a retreat moves away from it and
+   requests an attack. Movement and combat execute those requests later in the same
+   simulation step.
 
-### Tactics
+Loading rejects a machine with no states, a repeated state name, a transition from or
+to a state it lacks, a condition on a fact no row answers, or a hold that is not a
+finite, non-negative time, and names the transition.
 
-`NpcTactic` is one named policy on the brain: Pursuer or KeepDistance. The transition
-table asks it two questions, what to do about a target the NPC knows of and where a
-lost one leaves it, and shares every other transition. A Pursuer answers the first with
-the attack that reaches, a bite before a shot, or Chase, and the second with Search. A
-KeepDistance NPC answers Retreat while the target is nearer than its standoff and
-otherwise the same, and watches from where it stands rather than walk to where the
-target was. The zombie is a Pursuer. The zombie soldier keeps its distance through the
-`keep_distance` machine, the KeepDistance tactic written as data over the same states,
-facts and activities.
-
-A tactic chooses; it never adds behaviour. A state, its activity, the facts it decides on
-and any capability it uses exist first, so healing instead of attacking is a heal
-component, a hurt fact and a Heal state before it is a tactic that answers Heal. Adding
-a tactic is an enum value and a branch in each question it answers differently, plus
-whatever it needs, added once for every tactic to use.
-
-### Data-driven state machine
-
-An NPC may carry an `NpcMachine` beside its brain, built from a machine in
-`machines.json`. When it does, the machine chooses the activity and the tactic is not
-asked. A named state runs either a built-in C++ activity or a named Lua activity, and
-transitions have a `from`, a `to`, a `when` and an `after`. `when` is a map of fact
-names to the value each must hold, answered by the rows in `npc_fact_rows.cpp` over the
-same `NpcFacts` the enum brain reads. `after` is how long every condition must hold
-before the transition fires; the hold restarts when a condition drops.
-
-`advanceNpcMachine` runs once an update. Among the transitions from the active state,
-the first whose conditions have held long enough fires, so a transition's position in
-the data is its priority, and at most one fires an update. The machine owns the active
-state's elapsed time and calls its activity's exit and enter hooks around a transition.
-Built-in values dispatch the existing C++ activity switch; Lua values use the scripting
-boundary. Machine activities are not copied into `NpcBrain::state`. Loading rejects a
-machine with no states, a repeated state name, a transition
-from or to a state it lacks, a condition on a fact no row answers, or a hold that is
-not a finite, non-negative time, and names the transition.
-
-The zombie soldier runs built-in activities through the `keep_distance` machine, which
-expresses its KeepDistance policy as data.
+The engine supplies facts, routes, movement and combat; machines and scripts hold every
+policy. The zombie and bat close in through the `pursuer` machine, and the zombie
+soldier keeps its range through `keep_distance`, which retreats while its target is
+nearer than its standoff.
 
 Behaviour does not move the body directly. If a ground NPC reaches an awkward platform
 edge and loses its path, navigation can recover to a supported cell before repathing;
@@ -530,13 +500,12 @@ simulation. A failed script replacement leaves the previous script in place. Bef
 removals are applied, an NPC cleanup system discards their script-owned state. Level replacement
 and restart discard that state for every actor before replacing the world.
 
-Machine JSON keeps the short string form for built-in activities. A Lua activity uses
-`{"kind":"lua","script":"rat","activity":"flee"}`. The application loads referenced
-files from `assets/scripts` at startup and rejects missing scripts or activities.
-`common.lua` provides idle, patrol, chase, bite, shoot, search, retreat and watch as Lua
-activities, and every shipped machine uses them instead of the built-in ones: the
-`pursuer` machine for the zombie and bat, `keep_distance` for the zombie soldier, and the
-rat's patrol and bite. The rat uses its own Lua to choose a flee goal while C++ follows the
+A machine state names its activity by script and activity:
+`{"script":"rat","activity":"flee"}`. The application loads referenced files from
+`assets/scripts` at startup and rejects missing scripts or activities. `common.lua`
+provides idle, patrol, chase, bite, shoot, search, retreat and watch, which the shipped
+machines share: the `pursuer` machine for the zombie and bat, `keep_distance` for the
+zombie soldier, and the rat's patrol and bite. The rat uses its own Lua to choose a flee goal while C++ follows the
 path. The spider's Lua patrol and pursuit route it over walls and ceilings the same
 way. The boar's Lua charge activity requests ordinary walking, ledge avoidance,
 and contact damage; its machine uses facts to choose wake and recovery transitions.
@@ -987,30 +956,20 @@ when the actor holds no surface. Follow it for further abilities instead of fill
 
 ### Adding an NPC state
 
-To arrange existing activities differently, add named states and transitions to a
-machine; this needs no new C++ enum value. For a new built-in activity that multiple
-NPCs can use, extend the C++ state path:
+A new state is a named state and its transitions in a machine, running an activity from
+a script; it needs no C++. When the activity needs something scripts cannot see or ask
+for, extend the engine:
 
-1. Add the state to the enum.
-2. Add any fact its transitions decide on to `NpcFacts`, and gather it in
-   `gatherNpcFacts`.
-3. Give its entry and exit conditions branches in `nextNpcState`. Entering resets the
-   state's timing and clears the path for every state.
-4. Let the state's function in `npc_built_in_activity.cpp` choose a goal, facing, or attack
-   intention.
-5. Continue to move and attack through `InputIntentions`; NPC decision code should not
+1. Add any fact its transitions decide on to `NpcFacts`, gather it in
+   `gatherNpcFacts`, and give it a row in `npc_fact_rows.cpp` so a transition can ask
+   for it.
+2. Add a field to `NpcActivitySnapshot` for an observation a script needs, or to
+   `NpcActivityCommand` for a request the engine does not yet carry, and bind it in the
+   scripting target.
+3. Continue to move and attack through `InputIntentions`; NPC decision code should not
    write body position or bypass combat systems.
-6. Test its transitions with facts alone, then its sustained behaviour and the most
-   important interaction with sensing or target memory through `updateNpcBehaviour`.
-7. Add the state name to the debug presentation so it can be inspected while playing.
-8. Name the activity in the machine loader, so a machine in `machines.json` can run it,
-   and give any new fact a row in `npc_fact_rows.cpp`, so a transition can ask for it.
-
-Keep the enum and explicit state branches while the number of states is small. A
-behaviour tree, virtual brain hierarchy, or callback registry would make transitions
-and state ownership harder to follow without solving a current requirement.
-A reusable change to how built-in states are chosen can extend a
-[tactic](#tactics); an enemy-specific sequence can stay in its machine.
+4. Test the engine side with `RecordingNpcScripts` or a small inline fixture script.
+   Shipped scripts are content and are checked only for loading and running cleanly.
 
 ### Creating a new enemy
 
@@ -1028,12 +987,12 @@ engine only where that policy needs facts or capabilities it does not already ex
    check that shipped references resolve.
 
 Take only the steps the enemy needs. They are alternatives, not stages: a machine can
-run built-in activities without Lua, and a new fact does not need a script.
+arrange existing activities without new Lua, and a new fact does not need a script.
 
 Species, capabilities, and decisions are separate concerns. Artwork does not determine
 the brain, and a ranged weapon needs no `Shooter` subclass. The decision policy is
-the brain's [tactic](#tactics) or its machine. Add a new tactic only for a policy shared
-by multiple actors; it may need new facts or built-in states.
+its machine and the activities it runs. Share an activity between actors through a
+common script such as `common.lua`.
 
 ### Choosing the layer
 

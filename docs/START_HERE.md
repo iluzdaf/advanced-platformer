@@ -110,7 +110,7 @@ senses and memory
   The [debug overlay](../README.md#debug-overlay) shows visible targets, remembered
   positions, patrol points, goals, and paths.
 - **Add** an enemy with the [enemy recipe](ARCHITECTURE.md#creating-a-new-enemy), which
-  starts from the smallest route that works, or a reusable built-in state with the
+  starts from the smallest route that works, or a new state with the
   [NPC-state recipe](ARCHITECTURE.md#adding-an-npc-state).
 
 ## Recommended reading route
@@ -193,15 +193,18 @@ intentions instead of reading a keyboard. Follow this route:
 
 1. [`npc_senses.cpp`](../src/npc/npc_senses.cpp)
 2. [`npc_facts.cpp`](../src/npc/npc_facts.cpp)
-3. [`npc_transitions.cpp`](../src/npc/npc_transitions.cpp)
-4. [`npc_built_in_activity.cpp`](../src/npc/npc_built_in_activity.cpp)
+3. [`npc_state_machine.cpp`](../src/npc/npc_state_machine.cpp), which chooses the
+   state from the facts
+4. [`npc_scripted_activity.cpp`](../src/npc/npc_scripted_activity.cpp), which hands the
+   state's Lua activity a snapshot and applies the command it returns
 5. [`npc_system.cpp`](../src/npc/npc_system.cpp), which runs each NPC's decisions
-6. [`attack_system.cpp`](../src/combat/attack_system.cpp)
-7. [`projectile_system.cpp`](../src/combat/projectile_system.cpp)
-8. [`lifecycle.cpp`](../src/actor/lifecycle.cpp)
+6. [`common.lua`](../assets/scripts/common.lua), the activities shipped machines share
+7. [`attack_system.cpp`](../src/combat/attack_system.cpp)
+8. [`projectile_system.cpp`](../src/combat/projectile_system.cpp)
+9. [`lifecycle.cpp`](../src/actor/lifecycle.cpp)
 
-The enum-and-switch code holds the built-in decision flow. Combat then applies the
-requested attacks and contact damage.
+Machines in [`machines.json`](../assets/catalogs/machines.json) decide and Lua
+activities act. Combat then applies the requested attacks and contact damage.
 
 ### 7. Read navigation last
 
@@ -243,9 +246,8 @@ It is safe to return later to:
 
 - OpenGL setup and shader details in `app/graphics`;
 - ImGui layout code in `app/ui` and `app/debug`;
-- data-driven NPC machines and the Lua activities their states can run
-  ([Data-driven state machine](ARCHITECTURE.md#data-driven-state-machine) and
-  [Lua activity boundary](ARCHITECTURE.md#lua-activity-boundary));
+- the Lua runtime's sandbox, budgets and error handling
+  ([Lua activity boundary](ARCHITECTURE.md#lua-activity-boundary));
 - cover fading, which fades NPCs and pickups standing in grass on the player's screen
   ([Tile map, collision, and validation](ARCHITECTURE.md#tile-map-collision-and-validation));
 - the connection cache, which keeps platformer connections between searches and fills
