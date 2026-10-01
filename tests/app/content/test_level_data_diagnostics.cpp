@@ -61,16 +61,12 @@ TEST_CASE("Duplicate-marker diagnostics identify both placements", "[app][conten
 TEST_CASE("Object-template diagnostics name authored legend fields", "[app][content][json]")
 {
     auto level = markerLevel();
-    SECTION("Invalid pickup quantity")
+    SECTION("Empty pickup definition")
     {
-        level["objectLegend"]["K"] = tests::object(
-            {{"type", "pickup"},
-             {"item", "key"},
-             {"quantity", 0},
-             {"bodySize", tests::numbers({8, 8})}});
+        level["objectLegend"]["K"] = tests::object({{"type", "pickup"}, {"definition", ""}});
         REQUIRE_THROWS_WITH(
             advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"),
-            "level.json: objectLegend.K.quantity: expected a positive integer, got 0");
+            "level.json: objectLegend.K.definition: pickup definition name cannot be empty");
     }
     SECTION("Invalid exit setting")
     {

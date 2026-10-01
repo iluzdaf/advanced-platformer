@@ -49,21 +49,20 @@ TEST_CASE("Pickup and exit markers retain authored values", "[app][content][json
             "tileLegend": {".": "empty", "#": "stone"},
             "objectLegend": {
                 "P": {"type": "player"},
-                "K": {"type": "pickup", "item": "key", "quantity": 2, "bodySize": [8, 8]},
+                "K": {"type": "pickup", "definition": "key"},
                 "E": {"type": "exit", "definition": "test_door",
                       "requirement": {"item": "key", "quantity": 1},
                       "consumeItem": true, "nextLevel": 2}
             },
             "map": ["PKKE", "####"],
-            "pickups": [{"item": "coin", "quantity": 3, "bodySize": [8, 8],
-                         "spawnFeet": [136, 8]}]
+            "pickups": [{"definition": "coin", "spawnFeet": [136, 8]}]
         })",
         "markers");
 
     REQUIRE(data.pickups.size() == 3);
     REQUIRE(data.pickups[0].spawn == advanced_platformer::LevelPosition{glm::vec2{136.0F, 8.0F}});
-    REQUIRE(data.pickups[1].stack.item == "key");
-    REQUIRE(data.pickups[1].stack.quantity == 2);
+    REQUIRE(data.pickups[0].definitionName == "coin");
+    REQUIRE(data.pickups[1].definitionName == "key");
     REQUIRE(
         data.pickups[2].spawn ==
         advanced_platformer::LevelPosition{advanced_platformer::Cell{2, 0}});
@@ -150,15 +149,14 @@ TEST_CASE("Explicit pickups and exits retain item requirements", "[app][content]
             "tileLegend": {".": "empty", "#": "stone"},
             "map": ["....", "####"],
             "playerSpawnCell": [1, 0],
-            "pickups": [{"item": "key", "quantity": 1, "bodySize": [8, 8],
-                         "spawnCell": [1, 0]}],
+            "pickups": [{"definition": "key", "spawnCell": [1, 0]}],
             "exit": {"definition": "test_door", "spawnCell": [2, 0],
                      "requirement": {"item": "key", "quantity": 1}}
         })",
         "test level");
 
     REQUIRE(data.pickups.size() == 1);
-    REQUIRE(data.pickups[0].stack.item == "key");
+    REQUIRE(data.pickups[0].definitionName == "key");
     REQUIRE(
         data.pickups[0].spawn ==
         advanced_platformer::LevelPosition{advanced_platformer::Cell{1, 0}});
@@ -182,21 +180,4 @@ TEST_CASE("Pickup placements can reference a definition", "[app][content][json]"
 
     REQUIRE(data.pickups[0].definitionName == "treasure");
     REQUIRE(data.pickupReferences.at("pickups[0].definition") == "treasure");
-}
-
-TEST_CASE("Inline pickup placements retain their body size", "[app][content][json]")
-{
-    const auto data = advanced_platformer::parseLevelData(
-        R"({
-            "tileLegend": {".": "empty", "#": "stone"},
-            "map": ["....", "####"],
-            "playerSpawnCell": [0, 0],
-            "actors": [],
-            "pickups": [{"item": "key", "quantity": 1, "bodySize": [10, 12],
-                         "spawnCell": [1, 0]}],
-            "exit": {"definition": "test_door", "spawnCell": [3, 0]}
-        })",
-        "placement.json");
-
-    REQUIRE(data.pickups[0].bodySize == glm::vec2{10.0F, 12.0F});
 }
