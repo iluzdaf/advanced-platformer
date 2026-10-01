@@ -1,0 +1,40 @@
+[submodule "catch2"]
+	path = external/catch2
+	url = https://github.com/catchorg/Catch2.git
+	shallow = true
+[submodule "glfw"]
+	path = external/glfw
+	url = https://github.com/glfw/glfw.git
+	shallow = true
+[submodule "glm"]
+	path = external/glm
+	url = https://github.com/g-truc/glm.git
+	shallow = true
+[submodule "imgui"]
+	path = external/imgui
+	url = https://github.com/ocornut/imgui.git
+	shallow = true
+[submodule "implot"]
+	path = external/implot
+	url = https://github.com/epezent/implot.git
+	shallow = true
+[submodule "imgui-node-editor"]
+	path = external/imgui-node-editor
+	url = https://github.com/thedmd/imgui-node-editor.git
+	shallow = true
+[submodule "lua"]
+	path = external/lua
+	url = https://github.com/lua/lua.git
+	shallow = true
+[submodule "nlohmann"]
+	path = external/nlohmann
+	url = https://github.com/nlohmann/json.git
+	shallow = true
+[submodule "sol2"]
+	path = external/sol2
+	url = https://github.com/ThePhD/sol2.git
+	shallow = true
+[submodule "stb"]
+	path = external/stb
+	url = https://github.com/nothings/stb.git
+	shallow = true
