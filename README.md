@@ -148,7 +148,7 @@ runtime. `.luarc.json` configures LuaLS for Lua 5.4 and leaves formatting to Sty
 
 |           | Config          | Tool                            | VS Code                                 |
 | --------- | --------------- | ------------------------------- | --------------------------------------- |
-| C and C++ | `.clang-format` | clang-format 18                 | on save, through clangd                 |
+| C and C++ | `.clang-format` | clang-format 23                 | on save, through clangd                 |
 | JSON      | `.prettierrc`   | Prettier 3.9.8                  | on save, through the Prettier extension |
 | YAML      | `.prettierrc`   | Prettier 3.9.8                  | on save, through the Prettier extension |
 | Markdown  | `.prettierrc`   | Prettier 3.9.8                  | on save, through the Prettier extension |
@@ -225,7 +225,7 @@ configuring and omits only its targets. Use `-DCLANG_FORMAT_EXECUTABLE=`,
 `-DPRETTIER_EXECUTABLE=`, `-DRUFF_EXECUTABLE=`, `-DSTYLUA_EXECUTABLE=`, or
 `-DLUACHECK_EXECUTABLE=` to choose a specific one.
 
-CI runs clang-format 18, Prettier 3.9.8, Ruff 0.16.8, StyLua 2.5.2, and Luacheck 1.2.0,
+CI runs clang-format 23, Prettier 3.9.8, Ruff 0.16.8, StyLua 2.5.2, and Luacheck 1.2.0,
 and a pull request cannot merge until their checks pass. Local versions do not have to
 match. If yours formats differently, CI fails and you reformat with the commands above.
 
@@ -236,7 +236,7 @@ and performance mistakes. VS Code's recommended clangd extension reports unused 
 missing includes while editing. Treat include-cleaner suggestions as findings to
 review; do not automatically remove headers without rebuilding and running the tests.
 
-Static analysis is enforced by CI using LLVM 18, but remains optional for local
+Static analysis is enforced by CI using LLVM 23, but remains optional for local
 builds. Developers with clang-tidy installed can run it with:
 
 ```sh
@@ -259,9 +259,9 @@ python3 tools/tidy_targets.py --since origin/main
 ```
 
 For matching local quality tools, set `CLANG_FORMAT_EXECUTABLE` and
-`CLANG_TIDY_EXECUTABLE` to LLVM 18 executables in a personal `CMakeUserPresets.json`
+`CLANG_TIDY_EXECUTABLE` to LLVM 23 executables in a personal `CMakeUserPresets.json`
 preset, then configure and build using that preset. These variables select quality
-tools, not the C++ compiler. A personal preset such as `mac-debug-llvm18` is not part
+tools, not the C++ compiler. A personal preset such as `mac-debug-llvm23` is not part
 of the shared checkout. Compiler and SDK differences can still produce different
 diagnostics from CI.
 

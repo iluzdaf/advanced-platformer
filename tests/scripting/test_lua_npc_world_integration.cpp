@@ -28,13 +28,14 @@ TEST_CASE("An NPC machine invokes a loaded Lua activity", "[lua][npc][integratio
         "fixture.lua");
     const advanced_platformer::TileMap map = tests::TileMapBuilder({"...", "...", "###"});
     advanced_platformer::World world;
-    const advanced_platformer::ActorId npc =
-        world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                           .atFeet({24.0F, 32.0F})
-                           .flying(20.0F)
-                           .thinking({})
-                           .running(tests::NpcMachineBuilder::named("fixture").state(
-                               "fleeing", advanced_platformer::LuaNpcActivity{"fixture", "flee"})));
+    const advanced_platformer::ActorId npc = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({24.0F, 32.0F})
+            .flying(20.0F)
+            .thinking({})
+            .running(
+                tests::NpcMachineBuilder::named("fixture").state(
+                    "fleeing", advanced_platformer::LuaNpcActivity{"fixture", "flee"})));
 
     advanced_platformer::updateNpcBehaviour(map, world, 0.1F, &scripts);
 
@@ -72,11 +73,12 @@ TEST_CASE(
             .onTeam(advanced_platformer::Team::Enemy)
             .withContactDamage()
             .thinking({})
-            .running(tests::NpcMachineBuilder::named("walker")
-                         .state("moving", advanced_platformer::LuaNpcActivity{"walker", "walk"})
-                         .state("resting", advanced_platformer::LuaNpcActivity{"walker", "rest"})
-                         .transition("moving", "resting")
-                         .when("movementBlocked", true)));
+            .running(
+                tests::NpcMachineBuilder::named("walker")
+                    .state("moving", advanced_platformer::LuaNpcActivity{"walker", "walk"})
+                    .state("resting", advanced_platformer::LuaNpcActivity{"walker", "rest"})
+                    .transition("moving", "resting")
+                    .when("movementBlocked", true)));
     tests::platformerMovement(tests::actor(world, npc)).grounded = true;
     constexpr float StepSeconds = 0.05F;
 

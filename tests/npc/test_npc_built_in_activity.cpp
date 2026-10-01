@@ -57,13 +57,13 @@ TEST_CASE(
     advanced_platformer::World world;
     const advanced_platformer::ActorId playerId =
         tests::addPlayer(world, makePlayer({40.0F, 32.0F}));
-    const advanced_platformer::ActorId npcId =
-        world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                           .atFeet({72.0F, 32.0F})
-                           .platforming()
-                           .onTeam(advanced_platformer::Team::Enemy)
-                           .shooting()
-                           .thinking({96.0F, 1.0F}));
+    const advanced_platformer::ActorId npcId = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({72.0F, 32.0F})
+            .platforming()
+            .onTeam(advanced_platformer::Team::Enemy)
+            .shooting()
+            .thinking({96.0F, 1.0F}));
     brain(world, npcId).tactic = advanced_platformer::NpcTactic::KeepDistance;
     tests::senses(actor(world, npcId)).standoffDistance = 64.0F;
     brain(world, npcId).target = playerId;
@@ -161,10 +161,11 @@ TEST_CASE(
     const auto playerId = world.addActor(makePlayer({70.0F, 32.0F}));
     // A walking NPC as tall as a zombie, standing on the floor at y = 32. Its height decides
     // where it can stand.
-    const auto npcId = world.addActor(tests::ActorBuilder::sized({12.0F, 20.0F})
-                                          .atFeet({56.0F, 32.0F})
-                                          .platforming()
-                                          .thinking({64.0F, 1.0F}));
+    const auto npcId = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 20.0F})
+            .atFeet({56.0F, 32.0F})
+            .platforming()
+            .thinking({64.0F, 1.0F}));
     tests::platformerMovement(world, npcId).grounded = true;
     const glm::vec2 lastKnownFeet{8.0F, 20.0F};
     brain(world, npcId).target = playerId;

@@ -24,7 +24,16 @@ namespace tests
     // rules beyond that: startNpcMachine validates what it built. A machine with at least
     // one state converts to an NpcStateMachine wherever one is expected, such as the
     // actor builder's running().
-    class NpcMachineBuilder
+    //
+    // Each stage of the builder holds the machine built so far. The stages share it through
+    // this base rather than deriving from one another, so no stage inherits another's steps.
+    class NpcMachineDraft
+    {
+    protected:
+        advanced_platformer::NpcStateMachine built;
+    };
+
+    class NpcMachineBuilder : public NpcMachineDraft
     {
     public:
         class Stated;
@@ -40,14 +49,12 @@ namespace tests
         Stated state(std::string name, advanced_platformer::NpcState does) &&;
         Stated state(std::string name, advanced_platformer::LuaNpcActivity does) &&;
 
-    protected:
+    private:
         NpcMachineBuilder() = default;
-
-        advanced_platformer::NpcStateMachine built;
     };
 
     // A machine with its states so far, waiting for more or for its first transition.
-    class NpcMachineBuilder::Stated : public NpcMachineBuilder
+    class NpcMachineBuilder::Stated : public NpcMachineDraft
     {
     public:
         Stated state(std::string name, advanced_platformer::NpcState does) &&
@@ -80,7 +87,7 @@ namespace tests
     };
 
     // A machine whose last transition is the one when() and after() describe.
-    class NpcMachineBuilder::Transitioning : public NpcMachineBuilder
+    class NpcMachineBuilder::Transitioning : public NpcMachineDraft
     {
     public:
         Transitioning when(const std::string& fact, bool holds) &&

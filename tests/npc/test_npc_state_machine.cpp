@@ -84,8 +84,9 @@ TEST_CASE("Every fact row answers from the facts and an unknown name has no row"
     {
         REQUIRE_FALSE(row.holds(NpcFactsBuilder::facts()));
     }
-    REQUIRE(advanced_platformer::npcFactRow("targetWithinStandoffDistance")
-                ->holds(NpcFactsBuilder::facts().targetWithinStandoffDistance()));
+    REQUIRE(
+        advanced_platformer::npcFactRow("targetWithinStandoffDistance")
+            ->holds(NpcFactsBuilder::facts().targetWithinStandoffDistance()));
     REQUIRE(
         advanced_platformer::npcFactRow("hasPatrol")->holds(NpcFactsBuilder::facts().withPatrol()));
     REQUIRE(advanced_platformer::npcFactRow("cornered") == nullptr);
@@ -190,15 +191,15 @@ TEST_CASE("A transition with a hold fires once its conditions have held that lon
 
 TEST_CASE("Among transitions from one state the first that holds wins", "[npc][fsm]")
 {
-    NpcMachine machine =
-        advanced_platformer::startNpcMachine(NpcMachineBuilder::named("test")
-                                                 .state("rest", NpcState::Idle)
-                                                 .state("hunt", NpcState::Chase)
-                                                 .state("flee", NpcState::Retreat)
-                                                 .transition("rest", "flee")
-                                                 .when("targetWithinStandoffDistance", true)
-                                                 .transition("rest", "hunt")
-                                                 .when("targetKnown", true));
+    NpcMachine machine = advanced_platformer::startNpcMachine(
+        NpcMachineBuilder::named("test")
+            .state("rest", NpcState::Idle)
+            .state("hunt", NpcState::Chase)
+            .state("flee", NpcState::Retreat)
+            .transition("rest", "flee")
+            .when("targetWithinStandoffDistance", true)
+            .transition("rest", "hunt")
+            .when("targetKnown", true));
 
     // Both the flee and the hunt transitions hold; the flee is listed first.
     REQUIRE(

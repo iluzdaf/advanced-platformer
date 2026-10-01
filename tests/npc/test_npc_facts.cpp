@@ -30,11 +30,11 @@ namespace
     // A grounded walker at (24, 32) that notices within 32 pixels.
     advanced_platformer::ActorId addWalkingNpc(advanced_platformer::World& world)
     {
-        const advanced_platformer::ActorId npcId =
-            world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                               .atFeet({24.0F, 32.0F})
-                               .platforming()
-                               .thinking({32.0F, 1.0F}));
+        const advanced_platformer::ActorId npcId = world.addActor(
+            tests::ActorBuilder::sized({12.0F, 12.0F})
+                .atFeet({24.0F, 32.0F})
+                .platforming()
+                .thinking({32.0F, 1.0F}));
         tests::platformerMovement(actor(world, npcId)).grounded = true;
         return npcId;
     }

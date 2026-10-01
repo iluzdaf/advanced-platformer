@@ -153,10 +153,11 @@ TEST_CASE("A broken wall opens a route once the fill has caught up", "[navigatio
     const Cell start{1, 1};
     const Cell goal{5, 1};
     advanced_platformer::World world;
-    world.addActor(tests::ActorBuilder::sized(BodySize)
-                       .atFeet({24.0F, 32.0F})
-                       .platforming()
-                       .thinking({64.0F, 1.0F}));
+    world.addActor(
+        tests::ActorBuilder::sized(BodySize)
+            .atFeet({24.0F, 32.0F})
+            .platforming()
+            .thinking({64.0F, 1.0F}));
     const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
     tests::prepareNavigationCache(map, world);
     PlatformerConnectionCache& cache = world.platformerConnections();
@@ -222,10 +223,11 @@ TEST_CASE("A broken floor takes a walk away and gives a fall", "[navigation][cac
                                "########################"})
             .where('g', tests::Tile().blocksMovement().breaksInto('.'));
     advanced_platformer::World world;
-    world.addActor(tests::ActorBuilder::sized(BodySize)
-                       .atFeet({24.0F, 16.0F})
-                       .platforming()
-                       .thinking({64.0F, 1.0F}));
+    world.addActor(
+        tests::ActorBuilder::sized(BodySize)
+            .atFeet({24.0F, 16.0F})
+            .platforming()
+            .thinking({64.0F, 1.0F}));
     const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
     tests::prepareNavigationCache(map, world);
     PlatformerConnectionCache& cache = world.platformerConnections();
@@ -264,14 +266,15 @@ TEST_CASE("A broken floor takes a walk away and gives a fall", "[navigation][cac
     advanced_platformer::storePlatformerConnections(cache, {2, 0}, profile, std::move(edgeBuild));
     const std::vector<RouteConnection>* fromTheEdge = cache.cachedConnections({2, 0}, profile);
     REQUIRE(fromTheEdge != nullptr);
-    REQUIRE(std::any_of(
-        fromTheEdge->begin(),
-        fromTheEdge->end(),
-        [](const RouteConnection& connection)
-        {
-            return connection.step.traversal == advanced_platformer::Traversal::Fall &&
-                   connection.step.destination.cell == Cell{3, 2};
-        }));
+    REQUIRE(
+        std::any_of(
+            fromTheEdge->begin(),
+            fromTheEdge->end(),
+            [](const RouteConnection& connection)
+            {
+                return connection.step.traversal == advanced_platformer::Traversal::Fall &&
+                       connection.step.destination.cell == Cell{3, 2};
+            }));
     // A cell whose simulations never came near the hole was left as it was.
     const std::vector<RouteConnection>* farAwayAfter = cache.cachedConnections({23, 0}, profile);
     REQUIRE(farAwayAfter != nullptr);

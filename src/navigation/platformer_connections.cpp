@@ -264,7 +264,8 @@ namespace advanced_platformer
         {
             const int tileSize = map.tileSize();
             ConnectionPlan plan{{}, cellsCovered(tileSize, boxInCell(tileSize, start, bodySize))};
-            const auto recordProbe = [&](Cell cell) {
+            const auto recordProbe = [&](Cell cell)
+            {
                 includeCellsAroundBounds(
                     plan.footprint, tileSize, boxInCell(tileSize, cell, bodySize));
             };

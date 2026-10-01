@@ -55,12 +55,12 @@ namespace
                 .atFeet(advanced_platformer::feetOf(target))
                 .platforming()
                 .onTeam(advanced_platformer::Team::Player));
-        const advanced_platformer::ActorId npcId =
-            world.addActor(tests::ActorBuilder::sized(observer.size)
-                               .atFeet(advanced_platformer::feetOf(observer))
-                               .flying(20.0F)
-                               .onTeam(advanced_platformer::Team::Enemy)
-                               .thinking(senses));
+        const advanced_platformer::ActorId npcId = world.addActor(
+            tests::ActorBuilder::sized(observer.size)
+                .atFeet(advanced_platformer::feetOf(observer))
+                .flying(20.0F)
+                .onTeam(advanced_platformer::Team::Enemy)
+                .thinking(senses));
         advanced_platformer::updateNpcSenses(map, world, tests::FixedStepSeconds);
         return tests::perception(world, npcId).targetVisible;
     }
@@ -87,11 +87,12 @@ TEST_CASE("A landing is heard once by a ground NPC on the same run", "[npc][sens
         tests::TileMapBuilder({"........", "........", "........", "########"});
     advanced_platformer::World world;
     const auto playerId = tests::addPlayer(world, makePlayer({72.0F, 47.0F}));
-    const auto npcId = world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                                          .atFeet({24.0F, 48.0F})
-                                          .platforming()
-                                          .onTeam(advanced_platformer::Team::Enemy)
-                                          .thinking({64.0F, 1.0F}));
+    const auto npcId = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({24.0F, 48.0F})
+            .platforming()
+            .onTeam(advanced_platformer::Team::Enemy)
+            .thinking({64.0F, 1.0F}));
     tests::platformerMovement(actor(world, playerId)).grounded = false;
     actor(world, playerId).body.velocity.y = 40.0F;
     advanced_platformer::updateActorMovement(map, world, 0.1F);
@@ -111,11 +112,12 @@ TEST_CASE("Perception refreshes without clearing brain memory or decision state"
             .where('c', tests::Tile().blocksSight());
     advanced_platformer::World world;
     const auto playerId = tests::addPlayer(world, makePlayer({72.0F, 48.0F}));
-    const auto npcId = world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                                          .atFeet({24.0F, 48.0F})
-                                          .platforming()
-                                          .onTeam(advanced_platformer::Team::Enemy)
-                                          .thinking({64.0F, 1.0F}));
+    const auto npcId = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({24.0F, 48.0F})
+            .platforming()
+            .onTeam(advanced_platformer::Team::Enemy)
+            .thinking({64.0F, 1.0F}));
     tests::platformerMovement(actor(world, npcId)).grounded = true;
     brain(world, npcId).state = advanced_platformer::NpcState::Watch;
     brain(world, npcId).stateElapsed = 0.25F;
@@ -144,11 +146,12 @@ TEST_CASE("A landing across a broken run is not heard", "[npc][senses][noise]")
         tests::TileMapBuilder({"........", "........", "........", "###..###"});
     advanced_platformer::World world;
     const auto playerId = tests::addPlayer(world, makePlayer({104.0F, 48.0F}));
-    const auto npcId = world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                                          .atFeet({24.0F, 48.0F})
-                                          .platforming()
-                                          .onTeam(advanced_platformer::Team::Enemy)
-                                          .thinking({128.0F, 1.0F}));
+    const auto npcId = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({24.0F, 48.0F})
+            .platforming()
+            .onTeam(advanced_platformer::Team::Enemy)
+            .thinking({128.0F, 1.0F}));
     tests::platformerMovement(actor(world, npcId)).grounded = true;
     world.emitNoise({playerId, {104.0F, 48.0F}, advanced_platformer::NoiseKind::Landing});
     advanced_platformer::updateNpcSenses(map, world, 0.1F);
@@ -333,11 +336,12 @@ TEST_CASE("A noise batch preserves landing facts alongside shots", "[npc][senses
             .where('c', tests::Tile().blocksSight());
     advanced_platformer::World world;
     const auto playerId = tests::addPlayer(world, makePlayer({72.0F, 48.0F}));
-    const auto npcId = world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                                          .atFeet({24.0F, 48.0F})
-                                          .platforming()
-                                          .onTeam(advanced_platformer::Team::Enemy)
-                                          .thinking({96.0F, 1.0F}));
+    const auto npcId = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({24.0F, 48.0F})
+            .platforming()
+            .onTeam(advanced_platformer::Team::Enemy)
+            .thinking({96.0F, 1.0F}));
     tests::platformerMovement(actor(world, npcId)).grounded = true;
     world.emitNoise({playerId, {72.0F, 48.0F}, advanced_platformer::NoiseKind::Landing});
     world.emitNoise({playerId, {80.0F, 48.0F}, advanced_platformer::NoiseKind::Shot});

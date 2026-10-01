@@ -100,11 +100,12 @@ TEST_CASE(
                 .inCell({1, 1})
                 .platforming()
                 .onTeam(advanced_platformer::Team::Player));
-        world.addActor(tests::ActorBuilder::sized({12.0F, 12.0F})
-                           .inCell({6, 1})
-                           .flying(60.0F)
-                           .onTeam(advanced_platformer::Team::Enemy)
-                           .thinking({96.0F, 1.0F}));
+        world.addActor(
+            tests::ActorBuilder::sized({12.0F, 12.0F})
+                .inCell({6, 1})
+                .flying(60.0F)
+                .onTeam(advanced_platformer::Team::Enemy)
+                .thinking({96.0F, 1.0F}));
         return world;
     };
     advanced_platformer::TileMap timedMap =
@@ -130,14 +131,16 @@ TEST_CASE(
     }
     // The chasing NPC searched for a path at least once.
     REQUIRE(advanced_platformer::frameStatisticCount(profile, "Path searches") >= 1);
-    REQUIRE(std::any_of(
-        profile.phases.begin(),
-        profile.phases.end(),
-        [](const advanced_platformer::PhaseTiming& phase)
-        { return std::string_view(phase.name) == "Path search"; }));
-    REQUIRE(std::all_of(
-        profile.phases.begin(),
-        profile.phases.end(),
-        [](const advanced_platformer::PhaseTiming& phase) { return phase.seconds >= 0.0F; }));
+    REQUIRE(
+        std::any_of(
+            profile.phases.begin(),
+            profile.phases.end(),
+            [](const advanced_platformer::PhaseTiming& phase)
+            { return std::string_view(phase.name) == "Path search"; }));
+    REQUIRE(
+        std::all_of(
+            profile.phases.begin(),
+            profile.phases.end(),
+            [](const advanced_platformer::PhaseTiming& phase) { return phase.seconds >= 0.0F; }));
     REQUIRE(profile.nestedSecondsOfOpenPhases.empty());
 }

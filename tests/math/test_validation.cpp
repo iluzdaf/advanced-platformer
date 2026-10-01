@@ -58,8 +58,9 @@ TEST_CASE("A finite non-negative vector may have zero components", "[math][valid
     REQUIRE(advanced_platformer::isFiniteNonNegative(glm::vec2{0.0F, 0.0F}));
     REQUIRE(advanced_platformer::isFiniteNonNegative(glm::vec2{32.0F, 0.0F}));
     REQUIRE_FALSE(advanced_platformer::isFiniteNonNegative(glm::vec2{-1.0F, 0.0F}));
-    REQUIRE_FALSE(advanced_platformer::isFiniteNonNegative(
-        glm::vec2{0.0F, std::numeric_limits<float>::infinity()}));
+    REQUIRE_FALSE(
+        advanced_platformer::isFiniteNonNegative(
+            glm::vec2{0.0F, std::numeric_limits<float>::infinity()}));
 }
 
 TEST_CASE("A finite positive vector has both components above zero", "[math][validation]")

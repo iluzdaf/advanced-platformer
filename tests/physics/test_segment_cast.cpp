@@ -61,8 +61,9 @@ TEST_CASE("A solid tile cast accounts for the moving box size", "[physics][segme
     const glm::vec2 end = {64.0F, 8.0F};
 
     REQUIRE_FALSE(advanced_platformer::segmentCastMovementBlockingTiles(map, start, end));
-    REQUIRE(advanced_platformer::segmentCastMovementBlockingTiles(map, start, end, {4.0F, 16.0F})
-                .has_value());
+    REQUIRE(
+        advanced_platformer::segmentCastMovementBlockingTiles(map, start, end, {4.0F, 16.0F})
+            .has_value());
 }
 
 TEST_CASE(
@@ -74,8 +75,9 @@ TEST_CASE(
     const advanced_platformer::TileMap twoPatches =
         tests::TileMapBuilder({".....", "cc.c.", "....."}).where('c', tests::Tile().blocksSight());
 
-    REQUIRE_FALSE(advanced_platformer::segmentCastSightBlockingTiles(
-        onePatch, {8.0F, 24.0F}, {72.0F, 24.0F}));
+    REQUIRE_FALSE(
+        advanced_platformer::segmentCastSightBlockingTiles(
+            onePatch, {8.0F, 24.0F}, {72.0F, 24.0F}));
     const std::optional<float> hit = advanced_platformer::segmentCastSightBlockingTiles(
         twoPatches, {8.0F, 24.0F}, {72.0F, 24.0F});
     REQUIRE(hit.has_value());

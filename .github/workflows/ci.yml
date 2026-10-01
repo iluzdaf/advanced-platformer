@@ -14,18 +14,20 @@ jobs:
     if: github.event_name != 'push'
     runs-on: ubuntu-24.04
     env:
-      LLVM: 18
+      LLVM: 23
       PRETTIER: 3.9.8
       RUFF: 0.16.8
       STYLUA: 2.5.2
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
-      - name: Select preinstalled LLVM tools
-        run: |
-          clang-$LLVM --version
-          clang-format-$LLVM --version
-          echo "CLANG_FORMAT=$(command -v clang-format-$LLVM)" >> "$GITHUB_ENV"
+      - name: Install LLVM
+        uses: ./.github/actions/install-llvm
+        with:
+          version: ${{ env.LLVM }}
+          tools: clang-format
+      - name: Select LLVM tools
+        run: echo "CLANG_FORMAT=$(command -v clang-format-$LLVM)" >> "$GITHUB_ENV"
       - name: Install the pinned Prettier and StyLua
         run: |
           npm install --global --no-fund --no-audit \
@@ -75,12 +77,14 @@ jobs:
     if: github.event_name != 'push'
     runs-on: ubuntu-24.04
     env:
-      LLVM: 18
+      LLVM: 23
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
-      - name: Select preinstalled LLVM tools
-        run: clang-$LLVM --version
+      - name: Install LLVM
+        uses: ./.github/actions/install-llvm
+        with:
+          version: ${{ env.LLVM }}
       - name: Configure
         run: >
           cmake -S . -B build/quality
@@ -103,7 +107,7 @@ jobs:
       matrix:
         shard: [1, 2, 3]
     env:
-      LLVM: 18
+      LLVM: 23
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -125,12 +129,15 @@ jobs:
           else
             echo "has_files=true" >> "$GITHUB_OUTPUT"
           fi
-      - name: Select preinstalled LLVM tools
+      - name: Install LLVM
         if: steps.targets.outputs.has_files == 'true'
-        run: |
-          clang-$LLVM --version
-          clang-tidy-$LLVM --version
-          echo "CLANG_TIDY=$(command -v clang-tidy-$LLVM)" >> "$GITHUB_ENV"
+        uses: ./.github/actions/install-llvm
+        with:
+          version: ${{ env.LLVM }}
+          tools: clang-tidy
+      - name: Select LLVM tools
+        if: steps.targets.outputs.has_files == 'true'
+        run: echo "CLANG_TIDY=$(command -v clang-tidy-$LLVM)" >> "$GITHUB_ENV"
       - name: Configure
         if: steps.targets.outputs.has_files == 'true'
         run: >
