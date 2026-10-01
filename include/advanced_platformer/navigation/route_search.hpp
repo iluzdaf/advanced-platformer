@@ -21,9 +21,9 @@ namespace advanced_platformer
     // before it asks for that location's connections, so a cache can finish its work
     // first. An empty function allows every location.
     using ExpansionReady = std::function<bool(RouteLocation location)>;
-    // What taking a connection costs this search, which may differ from the connection's
-    // own cost, such as a penalty for starting a jump. It must be greater than zero. An
-    // empty function uses each connection's own cost.
+    // Says what taking a connection costs this search, which may differ from the
+    // connection's own cost, such as with a penalty for starting a jump. The cost must be
+    // greater than zero. An empty function uses each connection's own cost.
     using CostFunction = std::function<int(const RouteConnection& connection)>;
 
     // What a search ends with. A finished search has a route to the cheapest location in

@@ -138,8 +138,8 @@ namespace advanced_platformer
             return std::abs(cell.x - goal.x) + std::abs(cell.y - goal.y);
         }
 
-        // A flight to each open cell next to this one, for a cost of 1. Fills the given
-        // connections, so one search reuses the same storage for every cell it expands.
+        // Fills connections with a flight, costing 1, to each open cell next to this one.
+        // One search passes the same connections for every cell, reusing their storage.
         void flyingConnections(
             const TileMap& map,
             Cell cell,
@@ -237,8 +237,8 @@ namespace advanced_platformer
             return static_cast<int>(std::ceil(distance / (maximumSpeed * profile.stepSeconds)));
         }
 
-        // What a connection costs the platformer search: its simulated ticks, plus the
-        // start penalty for a jump. The cached costs stay the simulated ticks.
+        // The cost of a connection to the platformer search, which adds the start penalty
+        // to a jump's simulated ticks. The cached costs stay the simulated ticks.
         int withJumpStartPenalty(const RouteConnection& connection)
         {
             if (connection.step.traversal != Traversal::Jump)
