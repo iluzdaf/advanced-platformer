@@ -11,6 +11,8 @@
 #include "content/actor_definition.hpp"
 #include "content/animation_catalog.hpp"
 #include "content/machine_catalog.hpp"
+#include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"

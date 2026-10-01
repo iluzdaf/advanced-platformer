@@ -11,6 +11,7 @@
 #include "advanced_platformer/movement/flying_movement.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/render/sprite.hpp"
 #include <filesystem>
 #include <format>
 #include <array>

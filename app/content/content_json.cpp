@@ -8,14 +8,12 @@
 #include <fstream>
 #include <iterator>
 #include <limits>
-#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
 #include <nlohmann/json.hpp>
 #include <glm/vec2.hpp>
-#include "advanced_platformer/render/sprite.hpp"
 
 namespace advanced_platformer
 {
@@ -186,42 +184,6 @@ namespace advanced_platformer
             requiredJsonMember(object, key, sourceName, path), sourceName, fieldPath(path, key));
     }
 
-    void readOptionalInteger(
-        const nlohmann::json& object,
-        std::string_view key,
-        int& result,
-        std::string_view sourceName,
-        std::string_view path)
-    {
-        if (const nlohmann::json* found = optionalJsonMember(object, key, sourceName, path))
-        {
-            result = jsonInteger(*found, sourceName, fieldPath(path, key));
-        }
-    }
-
-    float readNumber(
-        const nlohmann::json& object,
-        std::string_view key,
-        std::string_view sourceName,
-        std::string_view path)
-    {
-        return jsonNumber(
-            requiredJsonMember(object, key, sourceName, path), sourceName, fieldPath(path, key));
-    }
-
-    void readOptionalNumber(
-        const nlohmann::json& object,
-        std::string_view key,
-        float& result,
-        std::string_view sourceName,
-        std::string_view path)
-    {
-        if (const nlohmann::json* found = optionalJsonMember(object, key, sourceName, path))
-        {
-            result = jsonNumber(*found, sourceName, fieldPath(path, key));
-        }
-    }
-
     bool readBoolean(
         const nlohmann::json& object,
         std::string_view key,
@@ -232,19 +194,6 @@ namespace advanced_platformer
             requiredJsonMember(object, key, sourceName, path), sourceName, fieldPath(path, key));
     }
 
-    void readOptionalBoolean(
-        const nlohmann::json& object,
-        std::string_view key,
-        bool& result,
-        std::string_view sourceName,
-        std::string_view path)
-    {
-        if (const nlohmann::json* found = optionalJsonMember(object, key, sourceName, path))
-        {
-            result = jsonBoolean(*found, sourceName, fieldPath(path, key));
-        }
-    }
-
     std::string readText(
         const nlohmann::json& object,
         std::string_view key,
@@ -253,19 +202,6 @@ namespace advanced_platformer
     {
         return jsonText(
             requiredJsonMember(object, key, sourceName, path), sourceName, fieldPath(path, key));
-    }
-
-    void readOptionalText(
-        const nlohmann::json& object,
-        std::string_view key,
-        std::string& result,
-        std::string_view sourceName,
-        std::string_view path)
-    {
-        if (const nlohmann::json* found = optionalJsonMember(object, key, sourceName, path))
-        {
-            result = jsonText(*found, sourceName, fieldPath(path, key));
-        }
     }
 
     glm::vec2 readVector(
@@ -288,100 +224,6 @@ namespace advanced_platformer
         if (const nlohmann::json* found = optionalJsonMember(object, key, sourceName, path))
         {
             result = jsonVector(*found, sourceName, fieldPath(path, key));
-        }
-    }
-
-    SpriteRegion jsonSpriteRegion(
-        const nlohmann::json& value,
-        std::string_view sourceName,
-        std::string_view path)
-    {
-        SpriteRegion region;
-        region.position = readVector(value, "position", sourceName, path);
-        region.size = readVector(value, "size", sourceName, path);
-        return region;
-    }
-
-    void readOptionalSpriteAnchor(
-        const nlohmann::json& object,
-        std::string_view key,
-        SpriteAnchor& result,
-        std::string_view sourceName,
-        std::string_view path)
-    {
-        std::string anchor;
-        readOptionalText(object, key, anchor, sourceName, path);
-        if (anchor.empty())
-        {
-            return;
-        }
-        if (anchor == "feet")
-        {
-            result = SpriteAnchor::BodyFeet;
-        }
-        else if (anchor == "center")
-        {
-            result = SpriteAnchor::BodyCenter;
-        }
-        else
-        {
-            failJson(
-                sourceName,
-                fieldPath(path, key),
-                std::format("unknown sprite anchor '{}'; expected feet or center", anchor));
-        }
-    }
-
-    Sprite jsonSprite(
-        const nlohmann::json& value,
-        std::string_view sourceName,
-        std::string_view path)
-    {
-        checkJsonFields(value, {"position", "size", "displaySize", "anchor"}, sourceName, path);
-        Sprite sprite;
-        sprite.region = jsonSpriteRegion(value, sourceName, path);
-        sprite.size = sprite.region.size;
-        readOptionalVector(value, "displaySize", sprite.size, sourceName, path);
-        readOptionalSpriteAnchor(value, "anchor", sprite.anchor, sourceName, path);
-        return sprite;
-    }
-
-    void readOptionalInteger(
-        const nlohmann::json& object,
-        std::string_view key,
-        std::optional<int>& result,
-        std::string_view sourceName,
-        std::string_view path)
-    {
-        if (const nlohmann::json* found = optionalJsonMember(object, key, sourceName, path))
-        {
-            result = jsonInteger(*found, sourceName, fieldPath(path, key));
-        }
-    }
-
-    void readOptionalSprite(
-        const nlohmann::json& object,
-        std::string_view key,
-        Sprite& result,
-        std::string_view sourceName,
-        std::string_view path)
-    {
-        if (const nlohmann::json* found = optionalJsonMember(object, key, sourceName, path))
-        {
-            result = jsonSprite(*found, sourceName, fieldPath(path, key));
-        }
-    }
-
-    void readOptionalSprite(
-        const nlohmann::json& object,
-        std::string_view key,
-        std::optional<Sprite>& result,
-        std::string_view sourceName,
-        std::string_view path)
-    {
-        if (const nlohmann::json* found = optionalJsonMember(object, key, sourceName, path))
-        {
-            result = jsonSprite(*found, sourceName, fieldPath(path, key));
         }
     }
 

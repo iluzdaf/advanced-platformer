@@ -1,12 +1,10 @@
 #pragma once
 #include <filesystem>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 #include <nlohmann/json.hpp>
 #include <glm/vec2.hpp>
-#include "advanced_platformer/render/sprite.hpp"
 
 namespace advanced_platformer
 {
@@ -46,36 +44,8 @@ namespace advanced_platformer
         std::string_view sourceName = {},
         std::string_view path = {});
 
-    void readOptionalInteger(
-        const nlohmann::json& object,
-        std::string_view key,
-        int& result,
-        std::string_view sourceName = {},
-        std::string_view path = {});
-
-    // For a field that is absent rather than defaulted when the key is missing.
-    void readOptionalInteger(
-        const nlohmann::json& object,
-        std::string_view key,
-        std::optional<int>& result,
-        std::string_view sourceName = {},
-        std::string_view path = {});
-
     float jsonNumber(
         const nlohmann::json& value,
-        std::string_view sourceName = {},
-        std::string_view path = {});
-
-    float readNumber(
-        const nlohmann::json& object,
-        std::string_view key,
-        std::string_view sourceName = {},
-        std::string_view path = {});
-
-    void readOptionalNumber(
-        const nlohmann::json& object,
-        std::string_view key,
-        float& result,
         std::string_view sourceName = {},
         std::string_view path = {});
 
@@ -90,13 +60,6 @@ namespace advanced_platformer
         std::string_view sourceName = {},
         std::string_view path = {});
 
-    void readOptionalBoolean(
-        const nlohmann::json& object,
-        std::string_view key,
-        bool& result,
-        std::string_view sourceName = {},
-        std::string_view path = {});
-
     std::string jsonText(
         const nlohmann::json& value,
         std::string_view sourceName = {},
@@ -105,13 +68,6 @@ namespace advanced_platformer
     std::string readText(
         const nlohmann::json& object,
         std::string_view key,
-        std::string_view sourceName = {},
-        std::string_view path = {});
-
-    void readOptionalText(
-        const nlohmann::json& object,
-        std::string_view key,
-        std::string& result,
         std::string_view sourceName = {},
         std::string_view path = {});
 
@@ -151,40 +107,6 @@ namespace advanced_platformer
         const nlohmann::json& object,
         std::string_view key,
         glm::vec2& result,
-        std::string_view sourceName = {},
-        std::string_view path = {});
-
-    // Reads the {"position", "size"} source rectangle shared by sprites and animation
-    // frames. Callers check the surrounding fields, which differ between them.
-    SpriteRegion jsonSpriteRegion(
-        const nlohmann::json& value,
-        std::string_view sourceName = {},
-        std::string_view path = {});
-
-    // Sprites and actor definitions share the "feet"/"center" spelling.
-    void readOptionalSpriteAnchor(
-        const nlohmann::json& object,
-        std::string_view key,
-        SpriteAnchor& result,
-        std::string_view sourceName = {},
-        std::string_view path = {});
-
-    Sprite jsonSprite(
-        const nlohmann::json& value,
-        std::string_view sourceName = {},
-        std::string_view path = {});
-
-    void readOptionalSprite(
-        const nlohmann::json& object,
-        std::string_view key,
-        Sprite& result,
-        std::string_view sourceName = {},
-        std::string_view path = {});
-
-    void readOptionalSprite(
-        const nlohmann::json& object,
-        std::string_view key,
-        std::optional<Sprite>& result,
         std::string_view sourceName = {},
         std::string_view path = {});
 

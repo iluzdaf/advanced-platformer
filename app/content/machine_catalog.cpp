@@ -75,7 +75,7 @@ namespace advanced_platformer
              {"retreat", NpcState::Retreat},
              {"watch", NpcState::Watch}}};
 
-        const std::string& requireName(
+        std::string requireName(
             const std::string& name,
             std::string_view description,
             std::string_view sourceName,
