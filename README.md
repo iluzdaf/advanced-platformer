@@ -22,7 +22,11 @@ New to the project? Start with [START_HERE.md](docs/START_HERE.md).
 ## Requirements
 
 - CMake 4.4 or newer (`brew install cmake`)
-- A C++26 compiler: Apple Clang supplied with current Xcode
+- LLVM 23 or newer from Homebrew (`brew install llvm`). It is the only supported
+  toolchain: its Clang compiles the project as C++26 against its own libc++, and its
+  clang-format and clang-tidy check it. CMake stops with an error for any other compiler.
+- The Xcode Command Line Tools (`xcode-select --install`), whose macOS SDK Homebrew's
+  Clang builds against
 
 Third-party libraries are git submodules under `external/` (see
 [THIRD_PARTY.md](THIRD_PARTY.md)). Clone with them:
@@ -34,13 +38,11 @@ git clone --recurse-submodules https://github.com/iluzdaf/advanced-platformer.gi
 In a checkout made without them, run `git submodule update --init`. Run it again after
 pulling a change that moves a submodule.
 
-macOS is the supported development platform, where development and graphical testing
-take place. Linux is used solely for CI quality checks and is not a supported local
-development workflow.
+macOS is the only supported platform, for development, graphical testing, and CI.
 
 ## macOS: configure, build, and test
 
-The shared macOS preset uses the build tools supplied with Xcode.
+The shared macOS presets use Homebrew's LLVM at `/opt/homebrew/opt/llvm`.
 
 ```sh
 cmake --preset mac-debug
@@ -134,16 +136,17 @@ GitHub Actions runs the jobs below. The names are the ones shown on a pull reque
 | Job                          | Runner         | What it does                                                                                                                                          | Runs on                            |
 | ---------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
 | Build and test               | `macos-latest` | Configures, builds, and runs the whole test suite.                                                                                                    | pushes to `main` and pull requests |
-| Formatting                   | `ubuntu-24.04` | Checks the formatting of C++, JSON, YAML, Markdown, Python, and Lua, lints the Python and Lua, and runs the tests for the repository's tools.         | pull requests only                 |
-| Headers stand alone          | `ubuntu-24.04` | Compiles every public header on its own.                                                                                                              | pull requests only                 |
-| Static analysis (1/3 to 3/3) | `ubuntu-24.04` | Runs clang-tidy, with warnings as errors, on the files the pull request affects (see [Static analysis](#static-analysis)), split across three shards. | pull requests only                 |
-| Static analysis              | `ubuntu-24.04` | Passes only if every static analysis shard passed. This is the check branch protection requires.                                                      | pull requests only                 |
+| Formatting                   | `macos-latest` | Checks the formatting of C++, JSON, YAML, Markdown, Python, and Lua, lints the Python and Lua, and runs the tests for the repository's tools.         | pull requests only                 |
+| Headers stand alone          | `macos-latest` | Compiles every public header on its own.                                                                                                              | pull requests only                 |
+| Static analysis (1/3 to 3/3) | `macos-latest` | Runs clang-tidy, with warnings as errors, on the files the pull request affects (see [Static analysis](#static-analysis)), split across three shards. | pull requests only                 |
+| Static analysis              | `macos-latest` | Passes only if every static analysis shard passed. This is the check branch protection requires.                                                      | pull requests only                 |
 
-The Linux jobs are skipped on pushes because branch protection already ran them on the
-pull request.
+The jobs other than build and test are skipped on pushes because branch protection
+already ran them on the pull request.
 
-Every job installs the same pinned CMake, 4.4.3, from PyPI rather than using the
-runner's own.
+Every job runs on macOS and installs the same toolchain through
+[`install-toolchain`](.github/actions/install-toolchain/action.yml): CMake 4.4.3 from
+PyPI and LLVM 23 from Homebrew, rather than the runner's own.
 
 The build and test job uses a pinned `sccache` release backed by GitHub Actions'
 cache service. Only compiler outputs are cached; generated build directories are not.
@@ -236,9 +239,10 @@ configuring and omits only its targets. Use `-DCLANG_FORMAT_EXECUTABLE=`,
 `-DPRETTIER_EXECUTABLE=`, `-DRUFF_EXECUTABLE=`, `-DSTYLUA_EXECUTABLE=`, or
 `-DLUACHECK_EXECUTABLE=` to choose a specific one.
 
-CI runs clang-format 23, Prettier 3.9.8, Ruff 0.16.8, StyLua 2.5.2, and Luacheck 1.2.0,
-and a pull request cannot merge until their checks pass. Local versions do not have to
-match. If yours formats differently, CI fails and you reformat with the commands above.
+CI runs clang-format from LLVM 23, Prettier 3.9.8, Ruff 0.16.8, StyLua 2.5.2, and
+Luacheck 1.2.0, and a pull request cannot merge until their checks pass. clang-format
+comes from your LLVM, so it matches CI when your LLVM does; the other tools need not.
+If yours format differently, CI fails and you reformat with the commands above.
 
 ## Static analysis
 
@@ -247,8 +251,8 @@ and performance mistakes. VS Code's recommended clangd extension reports unused 
 missing includes while editing. Treat include-cleaner suggestions as findings to
 review; do not automatically remove headers without rebuilding and running the tests.
 
-Static analysis is enforced by CI using LLVM 23, but remains optional for local
-builds. Developers with clang-tidy installed can run it with:
+Static analysis is enforced by CI, and runs locally with the clang-tidy from the same
+LLVM as the compiler:
 
 ```sh
 cmake --build --preset mac-debug --target tidy
@@ -260,9 +264,9 @@ listing it in its manifest under `cmake/sources/` checks only the new code, but
 changing only a manifest checks the whole tree. So do changes to the analysis rules,
 the CI workflow, the global build configuration, the third-party libraries under
 `external/` (including a submodule moving to another commit), or
-`tools/tidy_targets.py`, which picks the files. Local `tidy` builds always check the whole tree. CMake configuration
-fails with a focused error if an `app/`, `src/`, or enabled `tests/` source is missing
-from its target's manifest.
+`tools/tidy_targets.py`, which picks the files. Local `tidy` builds always check the
+whole tree. CMake configuration fails with a focused error if an `app/`, `src/`, or
+enabled `tests/` source is missing from its target's manifest.
 
 To see which files CI will check for your branch, run the same script:
 
@@ -270,12 +274,8 @@ To see which files CI will check for your branch, run the same script:
 python3 tools/tidy_targets.py --since origin/main
 ```
 
-For matching local quality tools, set `CLANG_FORMAT_EXECUTABLE` and
-`CLANG_TIDY_EXECUTABLE` to LLVM 23 executables in a personal `CMakeUserPresets.json`
-preset, then configure and build using that preset. These variables select quality
-tools, not the C++ compiler. A personal preset such as `mac-debug-llvm23` is not part
-of the shared checkout. Compiler and SDK differences can still produce different
-diagnostics from CI.
+CMake finds clang-format and clang-tidy beside the compiler, so they always match its
+LLVM version, locally as in CI.
 
 The `header_self_containment` target verifies that public headers include everything
 they need themselves:

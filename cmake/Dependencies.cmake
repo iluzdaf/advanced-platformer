@@ -116,3 +116,9 @@ target_include_directories(
     ${PROJECT_SOURCE_DIR}/external/imgui-node-editor
 )
 target_link_libraries(advanced_platformer_imgui PUBLIC glfw)
+# crude_json.cpp calls std::terminate without including <exception>, which LLVM's libc++
+# does not bring in through its other headers.
+set_source_files_properties(
+    ${PROJECT_SOURCE_DIR}/external/imgui-node-editor/crude_json.cpp
+    PROPERTIES COMPILE_OPTIONS "-include;exception"
+)
