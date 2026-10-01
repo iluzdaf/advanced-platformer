@@ -1,58 +1,14 @@
 #include "npc_names.hpp"
 
+#include <format>
 #include <string>
-#include <variant>
 
-#include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_activity.hpp"
 
 namespace advanced_platformer
 {
-    const char* nameOf(NpcState state)
+    std::string nameOf(const LuaNpcActivity& activity)
     {
-        switch (state)
-        {
-        case NpcState::Idle:
-            return "Idle";
-        case NpcState::Patrol:
-            return "Patrol";
-        case NpcState::Chase:
-            return "Chase";
-        case NpcState::Bite:
-            return "Bite";
-        case NpcState::Shoot:
-            return "Shoot";
-        case NpcState::Search:
-            return "Search";
-        case NpcState::Retreat:
-            return "Retreat";
-        case NpcState::Watch:
-            return "Watch";
-        }
-
-        return "Unknown";
-    }
-
-    const char* nameOf(NpcTactic tactic)
-    {
-        switch (tactic)
-        {
-        case NpcTactic::Pursuer:
-            return "Pursuer";
-        case NpcTactic::KeepDistance:
-            return "KeepDistance";
-        }
-
-        return "Unknown";
-    }
-
-    std::string nameOf(const NpcActivity& activity)
-    {
-        if (const auto* builtIn = std::get_if<BuiltInNpcActivity>(&activity))
-        {
-            return "builtin: " + std::string(nameOf(builtIn->state));
-        }
-        const LuaNpcActivity& scripted = std::get<LuaNpcActivity>(activity);
-        return "lua: " + scripted.script + "." + scripted.activity;
+        return std::format("{}.{}", activity.script, activity.activity);
     }
 }

@@ -8,36 +8,10 @@
 
 namespace advanced_platformer
 {
-    enum class NpcState
-    {
-        Idle,
-        Patrol,
-        Chase,
-        Bite,
-        Shoot,
-        Search,
-        Retreat,
-        Watch
-    };
-
-    // The brain's policy, asked wherever the transition table makes a choice: what to do
-    // about a known target, and where a lost one leaves the NPC. A Pursuer closes in,
-    // attacks with what reaches, and searches where it lost its target. A KeepDistance
-    // NPC backs away from a target nearer than its standoff, so a ranged NPC keeps its
-    // range, and watches from where it stands rather than walk to where the target was.
-    // A tactic chooses between states that exist; it never adds behaviour.
-    enum class NpcTactic
-    {
-        Pursuer,
-        KeepDistance
-    };
-
-    // Decision state and persistent knowledge, retained between sensing updates.
+    // What an NPC knows of its target, retained between sensing updates. Its state machine
+    // holds what it is doing.
     struct NpcBrain
     {
-        NpcTactic tactic = NpcTactic::Pursuer;
-        NpcState state = NpcState::Idle;
-        float stateElapsed = 0.0F;
         std::optional<ActorId> target;
         // Last observed target feet, refreshed by sight or an eligible noise.
         glm::vec2 lastKnownTargetFeet = {0.0F, 0.0F};
@@ -62,8 +36,8 @@ namespace advanced_platformer
         // How long a lost target is searched for before the NPC returns to its routine.
         // Zero sends it straight back.
         float searchDuration = 2.0F;
-        // Threshold for targetWithinStandoffDistance; tactics and machines decide
-        // what to do when the target crosses it.
+        // Threshold for targetWithinStandoffDistance; machines decide what to do when the
+        // target crosses it.
         float standoffDistance = 48.0F;
     };
 

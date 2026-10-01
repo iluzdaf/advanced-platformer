@@ -9,7 +9,7 @@ namespace tests
     //   NpcFactsBuilder::facts().withPatrol().knowingTarget().biteReadyFor(0.1F)
     //
     // Every fact starts false, so a chain names only the ones the transition depends on.
-    // The chain converts to NpcFacts wherever one is expected, such as nextNpcState.
+    // The chain converts to NpcFacts wherever one is expected, such as advanceNpcMachine.
     class NpcFactsBuilder
     {
     public:

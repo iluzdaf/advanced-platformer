@@ -17,12 +17,15 @@
 #include "advanced_platformer/navigation/path_follower.hpp"
 #include "advanced_platformer/navigation/platformer_cells.hpp"
 #include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "advanced_platformer/world/pickup.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
 #include "advanced_platformer/world/world.hpp"
 #include "advanced_platformer/world/world_simulation.hpp"
 #include "support/actor_builder.hpp"
 #include "support/actor_components.hpp"
+#include "support/pursuer_npc.hpp"
+#include "lua_npc_scripts.hpp"
 #include "support/tile_map_builder.hpp"
 #include "support/tile_size.hpp"
 #include "support/add_player.hpp"
@@ -32,6 +35,8 @@ TEST_CASE("World simulation senses decides and moves an NPC in one update", "[wo
 {
     advanced_platformer::TileMap map = tests::TileMapBuilder({"........", "........", "########"});
     advanced_platformer::World world;
+    advanced_platformer::LuaNpcScripts scripts;
+    tests::loadPursuerScript(scripts);
 
     advanced_platformer::Actor player = tests::ActorBuilder::sized({12.0F, 12.0F})
                                             .atFeet({70.0F, 28.0F})
@@ -46,15 +51,17 @@ TEST_CASE("World simulation senses decides and moves an NPC in one update", "[wo
                                          .withHealth(3, 3)
                                          .onTeam(advanced_platformer::Team::Enemy)
                                          .biting()
-                                         .thinking({96.0F, 1.0F});
+                                         .thinking({96.0F, 1.0F})
+                                         .running(tests::pursuerMachine());
     const advanced_platformer::ActorId npcId = world.addActor(npc);
 
-    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds);
+    advanced_platformer::updateWorldSimulation(
+        map, world, tests::FixedStepSeconds, nullptr, &scripts);
 
     advanced_platformer::Actor& storedNpc = tests::actor(world, npcId);
     const advanced_platformer::NpcBrain& brain = tests::brain(storedNpc);
     REQUIRE(brain.target == playerId);
-    REQUIRE(brain.state == advanced_platformer::NpcState::Chase);
+    REQUIRE(advanced_platformer::activeNpcMachineState(tests::machine(storedNpc)).name == "chase");
     REQUIRE(storedNpc.body.bounds.topLeft.x > 16.0F);
 }
 
@@ -62,6 +69,8 @@ TEST_CASE("World simulation lets a ranged NPC shoot a visible player", "[world][
 {
     advanced_platformer::TileMap map = tests::TileMapBuilder({".....", ".....", "#####"});
     advanced_platformer::World world;
+    advanced_platformer::LuaNpcScripts scripts;
+    tests::loadPursuerScript(scripts);
 
     advanced_platformer::Actor player = tests::ActorBuilder::sized({12.0F, 12.0F})
                                             .atFeet({54.0F, 28.0F})
@@ -76,10 +85,12 @@ TEST_CASE("World simulation lets a ranged NPC shoot a visible player", "[world][
                                          .withHealth(3, 3)
                                          .onTeam(advanced_platformer::Team::Enemy)
                                          .shooting()
-                                         .thinking({96.0F, 1.0F});
+                                         .thinking({96.0F, 1.0F})
+                                         .running(tests::pursuerMachine());
     const advanced_platformer::ActorId npcId = world.addActor(npc);
 
-    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds);
+    advanced_platformer::updateWorldSimulation(
+        map, world, tests::FixedStepSeconds, nullptr, &scripts);
 
     REQUIRE(world.projectiles().size() == 1);
     REQUIRE(world.projectiles().front().owner == npcId);
@@ -94,6 +105,8 @@ TEST_CASE("World simulation lets an NPC hear a shot on the next update", "[world
         tests::TileMapBuilder({"........", "........", "...x....", "########"})
             .where('x', tests::Tile().blocksSight());
     advanced_platformer::World world;
+    advanced_platformer::LuaNpcScripts scripts;
+    tests::loadPursuerScript(scripts);
 
     advanced_platformer::Actor player = tests::ActorBuilder::sized({12.0F, 12.0F})
                                             .atFeet({86.0F, 48.0F})
@@ -110,22 +123,26 @@ TEST_CASE("World simulation lets an NPC hear a shot on the next update", "[world
                                          .flying(60.0F)
                                          .withHealth(3, 3)
                                          .onTeam(advanced_platformer::Team::Enemy)
-                                         .thinking({96.0F, 1.0F});
+                                         .thinking({96.0F, 1.0F})
+                                         .running(tests::pursuerMachine());
     const advanced_platformer::ActorId npcId = world.addActor(npc);
 
     // Senses run before attacks, so the update that fires is not yet heard.
-    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds);
+    advanced_platformer::updateWorldSimulation(
+        map, world, tests::FixedStepSeconds, nullptr, &scripts);
     REQUIRE(world.projectiles().size() == 1);
     advanced_platformer::Actor& storedNpc = tests::actor(world, npcId);
     REQUIRE_FALSE(tests::brain(storedNpc).target.has_value());
 
     advanced_platformer::Actor& storedPlayer = tests::actor(world, playerId);
     storedPlayer.intentions.primaryAttackPressed = false;
-    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds);
+    advanced_platformer::updateWorldSimulation(
+        map, world, tests::FixedStepSeconds, nullptr, &scripts);
 
     REQUIRE(tests::brain(world, npcId).target == playerId);
     REQUIRE_FALSE(tests::perception(world, npcId).targetVisible);
-    REQUIRE(tests::brain(world, npcId).state == advanced_platformer::NpcState::Chase);
+    REQUIRE(
+        advanced_platformer::activeNpcMachineState(tests::machine(world, npcId)).name == "chase");
 }
 
 TEST_CASE("World simulation continuously patrols a ground NPC", "[world][simulation]")
@@ -133,6 +150,8 @@ TEST_CASE("World simulation continuously patrols a ground NPC", "[world][simulat
     advanced_platformer::TileMap map = tests::TileMapBuilder(
         {"..........", "..........", "..........", "....###...", "..........", "##########"});
     advanced_platformer::World world;
+    advanced_platformer::LuaNpcScripts scripts;
+    tests::loadPursuerScript(scripts);
     constexpr advanced_platformer::Cell LowerEndpoint{2, 4};
     constexpr advanced_platformer::Cell UpperEndpoint{4, 2};
     const glm::vec2 lowerFeet = advanced_platformer::feetInCell(tests::TileSize, LowerEndpoint);
@@ -142,7 +161,8 @@ TEST_CASE("World simulation continuously patrols a ground NPC", "[world][simulat
                                          .atFeet(lowerFeet)
                                          .platforming()
                                          .patrolling(lowerFeet, upperFeet)
-                                         .thinking({});
+                                         .thinking({})
+                                         .running(tests::pursuerMachine());
     tests::platformerMovement(npc).grounded = true;
     const advanced_platformer::ActorId npcId = world.addActor(npc);
 
@@ -155,7 +175,8 @@ TEST_CASE("World simulation continuously patrols a ground NPC", "[world][simulat
     bool previousHeadingToSecond = true;
     for (int tick = 0; tick < 1200 && completedPatrolLegs < 4; ++tick)
     {
-        advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds);
+        advanced_platformer::updateWorldSimulation(
+            map, world, tests::FixedStepSeconds, nullptr, &scripts);
         advanced_platformer::Actor& storedNpc = tests::actor(world, npcId);
         const advanced_platformer::PlatformerMovement& movement =
             tests::platformerMovement(storedNpc);
@@ -164,7 +185,8 @@ TEST_CASE("World simulation continuously patrols a ground NPC", "[world][simulat
             tests::TileSize, advanced_platformer::feetOf(storedNpc.body.bounds));
 
         enteredPatrol =
-            enteredPatrol || tests::brain(storedNpc).state == advanced_platformer::NpcState::Patrol;
+            enteredPatrol ||
+            advanced_platformer::activeNpcMachineState(tests::machine(storedNpc)).name == "patrol";
         wasAirborne = wasAirborne || !movement.grounded;
         reachedUpperEndpoint = reachedUpperEndpoint || (movement.grounded && cell == UpperEndpoint);
         switchedTowardLowerEndpoint =
@@ -195,6 +217,8 @@ TEST_CASE(
     advanced_platformer::TileMap map =
         tests::TileMapBuilder({".....###.....", ".............", ".............", "#############"});
     advanced_platformer::World world;
+    advanced_platformer::LuaNpcScripts scripts;
+    tests::loadPursuerScript(scripts);
     constexpr advanced_platformer::Cell FirstEndpoint{4, 2};
     constexpr advanced_platformer::Cell SpawnCell{12, 2};
     constexpr advanced_platformer::Cell SecondEndpoint{12, 2};
@@ -205,7 +229,8 @@ TEST_CASE(
                                          .inCell(SpawnCell)
                                          .platforming()
                                          .patrolling(firstFeet, secondFeet)
-                                         .thinking({});
+                                         .thinking({})
+                                         .running(tests::pursuerMachine());
     tests::platformerMovement(npc).config.maximumSpeed = 60.0F;
     tests::platformerMovement(npc).grounded = true;
     tests::patrol(npc).headingToSecond = false;
@@ -215,7 +240,8 @@ TEST_CASE(
     bool completedPatrolLeg = false;
     for (int tick = 0; tick < 900 && !completedPatrolLeg; ++tick)
     {
-        advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds);
+        advanced_platformer::updateWorldSimulation(
+            map, world, tests::FixedStepSeconds, nullptr, &scripts);
         advanced_platformer::Actor& storedNpc = tests::actor(world, npcId);
         becameAirborne = becameAirborne || !tests::platformerMovement(storedNpc).grounded;
         completedPatrolLeg = tests::patrol(storedNpc).headingToSecond;
@@ -232,6 +258,8 @@ TEST_CASE(
     advanced_platformer::TileMap map =
         tests::TileMapBuilder({"........", "........", "..###...", "........", "########"});
     advanced_platformer::World world;
+    advanced_platformer::LuaNpcScripts scripts;
+    tests::loadPursuerScript(scripts);
 
     advanced_platformer::Actor player = tests::ActorBuilder::sized({12.0F, 12.0F})
                                             .atFeet({104.0F, 64.0F})
@@ -256,30 +284,33 @@ TEST_CASE(
                                             .withHealth(3, 3)
                                             .onTeam(advanced_platformer::Team::Enemy)
                                             .patrolling(leftPatrolFeet, rightPatrolFeet)
-                                            .thinking({16.0F, 0.01F});
+                                            .thinking({16.0F, 0.01F})
+                                            .running(tests::pursuerMachine());
     // Preserve the movement that carried it toward the last-known player position.
     zombie.body.velocity.x = 100.0F;
     tests::platformerMovement(zombie).grounded = true;
-    tests::brain(zombie).state = advanced_platformer::NpcState::Chase;
+    tests::machine(zombie).active =
+        advanced_platformer::npcMachineStateNamed(tests::machine(zombie).definition, "chase");
     tests::brain(zombie).target = playerId;
     tests::brain(zombie).lastKnownTargetFeet = {88.0F, 32.0F};
     tests::brain(zombie).targetMemoryRemaining = 0.01F;
-    // It does not search, so losing the player sends it straight back to its patrol.
-    tests::senses(zombie).searchDuration = 0.0F;
     tests::patrol(zombie).headingToSecond = false;
     const advanced_platformer::ActorId zombieId = world.addActor(zombie);
 
     // Phase 1: Expiring the memory at the edge switches the zombie back to patrol.
-    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds);
+    advanced_platformer::updateWorldSimulation(
+        map, world, tests::FixedStepSeconds, nullptr, &scripts);
 
     advanced_platformer::Actor& storedZombie = tests::actor(world, zombieId);
-    REQUIRE(tests::brain(storedZombie).state == advanced_platformer::NpcState::Patrol);
+    REQUIRE(
+        advanced_platformer::activeNpcMachineState(tests::machine(storedZombie)).name == "patrol");
     REQUIRE_FALSE(tests::brain(storedZombie).target.has_value());
 
     // Phase 2: The resumed patrol carries it back toward the left endpoint.
     for (int tick = 0; tick < 180; ++tick)
     {
-        advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds);
+        advanced_platformer::updateWorldSimulation(
+            map, world, tests::FixedStepSeconds, nullptr, &scripts);
     }
 
     const glm::vec2 finalFeet =
@@ -300,6 +331,8 @@ TEST_CASE(
     constexpr int RememberedChaseTicks = 30;
 
     advanced_platformer::World world;
+    advanced_platformer::LuaNpcScripts scripts;
+    tests::loadPursuerScript(scripts);
     advanced_platformer::Actor player = tests::ActorBuilder::sized({12.0F, 20.0F})
                                             .inCell({2, 3})
                                             .platforming()
@@ -311,7 +344,8 @@ TEST_CASE(
                                             .inCell({7, 1})
                                             .platforming()
                                             .onTeam(advanced_platformer::Team::Enemy)
-                                            .thinking({});
+                                            .thinking({})
+                                            .running(tests::pursuerMachine());
     tests::platformerMovement(zombie).grounded = true;
     const advanced_platformer::ActorId zombieId = world.addActor(zombie);
 
@@ -323,11 +357,14 @@ TEST_CASE(
             advanced_platformer::Actor& storedPlayer = tests::actor(world, playerId);
             storedPlayer.intentions.jumpPressed = tick == 0;
             storedPlayer.intentions.jumpHeld = tick < 25;
-            advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds);
+            advanced_platformer::updateWorldSimulation(
+                map, world, tests::FixedStepSeconds, nullptr, &scripts);
             advanced_platformer::Actor& storedZombie = tests::actor(world, zombieId);
-            seenDuringJump = seenDuringJump || (tests::perception(storedZombie).targetVisible &&
-                                                tests::brain(storedZombie).state ==
-                                                    advanced_platformer::NpcState::Chase);
+            seenDuringJump =
+                seenDuringJump ||
+                (tests::perception(storedZombie).targetVisible &&
+                 advanced_platformer::activeNpcMachineState(tests::machine(storedZombie)).name ==
+                     "chase");
         }
         return seenDuringJump;
     };
@@ -337,7 +374,7 @@ TEST_CASE(
         REQUIRE_FALSE(tests::perception(zombie).targetVisible);
         REQUIRE(tests::brain(zombie).target == playerId);
         REQUIRE(tests::brain(zombie).targetMemoryRemaining > 0.0F);
-        REQUIRE(tests::brain(zombie).state == advanced_platformer::NpcState::Chase);
+        REQUIRE(advanced_platformer::activeNpcMachineState(tests::machine(zombie)).name == "chase");
         return zombie;
     };
 
@@ -359,7 +396,8 @@ TEST_CASE(
     for (int tick = 0; tick < RememberedChaseTicks; ++tick)
     {
         CAPTURE(tick);
-        advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds);
+        advanced_platformer::updateWorldSimulation(
+            map, world, tests::FixedStepSeconds, nullptr, &scripts);
         if (tests::perception(tests::actor(world, zombieId)).targetVisible)
         {
             break;
@@ -391,6 +429,8 @@ TEST_CASE(
     CAPTURE(feetOutsidePlatform);
 
     advanced_platformer::World world;
+    advanced_platformer::LuaNpcScripts scripts;
+    tests::loadPursuerScript(scripts);
     advanced_platformer::Actor player = tests::ActorBuilder::sized({12.0F, 20.0F})
                                             .atFeet(playerFeet)
                                             .platforming()
@@ -403,7 +443,8 @@ TEST_CASE(
                                             .platforming()
                                             .onTeam(advanced_platformer::Team::Enemy)
                                             .biting()
-                                            .thinking({});
+                                            .thinking({})
+                                            .running(tests::pursuerMachine());
     tests::platformerMovement(zombie).grounded = true;
     const advanced_platformer::ActorId zombieId = world.addActor(zombie);
 
@@ -418,8 +459,11 @@ TEST_CASE(
     };
 
     // Establish the visible chase before measuring progress toward the edge.
-    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds);
-    REQUIRE(tests::brain(world, zombieId).state == advanced_platformer::NpcState::Chase);
+    advanced_platformer::updateWorldSimulation(
+        map, world, tests::FixedStepSeconds, nullptr, &scripts);
+    REQUIRE(
+        advanced_platformer::activeNpcMachineState(tests::machine(world, zombieId)).name ==
+        "chase");
     const float startingDistance = requireVisiblePlayerDistance();
     constexpr float CloseDistance = 2.0F * tests::TileSize;
     REQUIRE(startingDistance > CloseDistance);
@@ -429,7 +473,8 @@ TEST_CASE(
     for (int tick = 0; tick < MaximumChaseTicks && distanceToPlayer > CloseDistance; ++tick)
     {
         CAPTURE(tick);
-        advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds);
+        advanced_platformer::updateWorldSimulation(
+            map, world, tests::FixedStepSeconds, nullptr, &scripts);
         distanceToPlayer = requireVisiblePlayerDistance();
     }
     CAPTURE(startingDistance, distanceToPlayer);
@@ -451,15 +496,19 @@ TEST_CASE(
                                          .atFeet(lowerFeet)
                                          .flying(60.0F)
                                          .patrolling(lowerFeet, upperFeet)
-                                         .thinking({});
+                                         .thinking({})
+                                         .running(tests::pursuerMachine());
     advanced_platformer::World world;
+    advanced_platformer::LuaNpcScripts scripts;
+    tests::loadPursuerScript(scripts);
     const advanced_platformer::ActorId batId = world.addActor(bat);
 
     int completedPatrolLegs = 0;
     bool headingToSecond = true;
     for (int tick = 0; tick < 1200 && completedPatrolLegs < 4; ++tick)
     {
-        advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds);
+        advanced_platformer::updateWorldSimulation(
+            map, world, tests::FixedStepSeconds, nullptr, &scripts);
         advanced_platformer::Actor& storedBat = tests::actor(world, batId);
         if (tests::patrol(storedBat).headingToSecond != headingToSecond)
         {

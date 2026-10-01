@@ -1,9 +1,11 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include <optional>
 #include <stdexcept>
 
 #include "content/actor_catalog.hpp"
 #include "content/actor_definition.hpp"
+#include "content/machine_catalog.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/math/aabb.hpp"
@@ -94,9 +96,18 @@ TEST_CASE("Actor composition creates fresh independent runtime state", "[app][ac
     definition.bite = advanced_platformer::BiteAttack{};
     definition.bite.value().phase = advanced_platformer::BitePhase::Recovery;
     definition.bite.value().phaseTimeRemaining = 10;
+    definition.machine = "test_machine";
+    const auto machines =
+        advanced_platformer::loadMachineCatalog("tests/fixtures/catalogs/machines.json");
     auto first = advanced_platformer::composeActor(
-        definition, {}, 0, {24, 32}, advanced_platformer::Patrol{{8, 32}, {40, 32}, true});
-    auto second = advanced_platformer::composeActor(definition, {}, 0, {40, 32});
+        definition,
+        {},
+        0,
+        {24, 32},
+        advanced_platformer::Patrol{{8, 32}, {40, 32}, true},
+        machines);
+    auto second =
+        advanced_platformer::composeActor(definition, {}, 0, {40, 32}, std::nullopt, machines);
     REQUIRE(tests::platformerMovement(first).config.maximumSpeed == 42);
     REQUIRE(advanced_platformer::feetOf(first.body.bounds).x == 24);
     REQUIRE(first.brain.has_value());
@@ -136,6 +147,7 @@ TEST_CASE("Actor definitions reuse engine component validation", "[app][actors]"
     SECTION("Invalid senses")
     {
         definition.senses = advanced_platformer::NpcSenses{-1, 1};
+        definition.machine = "test_machine";
     }
     SECTION("Negative movement")
     {
@@ -159,14 +171,15 @@ TEST_CASE("Actor definitions reuse engine component validation", "[app][actors]"
     {
         definition.contactDamage = advanced_platformer::ContactDamage{};
     }
-    SECTION("A tactic without senses")
+    SECTION("Senses without a machine")
     {
-        definition.tactic = advanced_platformer::NpcTactic::KeepDistance;
+        definition.senses = advanced_platformer::NpcSenses{};
     }
     SECTION("A negative standoff")
     {
         definition.senses = advanced_platformer::NpcSenses{};
         definition.senses->standoffDistance = -1.0F;
+        definition.machine = "test_machine";
     }
     SECTION("A machine without senses")
     {
@@ -178,5 +191,9 @@ TEST_CASE("Actor definitions reuse engine component validation", "[app][actors]"
         definition.machine = "missing";
     }
     REQUIRE_THROWS_AS(
-        advanced_platformer::validateActorDefinition(definition, {}), std::invalid_argument);
+        advanced_platformer::validateActorDefinition(
+            definition,
+            {},
+            advanced_platformer::loadMachineCatalog("tests/fixtures/catalogs/machines.json")),
+        std::invalid_argument);
 }

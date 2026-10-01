@@ -139,7 +139,6 @@ TEST_CASE(
     REQUIRE(actor(world, npcId).intentions.aimDirection == glm::vec2{56.0F, -16.0F});
     REQUIRE(actor(world, npcId).intentions.primaryAttackPressed);
     REQUIRE(machine(world, npcId).stateElapsed == 0.1F);
-    REQUIRE(brain(world, npcId).stateElapsed == 0.0F);
 
     advanced_platformer::updateNpcBehaviour(map, world, 0.1F, &scripts);
     REQUIRE(scripts.calls.size() == 3);

@@ -267,10 +267,9 @@ for the game's HUD, and must not enable NPC sensing. Level patrols remain per-in
 Exactly one of `platformer` or `flying` is required. Optional `surfaceClimb` works
 with `platformer` only. Empty component objects use C++ defaults; omitted optional
 components are absent. `senses` adds the NPC brain,
-transient perception, sensing configuration and path follower together. `tactic` is
-that brain's policy, `pursuer` or `keepDistance`, and requires `senses`. `machine`
-names a state machine in `machines.json` to run instead of the tactic; it requires
-`senses` too. `health` and `inventorySlots` are positive integers.
+transient perception, sensing configuration and path follower together, and requires
+`machine`, which names the state machine in `machines.json` the NPC runs. `machine`
+requires `senses` in turn. `health` and `inventorySlots` are positive integers.
 Primary attacks use either `bite` or `ranged`. Optional `contactDamage` is independent
 and can coexist with either; all require a non-neutral team. There is no
 inheritance or arbitrary per-placement override mechanism.
@@ -293,10 +292,8 @@ is `feet` or `center`.
 `machines.json` holds named machines an actor definition can run through its `machine`
 field. A machine has `states`, an array of `{ "name", "does" }` in the order they are
 declared, and `transitions`, an array of `{ "from", "to", "when", "after" }`. The
-first state is the one the NPC starts in. A string `does` value names the built-in
-activity the state runs: `idle`, `patrol`, `chase`, `bite`, `shoot`, `search`,
-`retreat` or `watch`. A Lua activity uses
-`{"kind":"lua","script":"rat","activity":"flee"}`.
+first state is the one the NPC starts in. `does` names the Lua activity the state
+runs by its script and activity: `{"script":"rat","activity":"flee"}`.
 
 `from` is a state name or an array of them, which declares one transition per name.
 `when` maps fact names to the boolean each must hold, and may be empty for a transition
@@ -305,9 +302,8 @@ hold before the transition fires. Among the transitions from one state, the firs
 the array whose conditions have held long enough wins.
 
 `assets/scripts/common.lua` provides `idle`, `patrol`, `chase`, `bite`, `shoot`, `search`,
-`retreat` and `watch` as Lua activities, which any machine can use, such as
-`{"kind":"lua","script":"common","activity":"chase"}`. Every shipped machine uses them in
-place of the built-in names.
+`retreat` and `watch`, which any machine can use, such as
+`{"script":"common","activity":"chase"}`.
 
 A Lua reference named `"script": "rat"` loads `assets/scripts/rat.lua`. The script
 returns an `activities` table; each referenced activity needs an `update` function,

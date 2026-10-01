@@ -13,7 +13,6 @@
 #include "advanced_platformer/navigation/path_follower.hpp"
 #include "advanced_platformer/navigation/platformer_cells.hpp"
 #include "advanced_platformer/npc/npc.hpp"
-#include "advanced_platformer/npc/npc_built_in_activity.hpp"
 #include "advanced_platformer/npc/npc_activity.hpp"
 #include "advanced_platformer/npc/npc_activity_scripts.hpp"
 #include "advanced_platformer/npc/npc_facts.hpp"
@@ -25,6 +24,11 @@ namespace advanced_platformer
 {
     namespace
     {
+        void aimToward(Actor& actor, glm::vec2 targetFeet)
+        {
+            actor.intentions.aimDirection = targetFeet - feetOf(actor.body.bounds);
+        }
+
         // Whether a walker could stand one body width to each side of where it stands.
         NpcFooting footingOf(const TileMap& map, const Actor& actor)
         {

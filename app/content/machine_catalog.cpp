@@ -3,7 +3,6 @@
 #include "content_diagnostics.hpp"
 #include "content_glaze.hpp"
 
-#include <array>
 #include <cstddef>
 #include <filesystem>
 #include <format>
@@ -17,7 +16,6 @@
 
 #include <glaze/glaze.hpp>
 
-#include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_activity.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 
@@ -27,7 +25,6 @@ namespace advanced_platformer
     // with linkage, so these cannot go in an anonymous namespace.
     struct LuaActivityJson
     {
-        std::string kind;
         std::string script;
         std::string activity;
     };
@@ -35,8 +32,7 @@ namespace advanced_platformer
     struct MachineStateJson
     {
         std::string name;
-        // A built-in activity's name, or a Lua activity.
-        std::variant<std::string, LuaActivityJson> does;
+        LuaActivityJson does;
     };
 
     struct MachineTransitionJson
@@ -61,23 +57,6 @@ namespace advanced_platformer
 
     namespace
     {
-        struct ActivityEntry
-        {
-            std::string_view name;
-            NpcState does;
-        };
-
-        // Every built-in activity a state may run, under the name the machine file uses.
-        constexpr std::array<ActivityEntry, 8> Activities = {
-            {{"idle", NpcState::Idle},
-             {"patrol", NpcState::Patrol},
-             {"chase", NpcState::Chase},
-             {"bite", NpcState::Bite},
-             {"shoot", NpcState::Shoot},
-             {"search", NpcState::Search},
-             {"retreat", NpcState::Retreat},
-             {"watch", NpcState::Watch}}};
-
         std::string requireName(
             const std::string& name,
             std::string_view description,
@@ -91,43 +70,11 @@ namespace advanced_platformer
             return name;
         }
 
-        BuiltInNpcActivity builtInActivity(
-            const std::string& name,
-            std::string_view sourceName,
-            const std::string& path)
-        {
-            for (const ActivityEntry& entry : Activities)
-            {
-                if (entry.name == name)
-                {
-                    return {entry.does};
-                }
-            }
-            std::string expected;
-            for (const ActivityEntry& entry : Activities)
-            {
-                if (!expected.empty())
-                {
-                    expected += ", ";
-                }
-                expected += entry.name;
-            }
-            failJson(
-                sourceName,
-                path,
-                std::format("unknown activity '{}'; expected one of {}", name, expected));
-        }
-
         LuaNpcActivity luaActivity(
             const LuaActivityJson& json,
             std::string_view sourceName,
             const std::string& path)
         {
-            requireName(json.kind, "activity kind", sourceName, fieldPath(path, "kind"));
-            if (json.kind != "lua")
-            {
-                failJson(sourceName, fieldPath(path, "kind"), "expected 'lua'");
-            }
             return {
                 requireName(json.script, "script name", sourceName, fieldPath(path, "script")),
                 requireName(
@@ -152,15 +99,7 @@ namespace advanced_platformer
                 state.name = requireName(
                     stateJson.name, "state name", sourceName, fieldPath(statePath, "name"));
                 const std::string doesPath = fieldPath(statePath, "does");
-                if (const auto* builtIn = std::get_if<std::string>(&stateJson.does))
-                {
-                    state.does = builtInActivity(*builtIn, sourceName, doesPath);
-                }
-                else
-                {
-                    state.does = luaActivity(
-                        std::get<LuaActivityJson>(stateJson.does), sourceName, doesPath);
-                }
+                state.does = luaActivity(stateJson.does, sourceName, doesPath);
                 machine.states.push_back(state);
             }
 

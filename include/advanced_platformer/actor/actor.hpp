@@ -57,7 +57,7 @@ namespace advanced_platformer
         std::optional<ContactDamage> contactDamage;
         std::optional<NpcBrain> brain;
         std::optional<NpcPerception> perception;
-        // A data-driven machine that chooses the activity instead of asking the tactic.
+        // The data-driven machine that chooses an NPC's activity.
         std::optional<NpcMachine> machine;
         std::optional<NpcSenses> senses;
         std::optional<Patrol> patrol;

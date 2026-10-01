@@ -29,7 +29,6 @@ TEST_CASE("Actor JSON accepts custom names and configures component choices", "[
         "player":"hero", "actors":{
           "hero":{"bodySize":[12,20],"platformer":{"jumpSpeed":210},"health":5,"inventorySlots":3},
           "scout":{"flying":{"speed":25},"team":"enemy","senses":{"noticeDistance":40,"searchDuration":3,"standoffDistance":30},
-                   "tactic":"keepDistance",
                    "machine":"test_machine",
                    "bodySize":[8,6],"animations":"test_actor","spriteAnchor":"center","bite":{"damage":2}}
         }})",
@@ -52,7 +51,6 @@ TEST_CASE("Actor JSON accepts custom names and configures component choices", "[
     REQUIRE(tests::flyingMovement(actor).speed == 25);
     REQUIRE(tests::bite(actor).damage == 2);
     REQUIRE(tests::senses(actor).searchDuration == 3);
-    REQUIRE(tests::brain(actor).tactic == advanced_platformer::NpcTactic::KeepDistance);
     REQUIRE(tests::senses(actor).standoffDistance == 30);
     REQUIRE(tests::sprite(actor).textureId == 7);
     REQUIRE(tests::sprite(actor).anchor == advanced_platformer::SpriteAnchor::BodyCenter);
@@ -163,13 +161,6 @@ TEST_CASE(
         start = "actors.json: line 1, column ";
         end = "unknown field 'phase'";
     }
-    SECTION("Unknown tactic")
-    {
-        actorJson["actors"]["hero"]["senses"] = tests::emptyObject();
-        actorJson["actors"]["hero"]["tactic"] = "ambusher";
-        start = "actors.json: line 1, column ";
-        end = "unknown value 'ambusher'; expected pursuer or keepDistance";
-    }
     SECTION("Unknown team")
     {
         actorJson["actors"]["hero"]["team"] = "pirates";
@@ -192,9 +183,11 @@ TEST_CASE("Actor JSON keeps the C++ defaults a component leaves out", "[app][act
         R"({"player":"hero","actors":{
         "hero":{"bodySize":[12,20],"platformer":{},"health":3,"inventorySlots":2},
         "guard":{"bodySize":[12,20],"team":"enemy","health":2,
-        "platformer":{"maximumSpeed":60},"senses":{"noticeDistance":80},"bite":{"damage":2}}}})",
+        "platformer":{"maximumSpeed":60},"senses":{"noticeDistance":80},"machine":"test_machine",
+        "bite":{"damage":2}}}})",
         "actors.json",
-        {});
+        {},
+        advanced_platformer::loadMachineCatalog("tests/fixtures/catalogs/machines.json"));
     const auto& guard = advanced_platformer::actorDefinition(catalog, "guard");
     const advanced_platformer::PlatformerMovementConfig movementDefaults;
     const advanced_platformer::NpcSenses sensesDefaults;

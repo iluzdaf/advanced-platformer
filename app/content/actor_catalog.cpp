@@ -39,12 +39,6 @@ struct glz::from<glz::JSON, advanced_platformer::Facing>
 {
 };
 
-template <>
-struct glz::from<glz::JSON, advanced_platformer::NpcTactic>
-    : advanced_platformer::NamedEnumReader<advanced_platformer::NpcTactic>
-{
-};
-
 namespace advanced_platformer
 {
     template <> struct ContentNames<Team>
@@ -60,13 +54,6 @@ namespace advanced_platformer
         static constexpr std::array Names{
             std::pair{std::string_view{"left"}, Facing::Left},
             std::pair{std::string_view{"right"}, Facing::Right}};
-    };
-
-    template <> struct ContentNames<NpcTactic>
-    {
-        static constexpr std::array Names{
-            std::pair{std::string_view{"pursuer"}, NpcTactic::Pursuer},
-            std::pair{std::string_view{"keepDistance"}, NpcTactic::KeepDistance}};
     };
 
     // actors.json as written: its member names are the file's keys. Glaze reflects only types
@@ -114,7 +101,6 @@ namespace advanced_platformer
         std::optional<WithDefaults<FlyingMovement>> flying;
         std::optional<WithDefaults<SurfaceClimbConfig>> surfaceClimb;
         std::optional<WithDefaults<NpcSenses>> senses;
-        std::optional<NpcTactic> tactic;
         std::optional<std::string> machine;
         std::optional<BiteJson> bite;
         std::optional<ContactDamageJson> contactDamage;
@@ -199,7 +185,6 @@ namespace advanced_platformer
             result.flying = configFrom(json.flying);
             result.surfaceClimb = configFrom(json.surfaceClimb);
             result.senses = configFrom(json.senses);
-            setIfGiven(result.tactic, json.tactic);
             setIfGiven(result.machine, json.machine);
             if (json.bite.has_value())
             {

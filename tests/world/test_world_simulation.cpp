@@ -24,6 +24,8 @@
 #include "advanced_platformer/world/world_simulation.hpp"
 #include "support/actor_builder.hpp"
 #include "support/actor_components.hpp"
+#include "support/pursuer_npc.hpp"
+#include "lua_npc_scripts.hpp"
 #include "support/tile_map_builder.hpp"
 #include "support/add_player.hpp"
 #include "support/fixed_step.hpp"
@@ -105,9 +107,12 @@ TEST_CASE(
                 .inCell({6, 1})
                 .flying(60.0F)
                 .onTeam(advanced_platformer::Team::Enemy)
-                .thinking({96.0F, 1.0F}));
+                .thinking({96.0F, 1.0F})
+                .running(tests::pursuerMachine()));
         return world;
     };
+    advanced_platformer::LuaNpcScripts scripts;
+    tests::loadPursuerScript(scripts);
     advanced_platformer::TileMap timedMap =
         tests::TileMapBuilder({"........", "........", "########"});
     advanced_platformer::TileMap plainMap = timedMap;
@@ -118,8 +123,9 @@ TEST_CASE(
     for (int tick = 0; tick < 30; ++tick)
     {
         advanced_platformer::updateWorldSimulation(
-            timedMap, timed, tests::FixedStepSeconds, &profile);
-        advanced_platformer::updateWorldSimulation(plainMap, plain, tests::FixedStepSeconds);
+            timedMap, timed, tests::FixedStepSeconds, &profile, &scripts);
+        advanced_platformer::updateWorldSimulation(
+            plainMap, plain, tests::FixedStepSeconds, nullptr, &scripts);
     }
 
     REQUIRE(timed.simulationTimeSeconds() == plain.simulationTimeSeconds());

@@ -8,7 +8,6 @@
 #include <set>
 #include <stdexcept>
 #include <string>
-#include <variant>
 
 #include "advanced_platformer/npc/npc_activity.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
@@ -41,13 +40,13 @@ namespace advanced_platformer
             const NpcStateMachine& machine = entry.second;
             for (const NpcMachineState& state : machine.states)
             {
-                const auto* activity = std::get_if<LuaNpcActivity>(&state.does);
-                if (activity == nullptr || !loaded.insert(activity->script).second)
+                const LuaNpcActivity& activity = state.does;
+                if (!loaded.insert(activity.script).second)
                 {
                     continue;
                 }
-                requireFileStem(activity->script);
-                scripts.loadScript(activity->script, directory / (activity->script + ".lua"));
+                requireFileStem(activity.script);
+                scripts.loadScript(activity.script, directory / (activity.script + ".lua"));
             }
         }
 
@@ -55,16 +54,16 @@ namespace advanced_platformer
         {
             for (const NpcMachineState& state : machine.states)
             {
-                const auto* activity = std::get_if<LuaNpcActivity>(&state.does);
-                if (activity != nullptr && !scripts.hasActivity(*activity))
+                const LuaNpcActivity& activity = state.does;
+                if (!scripts.hasActivity(activity))
                 {
                     throw std::invalid_argument(
                         std::format(
                             "State '{}' in machine '{}' references unknown Lua activity '{}.{}'",
                             state.name,
                             machineName,
-                            activity->script,
-                            activity->activity));
+                            activity.script,
+                            activity.activity));
                 }
             }
         }

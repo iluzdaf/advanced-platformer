@@ -20,8 +20,6 @@ namespace advanced_platformer
     class TileMap;
     struct CameraController;
     enum class AnimationName;
-    enum class NpcState;
-    enum class NpcTactic;
 
     enum class ActorDebugKind
     {
@@ -81,9 +79,6 @@ namespace advanced_platformer
         Aabb collider;
         std::optional<ActorSpriteDebugInfo> sprite;
         std::optional<AnimationName> animation;
-        std::optional<NpcState> npcState;
-        // The tactic is not asked when a machine chooses the state.
-        std::optional<NpcTactic> npcTactic;
         std::optional<std::string> machineState;
         std::optional<PathFollowerDebugInfo> pathFollower;
         std::optional<SensorDebugInfo> sensor;

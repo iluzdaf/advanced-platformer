@@ -3,18 +3,24 @@
 #include <string>
 #include <utility>
 
-#include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_activity.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 
 namespace tests
 {
+    // An activity for a test machine; tests answer it with RecordingNpcScripts or an inline
+    // fixture script.
+    inline advanced_platformer::LuaNpcActivity testActivity(std::string activity)
+    {
+        return {"test", std::move(activity)};
+    }
+
     // Builds a data-driven machine in the words the json uses, in the order the machine
     // lists them:
     //
     //   NpcMachineBuilder::named("test")
-    //       .state("rest", NpcState::Idle)
-    //       .state("hunt", NpcState::Chase)
+    //       .state("rest", testActivity("idle"))
+    //       .state("hunt", testActivity("chase"))
     //       .transition("rest", "hunt").when("targetKnown", true)
     //       .transition("hunt", "rest").when("targetKnown", false).after(0.5F)
     //
@@ -46,7 +52,6 @@ namespace tests
             return builder;
         }
 
-        Stated state(std::string name, advanced_platformer::NpcState does) &&;
         Stated state(std::string name, advanced_platformer::LuaNpcActivity does) &&;
 
     private:
@@ -57,13 +62,6 @@ namespace tests
     class NpcMachineBuilder::Stated : public NpcMachineDraft
     {
     public:
-        Stated state(std::string name, advanced_platformer::NpcState does) &&
-        {
-            built.states.push_back(
-                {std::move(name), advanced_platformer::BuiltInNpcActivity{does}});
-            return std::move(*this);
-        }
-
         Stated state(std::string name, advanced_platformer::LuaNpcActivity does) &&
         {
             built.states.push_back({std::move(name), std::move(does)});
@@ -124,14 +122,6 @@ namespace tests
             built = std::move(machine);
         }
     };
-
-    inline NpcMachineBuilder::Stated NpcMachineBuilder::state(
-        std::string name,
-        advanced_platformer::NpcState does) &&
-    {
-        built.states.push_back({std::move(name), advanced_platformer::BuiltInNpcActivity{does}});
-        return Stated(std::move(built));
-    }
 
     inline NpcMachineBuilder::Stated NpcMachineBuilder::state(
         std::string name,

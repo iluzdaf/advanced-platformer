@@ -81,7 +81,7 @@ TEST_CASE("An NPC from the actor builder is one World accepts", "[support][actor
 
     advanced_platformer::Actor& npc = tests::actor(world, id);
     REQUIRE(npc.team == advanced_platformer::Team::Enemy);
-    REQUIRE(tests::brain(npc).state == advanced_platformer::NpcState::Idle);
+    REQUIRE(advanced_platformer::activeNpcMachineState(tests::machine(npc)).name == "idle");
     REQUIRE_FALSE(tests::perception(npc).targetVisible);
     REQUIRE_FALSE(tests::perception(npc).heardLanding);
     REQUIRE(tests::senses(npc).noticeDistance == 64.0F);
@@ -102,7 +102,7 @@ TEST_CASE("A thinking actor from the builder can run a machine", "[support][acto
             .thinking({})
             .running(
                 tests::NpcMachineBuilder::named("test").state(
-                    "rest", advanced_platformer::NpcState::Idle)));
+                    "rest", tests::testActivity("idle"))));
     REQUIRE(
         advanced_platformer::activeNpcMachineState(
             tests::actor(world, id).machine.value_or(advanced_platformer::NpcMachine{}))
