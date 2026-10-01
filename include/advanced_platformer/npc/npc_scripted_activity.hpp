@@ -15,7 +15,8 @@ namespace advanced_platformer
     struct PathFollower;
 
     // A machine state's Lua activity, run through the update's scripts, which it requires.
-    // Each hook hands the script a copied snapshot of the actor, its target and its facts.
+    // Each hook hands the script a copied snapshot of the actor, its living target, if it has
+    // one, and its facts.
 
     // Drops the old path, as every activity change does, then runs the script's enter.
     void enterScriptedActivity(
@@ -23,16 +24,18 @@ namespace advanced_platformer
         const Actor& actor,
         const NpcBrain& brain,
         PathFollower& follower,
+        const Actor* target,
         const LuaNpcActivity& activity,
         const NpcFacts& facts);
 
     // Runs the script's update and applies its command as this tick's intentions: a route
-    // to follow, a route to drop, and an aim.
+    // to follow, a route to drop, an aim, and turning the patrol round.
     void updateScriptedActivity(
         const NpcUpdate& update,
         Actor& actor,
         const NpcBrain& brain,
         PathFollower& follower,
+        const Actor* target,
         const LuaNpcActivity& activity,
         const NpcFacts& facts);
 
@@ -41,6 +44,7 @@ namespace advanced_platformer
         const Actor& actor,
         const NpcBrain& brain,
         const PathFollower& follower,
+        const Actor* target,
         const LuaNpcActivity& activity,
         const NpcFacts& facts);
 

@@ -9,7 +9,9 @@
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/actor/actor_system.hpp"
 #include "advanced_platformer/combat/attack_system.hpp"
+#include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
@@ -212,4 +214,88 @@ TEST_CASE("Removing an actor forgets its scripted activity state", "[npc][lua][l
 
     REQUIRE(scripts.forgotten == std::vector<advanced_platformer::ActorId>{npcId});
     REQUIRE(world.findActor(npcId) == nullptr);
+}
+
+TEST_CASE("A scripted activity sees both bodies' centres, its footing and its route", "[npc][lua]")
+{
+    // The walker stands at a ledge: there is floor to its left and none to its right.
+    advanced_platformer::TileMap map = tests::TileMapBuilder({"........", "........", "##......"});
+    advanced_platformer::World world;
+    const advanced_platformer::ActorId player = tests::addPlayer(
+        world, makePlayer({56.0F, 32.0F}).onTeam(advanced_platformer::Team::Player));
+    const advanced_platformer::ActorId npc = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({24.0F, 32.0F})
+            .platforming()
+            .onTeam(advanced_platformer::Team::Enemy)
+            .thinking({64.0F, 1.0F})
+            .running(
+                tests::NpcMachineBuilder::named("test").state(
+                    "acting", advanced_platformer::LuaNpcActivity{"fixture", "act"})));
+    tests::RecordingNpcScripts scripts;
+
+    advanced_platformer::updateNpcSenses(map, world, tests::FixedStepSeconds);
+    advanced_platformer::updateNpcBehaviour(map, world, tests::FixedStepSeconds, &scripts);
+
+    REQUIRE(scripts.calls.size() == 2);
+    const advanced_platformer::NpcActivitySnapshot& snapshot = scripts.calls.back().snapshot;
+    REQUIRE(snapshot.center == advanced_platformer::centerOf(actor(world, npc).body.bounds));
+    REQUIRE(
+        snapshot.targetCenter.value_or(glm::vec2{}) ==
+        advanced_platformer::centerOf(actor(world, player).body.bounds));
+    REQUIRE(snapshot.footing.has_value());
+    REQUIRE(snapshot.footing.value_or(advanced_platformer::NpcFooting{}).left);
+    REQUIRE_FALSE(snapshot.footing.value_or(advanced_platformer::NpcFooting{}).right);
+    REQUIRE_FALSE(snapshot.hasRoute);
+    REQUIRE(snapshot.lastKnownTargetFeet == glm::vec2{56.0F, 32.0F});
+}
+
+TEST_CASE("A flyer has no footing, and the last known target feet outlast the target", "[npc][lua]")
+{
+    advanced_platformer::TileMap map = tests::TileMapBuilder({"........", "........", "########"});
+    advanced_platformer::World world;
+    const advanced_platformer::ActorId npc = world.addActor(
+        makeNpc({24.0F, 16.0F})
+            .running(
+                tests::NpcMachineBuilder::named("test").state(
+                    "acting", advanced_platformer::LuaNpcActivity{"fixture", "act"})));
+    brain(world, npc).lastKnownTargetFeet = {72.0F, 32.0F};
+    tests::RecordingNpcScripts scripts;
+
+    advanced_platformer::updateNpcBehaviour(map, world, tests::FixedStepSeconds, &scripts);
+
+    const advanced_platformer::NpcActivitySnapshot& snapshot = scripts.calls.back().snapshot;
+    REQUIRE_FALSE(snapshot.footing.has_value());
+    REQUIRE_FALSE(snapshot.targetFeet.has_value());
+    REQUIRE_FALSE(snapshot.targetCenter.has_value());
+    REQUIRE(snapshot.lastKnownTargetFeet == glm::vec2{72.0F, 32.0F});
+}
+
+TEST_CASE("A script can turn its NPC's patrol round", "[npc][lua]")
+{
+    advanced_platformer::TileMap map = tests::TileMapBuilder({"........", "........", "########"});
+    advanced_platformer::World world;
+    const advanced_platformer::ActorId npc = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({24.0F, 16.0F})
+            .flying(20.0F)
+            .patrolling({8.0F, 16.0F}, {104.0F, 16.0F})
+            .thinking({64.0F, 1.0F})
+            .running(
+                tests::NpcMachineBuilder::named("test").state(
+                    "acting", advanced_platformer::LuaNpcActivity{"fixture", "act"})));
+    tests::RecordingNpcScripts scripts;
+    scripts.command.turnPatrol = true;
+
+    advanced_platformer::updateNpcBehaviour(map, world, tests::FixedStepSeconds, &scripts);
+    REQUIRE(scripts.calls.back()
+                .snapshot.patrol.value_or(advanced_platformer::Patrol{})
+                .headingToSecond);
+    REQUIRE_FALSE(tests::patrol(world, npc).headingToSecond);
+
+    advanced_platformer::updateNpcBehaviour(map, world, tests::FixedStepSeconds, &scripts);
+    REQUIRE_FALSE(scripts.calls.back()
+                      .snapshot.patrol.value_or(advanced_platformer::Patrol{})
+                      .headingToSecond);
+    REQUIRE(tests::patrol(world, npc).headingToSecond);
 }
