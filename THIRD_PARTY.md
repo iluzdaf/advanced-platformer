@@ -1,6 +1,6 @@
 # Third-party source
 
-The project vendors dependency source so a classroom checkout builds without a
+The project vendors dependency source so a fresh checkout builds without a
 package manager or a network connection.
 
 | Directory           | Version                      | Upstream revision/source                                                                                     |

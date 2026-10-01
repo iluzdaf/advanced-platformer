@@ -43,7 +43,7 @@ and assigns stable numeric level IDs to files:
 - An exit's `nextLevel` refers to a level ID in the catalog.
 
 Each catalog entry assigns a level ID to a level file. The referenced file contains that
-level's map and object placements. Students can rename, add, or remove level files by
+level's map and object placements. Level files can be renamed, added, or removed by
 updating the catalog without changing C++.
 
 ## Content files at a glance
