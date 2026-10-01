@@ -17,7 +17,6 @@ add_library(advanced_platformer_json INTERFACE)
 target_include_directories(
     advanced_platformer_json
     SYSTEM INTERFACE
-    ${PROJECT_SOURCE_DIR}/external/nlohmann/single_include
     ${PROJECT_SOURCE_DIR}/external/glaze/include
 )
 

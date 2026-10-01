@@ -26,10 +26,6 @@
 	path = external/lua
 	url = https://github.com/lua/lua.git
 	shallow = true
-[submodule "nlohmann"]
-	path = external/nlohmann
-	url = https://github.com/nlohmann/json.git
-	shallow = true
 [submodule "sol2"]
 	path = external/sol2
 	url = https://github.com/ThePhD/sol2.git

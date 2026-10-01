@@ -243,15 +243,17 @@ namespace advanced_platformer
                     fieldPath(path, "definition"));
                 return result;
             }
-            for (const auto& [key, given] :
-                 {std::pair{"item", json.item.has_value()},
-                  std::pair{"quantity", json.quantity.has_value()},
-                  std::pair{"bodySize", json.bodySize.has_value()}})
+            if (!json.item.has_value())
             {
-                if (!given)
-                {
-                    failJson(sourceName, path, std::format("missing '{}'", key));
-                }
+                failJson(sourceName, path, "missing 'item'");
+            }
+            if (!json.quantity.has_value())
+            {
+                failJson(sourceName, path, "missing 'quantity'");
+            }
+            if (!json.bodySize.has_value())
+            {
+                failJson(sourceName, path, "missing 'bodySize'");
             }
             result.stack = {
                 nameFrom(*json.item, "item name", sourceName, fieldPath(path, "item")),
@@ -458,6 +460,8 @@ namespace advanced_platformer
             const auto& legend = *file.objectLegend;
             std::vector<std::string> tileSymbols;
             std::vector<std::string> objectSymbols;
+            tileSymbols.reserve(file.tileLegend.size());
+            objectSymbols.reserve(legend.size());
             for (const auto& entry : file.tileLegend)
             {
                 tileSymbols.push_back(entry.first);
@@ -519,6 +523,7 @@ namespace advanced_platformer
         }
 
         std::vector<std::string> tileSymbols;
+        tileSymbols.reserve(file.tileLegend.size());
         for (const auto& [symbol, tile] : file.tileLegend)
         {
             tileSymbols.push_back(symbol);
@@ -537,10 +542,10 @@ namespace advanced_platformer
 
         validateSinglePlacement(
             playerOrigins(file.playerSpawnCell, file.playerSpawnFeet), "player", sourceName);
-        const std::vector<PlacementOrigin> exits =
-            file.exit.has_value() ? std::vector<PlacementOrigin>{{"exit", std::nullopt}}
-                                  : std::vector<PlacementOrigin>{};
-        validateSinglePlacement(exits, "exit", sourceName);
+        if (!file.exit.has_value())
+        {
+            failJson(sourceName, "exit", "expected exactly one placement");
+        }
         result.playerSpawn = positionFrom(
             file.playerSpawnCell,
             file.playerSpawnFeet,

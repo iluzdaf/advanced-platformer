@@ -32,7 +32,7 @@ namespace tests
 
     inline void eraseKey(Json& object, std::string_view key)
     {
-        object.get_object().erase(std::string(key));
+        object.get_object().erase(key);
     }
 
     // A list of numbers, such as [0, 24].

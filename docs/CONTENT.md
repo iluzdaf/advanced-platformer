@@ -547,7 +547,7 @@ validators use it as well.
 | `indexPath` | a path and an index                  | `"parent[2]"`      | Used for array elements.                                                |
 | `failJson`  | a source name, a path, and a message | nothing; it throws | Reports `source: path: message`, omitting either part when it is empty. |
 
-Catalogs are read with [`content_glaze.hpp`](../app/content/content_glaze.hpp). Each file
+Content files are read with [`content_glaze.hpp`](../app/content/content_glaze.hpp). Each file
 is described by plain structs whose member names are its keys, and
 `readContent<T>(text, sourceName)` fills one with Glaze. Every key must be a member, and
 every member must be present unless it is a `std::optional`. The catalog then converts the
@@ -556,7 +556,7 @@ structs to engine types, and its validator checks the values.
 | Name                          | Use                                                                                                                                                            |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `readContent<T>`              | Reads a whole file into the struct that mirrors it.                                                                                                            |
-| `std::optional<T>` members    | A field a file may leave out.                                                                                                                                  |
+| `std::optional<T>` members    | A field a file may leave out. `null` reads as left out.                                                                                                        |
 | `WithDefaults<T>`             | An object whose members may each be left out, keeping their C++ defaults. Actor movement and senses configs are read this way, so their member names are keys. |
 | `ContentNames<E>`             | The names an enum's values are written as. With `NamedEnumReader`, an unknown name lists the allowed ones.                                                     |
 | `glm::vec2`                   | Written as `[x, y]`, with exactly two numbers.                                                                                                                 |
@@ -569,21 +569,9 @@ the key or value found there, such as
 reported as `invalid JSON` where its syntax breaks. Rule errors from the validators keep
 their field paths, such as `items.json: items.herb: ...`.
 
-Level files are read with nlohmann/json through
-[`content_json.cpp`](../app/content/content_json.cpp), because their legends, map rows and
-name references do not map onto structs. A `json` function receives a value; a `read`
-function finds one by key.
-
-| Name                                                  | Takes                               | Returns                                         | Notes                                                                          |
-| ----------------------------------------------------- | ----------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------ |
-| `jsonText`, `jsonVector`, `jsonInteger`, ...          | a JSON value                        | the converted value                             | The caller already holds the value.                                            |
-| `readText`, `readVector`, `readInteger`, ...          | an object and a key                 | the converted value                             | A missing key is an error.                                                     |
-| `jsonName`, `readName`                                | a value or a key, and a description | the name                                        | A name that identifies an entry; an empty one is an error.                     |
-| `readOptionalVector`                                  | an object, a key, and a reference   | nothing                                         | A missing key keeps the caller's value; a present but invalid one is an error. |
-| `checkJsonFields`, `checkJsonObject`, `checkJsonPair` | a JSON value                        | nothing                                         | Shape assertions. They extract no value.                                       |
-| `requiredJsonMember`                                  | an object and a key                 | the member                                      | Throws when the key is absent.                                                 |
-| `optionalJsonMember`                                  | an object and a key                 | the member, or `nullptr` when the key is absent | The lookup `readOptionalVector` and `requiredJsonMember` are built on.         |
-| `parseContentRoot`                                    | the file text                       | the JSON document                               | Reports a syntax error with its line and column.                               |
+Level files are read the same way. An object legend entry is one struct whose `type` names
+which fields it may use, and the reader checks that after reading. Map markers become
+placement structs before placements are read.
 
 The catalogs and [`level_data.cpp`](../app/content/level_data.cpp) build on those with a
 second set of verbs.
