@@ -2,6 +2,7 @@
   "recommendations": [
     "llvm-vs-code-extensions.vscode-clangd",
     "ms-vscode.cmake-tools",
+    "loopj.vscode-gersemi",
     "esbenp.prettier-vscode",
     "charliermarsh.ruff",
     "JohnnyMorganz.stylua",

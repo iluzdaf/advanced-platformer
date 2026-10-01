@@ -162,7 +162,7 @@ runtime. `.luarc.json` configures LuaLS for Lua 5.4 and leaves formatting to Sty
 |           | Config          | Tool                            | VS Code                                 |
 | --------- | --------------- | ------------------------------- | --------------------------------------- |
 | C and C++ | `.clang-format` | clang-format 23                 | on save, through clangd                 |
-| CMake     | `.gersemirc`    | gersemi 0.29.2                  | not set up                              |
+| CMake     | `.gersemirc`    | gersemi 0.29.2                  | on save, through the gersemi extension  |
 | JSON      | `.prettierrc`   | Prettier 3.9.8                  | on save, through the Prettier extension |
 | YAML      | `.prettierrc`   | Prettier 3.9.8                  | on save, through the Prettier extension |
 | Markdown  | `.prettierrc`   | Prettier 3.9.8                  | on save, through the Prettier extension |
@@ -179,8 +179,10 @@ brew install stylua luacheck
 uv tool install gersemi==0.29.2
 ```
 
-`pipx install gersemi==0.29.2` works as well. Configure again afterwards so CMake finds it,
-or pass `-DGERSEMI_EXECUTABLE=`.
+`pipx install gersemi==0.29.2` works as well. Both install into `~/.local/bin`; put it on
+your `PATH` with `uv tool update-shell` or `pipx ensurepath`, then restart your shell and VS
+Code. The gersemi extension runs whichever `gersemi` the `PATH` finds, and CMake finds it
+when you configure again.
 
 Format first-party CMake, or check it without changing files:
 
