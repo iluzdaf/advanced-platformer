@@ -4,7 +4,7 @@
 
 #include "graphics/display_viewport.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     struct DebugOverlay;
 

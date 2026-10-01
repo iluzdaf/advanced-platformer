@@ -10,9 +10,9 @@
 
 #include "tile_catalog.hpp"
 #include "level_data.hpp"
-#include "simple_platformer/render/sprite.hpp"
+#include "advanced_platformer/render/sprite.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     void validateContentSprite(const Sprite& sprite);
     // Rejects a region that runs past an atlas of this size, naming the file and field.

@@ -6,7 +6,7 @@
 #include "ui/hud_draw.hpp"
 #include "ui/hud_layout.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     void drawPauseNotice(const WindowViewport& viewport)
     {

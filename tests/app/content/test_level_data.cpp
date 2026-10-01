@@ -3,11 +3,11 @@
 #include <glm/vec2.hpp>
 
 #include "content/level_data.hpp"
-#include "simple_platformer/math/coordinates.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
 
 TEST_CASE("Actor markers append to explicit placements over empty terrain", "[app][content][json]")
 {
-    const auto data = simple_platformer::parseLevelData(
+    const auto data = advanced_platformer::parseLevelData(
         R"({
             "tileLegend": {".": "empty", "#": "stone", "G": "grass"},
             "objectLegend": {
@@ -23,14 +23,18 @@ TEST_CASE("Actor markers append to explicit placements over empty terrain", "[ap
         })",
         "markers");
 
-    REQUIRE(data.playerSpawn == simple_platformer::LevelPosition{simple_platformer::Cell{0, 0}});
+    REQUIRE(
+        data.playerSpawn == advanced_platformer::LevelPosition{advanced_platformer::Cell{0, 0}});
     REQUIRE(data.actors.size() == 5);
     REQUIRE(
-        data.actors[0].spawn == simple_platformer::LevelPosition{simple_platformer::Cell{7, 0}});
+        data.actors[0].spawn ==
+        advanced_platformer::LevelPosition{advanced_platformer::Cell{7, 0}});
     REQUIRE(
-        data.actors[1].spawn == simple_platformer::LevelPosition{simple_platformer::Cell{1, 0}});
+        data.actors[1].spawn ==
+        advanced_platformer::LevelPosition{advanced_platformer::Cell{1, 0}});
     REQUIRE(
-        data.actors[2].spawn == simple_platformer::LevelPosition{simple_platformer::Cell{2, 0}});
+        data.actors[2].spawn ==
+        advanced_platformer::LevelPosition{advanced_platformer::Cell{2, 0}});
     REQUIRE(data.actors[1].patrol.has_value());
     REQUIRE(data.actors[3].definitionName == "bat");
     REQUIRE(data.actors[4].definitionName == "zombie_soldier");
@@ -40,7 +44,7 @@ TEST_CASE("Actor markers append to explicit placements over empty terrain", "[ap
 
 TEST_CASE("Pickup and exit markers retain authored values", "[app][content][json]")
 {
-    const auto data = simple_platformer::parseLevelData(
+    const auto data = advanced_platformer::parseLevelData(
         R"({
             "tileLegend": {".": "empty", "#": "stone"},
             "objectLegend": {
@@ -57,12 +61,13 @@ TEST_CASE("Pickup and exit markers retain authored values", "[app][content][json
         "markers");
 
     REQUIRE(data.pickups.size() == 3);
-    REQUIRE(data.pickups[0].spawn == simple_platformer::LevelPosition{glm::vec2{136.0F, 8.0F}});
+    REQUIRE(data.pickups[0].spawn == advanced_platformer::LevelPosition{glm::vec2{136.0F, 8.0F}});
     REQUIRE(data.pickups[1].stack.item == "key");
     REQUIRE(data.pickups[1].stack.quantity == 2);
     REQUIRE(
-        data.pickups[2].spawn == simple_platformer::LevelPosition{simple_platformer::Cell{2, 0}});
-    REQUIRE(data.exit.spawn == simple_platformer::LevelPosition{simple_platformer::Cell{3, 0}});
+        data.pickups[2].spawn ==
+        advanced_platformer::LevelPosition{advanced_platformer::Cell{2, 0}});
+    REQUIRE(data.exit.spawn == advanced_platformer::LevelPosition{advanced_platformer::Cell{3, 0}});
     REQUIRE(data.exit.requirement.has_value());
     REQUIRE(data.exit.consumeItem);
     REQUIRE(data.exit.nextLevel == 2);
@@ -70,7 +75,7 @@ TEST_CASE("Pickup and exit markers retain authored values", "[app][content][json
 
 TEST_CASE("Object-only levels may omit explicit placement arrays", "[app][content][json]")
 {
-    const auto data = simple_platformer::parseLevelData(
+    const auto data = advanced_platformer::parseLevelData(
         R"({
             "tileLegend": {".": "empty", "#": "stone"},
             "objectLegend": {
@@ -83,12 +88,12 @@ TEST_CASE("Object-only levels may omit explicit placement arrays", "[app][conten
 
     REQUIRE(data.actors.empty());
     REQUIRE(data.pickups.empty());
-    REQUIRE(data.exit.spawn == simple_platformer::LevelPosition{simple_platformer::Cell{1, 0}});
+    REQUIRE(data.exit.spawn == advanced_platformer::LevelPosition{advanced_platformer::Cell{1, 0}});
 }
 
 TEST_CASE("Level JSON accepts a custom tile legend", "[app][content][json]")
 {
-    const auto data = simple_platformer::parseLevelData(
+    const auto data = advanced_platformer::parseLevelData(
         R"({
             "tileLegend": {".": "empty", "G": "grass", "X": "glass"},
             "map": [".GX"],
@@ -107,7 +112,7 @@ TEST_CASE(
     "Actor placements retain definition references and patrol coordinates",
     "[app][content][json]")
 {
-    const auto data = simple_platformer::parseLevelData(
+    const auto data = advanced_platformer::parseLevelData(
         R"({
             "tileLegend": {".": "empty", "#": "stone"},
             "map": ["....", "####"],
@@ -123,22 +128,24 @@ TEST_CASE(
         "test level");
 
     REQUIRE(data.mapRows.size() == 2);
-    REQUIRE(data.playerSpawn == simple_platformer::LevelPosition{simple_platformer::Cell{1, 0}});
+    REQUIRE(
+        data.playerSpawn == advanced_platformer::LevelPosition{advanced_platformer::Cell{1, 0}});
     REQUIRE(data.actors.size() == 2);
     REQUIRE(data.actors[0].definitionName == "zombie");
     REQUIRE(
-        data.actors[0].spawn == simple_platformer::LevelPosition{simple_platformer::Cell{2, 0}});
+        data.actors[0].spawn ==
+        advanced_platformer::LevelPosition{advanced_platformer::Cell{2, 0}});
     REQUIRE(data.actors[0].patrol.has_value());
     REQUIRE(
-        data.actors[0].patrol.value_or(simple_platformer::PatrolPlacement{}).second ==
-        simple_platformer::LevelPosition{simple_platformer::Cell{3, 0}});
+        data.actors[0].patrol.value_or(advanced_platformer::PatrolPlacement{}).second ==
+        advanced_platformer::LevelPosition{advanced_platformer::Cell{3, 0}});
     REQUIRE(data.actors[1].definitionName == "bat");
-    REQUIRE(data.actors[1].spawn == simple_platformer::LevelPosition{glm::vec2{17.0F, 9.0F}});
+    REQUIRE(data.actors[1].spawn == advanced_platformer::LevelPosition{glm::vec2{17.0F, 9.0F}});
 }
 
 TEST_CASE("Explicit pickups and exits retain item requirements", "[app][content][json]")
 {
-    const auto data = simple_platformer::parseLevelData(
+    const auto data = advanced_platformer::parseLevelData(
         R"({
             "tileLegend": {".": "empty", "#": "stone"},
             "map": ["....", "####"],
@@ -153,15 +160,16 @@ TEST_CASE("Explicit pickups and exits retain item requirements", "[app][content]
     REQUIRE(data.pickups.size() == 1);
     REQUIRE(data.pickups[0].stack.item == "key");
     REQUIRE(
-        data.pickups[0].spawn == simple_platformer::LevelPosition{simple_platformer::Cell{1, 0}});
-    REQUIRE(data.exit.spawn == simple_platformer::LevelPosition{simple_platformer::Cell{2, 0}});
+        data.pickups[0].spawn ==
+        advanced_platformer::LevelPosition{advanced_platformer::Cell{1, 0}});
+    REQUIRE(data.exit.spawn == advanced_platformer::LevelPosition{advanced_platformer::Cell{2, 0}});
     REQUIRE(data.exit.requirement.has_value());
     REQUIRE_FALSE(data.exit.nextLevel.has_value());
 }
 
 TEST_CASE("Pickup placements can reference a definition", "[app][content][json]")
 {
-    const auto data = simple_platformer::parseLevelData(
+    const auto data = advanced_platformer::parseLevelData(
         R"({
             "tileLegend": {".": "empty", "#": "stone"},
             "map": ["....", "####"],
@@ -178,7 +186,7 @@ TEST_CASE("Pickup placements can reference a definition", "[app][content][json]"
 
 TEST_CASE("Inline pickup placements retain their body size", "[app][content][json]")
 {
-    const auto data = simple_platformer::parseLevelData(
+    const auto data = advanced_platformer::parseLevelData(
         R"({
             "tileLegend": {".": "empty", "#": "stone"},
             "map": ["....", "####"],

@@ -3,17 +3,17 @@
 #include <catch2/catch_test_macros.hpp>
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/npc/npc_activity.hpp"
-#include "simple_platformer/npc/npc_activity_scripts.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/npc/npc_activity.hpp"
+#include "advanced_platformer/npc/npc_activity_scripts.hpp"
 #include "lua_npc_scripts.hpp"
 
 namespace
 {
-    using simple_platformer::ActorId;
-    using simple_platformer::LuaNpcActivity;
-    using simple_platformer::LuaNpcScripts;
-    using simple_platformer::NpcActivitySnapshot;
+    using advanced_platformer::ActorId;
+    using advanced_platformer::LuaNpcActivity;
+    using advanced_platformer::LuaNpcScripts;
+    using advanced_platformer::NpcActivitySnapshot;
 
     constexpr ActorId FirstActor{1};
     constexpr ActorId SecondActor{2};
@@ -47,7 +47,7 @@ TEST_CASE("Snapshot positions are vec2 values with glm's arithmetic", "[lua][npc
     snapshot.targetFeet = {{4.0F, 6.0F}};
     scripts.enter(FirstActor, Activity, snapshot);
 
-    const simple_platformer::NpcActivityCommand command =
+    const advanced_platformer::NpcActivityCommand command =
         scripts.update(FirstActor, Activity, snapshot, 0.1F);
 
     REQUIRE(scripts.diagnostics().empty());
@@ -97,7 +97,7 @@ TEST_CASE("A Lua command rejects a vec2 that is not finite", "[lua][npc][vec2]")
     const NpcActivitySnapshot snapshot;
     scripts.enter(FirstActor, Activity, snapshot);
 
-    const simple_platformer::NpcActivityCommand command =
+    const advanced_platformer::NpcActivityCommand command =
         scripts.update(FirstActor, Activity, snapshot, 0.1F);
 
     REQUIRE_FALSE(command.aimAt.has_value());

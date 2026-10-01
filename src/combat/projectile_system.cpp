@@ -1,4 +1,4 @@
-#include "simple_platformer/combat/projectile_system.hpp"
+#include "advanced_platformer/combat/projectile_system.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -7,18 +7,18 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/combat/combat.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/physics/segment_cast.hpp"
-#include "simple_platformer/world/tile_map.hpp"
-#include "simple_platformer/world/world.hpp"
-#include "simple_platformer/world/world_requests.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/physics/segment_cast.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
+#include "advanced_platformer/world/world.hpp"
+#include "advanced_platformer/world/world_requests.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

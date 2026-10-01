@@ -7,9 +7,9 @@
 #include <glm/vec2.hpp>
 #include <vector>
 
-#include "simple_platformer/world/tile_map.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     struct TileCatalog
     {

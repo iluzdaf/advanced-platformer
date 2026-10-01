@@ -7,11 +7,11 @@
 #include <string_view>
 #include <vector>
 
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/npc/npc_activity.hpp"
-#include "simple_platformer/npc/npc_activity_scripts.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/npc/npc_activity.hpp"
+#include "advanced_platformer/npc/npc_activity_scripts.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     struct LuaScriptDiagnostic
     {

@@ -1,4 +1,4 @@
-#include "simple_platformer/world/world.hpp"
+#include "advanced_platformer/world/world.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -13,37 +13,37 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/actor/actor_validation.hpp"
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/combat/combat.hpp"
-#include "simple_platformer/inventory/item.hpp"
-#include "simple_platformer/navigation/platformer_connection_cache.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_validation.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/inventory/item.hpp"
+#include "advanced_platformer/navigation/platformer_connection_cache.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {
-        void validateProjectile(const simple_platformer::Projectile& projectile)
+        void validateProjectile(const advanced_platformer::Projectile& projectile)
         {
             if (!isFinite(projectile.bounds.topLeft) || !isFinitePositive(projectile.bounds.size) ||
                 !isFinite(projectile.velocity) || projectile.damage <= 0 ||
                 !isFinitePositive(projectile.lifetimeRemaining) ||
                 !isFinitePositive(projectile.sprite.size) ||
-                (projectile.owner.has_value() && !simple_platformer::isValid(*projectile.owner)))
+                (projectile.owner.has_value() && !advanced_platformer::isValid(*projectile.owner)))
             {
                 throw std::invalid_argument("Projectile data is invalid");
             }
         }
 
-        void validateProjectileBurst(const simple_platformer::ProjectileBurst& burst)
+        void validateProjectileBurst(const advanced_platformer::ProjectileBurst& burst)
         {
             const bool hasValidCause =
-                burst.cause == simple_platformer::ProjectileBurstCause::Impact ||
-                burst.cause == simple_platformer::ProjectileBurstCause::LifetimeExpired;
+                burst.cause == advanced_platformer::ProjectileBurstCause::Impact ||
+                burst.cause == advanced_platformer::ProjectileBurstCause::LifetimeExpired;
             if (!hasValidCause || !isFinite(burst.center) || !isFinite(burst.direction) ||
                 (burst.direction.x == 0.0F && burst.direction.y == 0.0F) ||
                 !isFinitePositive(burst.sprite.size) || !isFinitePositive(burst.duration) ||

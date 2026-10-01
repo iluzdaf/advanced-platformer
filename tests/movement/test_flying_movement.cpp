@@ -5,24 +5,24 @@
 #include <limits>
 #include <stdexcept>
 
-#include "simple_platformer/input/input_state.hpp"
-#include "simple_platformer/movement/flying_movement.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/physics/body.hpp"
-#include "simple_platformer/physics/collision.hpp"
-#include "simple_platformer/world/tile_map.hpp"
+#include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/movement/flying_movement.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/physics/body.hpp"
+#include "advanced_platformer/physics/collision.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
 #include "support/tile_map_builder.hpp"
 
 TEST_CASE("Flying movement normalizes two-dimensional intentions", "[movement][flying]")
 {
-    const simple_platformer::TileMap map =
+    const advanced_platformer::TileMap map =
         tests::TileMapBuilder({".....", ".....", ".....", ".....", "#####"});
-    simple_platformer::Body body{{{16.0F, 16.0F}, {8.0F, 8.0F}}, {0.0F, 0.0F}};
-    const simple_platformer::FlyingMovement movement{10.0F};
-    simple_platformer::InputIntentions intentions;
+    advanced_platformer::Body body{{{16.0F, 16.0F}, {8.0F, 8.0F}}, {0.0F, 0.0F}};
+    const advanced_platformer::FlyingMovement movement{10.0F};
+    advanced_platformer::InputIntentions intentions;
     intentions.direction = {1.0F, 1.0F};
 
-    simple_platformer::updateFlyingMovement(map, body, movement, intentions, 1.0F);
+    advanced_platformer::updateFlyingMovement(map, body, movement, intentions, 1.0F);
 
     REQUIRE_THAT(body.velocity.x, Catch::Matchers::WithinAbs(7.071F, 0.001F));
     REQUIRE_THAT(body.velocity.y, Catch::Matchers::WithinAbs(7.071F, 0.001F));
@@ -30,15 +30,15 @@ TEST_CASE("Flying movement normalizes two-dimensional intentions", "[movement][f
 
 TEST_CASE("Flying movement uses tile collision", "[movement][flying]")
 {
-    const simple_platformer::TileMap map =
+    const advanced_platformer::TileMap map =
         tests::TileMapBuilder({".....", "..#..", ".....", ".....", "#####"});
-    simple_platformer::Body body{{{16.0F, 16.0F}, {8.0F, 8.0F}}, {0.0F, 0.0F}};
-    const simple_platformer::FlyingMovement movement{100.0F};
-    simple_platformer::InputIntentions intentions;
+    advanced_platformer::Body body{{{16.0F, 16.0F}, {8.0F, 8.0F}}, {0.0F, 0.0F}};
+    const advanced_platformer::FlyingMovement movement{100.0F};
+    advanced_platformer::InputIntentions intentions;
     intentions.direction.x = 1.0F;
 
-    const simple_platformer::CollisionContacts contacts =
-        simple_platformer::updateFlyingMovement(map, body, movement, intentions, 0.2F);
+    const advanced_platformer::CollisionContacts contacts =
+        advanced_platformer::updateFlyingMovement(map, body, movement, intentions, 0.2F);
 
     REQUIRE(contacts.right);
     REQUIRE(body.bounds.topLeft.x == 24.0F);
@@ -47,16 +47,16 @@ TEST_CASE("Flying movement uses tile collision", "[movement][flying]")
 
 TEST_CASE("Flying movement rejects invalid timing and intentions", "[movement][flying]")
 {
-    const simple_platformer::TileMap map = tests::TileMapBuilder({"...", "...", "###"});
-    simple_platformer::Body body{{{16.0F, 16.0F}, {8.0F, 8.0F}}, {0.0F, 0.0F}};
+    const advanced_platformer::TileMap map = tests::TileMapBuilder({"...", "...", "###"});
+    advanced_platformer::Body body{{{16.0F, 16.0F}, {8.0F, 8.0F}}, {0.0F, 0.0F}};
 
     REQUIRE_THROWS_AS(
-        simple_platformer::updateFlyingMovement(map, body, {-1.0F}, {}, 0.1F),
+        advanced_platformer::updateFlyingMovement(map, body, {-1.0F}, {}, 0.1F),
         std::invalid_argument);
 
-    simple_platformer::InputIntentions invalid;
+    advanced_platformer::InputIntentions invalid;
     invalid.direction.x = std::numeric_limits<float>::infinity();
     REQUIRE_THROWS_AS(
-        simple_platformer::updateFlyingMovement(map, body, {}, invalid, 0.1F),
+        advanced_platformer::updateFlyingMovement(map, body, {}, invalid, 0.1F),
         std::invalid_argument);
 }

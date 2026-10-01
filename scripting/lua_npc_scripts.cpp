@@ -23,9 +23,9 @@
 // NOLINTBEGIN(misc-include-cleaner)
 #include <sol/sol.hpp>
 
-#include "simple_platformer/math/validation.hpp"
+#include "advanced_platformer/math/validation.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

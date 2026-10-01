@@ -1,17 +1,17 @@
-#include "simple_platformer/render/actor_sprite.hpp"
+#include "advanced_platformer/render/actor_sprite.hpp"
 
 #include <stdexcept>
 
 #include <glm/gtc/constants.hpp>
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/render/sprite.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/render/sprite.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

@@ -11,9 +11,9 @@
 #include <glm/vec2.hpp>
 
 #include "item_catalog.hpp"
-#include "simple_platformer/math/coordinates.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     // A position as the level file gives it: a map cell, or feet in world pixels. The file
     // never knows the tile size, so cells stay cells until level composition has the map.

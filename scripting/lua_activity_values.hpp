@@ -3,14 +3,14 @@
 #include <initializer_list>
 #include <string_view>
 
-#include "simple_platformer/npc/npc_activity_scripts.hpp"
+#include "advanced_platformer/npc/npc_activity_scripts.hpp"
 
 // sol2 supports its public API through this umbrella header. Listing its internal headers
 // would couple the adapter to implementation details without improving include hygiene.
 // NOLINTBEGIN(misc-include-cleaner)
 #include <sol/sol.hpp>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     // Throws when the table has a key that is not text or is not one of the allowed
     // names. The subject begins the message.

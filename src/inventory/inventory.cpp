@@ -1,4 +1,4 @@
-#include "simple_platformer/inventory/inventory.hpp"
+#include "advanced_platformer/inventory/inventory.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -7,9 +7,9 @@
 #include <stdexcept>
 #include <vector>
 
-#include "simple_platformer/inventory/item.hpp"
+#include "advanced_platformer/inventory/item.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     Inventory::Inventory(std::size_t slotCount)
         : slotStorage(slotCount)

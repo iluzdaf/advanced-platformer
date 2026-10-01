@@ -1,15 +1,15 @@
-#include "simple_platformer/render/animation_system.hpp"
+#include "advanced_platformer/render/animation_system.hpp"
 
 #include <stdexcept>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/combat/combat.hpp"
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/render/animation.hpp"
-#include "simple_platformer/world/world.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/render/animation.hpp"
+#include "advanced_platformer/world/world.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

@@ -4,9 +4,9 @@
 #include <string>
 #include <string_view>
 #include <glm/vec2.hpp>
-#include "simple_platformer/render/animation.hpp"
+#include "advanced_platformer/render/animation.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     using AnimationCatalog = std::map<std::string, AnimationSet>;
     // Actor selection can request any of the six clips, so each set supplies all six.

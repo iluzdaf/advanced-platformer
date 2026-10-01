@@ -5,19 +5,19 @@
 #include <optional>
 #include <stdexcept>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/combat/combat.hpp"
-#include "simple_platformer/inventory/inventory.hpp"
-#include "simple_platformer/movement/flying_movement.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/navigation/path_follower.hpp"
-#include "simple_platformer/npc/npc.hpp"
-#include "simple_platformer/npc/npc_state_machine.hpp"
-#include "simple_platformer/render/animation.hpp"
-#include "simple_platformer/render/sprite.hpp"
-#include "simple_platformer/world/world.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/inventory/inventory.hpp"
+#include "advanced_platformer/movement/flying_movement.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/navigation/path_follower.hpp"
+#include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/npc/npc_state_machine.hpp"
+#include "advanced_platformer/render/animation.hpp"
+#include "advanced_platformer/render/sprite.hpp"
+#include "advanced_platformer/world/world.hpp"
 
 namespace tests
 {
@@ -25,24 +25,24 @@ namespace tests
     // Each fails the test when the actor or component is missing, rather than letting it
     // dereference nothing.
 
-    inline simple_platformer::Actor& actor(
-        simple_platformer::World& world,
-        simple_platformer::ActorId id)
+    inline advanced_platformer::Actor& actor(
+        advanced_platformer::World& world,
+        advanced_platformer::ActorId id)
     {
-        simple_platformer::Actor* result = world.findActor(id);
+        advanced_platformer::Actor* result = world.findActor(id);
         REQUIRE(result != nullptr);
         return *result;
     }
 
     // The actor the world treats as its player.
-    inline simple_platformer::Actor& player(simple_platformer::World& world)
+    inline advanced_platformer::Actor& player(advanced_platformer::World& world)
     {
         return actor(world, world.playerId());
     }
 
-    inline simple_platformer::Health& health(simple_platformer::Actor& actor)
+    inline advanced_platformer::Health& health(advanced_platformer::Actor& actor)
     {
-        std::optional<simple_platformer::Health>& component = actor.health;
+        std::optional<advanced_platformer::Health>& component = actor.health;
         if (!component.has_value())
         {
             throw std::logic_error("The test actor has no health");
@@ -50,16 +50,16 @@ namespace tests
         return *component;
     }
 
-    inline simple_platformer::Health& health(
-        simple_platformer::World& world,
-        simple_platformer::ActorId id)
+    inline advanced_platformer::Health& health(
+        advanced_platformer::World& world,
+        advanced_platformer::ActorId id)
     {
         return health(actor(world, id));
     }
 
-    inline simple_platformer::Inventory& inventory(simple_platformer::Actor& actor)
+    inline advanced_platformer::Inventory& inventory(advanced_platformer::Actor& actor)
     {
-        std::optional<simple_platformer::Inventory>& component = actor.inventory;
+        std::optional<advanced_platformer::Inventory>& component = actor.inventory;
         if (!component.has_value())
         {
             throw std::logic_error("The test actor has no inventory");
@@ -67,16 +67,16 @@ namespace tests
         return *component;
     }
 
-    inline simple_platformer::Inventory& inventory(
-        simple_platformer::World& world,
-        simple_platformer::ActorId id)
+    inline advanced_platformer::Inventory& inventory(
+        advanced_platformer::World& world,
+        advanced_platformer::ActorId id)
     {
         return inventory(actor(world, id));
     }
 
-    inline simple_platformer::Sprite& sprite(simple_platformer::Actor& actor)
+    inline advanced_platformer::Sprite& sprite(advanced_platformer::Actor& actor)
     {
-        std::optional<simple_platformer::Sprite>& component = actor.sprite;
+        std::optional<advanced_platformer::Sprite>& component = actor.sprite;
         if (!component.has_value())
         {
             throw std::logic_error("The test actor has no sprite");
@@ -84,16 +84,16 @@ namespace tests
         return *component;
     }
 
-    inline simple_platformer::Sprite& sprite(
-        simple_platformer::World& world,
-        simple_platformer::ActorId id)
+    inline advanced_platformer::Sprite& sprite(
+        advanced_platformer::World& world,
+        advanced_platformer::ActorId id)
     {
         return sprite(actor(world, id));
     }
 
-    inline simple_platformer::Animator& animator(simple_platformer::Actor& actor)
+    inline advanced_platformer::Animator& animator(advanced_platformer::Actor& actor)
     {
-        std::optional<simple_platformer::Animator>& component = actor.animator;
+        std::optional<advanced_platformer::Animator>& component = actor.animator;
         if (!component.has_value())
         {
             throw std::logic_error("The test actor has no animator");
@@ -101,16 +101,16 @@ namespace tests
         return *component;
     }
 
-    inline simple_platformer::Animator& animator(
-        simple_platformer::World& world,
-        simple_platformer::ActorId id)
+    inline advanced_platformer::Animator& animator(
+        advanced_platformer::World& world,
+        advanced_platformer::ActorId id)
     {
         return animator(actor(world, id));
     }
 
-    inline simple_platformer::NpcBrain& brain(simple_platformer::Actor& actor)
+    inline advanced_platformer::NpcBrain& brain(advanced_platformer::Actor& actor)
     {
-        std::optional<simple_platformer::NpcBrain>& component = actor.brain;
+        std::optional<advanced_platformer::NpcBrain>& component = actor.brain;
         if (!component.has_value())
         {
             throw std::logic_error("The test actor has no NPC brain");
@@ -118,16 +118,16 @@ namespace tests
         return *component;
     }
 
-    inline simple_platformer::NpcBrain& brain(
-        simple_platformer::World& world,
-        simple_platformer::ActorId id)
+    inline advanced_platformer::NpcBrain& brain(
+        advanced_platformer::World& world,
+        advanced_platformer::ActorId id)
     {
         return brain(actor(world, id));
     }
 
-    inline simple_platformer::NpcPerception& perception(simple_platformer::Actor& actor)
+    inline advanced_platformer::NpcPerception& perception(advanced_platformer::Actor& actor)
     {
-        std::optional<simple_platformer::NpcPerception>& component = actor.perception;
+        std::optional<advanced_platformer::NpcPerception>& component = actor.perception;
         if (!component.has_value())
         {
             throw std::logic_error("The test actor has no NPC perception");
@@ -135,16 +135,16 @@ namespace tests
         return *component;
     }
 
-    inline simple_platformer::NpcPerception& perception(
-        simple_platformer::World& world,
-        simple_platformer::ActorId id)
+    inline advanced_platformer::NpcPerception& perception(
+        advanced_platformer::World& world,
+        advanced_platformer::ActorId id)
     {
         return perception(actor(world, id));
     }
 
-    inline simple_platformer::NpcMachine& machine(simple_platformer::Actor& actor)
+    inline advanced_platformer::NpcMachine& machine(advanced_platformer::Actor& actor)
     {
-        std::optional<simple_platformer::NpcMachine>& component = actor.machine;
+        std::optional<advanced_platformer::NpcMachine>& component = actor.machine;
         if (!component.has_value())
         {
             throw std::logic_error("The test actor has no machine");
@@ -152,16 +152,16 @@ namespace tests
         return *component;
     }
 
-    inline simple_platformer::NpcMachine& machine(
-        simple_platformer::World& world,
-        simple_platformer::ActorId id)
+    inline advanced_platformer::NpcMachine& machine(
+        advanced_platformer::World& world,
+        advanced_platformer::ActorId id)
     {
         return machine(actor(world, id));
     }
 
-    inline simple_platformer::BiteAttack& bite(simple_platformer::Actor& actor)
+    inline advanced_platformer::BiteAttack& bite(advanced_platformer::Actor& actor)
     {
-        std::optional<simple_platformer::BiteAttack>& component = actor.bite;
+        std::optional<advanced_platformer::BiteAttack>& component = actor.bite;
         if (!component.has_value())
         {
             throw std::logic_error("The test actor has no bite");
@@ -169,16 +169,16 @@ namespace tests
         return *component;
     }
 
-    inline simple_platformer::BiteAttack& bite(
-        simple_platformer::World& world,
-        simple_platformer::ActorId id)
+    inline advanced_platformer::BiteAttack& bite(
+        advanced_platformer::World& world,
+        advanced_platformer::ActorId id)
     {
         return bite(actor(world, id));
     }
 
-    inline simple_platformer::RangedWeapon& rangedWeapon(simple_platformer::Actor& actor)
+    inline advanced_platformer::RangedWeapon& rangedWeapon(advanced_platformer::Actor& actor)
     {
-        std::optional<simple_platformer::RangedWeapon>& component = actor.rangedWeapon;
+        std::optional<advanced_platformer::RangedWeapon>& component = actor.rangedWeapon;
         if (!component.has_value())
         {
             throw std::logic_error("The test actor has no ranged weapon");
@@ -186,16 +186,16 @@ namespace tests
         return *component;
     }
 
-    inline simple_platformer::RangedWeapon& rangedWeapon(
-        simple_platformer::World& world,
-        simple_platformer::ActorId id)
+    inline advanced_platformer::RangedWeapon& rangedWeapon(
+        advanced_platformer::World& world,
+        advanced_platformer::ActorId id)
     {
         return rangedWeapon(actor(world, id));
     }
 
-    inline simple_platformer::ContactDamage& contactDamage(simple_platformer::Actor& actor)
+    inline advanced_platformer::ContactDamage& contactDamage(advanced_platformer::Actor& actor)
     {
-        std::optional<simple_platformer::ContactDamage>& component = actor.contactDamage;
+        std::optional<advanced_platformer::ContactDamage>& component = actor.contactDamage;
         if (!component.has_value())
         {
             throw std::logic_error("The test actor has no contact damage");
@@ -203,16 +203,16 @@ namespace tests
         return *component;
     }
 
-    inline simple_platformer::ContactDamage& contactDamage(
-        simple_platformer::World& world,
-        simple_platformer::ActorId id)
+    inline advanced_platformer::ContactDamage& contactDamage(
+        advanced_platformer::World& world,
+        advanced_platformer::ActorId id)
     {
         return contactDamage(actor(world, id));
     }
 
-    inline simple_platformer::SurfaceClimb& surfaceClimb(simple_platformer::Actor& actor)
+    inline advanced_platformer::SurfaceClimb& surfaceClimb(advanced_platformer::Actor& actor)
     {
-        std::optional<simple_platformer::SurfaceClimb>& component = actor.surfaceClimb;
+        std::optional<advanced_platformer::SurfaceClimb>& component = actor.surfaceClimb;
         if (!component.has_value())
         {
             throw std::logic_error("The test actor has no surface climb");
@@ -220,16 +220,16 @@ namespace tests
         return *component;
     }
 
-    inline simple_platformer::SurfaceClimb& surfaceClimb(
-        simple_platformer::World& world,
-        simple_platformer::ActorId id)
+    inline advanced_platformer::SurfaceClimb& surfaceClimb(
+        advanced_platformer::World& world,
+        advanced_platformer::ActorId id)
     {
         return surfaceClimb(actor(world, id));
     }
 
-    inline simple_platformer::PathFollower& pathFollower(simple_platformer::Actor& actor)
+    inline advanced_platformer::PathFollower& pathFollower(advanced_platformer::Actor& actor)
     {
-        std::optional<simple_platformer::PathFollower>& component = actor.pathFollower;
+        std::optional<advanced_platformer::PathFollower>& component = actor.pathFollower;
         if (!component.has_value())
         {
             throw std::logic_error("The test actor has no path follower");
@@ -237,16 +237,16 @@ namespace tests
         return *component;
     }
 
-    inline simple_platformer::PathFollower& pathFollower(
-        simple_platformer::World& world,
-        simple_platformer::ActorId id)
+    inline advanced_platformer::PathFollower& pathFollower(
+        advanced_platformer::World& world,
+        advanced_platformer::ActorId id)
     {
         return pathFollower(actor(world, id));
     }
 
-    inline simple_platformer::Patrol& patrol(simple_platformer::Actor& actor)
+    inline advanced_platformer::Patrol& patrol(advanced_platformer::Actor& actor)
     {
-        std::optional<simple_platformer::Patrol>& component = actor.patrol;
+        std::optional<advanced_platformer::Patrol>& component = actor.patrol;
         if (!component.has_value())
         {
             throw std::logic_error("The test actor has no patrol");
@@ -254,16 +254,16 @@ namespace tests
         return *component;
     }
 
-    inline simple_platformer::Patrol& patrol(
-        simple_platformer::World& world,
-        simple_platformer::ActorId id)
+    inline advanced_platformer::Patrol& patrol(
+        advanced_platformer::World& world,
+        advanced_platformer::ActorId id)
     {
         return patrol(actor(world, id));
     }
 
-    inline simple_platformer::FlyingMovement& flyingMovement(simple_platformer::Actor& actor)
+    inline advanced_platformer::FlyingMovement& flyingMovement(advanced_platformer::Actor& actor)
     {
-        std::optional<simple_platformer::FlyingMovement>& component = actor.flyingMovement;
+        std::optional<advanced_platformer::FlyingMovement>& component = actor.flyingMovement;
         if (!component.has_value())
         {
             throw std::logic_error("The test actor has no flying movement");
@@ -271,17 +271,18 @@ namespace tests
         return *component;
     }
 
-    inline simple_platformer::FlyingMovement& flyingMovement(
-        simple_platformer::World& world,
-        simple_platformer::ActorId id)
+    inline advanced_platformer::FlyingMovement& flyingMovement(
+        advanced_platformer::World& world,
+        advanced_platformer::ActorId id)
     {
         return flyingMovement(actor(world, id));
     }
 
-    inline simple_platformer::PlatformerMovement& platformerMovement(
-        simple_platformer::Actor& actor)
+    inline advanced_platformer::PlatformerMovement& platformerMovement(
+        advanced_platformer::Actor& actor)
     {
-        std::optional<simple_platformer::PlatformerMovement>& component = actor.platformerMovement;
+        std::optional<advanced_platformer::PlatformerMovement>& component =
+            actor.platformerMovement;
         if (!component.has_value())
         {
             throw std::logic_error("The test actor has no platformer movement");
@@ -289,16 +290,16 @@ namespace tests
         return *component;
     }
 
-    inline simple_platformer::PlatformerMovement& platformerMovement(
-        simple_platformer::World& world,
-        simple_platformer::ActorId id)
+    inline advanced_platformer::PlatformerMovement& platformerMovement(
+        advanced_platformer::World& world,
+        advanced_platformer::ActorId id)
     {
         return platformerMovement(actor(world, id));
     }
 
-    inline simple_platformer::NpcSenses& senses(simple_platformer::Actor& actor)
+    inline advanced_platformer::NpcSenses& senses(advanced_platformer::Actor& actor)
     {
-        std::optional<simple_platformer::NpcSenses>& component = actor.senses;
+        std::optional<advanced_platformer::NpcSenses>& component = actor.senses;
         if (!component.has_value())
         {
             throw std::logic_error("The test actor has no senses");

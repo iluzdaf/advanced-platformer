@@ -8,11 +8,11 @@
 #include <string>
 #include <variant>
 
-#include "simple_platformer/npc/npc_activity.hpp"
-#include "simple_platformer/npc/npc_state_machine.hpp"
+#include "advanced_platformer/npc/npc_activity.hpp"
+#include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "lua_npc_scripts.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

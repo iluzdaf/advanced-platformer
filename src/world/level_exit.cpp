@@ -1,20 +1,20 @@
-#include "simple_platformer/world/level_exit.hpp"
+#include "advanced_platformer/world/level_exit.hpp"
 
 #include <optional>
 #include <stdexcept>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/inventory/inventory.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/world/world.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/inventory/inventory.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/world/world.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     void validateLevelExit(const LevelExit& exit)
     {
-        if (!simple_platformer::isFinite(exit.bounds.topLeft) ||
-            !simple_platformer::isFinite(exit.bounds.size) || exit.bounds.size.x <= 0.0F ||
+        if (!advanced_platformer::isFinite(exit.bounds.topLeft) ||
+            !advanced_platformer::isFinite(exit.bounds.size) || exit.bounds.size.x <= 0.0F ||
             exit.bounds.size.y <= 0.0F)
         {
             throw std::invalid_argument("Level exits require finite positive-sized bounds");

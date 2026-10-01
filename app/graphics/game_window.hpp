@@ -4,7 +4,7 @@
 
 struct GLFWwindow;
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     // What the window reports at the start of a frame: its size in points, its
     // framebuffer in pixels, which differs on high-DPI displays, and the cursor in points.

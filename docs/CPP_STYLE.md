@@ -29,7 +29,7 @@ Tests use [Catch2](https://github.com/catchorg/Catch2). Lua scripting goes throu
 | Types, enums and enum values             | `CamelCase`  | `PlatformerMovement`, `ClimbSurface::LeftWall` |
 | Functions, variables, parameters, fields | `camelBack`  | `updateNpcSenses`, `goalFeet`                  |
 | Constants                                | `CamelCase`  | `ExitOpenSeconds`, `JumpStartPenaltyTicks`     |
-| Namespaces                               | `lower_case` | `simple_platformer`, `tests`                   |
+| Namespaces                               | `lower_case` | `advanced_platformer`, `tests`                 |
 | Files                                    | `snake_case` | `platformer_movement.cpp`                      |
 
 Names say what a thing is in the words of the [glossary](GLOSSARY.md). A number that
@@ -81,7 +81,7 @@ so a mistake fails loudly at its source, with a message that says what was wrong
 - `std::invalid_argument` means the caller passed something wrong: a negative time
   step, a missing component, bad content.
 - `std::logic_error` means the code broke one of its own rules, which is a bug.
-- Shared checks live in [`validation.hpp`](../include/simple_platformer/math/validation.hpp),
+- Shared checks live in [`validation.hpp`](../include/advanced_platformer/math/validation.hpp),
   such as `requireSeconds` and `requireFinite`.
 
 [Error handling and validation](ARCHITECTURE.md#error-handling-and-validation) explains
@@ -89,7 +89,7 @@ where each kind of check belongs.
 
 ## Files and headers
 
-- **Engine code** is in `include/simple_platformer/<area>/` for public headers and
+- **Engine code** is in `include/advanced_platformer/<area>/` for public headers and
   `src/<area>/` for their sources. **The game** is in `app/`, and **Lua scripting** in
   `scripting/`.
 - **A header declares only what other files use.** Helpers used by one source file go in

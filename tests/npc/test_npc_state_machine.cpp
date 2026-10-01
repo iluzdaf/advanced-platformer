@@ -7,19 +7,19 @@
 #include <string>
 #include <utility>
 
-#include "simple_platformer/npc/npc.hpp"
-#include "simple_platformer/npc/npc_activity.hpp"
-#include "simple_platformer/npc/npc_fact_rows.hpp"
-#include "simple_platformer/npc/npc_state_machine.hpp"
-#include "simple_platformer/npc/npc_facts.hpp"
+#include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/npc/npc_activity.hpp"
+#include "advanced_platformer/npc/npc_fact_rows.hpp"
+#include "advanced_platformer/npc/npc_state_machine.hpp"
+#include "advanced_platformer/npc/npc_facts.hpp"
 #include "support/npc_facts_builder.hpp"
 #include "support/npc_machine_builder.hpp"
 
+using advanced_platformer::NpcFactRow;
+using advanced_platformer::NpcMachine;
+using advanced_platformer::NpcState;
+using advanced_platformer::NpcStateMachine;
 using Catch::Matchers::ContainsSubstring;
-using simple_platformer::NpcFactRow;
-using simple_platformer::NpcMachine;
-using simple_platformer::NpcState;
-using simple_platformer::NpcStateMachine;
 using tests::NpcFactsBuilder;
 using tests::NpcMachineBuilder;
 
@@ -39,21 +39,21 @@ namespace
     }
 
     // Whether a lone rest-to-hunt transition asking `when` fires on these facts.
-    bool fires(const std::map<std::string, bool>& when, const simple_platformer::NpcFacts& facts)
+    bool fires(const std::map<std::string, bool>& when, const advanced_platformer::NpcFacts& facts)
     {
         NpcStateMachine definition = NpcMachineBuilder::named("test")
                                          .state("rest", NpcState::Idle)
                                          .state("hunt", NpcState::Chase)
                                          .transition("rest", "hunt");
         definition.transitions.front().when = when;
-        NpcMachine machine = simple_platformer::startNpcMachine(std::move(definition));
-        return simple_platformer::advanceNpcMachine(machine, facts, 0.1F).has_value();
+        NpcMachine machine = advanced_platformer::startNpcMachine(std::move(definition));
+        return advanced_platformer::advanceNpcMachine(machine, facts, 0.1F).has_value();
     }
 }
 
 TEST_CASE("Machine conditions compose run and range facts independently", "[npc][fsm]")
 {
-    simple_platformer::NpcFacts facts;
+    advanced_platformer::NpcFacts facts;
     SECTION("Neither condition")
     {
     }
@@ -80,20 +80,20 @@ TEST_CASE("Machine conditions compose run and range facts independently", "[npc]
 
 TEST_CASE("Every fact row answers from the facts and an unknown name has no row", "[npc][fsm]")
 {
-    for (const NpcFactRow& row : simple_platformer::npcFactRows())
+    for (const NpcFactRow& row : advanced_platformer::npcFactRows())
     {
         REQUIRE_FALSE(row.holds(NpcFactsBuilder::facts()));
     }
-    REQUIRE(simple_platformer::npcFactRow("targetWithinStandoffDistance")
+    REQUIRE(advanced_platformer::npcFactRow("targetWithinStandoffDistance")
                 ->holds(NpcFactsBuilder::facts().targetWithinStandoffDistance()));
     REQUIRE(
-        simple_platformer::npcFactRow("hasPatrol")->holds(NpcFactsBuilder::facts().withPatrol()));
-    REQUIRE(simple_platformer::npcFactRow("cornered") == nullptr);
+        advanced_platformer::npcFactRow("hasPatrol")->holds(NpcFactsBuilder::facts().withPatrol()));
+    REQUIRE(advanced_platformer::npcFactRow("cornered") == nullptr);
 }
 
 TEST_CASE("A transition fires when every fact answers as asked", "[npc][fsm]")
 {
-    const simple_platformer::NpcFacts facts = NpcFactsBuilder::facts().targetInSights();
+    const advanced_platformer::NpcFacts facts = NpcFactsBuilder::facts().targetInSights();
     REQUIRE(fires({{"targetKnown", true}, {"targetInSights", true}}, facts));
     REQUIRE_FALSE(fires({{"targetKnown", true}, {"hasPatrol", true}}, facts));
     REQUIRE(fires({}, facts));
@@ -110,7 +110,7 @@ TEST_CASE("A state machine rejects states and transitions it cannot run", "[npc]
     }
     SECTION("A state twice")
     {
-        machine.states.push_back({"rest", simple_platformer::BuiltInNpcActivity{NpcState::Idle}});
+        machine.states.push_back({"rest", advanced_platformer::BuiltInNpcActivity{NpcState::Idle}});
         expected = "declared twice";
     }
     SECTION("A transition from a state it lacks")
@@ -120,12 +120,12 @@ TEST_CASE("A state machine rejects states and transitions it cannot run", "[npc]
     }
     SECTION("A Lua state without a script name")
     {
-        machine.states[0].does = simple_platformer::LuaNpcActivity{"", "wait"};
+        machine.states[0].does = advanced_platformer::LuaNpcActivity{"", "wait"};
         expected = "needs a Lua script name";
     }
     SECTION("A Lua state without an activity name")
     {
-        machine.states[0].does = simple_platformer::LuaNpcActivity{"rat", ""};
+        machine.states[0].does = advanced_platformer::LuaNpcActivity{"rat", ""};
         expected = "needs a Lua activity name";
     }
     SECTION("A transition to a state it lacks")
@@ -144,69 +144,69 @@ TEST_CASE("A state machine rejects states and transitions it cannot run", "[npc]
         expected = "finite, non-negative time";
     }
     REQUIRE_THROWS_WITH(
-        simple_platformer::validateNpcStateMachine(machine), ContainsSubstring(expected));
-    REQUIRE_THROWS_AS(simple_platformer::startNpcMachine(machine), std::invalid_argument);
+        advanced_platformer::validateNpcStateMachine(machine), ContainsSubstring(expected));
+    REQUIRE_THROWS_AS(advanced_platformer::startNpcMachine(machine), std::invalid_argument);
 }
 
 TEST_CASE(
     "A started machine is in its first state and fires the first transition that holds",
     "[npc][fsm]")
 {
-    NpcMachine machine = simple_platformer::startNpcMachine(restAndHunt());
-    REQUIRE(simple_platformer::activeNpcMachineState(machine).name == "rest");
+    NpcMachine machine = advanced_platformer::startNpcMachine(restAndHunt());
+    REQUIRE(advanced_platformer::activeNpcMachineState(machine).name == "rest");
     REQUIRE(
-        std::get<simple_platformer::BuiltInNpcActivity>(
-            simple_platformer::activeNpcMachineState(machine).does)
+        std::get<advanced_platformer::BuiltInNpcActivity>(
+            advanced_platformer::activeNpcMachineState(machine).does)
             .state == NpcState::Idle);
 
     REQUIRE(
-        simple_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts(), 0.1F) ==
+        advanced_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts(), 0.1F) ==
         std::nullopt);
     REQUIRE(
-        simple_platformer::advanceNpcMachine(
+        advanced_platformer::advanceNpcMachine(
             machine, NpcFactsBuilder::facts().knowingTarget(), 0.1F) == 0);
-    REQUIRE(simple_platformer::activeNpcMachineState(machine).name == "hunt");
+    REQUIRE(advanced_platformer::activeNpcMachineState(machine).name == "hunt");
     REQUIRE(machine.lastFired == 0);
 }
 
 TEST_CASE("A transition with a hold fires once its conditions have held that long", "[npc][fsm]")
 {
-    NpcMachine machine = simple_platformer::startNpcMachine(restAndHunt());
-    simple_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts().knowingTarget(), 0.1F);
+    NpcMachine machine = advanced_platformer::startNpcMachine(restAndHunt());
+    advanced_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts().knowingTarget(), 0.1F);
 
     // Lost for 0.3 s, seen again, then lost: the hold starts over.
     REQUIRE(
-        simple_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts(), 0.3F) ==
+        advanced_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts(), 0.3F) ==
         std::nullopt);
     REQUIRE(
-        simple_platformer::advanceNpcMachine(
+        advanced_platformer::advanceNpcMachine(
             machine, NpcFactsBuilder::facts().knowingTarget(), 0.1F) == std::nullopt);
     REQUIRE(
-        simple_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts(), 0.3F) ==
+        advanced_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts(), 0.3F) ==
         std::nullopt);
-    REQUIRE(simple_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts(), 0.2F) == 1);
-    REQUIRE(simple_platformer::activeNpcMachineState(machine).name == "rest");
+    REQUIRE(advanced_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts(), 0.2F) == 1);
+    REQUIRE(advanced_platformer::activeNpcMachineState(machine).name == "rest");
 }
 
 TEST_CASE("Among transitions from one state the first that holds wins", "[npc][fsm]")
 {
     NpcMachine machine =
-        simple_platformer::startNpcMachine(NpcMachineBuilder::named("test")
-                                               .state("rest", NpcState::Idle)
-                                               .state("hunt", NpcState::Chase)
-                                               .state("flee", NpcState::Retreat)
-                                               .transition("rest", "flee")
-                                               .when("targetWithinStandoffDistance", true)
-                                               .transition("rest", "hunt")
-                                               .when("targetKnown", true));
+        advanced_platformer::startNpcMachine(NpcMachineBuilder::named("test")
+                                                 .state("rest", NpcState::Idle)
+                                                 .state("hunt", NpcState::Chase)
+                                                 .state("flee", NpcState::Retreat)
+                                                 .transition("rest", "flee")
+                                                 .when("targetWithinStandoffDistance", true)
+                                                 .transition("rest", "hunt")
+                                                 .when("targetKnown", true));
 
     // Both the flee and the hunt transitions hold; the flee is listed first.
     REQUIRE(
-        simple_platformer::advanceNpcMachine(
+        advanced_platformer::advanceNpcMachine(
             machine, NpcFactsBuilder::facts().targetWithinStandoffDistance(), 0.1F) == 0);
     REQUIRE(
-        std::get<simple_platformer::BuiltInNpcActivity>(
-            simple_platformer::activeNpcMachineState(machine).does)
+        std::get<advanced_platformer::BuiltInNpcActivity>(
+            advanced_platformer::activeNpcMachineState(machine).does)
             .state == NpcState::Retreat);
 }
 
@@ -215,6 +215,6 @@ TEST_CASE("A machine that was not started cannot advance", "[npc][fsm][validatio
     NpcMachine machine;
     machine.definition = restAndHunt();
     REQUIRE_THROWS_AS(
-        simple_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts(), 0.1F),
+        advanced_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts(), 0.1F),
         std::logic_error);
 }

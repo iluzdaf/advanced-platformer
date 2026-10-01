@@ -4,16 +4,16 @@
 #include <optional>
 #include <stdexcept>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/combat/combat.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/movement/flying_movement.hpp"
-#include "simple_platformer/navigation/path_follower.hpp"
-#include "simple_platformer/npc/npc.hpp"
-#include "simple_platformer/render/animation.hpp"
-#include "simple_platformer/render/sprite.hpp"
-#include "simple_platformer/world/world.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/movement/flying_movement.hpp"
+#include "advanced_platformer/navigation/path_follower.hpp"
+#include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/render/animation.hpp"
+#include "advanced_platformer/render/sprite.hpp"
+#include "advanced_platformer/world/world.hpp"
 #include "support/actor_builder.hpp"
 #include "support/actor_components.hpp"
 #include "support/fixed_step.hpp"
@@ -21,7 +21,7 @@
 
 namespace
 {
-    simple_platformer::Actor makeActor()
+    advanced_platformer::Actor makeActor()
     {
         return tests::ActorBuilder::sized({12.0F, 12.0F}).at({8.0F, 8.0F}).platforming();
     }
@@ -29,15 +29,15 @@ namespace
 
 TEST_CASE("World assigns stable monotonically increasing actor IDs", "[world][actor]")
 {
-    simple_platformer::World world;
+    advanced_platformer::World world;
 
-    const simple_platformer::ActorId first = world.addActor(makeActor());
-    const simple_platformer::ActorId second = world.addActor(makeActor());
+    const advanced_platformer::ActorId first = world.addActor(makeActor());
+    const advanced_platformer::ActorId second = world.addActor(makeActor());
     REQUIRE(first.value == 1);
     REQUIRE(second.value == 2);
 
     REQUIRE(world.removeActor(first));
-    const simple_platformer::ActorId third = world.addActor(makeActor());
+    const advanced_platformer::ActorId third = world.addActor(makeActor());
 
     REQUIRE(third.value == 3);
     REQUIRE(world.findActor(first) == nullptr);
@@ -47,9 +47,9 @@ TEST_CASE("World assigns stable monotonically increasing actor IDs", "[world][ac
 
 TEST_CASE("Actor IDs are not vector indexes", "[world][actor]")
 {
-    simple_platformer::World world;
-    const simple_platformer::ActorId first = world.addActor(makeActor());
-    const simple_platformer::ActorId second = world.addActor(makeActor());
+    advanced_platformer::World world;
+    const advanced_platformer::ActorId first = world.addActor(makeActor());
+    const advanced_platformer::ActorId second = world.addActor(makeActor());
 
     world.removeActor(first);
 
@@ -59,7 +59,7 @@ TEST_CASE("Actor IDs are not vector indexes", "[world][actor]")
 
 TEST_CASE("World owns a validated simulation clock", "[world][time]")
 {
-    simple_platformer::World world;
+    advanced_platformer::World world;
 
     REQUIRE(world.simulationTimeSeconds() == 0.0F);
 
@@ -74,7 +74,7 @@ TEST_CASE("World owns a validated simulation clock", "[world][time]")
 
 TEST_CASE("World measures how long ago a stamp on its clock was", "[world][time]")
 {
-    simple_platformer::World world;
+    advanced_platformer::World world;
     REQUIRE_FALSE(world.secondsSince(std::nullopt).has_value());
     REQUIRE(world.secondsSince(0.0F) == 0.0F);
 
@@ -88,7 +88,7 @@ TEST_CASE("World measures how long ago a stamp on its clock was", "[world][time]
 
 TEST_CASE("A stamp taken hours in still measures a single step", "[world][time]")
 {
-    simple_platformer::World world;
+    advanced_platformer::World world;
     for (int hour = 0; hour < 5; ++hour)
     {
         world.advanceSimulationTime(3600.0F);
@@ -100,8 +100,8 @@ TEST_CASE("A stamp taken hours in still measures a single step", "[world][time]"
 
 TEST_CASE("World rejects invalid actor composition", "[world][actor]")
 {
-    simple_platformer::World world;
-    simple_platformer::Actor actor = makeActor();
+    advanced_platformer::World world;
+    advanced_platformer::Actor actor = makeActor();
 
     SECTION("No movement component")
     {
@@ -109,7 +109,7 @@ TEST_CASE("World rejects invalid actor composition", "[world][actor]")
     }
     SECTION("Two movement components")
     {
-        actor.flyingMovement = simple_platformer::FlyingMovement{};
+        actor.flyingMovement = advanced_platformer::FlyingMovement{};
     }
     SECTION("An id the world did not assign")
     {
@@ -121,44 +121,44 @@ TEST_CASE("World rejects invalid actor composition", "[world][actor]")
     }
     SECTION("An animator without a sprite")
     {
-        actor.animator = simple_platformer::Animator{};
+        actor.animator = advanced_platformer::Animator{};
     }
     SECTION("An animator with no clips")
     {
-        actor.sprite = simple_platformer::Sprite{};
-        actor.animator = simple_platformer::Animator{};
+        actor.sprite = advanced_platformer::Sprite{};
+        actor.animator = advanced_platformer::Animator{};
     }
     SECTION("An animator with infinite elapsed time")
     {
-        actor.sprite = simple_platformer::Sprite{};
-        actor.animator = simple_platformer::Animator{};
+        actor.sprite = advanced_platformer::Sprite{};
+        actor.animator = advanced_platformer::Animator{};
         tests::animator(actor).animationSet.clips.push_back(
-            {simple_platformer::AnimationName::Idle, {{{0.0F, 0.0F}, {1.0F, 1.0F}}}});
+            {advanced_platformer::AnimationName::Idle, {{{0.0F, 0.0F}, {1.0F, 1.0F}}}});
         tests::animator(actor).elapsed = std::numeric_limits<float>::infinity();
     }
     SECTION("Two attacks")
     {
-        actor.team = simple_platformer::Team::Player;
-        actor.rangedWeapon = simple_platformer::RangedWeapon{};
-        actor.bite = simple_platformer::BiteAttack{};
+        actor.team = advanced_platformer::Team::Player;
+        actor.rangedWeapon = advanced_platformer::RangedWeapon{};
+        actor.bite = advanced_platformer::BiteAttack{};
     }
     SECTION("A neutral attacker")
     {
-        actor.rangedWeapon = simple_platformer::RangedWeapon{};
+        actor.rangedWeapon = advanced_platformer::RangedWeapon{};
     }
     SECTION("A brain without senses or a path follower")
     {
-        actor.brain = simple_platformer::NpcBrain{};
+        actor.brain = advanced_platformer::NpcBrain{};
     }
     SECTION("Perception without the other NPC components")
     {
-        actor.perception = simple_platformer::NpcPerception{};
+        actor.perception = advanced_platformer::NpcPerception{};
     }
     SECTION("An NPC without perception")
     {
-        actor.brain = simple_platformer::NpcBrain{};
-        actor.senses = simple_platformer::NpcSenses{};
-        actor.pathFollower = simple_platformer::PathFollower{};
+        actor.brain = advanced_platformer::NpcBrain{};
+        actor.senses = advanced_platformer::NpcSenses{};
+        actor.pathFollower = advanced_platformer::PathFollower{};
     }
     SECTION("Damage taken in the future")
     {
@@ -166,14 +166,14 @@ TEST_CASE("World rejects invalid actor composition", "[world][actor]")
     }
     SECTION("Shot time in the future")
     {
-        actor.team = simple_platformer::Team::Player;
-        actor.rangedWeapon = simple_platformer::RangedWeapon{};
+        actor.team = advanced_platformer::Team::Player;
+        actor.rangedWeapon = advanced_platformer::RangedWeapon{};
         actor.rangedWeapon->lastFiredTimeSeconds = 1.0;
     }
     SECTION("Non-finite shot time")
     {
-        actor.team = simple_platformer::Team::Player;
-        actor.rangedWeapon = simple_platformer::RangedWeapon{};
+        actor.team = advanced_platformer::Team::Player;
+        actor.rangedWeapon = advanced_platformer::RangedWeapon{};
         actor.rangedWeapon->lastFiredTimeSeconds = std::numeric_limits<double>::infinity();
     }
 
@@ -182,25 +182,25 @@ TEST_CASE("World rejects invalid actor composition", "[world][actor]")
 
 TEST_CASE("NPC composition does not require a bite attack", "[world][actor]")
 {
-    simple_platformer::World world;
-    simple_platformer::Actor npc = makeActor();
-    npc.brain = simple_platformer::NpcBrain{};
-    npc.perception = simple_platformer::NpcPerception{};
-    npc.senses = simple_platformer::NpcSenses{};
-    npc.pathFollower = simple_platformer::PathFollower{};
+    advanced_platformer::World world;
+    advanced_platformer::Actor npc = makeActor();
+    npc.brain = advanced_platformer::NpcBrain{};
+    npc.perception = advanced_platformer::NpcPerception{};
+    npc.senses = advanced_platformer::NpcSenses{};
+    npc.pathFollower = advanced_platformer::PathFollower{};
 
-    const simple_platformer::ActorId npcId = world.addActor(npc);
+    const advanced_platformer::ActorId npcId = world.addActor(npc);
 
     REQUIRE(world.findActor(npcId) != nullptr);
 }
 
 TEST_CASE("World adds and removes projectiles through its public interface", "[world][projectile]")
 {
-    simple_platformer::World world;
-    simple_platformer::Projectile first;
+    advanced_platformer::World world;
+    advanced_platformer::Projectile first;
     first.bounds = {{8.0F, 8.0F}, {4.0F, 2.0F}};
     first.sprite.size = {4.0F, 2.0F};
-    simple_platformer::Projectile second = first;
+    advanced_platformer::Projectile second = first;
     second.bounds.topLeft = {16.0F, 8.0F};
 
     world.addProjectile(first);
@@ -214,8 +214,8 @@ TEST_CASE("World adds and removes projectiles through its public interface", "[w
 
 TEST_CASE("World validates and owns projectile bursts", "[world][projectile]")
 {
-    simple_platformer::World world;
-    simple_platformer::ProjectileBurst burst;
+    advanced_platformer::World world;
+    advanced_platformer::ProjectileBurst burst;
     burst.center = {8.0F, 8.0F};
     burst.sprite.size = {4.0F, 2.0F};
 
@@ -235,8 +235,8 @@ TEST_CASE("World validates and owns projectile bursts", "[world][projectile]")
 
 TEST_CASE("The world records the player and feet-based spawn", "[world][actor]")
 {
-    simple_platformer::World world;
-    const simple_platformer::ActorId player = world.addActor(makeActor());
+    advanced_platformer::World world;
+    const advanced_platformer::ActorId player = world.addActor(makeActor());
 
     world.setPlayer(player, {40.0F, 48.0F});
 

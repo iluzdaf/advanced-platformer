@@ -2,28 +2,28 @@
 
 #include <stdexcept>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/combat/combat.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/render/animation.hpp"
-#include "simple_platformer/render/animation_system.hpp"
-#include "simple_platformer/world/world.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/render/animation.hpp"
+#include "advanced_platformer/render/animation_system.hpp"
+#include "advanced_platformer/world/world.hpp"
 #include "support/actor_builder.hpp"
 #include "support/actor_components.hpp"
 #include "support/animator.hpp"
 
 namespace
 {
-    simple_platformer::Actor makeAnimatedActor()
+    advanced_platformer::Actor makeAnimatedActor()
     {
-        const simple_platformer::Animator animator = tests::fullAnimator();
-        simple_platformer::Actor actor = tests::ActorBuilder::sized({12.0F, 12.0F})
-                                             .at({0.0F, 0.0F})
-                                             .platforming()
-                                             .withSprite({0, {}, {1.0F, 1.0F}})
-                                             .withAnimator(animator);
+        const advanced_platformer::Animator animator = tests::fullAnimator();
+        advanced_platformer::Actor actor = tests::ActorBuilder::sized({12.0F, 12.0F})
+                                               .at({0.0F, 0.0F})
+                                               .platforming()
+                                               .withSprite({0, {}, {1.0F, 1.0F}})
+                                               .withAnimator(animator);
         tests::platformerMovement(actor).grounded = true;
         return actor;
     }
@@ -31,99 +31,99 @@ namespace
 
 TEST_CASE("A ranged actor uses Attack only during its Shoot phase", "[render][animation][system]")
 {
-    simple_platformer::World world;
-    simple_platformer::Actor rangedActor = makeAnimatedActor();
-    rangedActor.team = simple_platformer::Team::Player;
-    rangedActor.rangedWeapon = simple_platformer::RangedWeapon{};
-    tests::rangedWeapon(rangedActor).phase = simple_platformer::RangedPhase::Shoot;
+    advanced_platformer::World world;
+    advanced_platformer::Actor rangedActor = makeAnimatedActor();
+    rangedActor.team = advanced_platformer::Team::Player;
+    rangedActor.rangedWeapon = advanced_platformer::RangedWeapon{};
+    tests::rangedWeapon(rangedActor).phase = advanced_platformer::RangedPhase::Shoot;
     tests::rangedWeapon(rangedActor).phaseTimeRemaining =
         tests::rangedWeapon(rangedActor).shootDuration;
-    const simple_platformer::ActorId id = world.addActor(rangedActor);
+    const advanced_platformer::ActorId id = world.addActor(rangedActor);
 
-    simple_platformer::updateWorldAnimations(world, 0.0F);
-    REQUIRE(tests::animator(world, id).current == simple_platformer::AnimationName::Attack);
+    advanced_platformer::updateWorldAnimations(world, 0.0F);
+    REQUIRE(tests::animator(world, id).current == advanced_platformer::AnimationName::Attack);
 
-    tests::rangedWeapon(world, id).phase = simple_platformer::RangedPhase::Recovery;
+    tests::rangedWeapon(world, id).phase = advanced_platformer::RangedPhase::Recovery;
     tests::rangedWeapon(world, id).phaseTimeRemaining =
         tests::rangedWeapon(world, id).recoveryDuration;
     tests::actor(world, id).body.velocity.x = 10.0F;
-    simple_platformer::updateWorldAnimations(world, 0.0F);
-    REQUIRE(tests::animator(world, id).current == simple_platformer::AnimationName::Move);
+    advanced_platformer::updateWorldAnimations(world, 0.0F);
+    REQUIRE(tests::animator(world, id).current == advanced_platformer::AnimationName::Move);
 }
 
 TEST_CASE("Every committed bite phase uses Attack", "[render][animation][system]")
 {
-    simple_platformer::World world;
-    simple_platformer::Actor bitingActor = makeAnimatedActor();
-    bitingActor.team = simple_platformer::Team::Enemy;
-    bitingActor.bite = simple_platformer::BiteAttack{};
-    const simple_platformer::ActorId id = world.addActor(bitingActor);
+    advanced_platformer::World world;
+    advanced_platformer::Actor bitingActor = makeAnimatedActor();
+    bitingActor.team = advanced_platformer::Team::Enemy;
+    bitingActor.bite = advanced_platformer::BiteAttack{};
+    const advanced_platformer::ActorId id = world.addActor(bitingActor);
 
-    for (const simple_platformer::BitePhase phase : {
-             simple_platformer::BitePhase::Windup,
-             simple_platformer::BitePhase::Active,
-             simple_platformer::BitePhase::Recovery,
+    for (const advanced_platformer::BitePhase phase : {
+             advanced_platformer::BitePhase::Windup,
+             advanced_platformer::BitePhase::Active,
+             advanced_platformer::BitePhase::Recovery,
          })
     {
         tests::bite(world, id).phase = phase;
-        simple_platformer::updateWorldAnimations(world, 0.0F);
-        REQUIRE(tests::animator(world, id).current == simple_platformer::AnimationName::Attack);
+        advanced_platformer::updateWorldAnimations(world, 0.0F);
+        REQUIRE(tests::animator(world, id).current == advanced_platformer::AnimationName::Attack);
     }
 }
 
 TEST_CASE("Death animation has priority over a shot", "[render][animation][system]")
 {
-    simple_platformer::World world;
-    simple_platformer::Actor dyingActor = makeAnimatedActor();
-    dyingActor.team = simple_platformer::Team::Player;
-    dyingActor.life = simple_platformer::LifeState::Dying;
-    dyingActor.rangedWeapon = simple_platformer::RangedWeapon{};
-    tests::rangedWeapon(dyingActor).phase = simple_platformer::RangedPhase::Shoot;
+    advanced_platformer::World world;
+    advanced_platformer::Actor dyingActor = makeAnimatedActor();
+    dyingActor.team = advanced_platformer::Team::Player;
+    dyingActor.life = advanced_platformer::LifeState::Dying;
+    dyingActor.rangedWeapon = advanced_platformer::RangedWeapon{};
+    tests::rangedWeapon(dyingActor).phase = advanced_platformer::RangedPhase::Shoot;
     tests::rangedWeapon(dyingActor).phaseTimeRemaining =
         tests::rangedWeapon(dyingActor).shootDuration;
-    const simple_platformer::ActorId id = world.addActor(dyingActor);
+    const advanced_platformer::ActorId id = world.addActor(dyingActor);
 
-    simple_platformer::updateWorldAnimations(world, 0.0F);
+    advanced_platformer::updateWorldAnimations(world, 0.0F);
 
-    REQUIRE(tests::animator(world, id).current == simple_platformer::AnimationName::Death);
+    REQUIRE(tests::animator(world, id).current == advanced_platformer::AnimationName::Death);
 }
 
 TEST_CASE(
     "A climber moves or idles on its surface instead of falling",
     "[render][animation][system][climb]")
 {
-    simple_platformer::World world;
-    simple_platformer::Actor climbingActor = makeAnimatedActor();
-    climbingActor.surfaceClimb = simple_platformer::SurfaceClimb{};
-    const simple_platformer::ActorId id = world.addActor(climbingActor);
+    advanced_platformer::World world;
+    advanced_platformer::Actor climbingActor = makeAnimatedActor();
+    climbingActor.surfaceClimb = advanced_platformer::SurfaceClimb{};
+    const advanced_platformer::ActorId id = world.addActor(climbingActor);
     tests::platformerMovement(world, id).grounded = false;
-    simple_platformer::Actor& actor = tests::actor(world, id);
+    advanced_platformer::Actor& actor = tests::actor(world, id);
     const auto animate = [&world, &id]()
     {
-        simple_platformer::updateWorldAnimations(world, 0.0F);
+        advanced_platformer::updateWorldAnimations(world, 0.0F);
         return tests::animator(world, id).current;
     };
 
-    tests::surfaceClimb(actor).surface = simple_platformer::ClimbSurface::LeftWall;
+    tests::surfaceClimb(actor).surface = advanced_platformer::ClimbSurface::LeftWall;
     actor.body.velocity = {0.0F, 60.0F};
-    REQUIRE(animate() == simple_platformer::AnimationName::Move);
+    REQUIRE(animate() == advanced_platformer::AnimationName::Move);
     actor.body.velocity = {0.0F, 0.0F};
-    REQUIRE(animate() == simple_platformer::AnimationName::Idle);
+    REQUIRE(animate() == advanced_platformer::AnimationName::Idle);
 
-    tests::surfaceClimb(actor).surface = simple_platformer::ClimbSurface::Ceiling;
+    tests::surfaceClimb(actor).surface = advanced_platformer::ClimbSurface::Ceiling;
     actor.body.velocity = {60.0F, 0.0F};
-    REQUIRE(animate() == simple_platformer::AnimationName::Move);
+    REQUIRE(animate() == advanced_platformer::AnimationName::Move);
 
     // Letting go, it falls.
-    tests::surfaceClimb(actor).surface = simple_platformer::ClimbSurface::None;
+    tests::surfaceClimb(actor).surface = advanced_platformer::ClimbSurface::None;
     actor.body.velocity = {0.0F, 60.0F};
-    REQUIRE(animate() == simple_platformer::AnimationName::Fall);
+    REQUIRE(animate() == advanced_platformer::AnimationName::Fall);
 }
 
 TEST_CASE("World animation rejects a negative delta time", "[render][animation][system]")
 {
-    simple_platformer::World world;
+    advanced_platformer::World world;
 
     REQUIRE_THROWS_AS(
-        simple_platformer::updateWorldAnimations(world, -0.1F), std::invalid_argument);
+        advanced_platformer::updateWorldAnimations(world, -0.1F), std::invalid_argument);
 }

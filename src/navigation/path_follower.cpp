@@ -1,4 +1,4 @@
-#include "simple_platformer/navigation/path_follower.hpp"
+#include "advanced_platformer/navigation/path_follower.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -10,18 +10,18 @@
 #include <glm/geometric.hpp>
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/input/input_program.hpp"
-#include "simple_platformer/input/input_state.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/movement/flying_movement.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/navigation/navigation_path.hpp"
-#include "simple_platformer/navigation/traversal.hpp"
-#include "simple_platformer/physics/body.hpp"
+#include "advanced_platformer/input/input_program.hpp"
+#include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/movement/flying_movement.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/navigation/navigation_path.hpp"
+#include "advanced_platformer/navigation/traversal.hpp"
+#include "advanced_platformer/physics/body.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

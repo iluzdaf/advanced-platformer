@@ -1,17 +1,17 @@
-#include "simple_platformer/actor/actor_system.hpp"
+#include "advanced_platformer/actor/actor_system.hpp"
 
 #include <stdexcept>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/input/input_state.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/movement/flying_movement.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/world/tile_map.hpp"
-#include "simple_platformer/world/world.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/movement/flying_movement.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
+#include "advanced_platformer/world/world.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     void updateActorMovement(const TileMap& map, World& world, float deltaTime)
     {

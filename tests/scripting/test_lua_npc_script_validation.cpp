@@ -3,34 +3,34 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/input/input_state.hpp"
-#include "simple_platformer/npc/npc_activity.hpp"
-#include "simple_platformer/npc/npc_activity_scripts.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/npc/npc_activity.hpp"
+#include "advanced_platformer/npc/npc_activity_scripts.hpp"
 #include "lua_npc_scripts.hpp"
 
 namespace
 {
-    constexpr simple_platformer::ActorId FirstActor{1};
-    const simple_platformer::LuaNpcActivity Activity{"example", "decide"};
+    constexpr advanced_platformer::ActorId FirstActor{1};
+    const advanced_platformer::LuaNpcActivity Activity{"example", "decide"};
 }
 
 TEST_CASE("A failing Lua update reports its context and asks for nothing", "[lua][npc]")
 {
-    simple_platformer::LuaNpcScripts scripts;
+    advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScriptText(
         "example",
         "return {activities={decide={update=function() error('boom') end}}}",
         "failing.lua");
-    const simple_platformer::NpcActivitySnapshot snapshot;
+    const advanced_platformer::NpcActivitySnapshot snapshot;
     scripts.enter(FirstActor, Activity, snapshot);
 
-    const simple_platformer::NpcActivityCommand command =
+    const advanced_platformer::NpcActivityCommand command =
         scripts.update(FirstActor, Activity, snapshot, 0.1F);
 
     REQUIRE(command.intentions.direction.x == 0.0F);
     REQUIRE(scripts.diagnostics().size() == 1);
-    const simple_platformer::LuaScriptDiagnostic& diagnostic = scripts.diagnostics().front();
+    const advanced_platformer::LuaScriptDiagnostic& diagnostic = scripts.diagnostics().front();
     REQUIRE(diagnostic.source == "failing.lua");
     REQUIRE(diagnostic.script == "example");
     REQUIRE(diagnostic.activity == "decide");
@@ -41,8 +41,8 @@ TEST_CASE("A failing Lua update reports its context and asks for nothing", "[lua
 
 TEST_CASE("Lua commands reject unknown fields and non-finite vectors", "[lua][npc]")
 {
-    simple_platformer::LuaNpcScripts scripts;
-    const simple_platformer::NpcActivitySnapshot snapshot;
+    advanced_platformer::LuaNpcScripts scripts;
+    const advanced_platformer::NpcActivitySnapshot snapshot;
 
     SECTION("Unknown field")
     {
@@ -82,10 +82,10 @@ TEST_CASE("Lua movement and contact requests require booleans", "[lua][npc]")
     {
         field = "contactDamage";
     }
-    simple_platformer::LuaNpcScripts scripts;
+    advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScriptText(
         "example", "return {activities={decide={update=function() return {" + field + "=1} end}}}");
-    const simple_platformer::NpcActivitySnapshot snapshot;
+    const advanced_platformer::NpcActivitySnapshot snapshot;
     scripts.enter(FirstActor, Activity, snapshot);
     const auto command = scripts.update(FirstActor, Activity, snapshot, 0.1F);
     REQUIRE_FALSE(command.intentions.contactDamage);
@@ -104,14 +104,14 @@ TEST_CASE("A Lua climb grip is named, and keeps the grip when left out", "[lua][
     {
         value = "true";
     }
-    simple_platformer::LuaNpcScripts scripts;
+    advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScriptText(
         "example",
         "return {activities={decide={update=function() return {climbGrip=" + value + "} end}}}");
-    const simple_platformer::NpcActivitySnapshot snapshot;
+    const advanced_platformer::NpcActivitySnapshot snapshot;
     scripts.enter(FirstActor, Activity, snapshot);
     const auto command = scripts.update(FirstActor, Activity, snapshot, 0.1F);
-    REQUIRE(command.intentions.climbGrip == simple_platformer::ClimbGrip::Keep);
+    REQUIRE(command.intentions.climbGrip == advanced_platformer::ClimbGrip::Keep);
     REQUIRE_THAT(
         scripts.diagnostics().back().message,
         Catch::Matchers::ContainsSubstring(
@@ -120,19 +120,19 @@ TEST_CASE("A Lua climb grip is named, and keeps the grip when left out", "[lua][
 
 TEST_CASE("A Lua command that leaves out the climb grip keeps it", "[lua][npc]")
 {
-    simple_platformer::LuaNpcScripts scripts;
+    advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScriptText(
         "example", "return {activities={decide={update=function() return {} end}}}");
-    const simple_platformer::NpcActivitySnapshot snapshot;
+    const advanced_platformer::NpcActivitySnapshot snapshot;
     scripts.enter(FirstActor, Activity, snapshot);
     const auto command = scripts.update(FirstActor, Activity, snapshot, 0.1F);
-    REQUIRE(command.intentions.climbGrip == simple_platformer::ClimbGrip::Keep);
+    REQUIRE(command.intentions.climbGrip == advanced_platformer::ClimbGrip::Keep);
     REQUIRE(scripts.diagnostics().empty());
 }
 
 TEST_CASE("Lua activities cannot use filesystem or system libraries", "[lua][npc]")
 {
-    simple_platformer::LuaNpcScripts scripts;
+    advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScriptText(
         "example",
         R"(
@@ -147,7 +147,7 @@ TEST_CASE("Lua activities cannot use filesystem or system libraries", "[lua][npc
                 }
             }
         )");
-    const simple_platformer::NpcActivitySnapshot snapshot;
+    const advanced_platformer::NpcActivitySnapshot snapshot;
     scripts.enter(FirstActor, Activity, snapshot);
 
     REQUIRE(scripts.update(FirstActor, Activity, snapshot, 0.1F).intentions.direction.x == 0.0F);
@@ -155,12 +155,12 @@ TEST_CASE("Lua activities cannot use filesystem or system libraries", "[lua][npc
 
 TEST_CASE("A Lua activity cannot run past its instruction budget", "[lua][npc]")
 {
-    simple_platformer::LuaNpcScripts scripts;
+    advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScriptText(
         "example",
         "return {activities={decide={update=function() while true do end end}}}",
         "loop.lua");
-    const simple_platformer::NpcActivitySnapshot snapshot;
+    const advanced_platformer::NpcActivitySnapshot snapshot;
     scripts.enter(FirstActor, Activity, snapshot);
 
     REQUIRE_NOTHROW(scripts.update(FirstActor, Activity, snapshot, 0.1F));
@@ -171,10 +171,10 @@ TEST_CASE("A Lua activity cannot run past its instruction budget", "[lua][npc]")
 
 TEST_CASE("A Lua activity rejects an invalid update time step", "[lua][npc]")
 {
-    simple_platformer::LuaNpcScripts scripts;
+    advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScriptText(
         "example", "return {activities={decide={update=function() return {} end}}}");
-    const simple_platformer::NpcActivitySnapshot snapshot;
+    const advanced_platformer::NpcActivitySnapshot snapshot;
     scripts.enter(FirstActor, Activity, snapshot);
 
     REQUIRE_THROWS_WITH(

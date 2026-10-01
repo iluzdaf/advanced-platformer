@@ -1,6 +1,6 @@
 #pragma once
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     class Game;
     struct WindowViewport;

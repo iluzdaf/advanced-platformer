@@ -1,4 +1,4 @@
-#include "simple_platformer/math/coordinates.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <functional>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     std::size_t CellHash::operator()(Cell cell) const
     {

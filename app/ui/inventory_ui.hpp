@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <optional>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     class Game;
     struct SpriteRegion;

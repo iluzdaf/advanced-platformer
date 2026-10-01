@@ -1,16 +1,16 @@
-#include "simple_platformer/actor/lifecycle.hpp"
+#include "advanced_platformer/actor/lifecycle.hpp"
 
 #include <algorithm>
 #include <stdexcept>
 #include <vector>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/world/world.hpp"
-#include "simple_platformer/world/world_requests.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/world/world.hpp"
+#include "advanced_platformer/world/world_requests.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     void updateLifeState(
         World& world,

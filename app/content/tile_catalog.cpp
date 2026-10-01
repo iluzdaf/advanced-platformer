@@ -11,9 +11,9 @@
 #include <vector>
 
 #include <nlohmann/json.hpp>
-#include "simple_platformer/world/tile_map.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     TileCatalog parseTileCatalog(std::string_view text, std::string_view sourceName)
     {

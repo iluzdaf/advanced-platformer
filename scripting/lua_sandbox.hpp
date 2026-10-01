@@ -6,7 +6,7 @@
 #include <lua.hpp>
 #include <sol/sol.hpp>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     // Opens only the base, math, string, and table libraries, removes the chunk loaders,
     // and binds vec2, so scripts can read and compute but not reach files or load code.

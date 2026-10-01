@@ -4,7 +4,7 @@
 
 #include <glm/vec2.hpp>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     struct DisplayViewport
     {

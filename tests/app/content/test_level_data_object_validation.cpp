@@ -40,7 +40,7 @@ TEST_CASE("Object markers require exactly one player and exit", "[app][content][
         level["map"] = {"P."};
     }
     REQUIRE_THROWS_AS(
-        simple_platformer::parseLevelData(level.dump(), "bad markers"), std::invalid_argument);
+        advanced_platformer::parseLevelData(level.dump(), "bad markers"), std::invalid_argument);
 }
 
 TEST_CASE("Object markers cannot duplicate explicit placements", "[app][content][json]")
@@ -55,7 +55,7 @@ TEST_CASE("Object markers cannot duplicate explicit placements", "[app][content]
         level["exit"] = {{"definition", "test_door"}, {"spawnCell", {1, 0}}};
     }
     REQUIRE_THROWS_AS(
-        simple_platformer::parseLevelData(level.dump(), "bad markers"), std::invalid_argument);
+        advanced_platformer::parseLevelData(level.dump(), "bad markers"), std::invalid_argument);
 }
 
 TEST_CASE("Object legend symbols are single glyphs distinct from terrain", "[app][content][json]")
@@ -70,7 +70,7 @@ TEST_CASE("Object legend symbols are single glyphs distinct from terrain", "[app
         level["objectLegend"]["ZZ"] = {{"type", "actor"}, {"definition", "zombie"}};
     }
     REQUIRE_THROWS_AS(
-        simple_platformer::parseLevelData(level.dump(), "bad markers"), std::invalid_argument);
+        advanced_platformer::parseLevelData(level.dump(), "bad markers"), std::invalid_argument);
 }
 
 TEST_CASE(
@@ -91,7 +91,7 @@ TEST_CASE(
         level["objectLegend"]["Z"] = {{"type", "zombie"}, {"definition", "zombie"}};
     }
     REQUIRE_THROWS_AS(
-        simple_platformer::parseLevelData(level.dump(), "bad markers"), std::invalid_argument);
+        advanced_platformer::parseLevelData(level.dump(), "bad markers"), std::invalid_argument);
 }
 
 TEST_CASE("Object templates cannot provide a placement", "[app][content][json]")
@@ -100,7 +100,7 @@ TEST_CASE("Object templates cannot provide a placement", "[app][content][json]")
     level["objectLegend"]["P"]["spawnFeet"] = {1, 2};
 
     REQUIRE_THROWS_AS(
-        simple_platformer::parseLevelData(level.dump(), "bad markers"), std::invalid_argument);
+        advanced_platformer::parseLevelData(level.dump(), "bad markers"), std::invalid_argument);
 }
 
 TEST_CASE("Pickup object templates require a positive quantity", "[app][content][json]")
@@ -110,7 +110,7 @@ TEST_CASE("Pickup object templates require a positive quantity", "[app][content]
         {"type", "pickup"}, {"item", "key"}, {"quantity", 0}, {"bodySize", {8, 8}}};
 
     REQUIRE_THROWS_AS(
-        simple_platformer::parseLevelData(level.dump(), "bad markers"), std::invalid_argument);
+        advanced_platformer::parseLevelData(level.dump(), "bad markers"), std::invalid_argument);
 }
 
 TEST_CASE("Unused object templates reject unknown fields", "[app][content][json]")
@@ -134,5 +134,5 @@ TEST_CASE("Unused object templates reject unknown fields", "[app][content][json]
         level["objectLegend"]["X"] = {{"type", "exit"}, {"definition", "door"}, {"nextLevell", 2}};
     }
     REQUIRE_THROWS_AS(
-        simple_platformer::parseLevelData(level.dump(), "bad markers"), std::invalid_argument);
+        advanced_platformer::parseLevelData(level.dump(), "bad markers"), std::invalid_argument);
 }

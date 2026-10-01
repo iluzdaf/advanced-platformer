@@ -19,8 +19,8 @@ namespace
 
 TEST_CASE("HUD icons name their atlas regions", "[app][content][hud]")
 {
-    const simple_platformer::HudIcons icons =
-        simple_platformer::parseHudIcons(hudData().dump(), "hud.json");
+    const advanced_platformer::HudIcons icons =
+        advanced_platformer::parseHudIcons(hudData().dump(), "hud.json");
 
     REQUIRE(icons.fullHeart.position == glm::vec2{96.0F, 192.0F});
     REQUIRE(icons.emptyHeart.position == glm::vec2{112.0F, 192.0F});
@@ -30,8 +30,8 @@ TEST_CASE("HUD icons name their atlas regions", "[app][content][hud]")
 
 TEST_CASE("HUD icons load from a catalog file", "[app][content][hud]")
 {
-    const simple_platformer::HudIcons icons =
-        simple_platformer::loadHudIcons("tests/fixtures/catalogs/hud.json");
+    const advanced_platformer::HudIcons icons =
+        advanced_platformer::loadHudIcons("tests/fixtures/catalogs/hud.json");
 
     REQUIRE(icons.fullHeart.size == glm::vec2{16.0F, 16.0F});
 }
@@ -61,7 +61,7 @@ TEST_CASE("HUD icons reject missing, unknown, and unusable regions", "[app][cont
         expected = "emptyHeart";
     }
     REQUIRE_THROWS_WITH(
-        simple_platformer::parseHudIcons(data.dump(), "hud.json"),
+        advanced_platformer::parseHudIcons(data.dump(), "hud.json"),
         Catch::Matchers::ContainsSubstring("hud.json") &&
             Catch::Matchers::ContainsSubstring(expected));
 }

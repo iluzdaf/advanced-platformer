@@ -9,24 +9,24 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/input/input_state.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/navigation/actor_navigation.hpp"
-#include "simple_platformer/navigation/platformer_connection_cache.hpp"
-#include "simple_platformer/navigation/route.hpp"
-#include "simple_platformer/navigation/navigation_path.hpp"
-#include "simple_platformer/navigation/path_follower.hpp"
-#include "simple_platformer/navigation/platformer_cells.hpp"
-#include "simple_platformer/navigation/platformer_connections.hpp"
-#include "simple_platformer/navigation/platformer_traversal_profile.hpp"
-#include "simple_platformer/navigation/traversal.hpp"
-#include "simple_platformer/physics/body.hpp"
-#include "simple_platformer/timing/frame_profile.hpp"
-#include "simple_platformer/world/tile_map.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/navigation/actor_navigation.hpp"
+#include "advanced_platformer/navigation/platformer_connection_cache.hpp"
+#include "advanced_platformer/navigation/route.hpp"
+#include "advanced_platformer/navigation/navigation_path.hpp"
+#include "advanced_platformer/navigation/path_follower.hpp"
+#include "advanced_platformer/navigation/platformer_cells.hpp"
+#include "advanced_platformer/navigation/platformer_connections.hpp"
+#include "advanced_platformer/navigation/platformer_traversal_profile.hpp"
+#include "advanced_platformer/navigation/traversal.hpp"
+#include "advanced_platformer/physics/body.hpp"
+#include "advanced_platformer/timing/frame_profile.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
 #include "support/actor_builder.hpp"
 #include "support/fixed_step.hpp"
 #include "support/route_connections.hpp"
@@ -36,39 +36,39 @@
 
 namespace
 {
-    using simple_platformer::Actor;
-    using simple_platformer::boundsAtSurface;
-    using simple_platformer::buildPlatformerConnections;
-    using simple_platformer::Cell;
-    using simple_platformer::cellAtFeet;
-    using simple_platformer::ClimbSurface;
-    using simple_platformer::endOf;
-    using simple_platformer::feetInCell;
-    using simple_platformer::feetOf;
-    using simple_platformer::findActorPath;
-    using simple_platformer::followPlatformerPath;
-    using simple_platformer::FrameProfile;
-    using simple_platformer::frameStatisticCount;
-    using simple_platformer::InputIntentions;
-    using simple_platformer::NavigationPath;
-    using simple_platformer::NavigationPathResult;
-    using simple_platformer::NavigationPathStatus;
-    using simple_platformer::pathComplete;
-    using simple_platformer::PathFollower;
-    using simple_platformer::PlatformerConnectionCache;
-    using simple_platformer::PlatformerMovement;
-    using simple_platformer::PlatformerMovementConfig;
-    using simple_platformer::PlatformerTraversalProfile;
-    using simple_platformer::platformerTraversalProfileFor;
-    using simple_platformer::RouteConnection;
-    using simple_platformer::RouteLocation;
-    using simple_platformer::setPath;
-    using simple_platformer::SurfaceClimb;
-    using simple_platformer::SurfaceClimbConfig;
-    using simple_platformer::TileMap;
-    using simple_platformer::Traversal;
-    using simple_platformer::updateSurfaceClimbMovement;
-    using simple_platformer::Waypoint;
+    using advanced_platformer::Actor;
+    using advanced_platformer::boundsAtSurface;
+    using advanced_platformer::buildPlatformerConnections;
+    using advanced_platformer::Cell;
+    using advanced_platformer::cellAtFeet;
+    using advanced_platformer::ClimbSurface;
+    using advanced_platformer::endOf;
+    using advanced_platformer::feetInCell;
+    using advanced_platformer::feetOf;
+    using advanced_platformer::findActorPath;
+    using advanced_platformer::followPlatformerPath;
+    using advanced_platformer::FrameProfile;
+    using advanced_platformer::frameStatisticCount;
+    using advanced_platformer::InputIntentions;
+    using advanced_platformer::NavigationPath;
+    using advanced_platformer::NavigationPathResult;
+    using advanced_platformer::NavigationPathStatus;
+    using advanced_platformer::pathComplete;
+    using advanced_platformer::PathFollower;
+    using advanced_platformer::PlatformerConnectionCache;
+    using advanced_platformer::PlatformerMovement;
+    using advanced_platformer::PlatformerMovementConfig;
+    using advanced_platformer::PlatformerTraversalProfile;
+    using advanced_platformer::platformerTraversalProfileFor;
+    using advanced_platformer::RouteConnection;
+    using advanced_platformer::RouteLocation;
+    using advanced_platformer::setPath;
+    using advanced_platformer::SurfaceClimb;
+    using advanced_platformer::SurfaceClimbConfig;
+    using advanced_platformer::TileMap;
+    using advanced_platformer::Traversal;
+    using advanced_platformer::updateSurfaceClimbMovement;
+    using advanced_platformer::Waypoint;
 
     constexpr glm::vec2 SmallBody{12.0F, 12.0F};
     constexpr glm::vec2 TallBody{12.0F, 20.0F};

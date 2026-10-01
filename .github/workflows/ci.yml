@@ -216,7 +216,7 @@ jobs:
           -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded
       - name: Build Visual Studio solution
         run: >
-          msbuild build\windows-vs\SimplePlatformer.sln
+          msbuild build\windows-vs\AdvancedPlatformer.sln
           /m
           /p:Configuration=Debug
           /p:Platform=x64
@@ -238,8 +238,8 @@ jobs:
       # directory when none is set. CTest chooses its own, so it cannot catch this.
       - name: Run tests where the Visual Studio debugger starts them
         run: |
-          $project = Resolve-Path build\windows-vs\simple_platformer_tests.vcxproj
-          $tests = Resolve-Path build\windows-vs\Debug\simple_platformer_tests.exe
+          $project = Resolve-Path build\windows-vs\advanced_platformer_tests.vcxproj
+          $tests = Resolve-Path build\windows-vs\Debug\advanced_platformer_tests.exe
           $directory = (msbuild $project -nologo -p:Configuration=Debug -p:Platform=x64 `
             -getProperty:LocalDebuggerWorkingDirectory | Out-String).Trim()
           if (-not $directory) { $directory = Split-Path $project }

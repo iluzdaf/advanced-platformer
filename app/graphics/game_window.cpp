@@ -10,9 +10,9 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/math/coordinates.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     GameWindow::GlfwLibrary::GlfwLibrary()
     {

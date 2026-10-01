@@ -8,10 +8,10 @@
 #include "game/game.hpp"
 #include "content/game_catalogs.hpp"
 #include "content/level_catalog.hpp"
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/input/input_state.hpp"
-#include "simple_platformer/inventory/inventory.hpp"
-#include "simple_platformer/render/sprite.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/inventory/inventory.hpp"
+#include "advanced_platformer/render/sprite.hpp"
 #include "support/atlas_size.hpp"
 #include "support/fixed_step.hpp"
 
@@ -19,14 +19,14 @@ namespace
 {
     constexpr int MaximumSimulationTicks = 12000;
 
-    bool sameHealth(simple_platformer::Health left, simple_platformer::Health right)
+    bool sameHealth(advanced_platformer::Health left, advanced_platformer::Health right)
     {
         return left.current == right.current && left.maximum == right.maximum;
     }
 
     bool sameInventory(
-        const simple_platformer::Inventory& left,
-        const simple_platformer::Inventory& right)
+        const advanced_platformer::Inventory& left,
+        const advanced_platformer::Inventory& right)
     {
         const auto& leftSlots = left.slots();
         const auto& rightSlots = right.slots();
@@ -58,16 +58,16 @@ TEST_CASE(
     "The game carries progress across levels and restarts after the final exit",
     "[app][level-transition]")
 {
-    simple_platformer::Game game(
+    advanced_platformer::Game game(
         0,
-        simple_platformer::loadLevelCatalog("tests/fixtures/levels/levels.json"),
-        simple_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
-        simple_platformer::LuaNpcScripts{},
+        advanced_platformer::loadLevelCatalog("tests/fixtures/levels/levels.json"),
+        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
+        advanced_platformer::LuaNpcScripts{},
         tests::FixedStepSeconds);
     const auto initialHealth = game.playerHealth();
     const auto initialInventory = game.playerInventory();
     const int initialLevel = game.levelNumber();
-    simple_platformer::InputIntentions intentions;
+    advanced_platformer::InputIntentions intentions;
     intentions.direction.x = 1.0F;
     bool changedLevel = false;
 
@@ -104,15 +104,15 @@ TEST_CASE(
     "The game hints the missing item while the player stands in a locked exit",
     "[app][level-transition][exit]")
 {
-    simple_platformer::Game game(
+    advanced_platformer::Game game(
         0,
-        simple_platformer::loadLevelCatalog("tests/fixtures/levels/locked_levels.json"),
-        simple_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
-        simple_platformer::LuaNpcScripts{},
+        advanced_platformer::loadLevelCatalog("tests/fixtures/levels/locked_levels.json"),
+        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
+        advanced_platformer::LuaNpcScripts{},
         tests::FixedStepSeconds);
     REQUIRE_FALSE(game.lockedExitHintIcon().has_value());
 
-    simple_platformer::InputIntentions walkRight;
+    advanced_platformer::InputIntentions walkRight;
     walkRight.direction.x = 1.0F;
     int ticks = 0;
     while (!game.lockedExitHintIcon().has_value() && ticks < MaximumSimulationTicks)
@@ -120,8 +120,8 @@ TEST_CASE(
         game.update(walkRight, tests::FixedStepSeconds);
         ++ticks;
     }
-    const simple_platformer::Sprite icon =
-        game.lockedExitHintIcon().value_or(simple_platformer::Sprite{});
+    const advanced_platformer::Sprite icon =
+        game.lockedExitHintIcon().value_or(advanced_platformer::Sprite{});
     REQUIRE(icon.region.position == glm::vec2{0.0F, 0.0F});
     REQUIRE(icon.region.size == glm::vec2{8.0F, 8.0F});
 
@@ -140,7 +140,7 @@ TEST_CASE(
     REQUIRE_FALSE(game.lockedExitHintIcon().has_value());
     REQUIRE(game.playerInventory().count(1) == 1);
 
-    simple_platformer::InputIntentions walkLeft;
+    advanced_platformer::InputIntentions walkLeft;
     walkLeft.direction.x = -1.0F;
     const int lockedLevel = game.levelNumber();
     for (ticks = 0; ticks < MaximumSimulationTicks && game.levelNumber() == lockedLevel; ++ticks)

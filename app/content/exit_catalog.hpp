@@ -4,10 +4,10 @@
 #include <string>
 #include <string_view>
 #include <glm/vec2.hpp>
-#include "simple_platformer/render/sprite.hpp"
-#include "simple_platformer/world/level_exit.hpp"
+#include "advanced_platformer/render/sprite.hpp"
+#include "advanced_platformer/world/level_exit.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     struct ExitDefinition
     {

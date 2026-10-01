@@ -5,10 +5,10 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/math/validation.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/math/validation.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     std::optional<DisplayViewport> makeDisplayViewport(glm::ivec2 framebufferSize)
     {

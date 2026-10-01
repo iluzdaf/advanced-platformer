@@ -4,16 +4,16 @@
 #include <stdexcept>
 #include "content/content_json.hpp"
 #include "content/machine_catalog.hpp"
-#include "simple_platformer/npc/npc.hpp"
-#include "simple_platformer/npc/npc_activity.hpp"
-#include "simple_platformer/npc/npc_state_machine.hpp"
+#include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/npc/npc_activity.hpp"
+#include "advanced_platformer/npc/npc_state_machine.hpp"
 
 using Catch::Matchers::ContainsSubstring;
 
 TEST_CASE("Machine JSON keeps state order, expands from lists and reads holds", "[app][machines]")
 {
     auto machineJson = nlohmann::json::parse(
-        simple_platformer::loadContentText("tests/fixtures/catalogs/machines.json"));
+        advanced_platformer::loadContentText("tests/fixtures/catalogs/machines.json"));
     auto& machine = machineJson["machines"]["test_machine"];
     machine["states"].push_back({{"name", "flee"}, {"does", "retreat"}});
     machine["transitions"].push_back(
@@ -21,19 +21,19 @@ TEST_CASE("Machine JSON keeps state order, expands from lists and reads holds", 
          {"to", "flee"},
          {"when", {{"targetWithinStandoffDistance", true}}}});
     const auto catalog =
-        simple_platformer::parseMachineCatalog(machineJson.dump(), "test machines");
-    const simple_platformer::NpcStateMachine& parsed =
-        simple_platformer::npcStateMachine(catalog, "test_machine");
+        advanced_platformer::parseMachineCatalog(machineJson.dump(), "test machines");
+    const advanced_platformer::NpcStateMachine& parsed =
+        advanced_platformer::npcStateMachine(catalog, "test_machine");
 
     REQUIRE(parsed.name == "test_machine");
     REQUIRE(parsed.states.size() == 3);
     REQUIRE(parsed.states[0].name == "rest");
     REQUIRE(
-        std::get<simple_platformer::BuiltInNpcActivity>(parsed.states[0].does).state ==
-        simple_platformer::NpcState::Idle);
+        std::get<advanced_platformer::BuiltInNpcActivity>(parsed.states[0].does).state ==
+        advanced_platformer::NpcState::Idle);
     REQUIRE(
-        std::get<simple_platformer::BuiltInNpcActivity>(parsed.states[2].does).state ==
-        simple_platformer::NpcState::Retreat);
+        std::get<advanced_platformer::BuiltInNpcActivity>(parsed.states[2].does).state ==
+        advanced_platformer::NpcState::Retreat);
     REQUIRE(parsed.transitions.size() == 4);
     REQUIRE(parsed.transitions[1].after == 0.5F);
     REQUIRE(parsed.transitions[1].when.at("targetKnown") == false);
@@ -41,20 +41,20 @@ TEST_CASE("Machine JSON keeps state order, expands from lists and reads holds", 
     REQUIRE(parsed.transitions[3].from == "hunt");
     REQUIRE(parsed.transitions[3].to == "flee");
     REQUIRE_THROWS_AS(
-        simple_platformer::npcStateMachine(catalog, "missing"), std::invalid_argument);
+        advanced_platformer::npcStateMachine(catalog, "missing"), std::invalid_argument);
 }
 
 TEST_CASE("Machine JSON reads explicitly tagged Lua activities", "[app][machines][lua]")
 {
     auto machineJson = nlohmann::json::parse(
-        simple_platformer::loadContentText("tests/fixtures/catalogs/machines.json"));
+        advanced_platformer::loadContentText("tests/fixtures/catalogs/machines.json"));
     machineJson["machines"]["test_machine"]["states"][0]["does"] = {
         {"kind", "lua"}, {"script", "rat"}, {"activity", "flee"}};
 
     const auto catalog =
-        simple_platformer::parseMachineCatalog(machineJson.dump(), "machines.json");
-    const auto& activity = std::get<simple_platformer::LuaNpcActivity>(
-        simple_platformer::npcStateMachine(catalog, "test_machine").states[0].does);
+        advanced_platformer::parseMachineCatalog(machineJson.dump(), "machines.json");
+    const auto& activity = std::get<advanced_platformer::LuaNpcActivity>(
+        advanced_platformer::npcStateMachine(catalog, "test_machine").states[0].does);
     REQUIRE(activity.script == "rat");
     REQUIRE(activity.activity == "flee");
 }
@@ -62,7 +62,7 @@ TEST_CASE("Machine JSON reads explicitly tagged Lua activities", "[app][machines
 TEST_CASE("Machine JSON rejects what the engine cannot run, naming where", "[app][machines]")
 {
     auto machineJson = nlohmann::json::parse(
-        simple_platformer::loadContentText("tests/fixtures/catalogs/machines.json"));
+        advanced_platformer::loadContentText("tests/fixtures/catalogs/machines.json"));
     auto& machine = machineJson["machines"]["test_machine"];
     const char* expected = "";
     SECTION("Unknown activity")
@@ -112,6 +112,6 @@ TEST_CASE("Machine JSON rejects what the engine cannot run, naming where", "[app
         expected = "machines.test_machine";
     }
     REQUIRE_THROWS_WITH(
-        simple_platformer::parseMachineCatalog(machineJson.dump(), "machines.json"),
+        advanced_platformer::parseMachineCatalog(machineJson.dump(), "machines.json"),
         ContainsSubstring("machines.json") && ContainsSubstring(expected));
 }

@@ -1,4 +1,4 @@
-#include "simple_platformer/world/tile_map.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
 
 #include <cstddef>
 #include <map>
@@ -8,9 +8,9 @@
 #include <utility>
 #include <vector>
 
-#include "simple_platformer/math/coordinates.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     TileMap::TileMap(
         int tileSize,
@@ -141,7 +141,7 @@ namespace simple_platformer
 
     bool TileMap::contains(Cell cell) const
     {
-        return simple_platformer::contains(size(), cell);
+        return advanced_platformer::contains(size(), cell);
     }
 
     int TileMap::tileAt(Cell cell) const

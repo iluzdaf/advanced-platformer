@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     struct RenderScene;
 

@@ -4,7 +4,7 @@
 
 #include "machine_catalog.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     class LuaNpcScripts;
 

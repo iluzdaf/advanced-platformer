@@ -9,26 +9,26 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/navigation/platformer_connection_cache.hpp"
-#include "simple_platformer/navigation/route.hpp"
-#include "simple_platformer/navigation/platformer_connections.hpp"
-#include "simple_platformer/navigation/platformer_traversal_profile.hpp"
-#include "simple_platformer/world/tile_map.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/navigation/platformer_connection_cache.hpp"
+#include "advanced_platformer/navigation/route.hpp"
+#include "advanced_platformer/navigation/platformer_connections.hpp"
+#include "advanced_platformer/navigation/platformer_traversal_profile.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
 #include "support/fixed_step.hpp"
 #include "support/route_connections.hpp"
 #include "support/tile_map_builder.hpp"
 
 namespace
 {
-    using simple_platformer::BuiltPlatformerConnections;
-    using simple_platformer::Cell;
-    using simple_platformer::CellRange;
-    using simple_platformer::PlatformerConnectionCache;
-    using simple_platformer::PlatformerTraversalProfile;
-    using simple_platformer::RouteConnection;
-    using simple_platformer::WalkSimulationResult;
+    using advanced_platformer::BuiltPlatformerConnections;
+    using advanced_platformer::Cell;
+    using advanced_platformer::CellRange;
+    using advanced_platformer::PlatformerConnectionCache;
+    using advanced_platformer::PlatformerTraversalProfile;
+    using advanced_platformer::RouteConnection;
+    using advanced_platformer::WalkSimulationResult;
 
     constexpr glm::vec2 BodySize{12.0F, 12.0F};
 }
@@ -36,19 +36,19 @@ namespace
 TEST_CASE("Built connections enter the cache only when stored", "[navigation][cache]")
 {
     // A ledge with a drop and a gap: walks, a fall and jumps leave the middle cell.
-    const simple_platformer::TileMap map =
+    const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"........", "........", "........", "###..###", "########"});
     const Cell cell{1, 2};
     PlatformerConnectionCache cache;
     const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
 
     BuiltPlatformerConnections built =
-        simple_platformer::buildPlatformerConnections(map, cell, profile, &cache);
+        advanced_platformer::buildPlatformerConnections(map, cell, profile, &cache);
     REQUIRE(cache.size() == 0);
     REQUIRE(cache.cachedWalkCount(profile) == 0);
     REQUIRE_FALSE(built.walksToCache.empty());
     const int simulatedTicks = built.simulatedTicks;
-    simple_platformer::storePlatformerConnections(cache, cell, profile, std::move(built));
+    advanced_platformer::storePlatformerConnections(cache, cell, profile, std::move(built));
     const std::vector<RouteConnection>* simulated = cache.cachedConnections(cell, profile);
     REQUIRE(simulated != nullptr);
     REQUIRE_FALSE(simulated->empty());
@@ -61,20 +61,20 @@ TEST_CASE("Built connections enter the cache only when stored", "[navigation][ca
 
     // Without a cache argument, the builder simulates the walks again.
     const BuiltPlatformerConnections uncached =
-        simple_platformer::buildPlatformerConnections(map, cell, profile);
+        advanced_platformer::buildPlatformerConnections(map, cell, profile);
     REQUIRE(uncached.simulatedTicks == simulatedTicks);
 }
 
 TEST_CASE("Connections are cached separately for each profile", "[navigation][cache]")
 {
-    const simple_platformer::TileMap map =
+    const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"........", "........", "########"});
     const Cell cell{3, 1};
     PlatformerConnectionCache cache;
     const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
     BuiltPlatformerConnections initial =
-        simple_platformer::buildPlatformerConnections(map, cell, profile);
-    simple_platformer::storePlatformerConnections(cache, cell, profile, std::move(initial));
+        advanced_platformer::buildPlatformerConnections(map, cell, profile);
+    advanced_platformer::storePlatformerConnections(cache, cell, profile, std::move(initial));
     REQUIRE(cache.cachedConnections(cell, profile) != nullptr);
     REQUIRE(cache.cachedConnections({0, 1}, profile) == nullptr);
 
@@ -88,13 +88,13 @@ TEST_CASE("Connections are cached separately for each profile", "[navigation][ca
     finer.stepSeconds *= 0.5F;
     REQUIRE(cache.cachedConnections(cell, finer) == nullptr);
     PlatformerTraversalProfile climber = profile;
-    climber.climb = simple_platformer::SurfaceClimbConfig{60.0F};
+    climber.climb = advanced_platformer::SurfaceClimbConfig{60.0F};
     REQUIRE(cache.cachedConnections(cell, climber) == nullptr);
 
     BuiltPlatformerConnections tallBuild =
-        simple_platformer::buildPlatformerConnections(map, cell, taller, &cache);
+        advanced_platformer::buildPlatformerConnections(map, cell, taller, &cache);
     REQUIRE(tallBuild.simulatedTicks > 0);
-    simple_platformer::storePlatformerConnections(cache, cell, taller, std::move(tallBuild));
+    advanced_platformer::storePlatformerConnections(cache, cell, taller, std::move(tallBuild));
     REQUIRE(cache.size() == 2);
     // The cache lists profiles in the order first seen.
     REQUIRE(cache.knownProfiles().size() == 2);
@@ -108,13 +108,13 @@ TEST_CASE("Connections are cached separately for each profile", "[navigation][ca
 
 TEST_CASE("A non-standable cell is cached with no connections", "[navigation][cache]")
 {
-    const simple_platformer::TileMap map =
+    const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"........", "........", "########"});
     PlatformerConnectionCache cache;
     const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
     BuiltPlatformerConnections built =
-        simple_platformer::buildPlatformerConnections(map, {3, 0}, profile, &cache);
-    simple_platformer::storePlatformerConnections(cache, {3, 0}, profile, std::move(built));
+        advanced_platformer::buildPlatformerConnections(map, {3, 0}, profile, &cache);
+    advanced_platformer::storePlatformerConnections(cache, {3, 0}, profile, std::move(built));
     const std::vector<RouteConnection>* connections = cache.cachedConnections({3, 0}, profile);
     REQUIRE(connections != nullptr);
     REQUIRE(connections->empty());
@@ -163,7 +163,7 @@ TEST_CASE("Cached walks change nothing but the ticks simulated", "[navigation][c
     // A floor long enough that a walk along it runs past the simulation limit.
     const std::string open(40, '.');
     const std::string floor(40, '#');
-    const simple_platformer::TileMap map = tests::TileMapBuilder({open, open, floor});
+    const advanced_platformer::TileMap map = tests::TileMapBuilder({open, open, floor});
     PlatformerConnectionCache cache;
     const PlatformerTraversalProfile profile{BodySize, {}, tests::FixedStepSeconds};
     const Cell first{20, 1};
@@ -171,11 +171,11 @@ TEST_CASE("Cached walks change nothing but the ticks simulated", "[navigation][c
 
     // The first cell simulates every length it can walk, and the one it cannot.
     BuiltPlatformerConnections firstBuild =
-        simple_platformer::buildPlatformerConnections(map, first, profile, &cache);
+        advanced_platformer::buildPlatformerConnections(map, first, profile, &cache);
     const int firstSimulatedTicks = firstBuild.simulatedTicks;
     REQUIRE_FALSE(firstBuild.walksToCache.empty());
     REQUIRE(firstBuild.walksToCache.front().simulatedTicks > 0);
-    simple_platformer::storePlatformerConnections(cache, first, profile, std::move(firstBuild));
+    advanced_platformer::storePlatformerConnections(cache, first, profile, std::move(firstBuild));
     const std::size_t walks = cache.cachedWalkCount(profile);
     REQUIRE(walks > 0);
     bool pastTheLimit = false;
@@ -190,17 +190,17 @@ TEST_CASE("Cached walks change nothing but the ticks simulated", "[navigation][c
     // and falls and caches no new walk, yet its connections and footprint are the
     // ones it would have simulated alone.
     BuiltPlatformerConnections secondBuild =
-        simple_platformer::buildPlatformerConnections(map, second, profile, &cache);
+        advanced_platformer::buildPlatformerConnections(map, second, profile, &cache);
     const int secondSimulatedTicks = secondBuild.simulatedTicks;
-    simple_platformer::storePlatformerConnections(cache, second, profile, std::move(secondBuild));
+    advanced_platformer::storePlatformerConnections(cache, second, profile, std::move(secondBuild));
     const std::vector<RouteConnection>* cached = cache.cachedConnections(second, profile);
     REQUIRE(cached != nullptr);
     REQUIRE(secondSimulatedTicks < firstSimulatedTicks);
     REQUIRE(cache.cachedWalkCount(profile) == walks);
     PlatformerConnectionCache alone;
     BuiltPlatformerConnections aloneBuild =
-        simple_platformer::buildPlatformerConnections(map, second, profile, &alone);
-    simple_platformer::storePlatformerConnections(alone, second, profile, std::move(aloneBuild));
+        advanced_platformer::buildPlatformerConnections(map, second, profile, &alone);
+    advanced_platformer::storePlatformerConnections(alone, second, profile, std::move(aloneBuild));
     const std::vector<RouteConnection>* simulated = alone.cachedConnections(second, profile);
     REQUIRE(simulated != nullptr);
     tests::requireSameRouteConnections(*cached, *simulated);
@@ -211,7 +211,7 @@ TEST_CASE("Cached walks change nothing but the ticks simulated", "[navigation][c
     REQUIRE(cachedFootprint.last == simulatedFootprint.last);
     // Without a cache argument, the builder cannot reuse those walks.
     const BuiltPlatformerConnections aloneBuildWithoutCache =
-        simple_platformer::buildPlatformerConnections(map, second, profile);
+        advanced_platformer::buildPlatformerConnections(map, second, profile);
     REQUIRE(aloneBuildWithoutCache.simulatedTicks == firstSimulatedTicks);
 }
 

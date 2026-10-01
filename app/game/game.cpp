@@ -13,27 +13,27 @@
 #include <stdexcept>
 #include <utility>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/input/input_state.hpp"
-#include "simple_platformer/inventory/inventory.hpp"
-#include "simple_platformer/inventory/item.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/navigation/navigation_fill.hpp"
-#include "simple_platformer/render/camera.hpp"
-#include "simple_platformer/render/presentation.hpp"
-#include "simple_platformer/render/render_scene.hpp"
-#include "simple_platformer/render/sprite.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/inventory/inventory.hpp"
+#include "advanced_platformer/inventory/item.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/navigation/navigation_fill.hpp"
+#include "advanced_platformer/render/camera.hpp"
+#include "advanced_platformer/render/presentation.hpp"
+#include "advanced_platformer/render/render_scene.hpp"
+#include "advanced_platformer/render/sprite.hpp"
 #include "lua_npc_scripts.hpp"
-#include "simple_platformer/world/level_exit.hpp"
-#include "simple_platformer/world/level_validation.hpp"
-#include "simple_platformer/world/world_requests.hpp"
-#include "simple_platformer/world/world_simulation.hpp"
+#include "advanced_platformer/world/level_exit.hpp"
+#include "advanced_platformer/world/level_validation.hpp"
+#include "advanced_platformer/world/world_requests.hpp"
+#include "advanced_platformer/world/world_simulation.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     Game::Game(
         int textureId,

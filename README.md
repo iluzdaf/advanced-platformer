@@ -1,6 +1,6 @@
-# Simple Platformer
+# Advanced Platformer
 
-Simple Platformer is a C++17 teaching engine and example game built from independently
+Advanced Platformer is a C++17 teaching engine and example game built from independently
 testable systems. The current implementation includes platformer movement, tile collision,
 scrolling, composed actors, NPC state machines with Lua activities, flying and platformer
 pathfinding, projectiles, animation, inventory, automatic pickups, a three-level game
@@ -47,7 +47,7 @@ Run the example game:
 
 ```sh
 cd build/mac-debug
-./simple_platformer
+./advanced_platformer
 ```
 
 Press F1 in the game to open the [debug overlay](#debug-overlay), which shows frame
@@ -58,12 +58,12 @@ representation of what players will experience.
 ```sh
 cmake --preset mac-release
 cmake --build --preset mac-release
-build/mac-release/simple_platformer
+build/mac-release/advanced_platformer
 ```
 
 On Windows, choose the **Release** configuration in Visual Studio, or run
 `cmake --build --preset windows-release` after `setup-windows.bat` has generated the
-solution. The game is then at `build\windows-vs\Release\simple_platformer.exe`.
+solution. The game is then at `build\windows-vs\Release\advanced_platformer.exe`.
 
 ## Windows: create and use the Visual Studio solution
 
@@ -74,13 +74,13 @@ tools for Windows** selected in the Visual Studio Installer. Then double-click:
 setup-windows.bat
 ```
 
-The script finds CMake, generates `build/windows-vs/SimplePlatformer.sln`, and opens
-the solution. The `simple_platformer` project is already selected as the startup
+The script finds CMake, generates `build/windows-vs/AdvancedPlatformer.sln`, and opens
+the solution. The `advanced_platformer` project is already selected as the startup
 project, so build the solution and press **F5** to run the game.
 
 To run the tests, build the `run_tests` project; the results appear in the Output
-window. To debug them, set `simple_platformer_tests` as the startup project and press
-**F5**, then set `simple_platformer` back to run the game.
+window. To debug them, set `advanced_platformer_tests` as the startup project and press
+**F5**, then set `advanced_platformer` back to run the game.
 
 The solution is generated from `CMakeLists.txt` and `CMakePresets.json`. It belongs in
 the ignored `build/` directory and should not be committed. Run `setup-windows.bat`
@@ -89,7 +89,7 @@ again after changing the CMake configuration.
 The Windows executable is:
 
 ```text
-build\windows-vs\Debug\simple_platformer.exe
+build\windows-vs\Debug\advanced_platformer.exe
 ```
 
 `CMakePresets.json` contains the shared macOS and Windows configurations.
@@ -339,6 +339,6 @@ external/      fixed third-party source releases
 
 ## License
 
-Simple Platformer is available under the [MIT License](LICENSE). Third-party
+Advanced Platformer is available under the [MIT License](LICENSE). Third-party
 dependencies retain their own licenses as documented in
 [THIRD_PARTY.md](THIRD_PARTY.md).

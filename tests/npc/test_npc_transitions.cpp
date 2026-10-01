@@ -2,19 +2,19 @@
 
 #include <optional>
 
-#include "simple_platformer/npc/npc.hpp"
-#include "simple_platformer/npc/npc_transitions.hpp"
+#include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/npc/npc_transitions.hpp"
 #include "support/npc_facts_builder.hpp"
 
-using simple_platformer::nextNpcState;
-using simple_platformer::NpcState;
+using advanced_platformer::nextNpcState;
+using advanced_platformer::NpcState;
 using tests::NpcFactsBuilder;
 
 namespace
 {
-    constexpr simple_platformer::NpcTactic Pursuer = simple_platformer::NpcTactic::Pursuer;
-    constexpr simple_platformer::NpcTactic KeepDistance =
-        simple_platformer::NpcTactic::KeepDistance;
+    constexpr advanced_platformer::NpcTactic Pursuer = advanced_platformer::NpcTactic::Pursuer;
+    constexpr advanced_platformer::NpcTactic KeepDistance =
+        advanced_platformer::NpcTactic::KeepDistance;
 }
 
 TEST_CASE("An idle NPC patrols when it has a patrol and otherwise stays", "[npc][fsm]")

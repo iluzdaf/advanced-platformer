@@ -6,9 +6,9 @@
 #include <optional>
 #include <stdexcept>
 
-#include "simple_platformer/timing/frame_profile.hpp"
+#include "advanced_platformer/timing/frame_profile.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     std::optional<std::size_t> frameAtPlotFraction(
         float fraction,

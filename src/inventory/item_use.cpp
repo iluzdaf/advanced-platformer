@@ -1,15 +1,15 @@
-#include "simple_platformer/inventory/item_use.hpp"
+#include "advanced_platformer/inventory/item_use.hpp"
 
 #include <algorithm>
 #include <cstddef>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/inventory/inventory.hpp"
-#include "simple_platformer/inventory/item.hpp"
-#include "simple_platformer/world/world.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/inventory/inventory.hpp"
+#include "advanced_platformer/inventory/item.hpp"
+#include "advanced_platformer/world/world.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     bool useItem(World& world, ActorId id, std::size_t slot)
     {

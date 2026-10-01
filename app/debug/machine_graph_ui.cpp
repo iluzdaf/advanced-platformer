@@ -18,11 +18,11 @@
 #include <imgui.h>
 #include <imgui_node_editor.h>
 
-#include "simple_platformer/npc/npc_state_machine.hpp"
+#include "advanced_platformer/npc/npc_state_machine.hpp"
 
 namespace ed = ax::NodeEditor;
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

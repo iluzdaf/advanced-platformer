@@ -5,30 +5,30 @@
 #include <glm/geometric.hpp>
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/render/actor_sprite.hpp"
-#include "simple_platformer/render/sprite.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/render/actor_sprite.hpp"
+#include "advanced_platformer/render/sprite.hpp"
 #include "support/actor_builder.hpp"
 #include "support/actor_components.hpp"
 
 namespace
 {
-    using simple_platformer::ActorSpritePlacement;
-    using simple_platformer::ClimbSurface;
-    using simple_platformer::Facing;
+    using advanced_platformer::ActorSpritePlacement;
+    using advanced_platformer::ClimbSurface;
+    using advanced_platformer::Facing;
 
     constexpr glm::vec2 SpriteSize{32.0F, 30.0F};
 
-    simple_platformer::Actor climber(ClimbSurface surface, Facing facing)
+    advanced_platformer::Actor climber(ClimbSurface surface, Facing facing)
     {
-        simple_platformer::Actor actor = tests::ActorBuilder::sized({12.0F, 12.0F})
-                                             .at({16.0F, 32.0F})
-                                             .platforming()
-                                             .climbing()
-                                             .withSprite({0, {}, SpriteSize});
+        advanced_platformer::Actor actor = tests::ActorBuilder::sized({12.0F, 12.0F})
+                                               .at({16.0F, 32.0F})
+                                               .platforming()
+                                               .climbing()
+                                               .withSprite({0, {}, SpriteSize});
         tests::surfaceClimb(actor).surface = surface;
         actor.facing = facing;
         return actor;
@@ -68,7 +68,7 @@ namespace
     // The turned rectangle, found from its corners, is what the placement says it covers.
     void requireVisibleIsTurnedDrawn(const ActorSpritePlacement& placement)
     {
-        const glm::vec2 centre = simple_platformer::centerOf(placement.drawn);
+        const glm::vec2 centre = advanced_platformer::centerOf(placement.drawn);
         const glm::vec2 half = placement.drawn.size * 0.5F;
         glm::vec2 lowest = centre;
         glm::vec2 highest = centre;
@@ -84,20 +84,20 @@ namespace
         }
         REQUIRE(near(placement.visible.topLeft.x, lowest.x));
         REQUIRE(near(placement.visible.topLeft.y, lowest.y));
-        REQUIRE(near(simple_platformer::rightOf(placement.visible), highest.x));
-        REQUIRE(near(simple_platformer::bottomOf(placement.visible), highest.y));
+        REQUIRE(near(advanced_platformer::rightOf(placement.visible), highest.x));
+        REQUIRE(near(advanced_platformer::bottomOf(placement.visible), highest.y));
     }
 }
 
 TEST_CASE("A sprite off every surface stands on the body's feet unturned", "[render][sprite]")
 {
-    simple_platformer::Actor actor = climber(ClimbSurface::None, Facing::Left);
-    const ActorSpritePlacement placement = simple_platformer::placeActorSprite(actor);
+    advanced_platformer::Actor actor = climber(ClimbSurface::None, Facing::Left);
+    const ActorSpritePlacement placement = advanced_platformer::placeActorSprite(actor);
 
     REQUIRE(placement.rotationRadians == 0.0F);
     REQUIRE(placement.flipHorizontal);
-    const simple_platformer::Aabb expected =
-        simple_platformer::spriteBounds(actor.body.bounds, tests::sprite(actor));
+    const advanced_platformer::Aabb expected =
+        advanced_platformer::spriteBounds(actor.body.bounds, tests::sprite(actor));
     REQUIRE(placement.drawn.topLeft == expected.topLeft);
     REQUIRE(placement.drawn.size == expected.size);
     REQUIRE(placement.visible.topLeft == expected.topLeft);
@@ -116,11 +116,11 @@ TEST_CASE("A climber's sprite stands its feet on the surface it holds", "[render
           Case{ClimbSurface::RightWall, {1.0F, 0.0F}},
           Case{ClimbSurface::Ceiling, {0.0F, -1.0F}}})
     {
-        const simple_platformer::Actor actor = climber(held.surface, Facing::Right);
-        const ActorSpritePlacement placement = simple_platformer::placeActorSprite(actor);
-        const simple_platformer::Aabb& body = actor.body.bounds;
-        const glm::vec2 bodyCentre = simple_platformer::centerOf(body);
-        const glm::vec2 visibleCentre = simple_platformer::centerOf(placement.visible);
+        const advanced_platformer::Actor actor = climber(held.surface, Facing::Right);
+        const ActorSpritePlacement placement = advanced_platformer::placeActorSprite(actor);
+        const advanced_platformer::Aabb& body = actor.body.bounds;
+        const glm::vec2 bodyCentre = advanced_platformer::centerOf(body);
+        const glm::vec2 visibleCentre = advanced_platformer::centerOf(placement.visible);
 
         REQUIRE(pointsAlong(feetDirection(placement), held.towardsSurface));
         REQUIRE(placement.drawn.size == SpriteSize);
@@ -133,7 +133,8 @@ TEST_CASE("A climber's sprite stands its feet on the surface it holds", "[render
             break;
         case ClimbSurface::RightWall:
             REQUIRE(near(
-                simple_platformer::rightOf(placement.visible), simple_platformer::rightOf(body)));
+                advanced_platformer::rightOf(placement.visible),
+                advanced_platformer::rightOf(body)));
             REQUIRE(near(visibleCentre.y, bodyCentre.y));
             break;
         case ClimbSurface::Ceiling:
@@ -151,33 +152,33 @@ TEST_CASE("A climber's head leads the way it goes", "[render][sprite][climb]")
     // On a ceiling the head points the way the climber faces.
     REQUIRE(pointsAlong(
         headDirection(
-            simple_platformer::placeActorSprite(climber(ClimbSurface::Ceiling, Facing::Right))),
+            advanced_platformer::placeActorSprite(climber(ClimbSurface::Ceiling, Facing::Right))),
         {1.0F, 0.0F}));
     REQUIRE(pointsAlong(
         headDirection(
-            simple_platformer::placeActorSprite(climber(ClimbSurface::Ceiling, Facing::Left))),
+            advanced_platformer::placeActorSprite(climber(ClimbSurface::Ceiling, Facing::Left))),
         {-1.0F, 0.0F}));
 
     // On a wall it points the climb's wall heading.
     for (const ClimbSurface wall : {ClimbSurface::LeftWall, ClimbSurface::RightWall})
     {
-        simple_platformer::Actor actor = climber(wall, Facing::Right);
-        REQUIRE(
-            pointsAlong(headDirection(simple_platformer::placeActorSprite(actor)), {0.0F, -1.0F}));
+        advanced_platformer::Actor actor = climber(wall, Facing::Right);
+        REQUIRE(pointsAlong(
+            headDirection(advanced_platformer::placeActorSprite(actor)), {0.0F, -1.0F}));
 
-        tests::surfaceClimb(actor).wallHeading = simple_platformer::WallHeading::Down;
+        tests::surfaceClimb(actor).wallHeading = advanced_platformer::WallHeading::Down;
         REQUIRE(
-            pointsAlong(headDirection(simple_platformer::placeActorSprite(actor)), {0.0F, 1.0F}));
+            pointsAlong(headDirection(advanced_platformer::placeActorSprite(actor)), {0.0F, 1.0F}));
     }
 }
 
 TEST_CASE("A centre-anchored climber's sprite turns about its body's centre", "[render][sprite]")
 {
-    simple_platformer::Actor actor = climber(ClimbSurface::LeftWall, Facing::Right);
-    tests::sprite(actor).anchor = simple_platformer::SpriteAnchor::BodyCenter;
-    const ActorSpritePlacement placement = simple_platformer::placeActorSprite(actor);
+    advanced_platformer::Actor actor = climber(ClimbSurface::LeftWall, Facing::Right);
+    tests::sprite(actor).anchor = advanced_platformer::SpriteAnchor::BodyCenter;
+    const ActorSpritePlacement placement = advanced_platformer::placeActorSprite(actor);
 
-    const glm::vec2 bodyCentre = simple_platformer::centerOf(actor.body.bounds);
-    REQUIRE(pointsAlong(simple_platformer::centerOf(placement.drawn), bodyCentre));
-    REQUIRE(pointsAlong(simple_platformer::centerOf(placement.visible), bodyCentre));
+    const glm::vec2 bodyCentre = advanced_platformer::centerOf(actor.body.bounds);
+    REQUIRE(pointsAlong(advanced_platformer::centerOf(placement.drawn), bodyCentre));
+    REQUIRE(pointsAlong(advanced_platformer::centerOf(placement.visible), bodyCentre));
 }

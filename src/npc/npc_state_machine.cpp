@@ -1,4 +1,4 @@
-#include "simple_platformer/npc/npc_state_machine.hpp"
+#include "advanced_platformer/npc/npc_state_machine.hpp"
 
 #include <cstddef>
 #include <map>
@@ -10,12 +10,12 @@
 #include <utility>
 #include <variant>
 
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/npc/npc_activity.hpp"
-#include "simple_platformer/npc/npc_fact_rows.hpp"
-#include "simple_platformer/npc/npc_facts.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/npc/npc_activity.hpp"
+#include "advanced_platformer/npc/npc_fact_rows.hpp"
+#include "advanced_platformer/npc/npc_facts.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

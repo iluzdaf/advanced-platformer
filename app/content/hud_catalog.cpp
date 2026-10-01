@@ -5,10 +5,10 @@
 #include <nlohmann/json.hpp>
 #include <filesystem>
 #include <string_view>
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/render/sprite.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/render/sprite.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

@@ -1,16 +1,16 @@
-#include "simple_platformer/actor/actor_validation.hpp"
+#include "advanced_platformer/actor/actor_validation.hpp"
 
-#include "simple_platformer/npc/npc_state_machine.hpp"
+#include "advanced_platformer/npc/npc_state_machine.hpp"
 
 #include <stdexcept>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/combat/combat.hpp"
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

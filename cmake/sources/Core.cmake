@@ -1,6 +1,6 @@
 # Keep this file source-only so clang-tidy can scope manifest changes safely.
 target_sources(
-    simple_platformer_core
+    advanced_platformer_core
     PRIVATE
     ${PROJECT_SOURCE_DIR}/src/actor/actor_id.cpp
     ${PROJECT_SOURCE_DIR}/src/actor/actor_system.cpp

@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     InventoryGridLayout makeInventoryGridLayout(std::size_t slotCount)
     {

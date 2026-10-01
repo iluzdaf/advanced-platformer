@@ -8,8 +8,8 @@
 #include <utility>
 #include <vector>
 
-#include "simple_platformer/render/sprite.hpp"
-#include "simple_platformer/world/tile_map.hpp"
+#include "advanced_platformer/render/sprite.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
 #include "support/tile_size.hpp"
 
 namespace tests
@@ -37,7 +37,7 @@ namespace tests
             return *this;
         }
 
-        Tile withSprite(simple_platformer::SpriteRegion region) &&
+        Tile withSprite(advanced_platformer::SpriteRegion region) &&
         {
             definition.sprite = region;
             return *this;
@@ -53,7 +53,7 @@ namespace tests
     private:
         friend class TileMapBuilder;
 
-        simple_platformer::TileDefinition definition;
+        advanced_platformer::TileDefinition definition;
         std::optional<char> breaksIntoSymbol;
     };
 
@@ -86,9 +86,9 @@ namespace tests
             return std::move(*this);
         }
 
-        operator simple_platformer::TileMap() &&
+        operator advanced_platformer::TileMap() &&
         {
-            std::vector<simple_platformer::TileDefinition> definitions{{}};
+            std::vector<advanced_platformer::TileDefinition> definitions{{}};
             std::map<char, int> legend{{'.', 0}};
             for (const auto& declared : tiles)
             {
@@ -96,7 +96,7 @@ namespace tests
                 definitions.push_back(declared.second.definition);
             }
 
-            simple_platformer::TileDefinition solid;
+            advanced_platformer::TileDefinition solid;
             solid.blocksMovement = true;
             solid.blocksSight = true;
             const auto side = static_cast<float>(TileSize);
@@ -119,7 +119,7 @@ namespace tests
                 definitions[index + 1].breaksIntoTileId = target->second;
             }
 
-            return simple_platformer::TileMap::fromAscii(
+            return advanced_platformer::TileMap::fromAscii(
                 TileSize, mapRows, std::move(definitions), legend);
         }
 

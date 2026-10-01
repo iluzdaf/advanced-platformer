@@ -1,4 +1,4 @@
-#include "simple_platformer/physics/collision.hpp"
+#include "advanced_platformer/physics/collision.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -6,12 +6,12 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/world/tile_map.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

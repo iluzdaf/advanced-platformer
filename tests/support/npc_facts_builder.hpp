@@ -1,6 +1,6 @@
 #pragma once
 
-#include "simple_platformer/npc/npc_facts.hpp"
+#include "advanced_platformer/npc/npc_facts.hpp"
 
 namespace tests
 {
@@ -79,12 +79,12 @@ namespace tests
             return *this;
         }
 
-        operator simple_platformer::NpcFacts() &&
+        operator advanced_platformer::NpcFacts() &&
         {
             return built;
         }
 
     private:
-        simple_platformer::NpcFacts built;
+        advanced_platformer::NpcFacts built;
     };
 }

@@ -16,9 +16,9 @@
 #include <nlohmann/json.hpp>
 
 #include "content/item_catalog.hpp"
-#include "simple_platformer/math/coordinates.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

@@ -7,18 +7,18 @@
 #include <type_traits>
 #include <vector>
 
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/render/camera.hpp"
-#include "simple_platformer/world/tile_map.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/render/camera.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
 #include "support/require_near.hpp"
 #include "support/tile_size.hpp"
 
 namespace
 {
-    using simple_platformer::Aabb;
-    using simple_platformer::Camera;
-    using simple_platformer::CameraController;
-    using simple_platformer::TileMap;
+    using advanced_platformer::Aabb;
+    using advanced_platformer::Camera;
+    using advanced_platformer::CameraController;
+    using advanced_platformer::TileMap;
 
     TileMap makeMap(int width, int height)
     {
@@ -39,15 +39,15 @@ TEST_CASE("The camera locks to the target centre", "[render][camera]")
     const TileMap map = makeMap(30, 20);
     const Aabb target{{145.0F, 95.0F}, {10.0F, 10.0F}};
 
-    const Camera camera = simple_platformer::makeLockedCamera(map, target, {100.0F, 60.0F});
+    const Camera camera = advanced_platformer::makeLockedCamera(map, target, {100.0F, 60.0F});
 
     REQUIRE_NEAR(camera.position.x, 100.0F);
 
     REQUIRE_NEAR(camera.position.y, 70.0F);
-    REQUIRE_NEAR(simple_platformer::worldToScreen(camera, target.topLeft).x, 45.0F);
-    REQUIRE_NEAR(simple_platformer::worldToScreen(camera, target.topLeft).y, 25.0F);
-    REQUIRE_NEAR(simple_platformer::screenToWorld(camera, {45.0F, 25.0F}).x, target.topLeft.x);
-    REQUIRE_NEAR(simple_platformer::screenToWorld(camera, {45.0F, 25.0F}).y, target.topLeft.y);
+    REQUIRE_NEAR(advanced_platformer::worldToScreen(camera, target.topLeft).x, 45.0F);
+    REQUIRE_NEAR(advanced_platformer::worldToScreen(camera, target.topLeft).y, 25.0F);
+    REQUIRE_NEAR(advanced_platformer::screenToWorld(camera, {45.0F, 25.0F}).x, target.topLeft.x);
+    REQUIRE_NEAR(advanced_platformer::screenToWorld(camera, {45.0F, 25.0F}).y, target.topLeft.y);
 }
 
 TEST_CASE("The camera clamps to every map edge", "[render][camera]")
@@ -56,7 +56,7 @@ TEST_CASE("The camera clamps to every map edge", "[render][camera]")
 
     SECTION("top left")
     {
-        const Camera camera = simple_platformer::makeLockedCamera(
+        const Camera camera = advanced_platformer::makeLockedCamera(
             map, {{0.0F, 0.0F}, {10.0F, 10.0F}}, {100.0F, 60.0F});
         REQUIRE_NEAR(camera.position.x, 0.0F);
         REQUIRE_NEAR(camera.position.y, 0.0F);
@@ -64,7 +64,7 @@ TEST_CASE("The camera clamps to every map edge", "[render][camera]")
 
     SECTION("bottom right")
     {
-        const Camera camera = simple_platformer::makeLockedCamera(
+        const Camera camera = advanced_platformer::makeLockedCamera(
             map, {{470.0F, 310.0F}, {10.0F, 10.0F}}, {100.0F, 60.0F});
         REQUIRE_NEAR(camera.position.x, 380.0F);
         REQUIRE_NEAR(camera.position.y, 260.0F);
@@ -76,7 +76,7 @@ TEST_CASE("Maps smaller than the viewport are centred", "[render][camera]")
     const TileMap map = makeMap(4, 3);
 
     const Camera camera =
-        simple_platformer::makeLockedCamera(map, {{20.0F, 20.0F}, {10.0F, 10.0F}});
+        advanced_platformer::makeLockedCamera(map, {{20.0F, 20.0F}, {10.0F, 10.0F}});
 
     REQUIRE_NEAR(camera.position.x, -128.0F);
 
@@ -88,7 +88,7 @@ TEST_CASE("Camera movement is rounded to internal pixels", "[render][camera]")
     const TileMap map = makeMap(30, 20);
     const Aabb target{{155.6F, 70.4F}, {10.0F, 10.0F}};
 
-    const Camera camera = simple_platformer::makeLockedCamera(map, target, {100.0F, 60.0F});
+    const Camera camera = advanced_platformer::makeLockedCamera(map, target, {100.0F, 60.0F});
 
     REQUIRE_NEAR(camera.position.x, 111.0F);
 
@@ -99,10 +99,10 @@ TEST_CASE("A target inside the dead zone does not move the camera", "[render][ca
 {
     const TileMap map = makeMap(30, 20);
     const Aabb initialTarget{{145.0F, 95.0F}, {10.0F, 10.0F}};
-    CameraController controller = simple_platformer::makeCameraController(
+    CameraController controller = advanced_platformer::makeCameraController(
         map, initialTarget, {20.0F, 20.0F}, {100.0F, 60.0F});
 
-    simple_platformer::followTarget(controller, map, {{154.0F, 99.0F}, {10.0F, 10.0F}});
+    advanced_platformer::followTarget(controller, map, {{154.0F, 99.0F}, {10.0F, 10.0F}});
 
     REQUIRE_NEAR(controller.camera.position.x, 100.0F);
 
@@ -113,10 +113,10 @@ TEST_CASE("The camera follows only after its target leaves the dead zone", "[ren
 {
     const TileMap map = makeMap(30, 20);
     const Aabb initialTarget{{145.0F, 95.0F}, {10.0F, 10.0F}};
-    CameraController controller = simple_platformer::makeCameraController(
+    CameraController controller = advanced_platformer::makeCameraController(
         map, initialTarget, {20.0F, 20.0F}, {100.0F, 60.0F});
 
-    simple_platformer::followTarget(controller, map, {{170.0F, 95.0F}, {10.0F, 10.0F}});
+    advanced_platformer::followTarget(controller, map, {{170.0F, 95.0F}, {10.0F, 10.0F}});
 
     REQUIRE_NEAR(controller.camera.position.x, 115.0F);
 
@@ -126,14 +126,14 @@ TEST_CASE("The camera follows only after its target leaves the dead zone", "[ren
 TEST_CASE("Dead-zone camera movement remains inside map bounds", "[render][camera]")
 {
     const TileMap map = makeMap(30, 20);
-    CameraController controller = simple_platformer::makeCameraController(
+    CameraController controller = advanced_platformer::makeCameraController(
         map, {{145.0F, 95.0F}, {10.0F, 10.0F}}, {20.0F, 20.0F}, {100.0F, 60.0F});
 
-    simple_platformer::followTarget(controller, map, {{0.0F, 0.0F}, {10.0F, 10.0F}});
+    advanced_platformer::followTarget(controller, map, {{0.0F, 0.0F}, {10.0F, 10.0F}});
     REQUIRE_NEAR(controller.camera.position.x, 0.0F);
     REQUIRE_NEAR(controller.camera.position.y, 0.0F);
 
-    simple_platformer::followTarget(controller, map, {{470.0F, 310.0F}, {10.0F, 10.0F}});
+    advanced_platformer::followTarget(controller, map, {{470.0F, 310.0F}, {10.0F, 10.0F}});
     REQUIRE_NEAR(controller.camera.position.x, 380.0F);
     REQUIRE_NEAR(controller.camera.position.y, 260.0F);
 }
@@ -143,7 +143,7 @@ TEST_CASE("Camera viewports must have positive finite dimensions", "[render][cam
     const TileMap map = makeMap(4, 3);
 
     REQUIRE_THROWS_AS(
-        simple_platformer::makeLockedCamera(map, {{0.0F, 0.0F}, {10.0F, 10.0F}}, {0.0F, 180.0F}),
+        advanced_platformer::makeLockedCamera(map, {{0.0F, 0.0F}, {10.0F, 10.0F}}, {0.0F, 180.0F}),
         std::invalid_argument);
 }
 
@@ -153,10 +153,10 @@ TEST_CASE("Camera dead zones must fit inside the viewport", "[render][camera]")
     const Aabb target{{145.0F, 95.0F}, {10.0F, 10.0F}};
 
     REQUIRE_THROWS_AS(
-        simple_platformer::makeCameraController(map, target, {0.0F, 20.0F}, {100.0F, 60.0F}),
+        advanced_platformer::makeCameraController(map, target, {0.0F, 20.0F}, {100.0F, 60.0F}),
         std::invalid_argument);
     REQUIRE_THROWS_AS(
-        simple_platformer::makeCameraController(map, target, {101.0F, 20.0F}, {100.0F, 60.0F}),
+        advanced_platformer::makeCameraController(map, target, {101.0F, 20.0F}, {100.0F, 60.0F}),
         std::invalid_argument);
 }
 

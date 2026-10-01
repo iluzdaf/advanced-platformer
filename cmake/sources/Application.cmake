@@ -1,6 +1,6 @@
 # Keep this file source-only so clang-tidy can scope manifest changes safely.
 target_sources(
-    simple_platformer
+    advanced_platformer
     PRIVATE
     ${PROJECT_SOURCE_DIR}/app/application.cpp
     ${PROJECT_SOURCE_DIR}/app/debug/debug_draw.cpp

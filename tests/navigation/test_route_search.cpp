@@ -6,29 +6,29 @@
 #include <utility>
 #include <vector>
 
-#include "simple_platformer/input/input_program.hpp"
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/navigation/route.hpp"
-#include "simple_platformer/navigation/route_search.hpp"
-#include "simple_platformer/navigation/traversal.hpp"
+#include "advanced_platformer/input/input_program.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/navigation/route.hpp"
+#include "advanced_platformer/navigation/route_search.hpp"
+#include "advanced_platformer/navigation/traversal.hpp"
 
 namespace
 {
-    using simple_platformer::Cell;
-    using simple_platformer::ClimbSurface;
-    using simple_platformer::ConnectionFunction;
-    using simple_platformer::endOf;
-    using simple_platformer::ExpansionReady;
-    using simple_platformer::findLowestCostRoute;
-    using simple_platformer::GridSize;
-    using simple_platformer::HeuristicFunction;
-    using simple_platformer::InputProgram;
-    using simple_platformer::Route;
-    using simple_platformer::RouteConnection;
-    using simple_platformer::RouteLocation;
-    using simple_platformer::RouteSearchResult;
-    using simple_platformer::Traversal;
+    using advanced_platformer::Cell;
+    using advanced_platformer::ClimbSurface;
+    using advanced_platformer::ConnectionFunction;
+    using advanced_platformer::endOf;
+    using advanced_platformer::ExpansionReady;
+    using advanced_platformer::findLowestCostRoute;
+    using advanced_platformer::GridSize;
+    using advanced_platformer::HeuristicFunction;
+    using advanced_platformer::InputProgram;
+    using advanced_platformer::Route;
+    using advanced_platformer::RouteConnection;
+    using advanced_platformer::RouteLocation;
+    using advanced_platformer::RouteSearchResult;
+    using advanced_platformer::Traversal;
 
     constexpr GridSize TestGrid{8, 8};
 
@@ -296,7 +296,7 @@ TEST_CASE(
         ++connectionQueries;
         return line(location);
     };
-    const simple_platformer::ExpansionReady canExpand = [](RouteLocation location)
+    const advanced_platformer::ExpansionReady canExpand = [](RouteLocation location)
     { return location.cell != Cell{1, 0}; };
 
     const RouteSearchResult paused =

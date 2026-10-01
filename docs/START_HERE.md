@@ -1,6 +1,6 @@
 # Start Here
 
-This is the recommended first route through Simple Platformer. It follows one player
+This is the recommended first route through Advanced Platformer. It follows one player
 update from the application into the engine, then follows the resulting world back to
 the renderer. You do not need to understand every subsystem before changing the game.
 
@@ -140,11 +140,11 @@ Use [CONTENT.md](CONTENT.md) when you need the JSON fields or shared catalogs.
 
 Read these headers first:
 
-- [`actor.hpp`](../include/simple_platformer/actor/actor.hpp) shows an actor assembled
+- [`actor.hpp`](../include/advanced_platformer/actor/actor.hpp) shows an actor assembled
   from optional components;
-- [`world.hpp`](../include/simple_platformer/world/world.hpp) shows what the world owns;
-- [`body.hpp`](../include/simple_platformer/physics/body.hpp) shows the physical state;
-- [`input_state.hpp`](../include/simple_platformer/input/input_state.hpp) shows the common
+- [`world.hpp`](../include/advanced_platformer/world/world.hpp) shows what the world owns;
+- [`body.hpp`](../include/advanced_platformer/physics/body.hpp) shows the physical state;
+- [`input_state.hpp`](../include/advanced_platformer/input/input_state.hpp) shows the common
   intentions used by the player and NPCs.
 
 The important idea is composition: gameplay roles are not represented by different

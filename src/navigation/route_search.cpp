@@ -1,4 +1,4 @@
-#include "simple_platformer/navigation/route_search.hpp"
+#include "advanced_platformer/navigation/route_search.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -9,10 +9,10 @@
 #include <utility>
 #include <vector>
 
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/navigation/route.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/navigation/route.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

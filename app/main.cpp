@@ -8,11 +8,11 @@ int main()
 {
     try
     {
-        return simple_platformer::runApplication();
+        return advanced_platformer::runApplication();
     }
     catch (const std::exception& error)
     {
-        std::cerr << "Simple Platformer could not start: " << error.what() << '\n';
+        std::cerr << "Advanced Platformer could not start: " << error.what() << '\n';
         return EXIT_FAILURE;
     }
 }

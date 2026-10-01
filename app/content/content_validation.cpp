@@ -11,14 +11,14 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/math/validation.hpp"
-#include "simple_platformer/render/sprite.hpp"
-#include "simple_platformer/world/tile_map.hpp"
+#include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/render/sprite.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
 #include "tile_catalog.hpp"
 #include "level_data.hpp"
-#include "simple_platformer/math/validation.hpp"
+#include "advanced_platformer/math/validation.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     void validateContentSprite(const Sprite& sprite)
     {

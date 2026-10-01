@@ -12,8 +12,8 @@
 namespace
 {
 
-    simple_platformer::DisplayViewport required(
-        const std::optional<simple_platformer::DisplayViewport>& viewport)
+    advanced_platformer::DisplayViewport required(
+        const std::optional<advanced_platformer::DisplayViewport>& viewport)
     {
         if (!viewport.has_value())
         {
@@ -22,8 +22,8 @@ namespace
         return *viewport;
     }
 
-    simple_platformer::WindowViewport required(
-        const std::optional<simple_platformer::WindowViewport>& viewport)
+    advanced_platformer::WindowViewport required(
+        const std::optional<advanced_platformer::WindowViewport>& viewport)
     {
         if (!viewport.has_value())
         {
@@ -44,8 +44,8 @@ namespace
 
 TEST_CASE("The display viewport uses the largest integer scale", "[app][viewport]")
 {
-    const simple_platformer::DisplayViewport viewport =
-        required(simple_platformer::makeDisplayViewport({1000, 600}));
+    const advanced_platformer::DisplayViewport viewport =
+        required(advanced_platformer::makeDisplayViewport({1000, 600}));
 
     REQUIRE(viewport.scale == 3);
     REQUIRE(viewport.size == glm::ivec2{960, 540});
@@ -55,8 +55,8 @@ TEST_CASE("The display viewport uses the largest integer scale", "[app][viewport
 
 TEST_CASE("Odd letterbox space preserves both vertical origins", "[app][viewport]")
 {
-    const simple_platformer::DisplayViewport viewport =
-        required(simple_platformer::makeDisplayViewport({1001, 601}));
+    const advanced_platformer::DisplayViewport viewport =
+        required(advanced_platformer::makeDisplayViewport({1001, 601}));
 
     REQUIRE(viewport.topLeftMargin == glm::ivec2{20, 31});
     REQUIRE(viewport.bottomMargin == 30);
@@ -65,7 +65,7 @@ TEST_CASE("Odd letterbox space preserves both vertical origins", "[app][viewport
 TEST_CASE("Window cursor positions account for high DPI and letterboxing", "[app][viewport]")
 {
     const glm::vec2 internal =
-        required(simple_platformer::windowToInternal({250.0F, 150.0F}, {500, 300}, {1000, 600}));
+        required(advanced_platformer::windowToInternal({250.0F, 150.0F}, {500, 300}, {1000, 600}));
 
     REQUIRE_NEAR(internal.x, 160.0F);
     REQUIRE_NEAR(internal.y, 90.0F);
@@ -73,8 +73,8 @@ TEST_CASE("Window cursor positions account for high DPI and letterboxing", "[app
 
 TEST_CASE("Window viewport coordinates account for high DPI", "[app][viewport]")
 {
-    const simple_platformer::WindowViewport viewport =
-        required(simple_platformer::makeWindowViewport({500, 300}, {1000, 600}));
+    const advanced_platformer::WindowViewport viewport =
+        required(advanced_platformer::makeWindowViewport({500, 300}, {1000, 600}));
 
     REQUIRE(viewport.topLeft == glm::vec2{10.0F, 15.0F});
     REQUIRE(viewport.scale == glm::vec2{1.5F, 1.5F});
@@ -83,6 +83,6 @@ TEST_CASE("Window viewport coordinates account for high DPI", "[app][viewport]")
 TEST_CASE("Cursor positions in the letterbox are rejected", "[app][viewport]")
 {
     REQUIRE_FALSE(
-        simple_platformer::windowToInternal({0.0F, 150.0F}, {500, 300}, {1000, 600}).has_value());
-    REQUIRE_FALSE(simple_platformer::makeDisplayViewport({319, 179}).has_value());
+        advanced_platformer::windowToInternal({0.0F, 150.0F}, {500, 300}, {1000, 600}).has_value());
+    REQUIRE_FALSE(advanced_platformer::makeDisplayViewport({319, 179}).has_value());
 }

@@ -12,11 +12,11 @@
 #include "debug_draw.hpp"
 #include "graphics/display_viewport.hpp"
 #include "navigation_debug.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/navigation/traversal.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/navigation/traversal.hpp"
 #include "ui/hud_draw.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

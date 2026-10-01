@@ -5,7 +5,7 @@
 #include <string>
 #include <string_view>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     void validateInFile(std::string_view sourceName, const std::function<void()>& validate)
     {

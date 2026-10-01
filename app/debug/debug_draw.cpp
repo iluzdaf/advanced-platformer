@@ -5,10 +5,10 @@
 #include <glm/vec2.hpp>
 
 #include "graphics/display_viewport.hpp"
-#include "simple_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/aabb.hpp"
 #include "ui/hud_draw.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     ImVec2 screenPosition(
         glm::vec2 worldPosition,

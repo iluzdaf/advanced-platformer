@@ -8,7 +8,7 @@
 #include <lua.hpp>
 #include <sol/sol.hpp>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

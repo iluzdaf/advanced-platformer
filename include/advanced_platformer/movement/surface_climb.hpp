@@ -1,0 +1,63 @@
+#pragma once
+
+#include "advanced_platformer/physics/collision.hpp"
+
+namespace advanced_platformer
+{
+    class TileMap;
+    struct Aabb;
+    struct Body;
+    struct InputIntentions;
+    struct PlatformerMovement;
+
+    enum class ClimbSurface
+    {
+        None,
+        LeftWall,
+        RightWall,
+        Ceiling
+    };
+
+    // Which way a climber's head points along a wall.
+    enum class WallHeading
+    {
+        Up,
+        Down
+    };
+
+    struct SurfaceClimbConfig
+    {
+        float speed = 60.0F;
+    };
+
+    // Optional capability for a platformer actor. The surface is runtime state; the
+    // intentions' climbGrip decides whether it grabs, stays attached or lets go.
+    struct SurfaceClimb
+    {
+        SurfaceClimbConfig config;
+        ClimbSurface surface = ClimbSurface::None;
+        // Kept while the climber holds still on a wall, so it does not turn round.
+        WallHeading wallHeading = WallHeading::Up;
+    };
+
+    void validateSurfaceClimbConfig(const SurfaceClimbConfig& config);
+
+    // On a wall, the way the intentions climb, or the current heading when they hold
+    // still. Off a wall, Up, which is where a climber heads on the next wall until it moves.
+    WallHeading wallHeadingFor(
+        ClimbSurface surface,
+        const InputIntentions& intentions,
+        WallHeading current);
+
+    // Whether a body with these bounds is against a climbable tile on the surface's side.
+    // The floor is not a climb surface.
+    bool touchesClimbable(const TileMap& map, const Aabb& bounds, ClimbSurface surface);
+
+    CollisionContacts updateSurfaceClimbMovement(
+        const TileMap& map,
+        Body& body,
+        PlatformerMovement& movement,
+        SurfaceClimb& climb,
+        const InputIntentions& intentions,
+        float deltaTime);
+}

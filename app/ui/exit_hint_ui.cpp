@@ -8,11 +8,11 @@
 #include "game/game.hpp"
 #include "graphics/display_viewport.hpp"
 #include "graphics/sprite_renderer.hpp"
-#include "simple_platformer/render/sprite.hpp"
+#include "advanced_platformer/render/sprite.hpp"
 #include "ui/hud_draw.hpp"
 #include "ui/hud_layout.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     void drawLockedExitHint(const Game& game, const Texture& atlas, const WindowViewport& viewport)
     {

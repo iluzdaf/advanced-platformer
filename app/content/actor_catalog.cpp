@@ -5,11 +5,11 @@
 #include "content_validation.hpp"
 #include "animation_catalog.hpp"
 #include "content/actor_definition.hpp"
-#include "simple_platformer/combat/combat.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/movement/flying_movement.hpp"
-#include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/npc/npc.hpp"
+#include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/flying_movement.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/npc/npc.hpp"
 #include <filesystem>
 #include <initializer_list>
 #include <optional>
@@ -18,7 +18,7 @@
 #include <string_view>
 #include <string>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

@@ -7,7 +7,7 @@
 #include <imgui_impl_opengl3.h>
 #include <implot.h>
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     namespace
     {

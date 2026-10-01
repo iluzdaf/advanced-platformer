@@ -4,21 +4,21 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/actor/actor.hpp"
-#include "simple_platformer/combat/combat.hpp"
-#include "simple_platformer/inventory/inventory.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/math/coordinates.hpp"
-#include "simple_platformer/movement/flying_movement.hpp"
-#include "simple_platformer/movement/platformer_movement.hpp"
-#include "simple_platformer/movement/surface_climb.hpp"
-#include "simple_platformer/navigation/path_follower.hpp"
-#include "simple_platformer/navigation/platformer_cells.hpp"
-#include "simple_platformer/navigation/route.hpp"
-#include "simple_platformer/npc/npc.hpp"
-#include "simple_platformer/npc/npc_state_machine.hpp"
-#include "simple_platformer/render/animation.hpp"
-#include "simple_platformer/render/sprite.hpp"
+#include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/inventory/inventory.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/movement/flying_movement.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/navigation/path_follower.hpp"
+#include "advanced_platformer/navigation/platformer_cells.hpp"
+#include "advanced_platformer/navigation/route.hpp"
+#include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/npc/npc_state_machine.hpp"
+#include "advanced_platformer/render/animation.hpp"
+#include "advanced_platformer/render/sprite.hpp"
 #include "support/tile_size.hpp"
 
 namespace tests
@@ -56,108 +56,108 @@ namespace tests
 
         static Sized sized(glm::vec2 size);
 
-        ActorBuilder onTeam(simple_platformer::Team team) &&
+        ActorBuilder onTeam(advanced_platformer::Team team) &&
         {
             built.team = team;
             return std::move(*this);
         }
 
-        Thinking thinking(simple_platformer::NpcSenses senses) &&;
+        Thinking thinking(advanced_platformer::NpcSenses senses) &&;
 
         ActorBuilder patrolling(glm::vec2 firstFeet, glm::vec2 secondFeet) &&
         {
-            built.patrol = simple_platformer::Patrol{firstFeet, secondFeet, true};
+            built.patrol = advanced_platformer::Patrol{firstFeet, secondFeet, true};
             return std::move(*this);
         }
 
         ActorBuilder withHealth(int current, int maximum) &&
         {
-            built.health = simple_platformer::Health{current, maximum};
+            built.health = advanced_platformer::Health{current, maximum};
             return std::move(*this);
         }
 
-        ActorBuilder withInventory(simple_platformer::Inventory inventory) &&
+        ActorBuilder withInventory(advanced_platformer::Inventory inventory) &&
         {
             built.inventory = std::move(inventory);
             return std::move(*this);
         }
 
-        ActorBuilder withSprite(simple_platformer::Sprite sprite) &&
+        ActorBuilder withSprite(advanced_platformer::Sprite sprite) &&
         {
             built.sprite = sprite;
             return std::move(*this);
         }
 
-        ActorBuilder withAnimator(simple_platformer::Animator animator) &&
+        ActorBuilder withAnimator(advanced_platformer::Animator animator) &&
         {
             built.animator = std::move(animator);
             return std::move(*this);
         }
 
         // Only a platforming actor can climb. World rejects a climbing flyer.
-        ActorBuilder climbing(simple_platformer::SurfaceClimbConfig config = {}) &&
+        ActorBuilder climbing(advanced_platformer::SurfaceClimbConfig config = {}) &&
         {
-            built.surfaceClimb = simple_platformer::SurfaceClimb{config};
+            built.surfaceClimb = advanced_platformer::SurfaceClimb{config};
             return std::move(*this);
         }
 
-        ActorBuilder biting(simple_platformer::BiteAttack bite = {}) &&
+        ActorBuilder biting(advanced_platformer::BiteAttack bite = {}) &&
         {
             built.bite = std::move(bite);
             return std::move(*this);
         }
 
-        ActorBuilder withContactDamage(simple_platformer::ContactDamage contact = {}) &&
+        ActorBuilder withContactDamage(advanced_platformer::ContactDamage contact = {}) &&
         {
             built.contactDamage = std::move(contact);
             return std::move(*this);
         }
 
-        ActorBuilder shooting(simple_platformer::RangedWeapon weapon = {}) &&
+        ActorBuilder shooting(advanced_platformer::RangedWeapon weapon = {}) &&
         {
             built.rangedWeapon = weapon;
             return std::move(*this);
         }
 
-        operator simple_platformer::Actor() &&
+        operator advanced_platformer::Actor() &&
         {
             return std::move(built);
         }
 
     protected:
-        explicit ActorBuilder(simple_platformer::Actor actor)
+        explicit ActorBuilder(advanced_platformer::Actor actor)
             : built(std::move(actor))
         {
         }
 
-        simple_platformer::Actor built;
+        advanced_platformer::Actor built;
     };
 
     // An NPC: everything an ActorBuilder offers, and running().
     class ActorBuilder::Thinking : public ActorBuilder
     {
     public:
-        Thinking running(simple_platformer::NpcStateMachine machine) &&
+        Thinking running(advanced_platformer::NpcStateMachine machine) &&
         {
-            built.machine = simple_platformer::startNpcMachine(std::move(machine));
+            built.machine = advanced_platformer::startNpcMachine(std::move(machine));
             return std::move(*this);
         }
 
     private:
         friend class ActorBuilder;
 
-        explicit Thinking(simple_platformer::Actor actor)
+        explicit Thinking(advanced_platformer::Actor actor)
             : ActorBuilder(std::move(actor))
         {
         }
     };
 
-    inline ActorBuilder::Thinking ActorBuilder::thinking(simple_platformer::NpcSenses senses) &&
+    inline ActorBuilder::Thinking ActorBuilder::thinking(advanced_platformer::NpcSenses senses) &&
     {
-        built.brain = simple_platformer::NpcBrain{};
-        built.perception = simple_platformer::NpcPerception{};
+        built.brain = advanced_platformer::NpcBrain{};
+        built.perception = advanced_platformer::NpcPerception{};
         built.senses = senses;
-        built.pathFollower = simple_platformer::PathFollower{};
+        built.pathFollower = advanced_platformer::PathFollower{};
         return Thinking(std::move(built));
     }
 
@@ -165,27 +165,27 @@ namespace tests
     class ActorBuilder::Placed
     {
     public:
-        ActorBuilder platforming(simple_platformer::PlatformerMovementConfig config = {}) &&
+        ActorBuilder platforming(advanced_platformer::PlatformerMovementConfig config = {}) &&
         {
-            built.platformerMovement = simple_platformer::PlatformerMovement{config};
+            built.platformerMovement = advanced_platformer::PlatformerMovement{config};
             return ActorBuilder(std::move(built));
         }
 
         ActorBuilder flying(float speed) &&
         {
-            built.flyingMovement = simple_platformer::FlyingMovement{speed};
+            built.flyingMovement = advanced_platformer::FlyingMovement{speed};
             return ActorBuilder(std::move(built));
         }
 
     private:
         friend class ActorBuilder::Sized;
 
-        explicit Placed(const simple_platformer::Aabb& bounds)
+        explicit Placed(const advanced_platformer::Aabb& bounds)
         {
             built.body.bounds = bounds;
         }
 
-        simple_platformer::Actor built;
+        advanced_platformer::Actor built;
     };
 
     // A body size waiting for its placement.
@@ -201,21 +201,21 @@ namespace tests
         // By the middle of its bottom edge, where the game places actors.
         Placed atFeet(glm::vec2 feet) &&
         {
-            return Placed(simple_platformer::boxStandingOn(feet, size));
+            return Placed(advanced_platformer::boxStandingOn(feet, size));
         }
 
         // Standing in the cell, its feet on the middle of the cell's bottom edge. Every test
         // map has tests::TileSize tiles, so the cell is unambiguous.
-        Placed inCell(simple_platformer::Cell cell) &&
+        Placed inCell(advanced_platformer::Cell cell) &&
         {
-            return Placed(simple_platformer::boxInCell(TileSize, cell, size));
+            return Placed(advanced_platformer::boxInCell(TileSize, cell, size));
         }
 
         // Resting at the location: standing on the cell's floor, flush against its wall, or
         // hanging from its ceiling, where a search would start from it.
-        Placed restingAt(simple_platformer::RouteLocation location) &&
+        Placed restingAt(advanced_platformer::RouteLocation location) &&
         {
-            return Placed(simple_platformer::boundsAtSurface(TileSize, location, size));
+            return Placed(advanced_platformer::boundsAtSurface(TileSize, location, size));
         }
 
     private:

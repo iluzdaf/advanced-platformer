@@ -1,6 +1,6 @@
 #pragma once
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     struct Health;
     struct HudIcons;

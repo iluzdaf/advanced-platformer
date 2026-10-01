@@ -1,10 +1,10 @@
-#include "simple_platformer/render/sprite.hpp"
+#include "advanced_platformer/render/sprite.hpp"
 
 #include <stdexcept>
 
-#include "simple_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/aabb.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     Aabb spriteBounds(const Aabb& bodyBounds, const Sprite& sprite)
     {

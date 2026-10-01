@@ -10,7 +10,7 @@
 #include "hud_catalog.hpp"
 #include "machine_catalog.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     GameCatalogs loadGameCatalogs(
         const std::filesystem::path& catalogDirectory,

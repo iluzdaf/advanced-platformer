@@ -7,14 +7,14 @@
 
 #include <glm/vec2.hpp>
 
-#include "simple_platformer/actor/actor_id.hpp"
-#include "simple_platformer/math/aabb.hpp"
-#include "simple_platformer/navigation/traversal.hpp"
-#include "simple_platformer/npc/npc_state_machine.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/navigation/traversal.hpp"
+#include "advanced_platformer/npc/npc_state_machine.hpp"
 
 #include "debug/navigation_debug.hpp"
 
-namespace simple_platformer
+namespace advanced_platformer
 {
     class World;
     class TileMap;
