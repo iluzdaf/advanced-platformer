@@ -1,15 +1,32 @@
 #include "hud_catalog.hpp"
 #include "content_diagnostics.hpp"
+#include "content_glaze.hpp"
 #include "content_json.hpp"
 #include "content_validation.hpp"
-#include <nlohmann/json.hpp>
 #include <filesystem>
 #include <string_view>
+#include <glaze/glaze.hpp>
+#include <glm/vec2.hpp>
 #include "advanced_platformer/math/validation.hpp"
 #include "advanced_platformer/render/sprite.hpp"
 
 namespace advanced_platformer
 {
+    // hud.json as written: its member names are the file's keys. Glaze reflects only types
+    // with linkage, so these cannot go in an anonymous namespace.
+    struct HudIconJson
+    {
+        glm::vec2 position{};
+        glm::vec2 size{};
+    };
+
+    struct HudJson
+    {
+        HudIconJson fullHeart;
+        HudIconJson emptyHeart;
+        HudIconJson bag;
+    };
+
     namespace
     {
         void validateHudIcon(const SpriteRegion& region, std::string_view name)
@@ -21,14 +38,9 @@ namespace advanced_platformer
             }
         }
 
-        SpriteRegion jsonHudIcon(
-            const nlohmann::json& root,
-            std::string_view name,
-            std::string_view sourceName)
+        SpriteRegion regionFrom(const HudIconJson& json)
         {
-            const auto& value = requiredJsonMember(root, name, sourceName, "root");
-            checkJsonFields(value, {"position", "size"}, sourceName, name);
-            return jsonSpriteRegion(value, sourceName, name);
+            return {json.position, json.size};
         }
     }
 
@@ -41,12 +53,11 @@ namespace advanced_platformer
 
     HudIcons parseHudIcons(std::string_view text, std::string_view sourceName)
     {
-        const auto root = parseContentRoot(text, sourceName);
-        checkJsonFields(root, {"fullHeart", "emptyHeart", "bag"}, sourceName, "root");
+        const auto file = readContent<HudJson>(text, sourceName);
         HudIcons icons;
-        icons.fullHeart = jsonHudIcon(root, "fullHeart", sourceName);
-        icons.emptyHeart = jsonHudIcon(root, "emptyHeart", sourceName);
-        icons.bag = jsonHudIcon(root, "bag", sourceName);
+        icons.fullHeart = regionFrom(file.fullHeart);
+        icons.emptyHeart = regionFrom(file.emptyHeart);
+        icons.bag = regionFrom(file.bag);
         validateInFile(sourceName, [&] { validateHudIcons(icons); });
         return icons;
     }
