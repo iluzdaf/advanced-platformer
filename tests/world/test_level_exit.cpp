@@ -20,6 +20,7 @@
 #include "support/actor_components.hpp"
 #include "support/add_player.hpp"
 #include "support/fixed_step.hpp"
+#include "support/recording_npc_scripts.hpp"
 #include "support/tile_map_builder.hpp"
 
 namespace
@@ -164,11 +165,12 @@ TEST_CASE(
     "[world][simulation][exit]")
 {
     auto world = makeWorld();
+    tests::RecordingNpcScripts scripts;
     advanced_platformer::TileMap map = tests::TileMapBuilder({"......", "......", "######"});
     world.addPickup(pickupAt({18.0F, 20.0F}, {8.0F, 8.0F}, {3, 1}));
     world.setExit(
         exitWith({{18.0F, 16.0F}, {16.0F, 16.0F}}, advanced_platformer::ItemStack{3, 1}, false, 2));
-    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds);
+    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
     REQUIRE(world.pickups().empty());
     REQUIRE(advanced_platformer::exitOpening(world));
     REQUIRE_FALSE(world.levelComplete());
@@ -185,7 +187,7 @@ TEST_CASE(
     for (int tick = 0; tick < 60 && !world.levelComplete(); ++tick)
     {
         tests::player(world).intentions.direction.x = 1.0F;
-        advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds);
+        advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
         REQUIRE(tests::player(world).body.bounds.topLeft == position);
         REQUIRE(world.projectiles().front().bounds.topLeft == shot.bounds.topLeft);
         REQUIRE(world.projectiles().front().lifetimeRemaining == shot.lifetimeRemaining);
@@ -198,6 +200,7 @@ TEST_CASE(
     "[world][simulation][pickups]")
 {
     auto world = makeWorld();
+    tests::RecordingNpcScripts scripts;
     tests::player(world).team = advanced_platformer::Team::Player;
     world.addPickup(pickupAt({18.0F, 20.0F}, {8.0F, 8.0F}, {3, 1}));
     world.setExit(exitWith({{18.0F, 16.0F}, {16.0F, 16.0F}}, {}, false, {}));
@@ -207,7 +210,7 @@ TEST_CASE(
     projectile.sprite.size = {2.0F, 2.0F};
     world.addProjectile(projectile);
     advanced_platformer::TileMap map = tests::TileMapBuilder({"......", "......", "######"});
-    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds);
+    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
     REQUIRE(tests::player(world).life == advanced_platformer::LifeState::Dying);
     REQUIRE(tests::inventory(tests::player(world)).count(3) == 0);
     REQUIRE(world.pickups().size() == 1);

@@ -1,6 +1,5 @@
 #include "advanced_platformer/npc/npc_activity_runner.hpp"
 
-#include <stdexcept>
 #include <vector>
 
 #include <glm/vec2.hpp>
@@ -74,15 +73,6 @@ namespace advanced_platformer
             return snapshot;
         }
 
-        NpcActivityScripts& requiredScripts(const NpcUpdate& update)
-        {
-            if (update.scripts == nullptr)
-            {
-                throw std::logic_error("An NPC activity needs the scripting runtime");
-            }
-            return *update.scripts;
-        }
-
         void applyScriptCommand(
             const NpcUpdate& update,
             Actor& actor,
@@ -124,7 +114,7 @@ namespace advanced_platformer
         const NpcFacts& facts)
     {
         clearPath(follower);
-        requiredScripts(update).enter(
+        update.scripts.enter(
             actor.id, activity, activitySnapshot(update, actor, brain, follower, target, facts));
     }
 
@@ -137,7 +127,7 @@ namespace advanced_platformer
         const NpcActivity& activity,
         const NpcFacts& facts)
     {
-        const NpcActivityCommand command = requiredScripts(update).update(
+        const NpcActivityCommand command = update.scripts.update(
             actor.id,
             activity,
             activitySnapshot(update, actor, brain, follower, target, facts),
@@ -154,7 +144,7 @@ namespace advanced_platformer
         const NpcActivity& activity,
         const NpcFacts& facts)
     {
-        requiredScripts(update).exit(
+        update.scripts.exit(
             actor.id, activity, activitySnapshot(update, actor, brain, follower, target, facts));
     }
 

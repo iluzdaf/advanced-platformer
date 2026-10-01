@@ -55,8 +55,7 @@ TEST_CASE("World simulation senses decides and moves an NPC in one update", "[wo
                                          .running(tests::pursuerMachine());
     const advanced_platformer::ActorId npcId = world.addActor(npc);
 
-    advanced_platformer::updateWorldSimulation(
-        map, world, tests::FixedStepSeconds, nullptr, &scripts);
+    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
 
     advanced_platformer::Actor& storedNpc = tests::actor(world, npcId);
     const advanced_platformer::NpcBrain& brain = tests::brain(storedNpc);
@@ -89,8 +88,7 @@ TEST_CASE("World simulation lets a ranged NPC shoot a visible player", "[world][
                                          .running(tests::pursuerMachine());
     const advanced_platformer::ActorId npcId = world.addActor(npc);
 
-    advanced_platformer::updateWorldSimulation(
-        map, world, tests::FixedStepSeconds, nullptr, &scripts);
+    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
 
     REQUIRE(world.projectiles().size() == 1);
     REQUIRE(world.projectiles().front().owner == npcId);
@@ -128,16 +126,14 @@ TEST_CASE("World simulation lets an NPC hear a shot on the next update", "[world
     const advanced_platformer::ActorId npcId = world.addActor(npc);
 
     // Senses run before attacks, so the update that fires is not yet heard.
-    advanced_platformer::updateWorldSimulation(
-        map, world, tests::FixedStepSeconds, nullptr, &scripts);
+    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
     REQUIRE(world.projectiles().size() == 1);
     advanced_platformer::Actor& storedNpc = tests::actor(world, npcId);
     REQUIRE_FALSE(tests::brain(storedNpc).target.has_value());
 
     advanced_platformer::Actor& storedPlayer = tests::actor(world, playerId);
     storedPlayer.intentions.primaryAttackPressed = false;
-    advanced_platformer::updateWorldSimulation(
-        map, world, tests::FixedStepSeconds, nullptr, &scripts);
+    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
 
     REQUIRE(tests::brain(world, npcId).target == playerId);
     REQUIRE_FALSE(tests::perception(world, npcId).targetVisible);
@@ -175,8 +171,7 @@ TEST_CASE("World simulation continuously patrols a ground NPC", "[world][simulat
     bool previousHeadingToSecond = true;
     for (int tick = 0; tick < 1200 && completedPatrolLegs < 4; ++tick)
     {
-        advanced_platformer::updateWorldSimulation(
-            map, world, tests::FixedStepSeconds, nullptr, &scripts);
+        advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
         advanced_platformer::Actor& storedNpc = tests::actor(world, npcId);
         const advanced_platformer::PlatformerMovement& movement =
             tests::platformerMovement(storedNpc);
@@ -240,8 +235,7 @@ TEST_CASE(
     bool completedPatrolLeg = false;
     for (int tick = 0; tick < 900 && !completedPatrolLeg; ++tick)
     {
-        advanced_platformer::updateWorldSimulation(
-            map, world, tests::FixedStepSeconds, nullptr, &scripts);
+        advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
         advanced_platformer::Actor& storedNpc = tests::actor(world, npcId);
         becameAirborne = becameAirborne || !tests::platformerMovement(storedNpc).grounded;
         completedPatrolLeg = tests::patrol(storedNpc).headingToSecond;
@@ -298,8 +292,7 @@ TEST_CASE(
     const advanced_platformer::ActorId zombieId = world.addActor(zombie);
 
     // Phase 1: Expiring the memory at the edge switches the zombie back to patrol.
-    advanced_platformer::updateWorldSimulation(
-        map, world, tests::FixedStepSeconds, nullptr, &scripts);
+    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
 
     advanced_platformer::Actor& storedZombie = tests::actor(world, zombieId);
     REQUIRE(
@@ -309,8 +302,7 @@ TEST_CASE(
     // Phase 2: The resumed patrol carries it back toward the left endpoint.
     for (int tick = 0; tick < 180; ++tick)
     {
-        advanced_platformer::updateWorldSimulation(
-            map, world, tests::FixedStepSeconds, nullptr, &scripts);
+        advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
     }
 
     const glm::vec2 finalFeet =
@@ -358,7 +350,7 @@ TEST_CASE(
             storedPlayer.intentions.jumpPressed = tick == 0;
             storedPlayer.intentions.jumpHeld = tick < 25;
             advanced_platformer::updateWorldSimulation(
-                map, world, tests::FixedStepSeconds, nullptr, &scripts);
+                map, world, tests::FixedStepSeconds, scripts);
             advanced_platformer::Actor& storedZombie = tests::actor(world, zombieId);
             seenDuringJump =
                 seenDuringJump ||
@@ -396,8 +388,7 @@ TEST_CASE(
     for (int tick = 0; tick < RememberedChaseTicks; ++tick)
     {
         CAPTURE(tick);
-        advanced_platformer::updateWorldSimulation(
-            map, world, tests::FixedStepSeconds, nullptr, &scripts);
+        advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
         if (tests::perception(tests::actor(world, zombieId)).targetVisible)
         {
             break;
@@ -459,8 +450,7 @@ TEST_CASE(
     };
 
     // Establish the visible chase before measuring progress toward the edge.
-    advanced_platformer::updateWorldSimulation(
-        map, world, tests::FixedStepSeconds, nullptr, &scripts);
+    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
     REQUIRE(
         advanced_platformer::activeNpcMachineState(tests::machine(world, zombieId)).name ==
         "chase");
@@ -473,8 +463,7 @@ TEST_CASE(
     for (int tick = 0; tick < MaximumChaseTicks && distanceToPlayer > CloseDistance; ++tick)
     {
         CAPTURE(tick);
-        advanced_platformer::updateWorldSimulation(
-            map, world, tests::FixedStepSeconds, nullptr, &scripts);
+        advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
         distanceToPlayer = requireVisiblePlayerDistance();
     }
     CAPTURE(startingDistance, distanceToPlayer);
@@ -507,8 +496,7 @@ TEST_CASE(
     bool headingToSecond = true;
     for (int tick = 0; tick < 1200 && completedPatrolLegs < 4; ++tick)
     {
-        advanced_platformer::updateWorldSimulation(
-            map, world, tests::FixedStepSeconds, nullptr, &scripts);
+        advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
         advanced_platformer::Actor& storedBat = tests::actor(world, batId);
         if (tests::patrol(storedBat).headingToSecond != headingToSecond)
         {

@@ -112,7 +112,7 @@ namespace advanced_platformer
         }
 
         player->intentions = intentions;
-        updateWorldSimulation(level.map, level.world, deltaTime, profile, &npcScripts);
+        updateWorldSimulation(level.map, level.world, deltaTime, npcScripts, profile);
 
         if (level.world.levelComplete())
         {

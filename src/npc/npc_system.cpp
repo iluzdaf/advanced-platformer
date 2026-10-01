@@ -76,7 +76,7 @@ namespace advanced_platformer
         const TileMap& map,
         World& world,
         float deltaTime,
-        NpcActivityScripts* scripts,
+        NpcActivityScripts& scripts,
         FrameProfile* profile)
     {
         requireSeconds(deltaTime, "NPC behaviour time step");

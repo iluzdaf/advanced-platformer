@@ -53,9 +53,10 @@ TEST_CASE("NPC behaviour rejects invalid timing", "[npc][validation]")
 {
     const advanced_platformer::TileMap map = tests::TileMapBuilder({"...", "...", "###"});
     advanced_platformer::World world;
+    tests::RecordingNpcScripts scripts;
 
     REQUIRE_THROWS_AS(
-        advanced_platformer::updateNpcBehaviour(map, world, -0.1F), std::invalid_argument);
+        advanced_platformer::updateNpcBehaviour(map, world, -0.1F, scripts), std::invalid_argument);
 }
 
 TEST_CASE("An NPC without a state machine cannot act", "[npc][validation]")
@@ -67,7 +68,7 @@ TEST_CASE("An NPC without a state machine cannot act", "[npc][validation]")
     tests::RecordingNpcScripts scripts;
 
     REQUIRE_THROWS_AS(
-        advanced_platformer::updateNpcBehaviour(map, world, 0.1F, &scripts), std::logic_error);
+        advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts), std::logic_error);
     REQUIRE(scripts.calls.empty());
 }
 
@@ -110,7 +111,7 @@ TEST_CASE("A machine reacts to landing and blocked walking facts", "[npc][machin
     REQUIRE(
         advanced_platformer::onSameGroundRun(
             map, actor(world, npcId).body.bounds, actor(world, playerId).body.bounds));
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, &scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
     REQUIRE(machine(world, npcId).definition.states[machine(world, npcId).active].name == "charge");
     REQUIRE(actor(world, npcId).intentions.direction.x == 1.0F);
     REQUIRE(actor(world, npcId).intentions.contactDamage);
@@ -123,7 +124,7 @@ TEST_CASE("A machine reacts to landing and blocked walking facts", "[npc][machin
     REQUIRE(tests::platformerMovement(actor(world, npcId)).blocked);
     scripts.command = {};
     advanced_platformer::updateNpcSenses(map, world, 0.1F);
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, &scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
     REQUIRE(
         machine(world, npcId).definition.states[machine(world, npcId).active].name == "stunned");
     REQUIRE(scripts.calls.back().snapshot.facts.movementBlocked);

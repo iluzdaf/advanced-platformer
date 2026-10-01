@@ -363,8 +363,8 @@ The engine supplies these boolean facts to machine `when` conditions:
 The two run and notice-distance facts are independent; policy decides how to combine
 them. Both are false without a living remembered target. Sight refreshes the last
 known feet before behavior runs; without sight or a new noise that position stays fixed
-until the target is forgotten. Lua snapshots also expose `searches` and `stateElapsed`;
-they are not boolean machine `when` conditions.
+until the target is forgotten. Lua snapshots also expose `stateElapsed`, which is not a
+`when` condition; a transition's `after` holds for a time instead.
 
 For an example, compare the [boar machine](../assets/catalogs/machines.json) with its
 [Lua activities](../assets/scripts/boar.lua). It combines the run and notice-distance
