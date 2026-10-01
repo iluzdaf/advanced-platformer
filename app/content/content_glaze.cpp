@@ -70,6 +70,8 @@ namespace advanced_platformer
                 return std::format("invalid number '{}'", token);
             case glz::error_code::expected_brace:
                 return std::format("expected an object, found '{}'", token);
+            case glz::error_code::no_matching_variant_type:
+                return std::format("unexpected '{}', which is not a form this field takes", token);
             case glz::error_code::expected_bracket:
                 return std::format("expected a list, found '{}'", token);
             default:
