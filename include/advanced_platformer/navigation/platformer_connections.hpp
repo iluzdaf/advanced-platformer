@@ -1,10 +1,8 @@
 #pragma once
 
 #include <optional>
-#include <vector>
 
 #include "advanced_platformer/math/coordinates.hpp"
-#include "advanced_platformer/navigation/route.hpp"
 #include "advanced_platformer/navigation/platformer_traversal_profile.hpp"
 
 namespace advanced_platformer
@@ -25,29 +23,12 @@ namespace advanced_platformer
         int simulatedTicks = 0;
     };
 
-    struct BuiltPlatformerConnections
-    {
-        std::vector<RouteConnection> connections;
-        // Conservative rectangle covering the tiles probed or swept by simulation.
-        CellRange footprint;
-        std::vector<WalkSimulationResult> walksToCache;
-        // Movement ticks simulated for this build; reused walks add none.
-        int simulatedTicks = 0;
-    };
-
-    // Builds connections without changing the cache. A read-only cache can reuse
-    // previously simulated walks; newly simulated walks are returned for later storage.
-    BuiltPlatformerConnections buildPlatformerConnections(
+    // Simulates the connections leaving a cell, reusing the flat walks the cache already
+    // holds, and stores them in the cache together with the walks it newly simulated.
+    // Returns the movement ticks it simulated; reused walks add none.
+    int cachePlatformerConnections(
         const TileMap& map,
-        Cell cell,
-        const PlatformerTraversalProfile& profile,
-        const PlatformerConnectionCache* walkCache = nullptr);
-
-    // Stores a completed build; it does not simulate connections or check for a hit.
-    void storePlatformerConnections(
         PlatformerConnectionCache& cache,
         Cell cell,
-        const PlatformerTraversalProfile& profile,
-        BuiltPlatformerConnections built);
-
+        const PlatformerTraversalProfile& profile);
 }

@@ -15,6 +15,7 @@
 #include "advanced_platformer/navigation/traversal.hpp"
 #include "advanced_platformer/physics/body.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
+#include "support/cell_connections.hpp"
 #include "support/require_near.hpp"
 #include "support/tile_map_builder.hpp"
 #include "support/tile_size.hpp"
@@ -79,7 +80,7 @@ TEST_CASE(
     const glm::vec2 bodySize{12.0F, 12.0F};
     const advanced_platformer::PlatformerMovementConfig config;
     const std::vector<advanced_platformer::RouteConnection> connections =
-        advanced_platformer::buildPlatformerConnections(
+        tests::connectionsFrom(
             map,
             {2, 2},
             advanced_platformer::PlatformerTraversalProfile{
@@ -119,7 +120,7 @@ TEST_CASE(
     const glm::vec2 bodySize{12.0F, 12.0F};
     const advanced_platformer::PlatformerMovementConfig config;
     const std::vector<advanced_platformer::RouteConnection> connections =
-        advanced_platformer::buildPlatformerConnections(
+        tests::connectionsFrom(
             map,
             {2, 2},
             advanced_platformer::PlatformerTraversalProfile{
@@ -168,7 +169,7 @@ TEST_CASE(
     const glm::vec2 bodySize{12.0F, 12.0F};
     const advanced_platformer::PlatformerMovementConfig config;
     const std::vector<advanced_platformer::RouteConnection> connections =
-        advanced_platformer::buildPlatformerConnections(
+        tests::connectionsFrom(
             map,
             {2, 2},
             advanced_platformer::PlatformerTraversalProfile{
@@ -216,7 +217,7 @@ TEST_CASE(
     const glm::vec2 bodySize{12.0F, 12.0F};
     const advanced_platformer::PlatformerMovementConfig config;
     const std::vector<advanced_platformer::RouteConnection> connections =
-        advanced_platformer::buildPlatformerConnections(
+        tests::connectionsFrom(
             map,
             {2, 2},
             advanced_platformer::PlatformerTraversalProfile{

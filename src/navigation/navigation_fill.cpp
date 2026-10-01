@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <optional>
 #include <stdexcept>
-#include <utility>
 #include <vector>
 
 #include "advanced_platformer/actor/actor.hpp"
@@ -42,11 +41,8 @@ namespace advanced_platformer
                 {
                     break;
                 }
-                const Cell cell = next.value();
-                BuiltPlatformerConnections built =
-                    buildPlatformerConnections(map, cell, profile, &cache);
-                const int ticksForCell = built.simulatedTicks;
-                storePlatformerConnections(cache, cell, profile, std::move(built));
+                const int ticksForCell =
+                    cachePlatformerConnections(map, cache, next.value(), profile);
                 ++cellsCached;
                 simulatedTicks += ticksForCell;
                 budgetSpent += ticksForCell + CacheWriteCostTicks;

@@ -31,6 +31,16 @@ namespace advanced_platformer
 {
     namespace
     {
+        struct BuiltPlatformerConnections
+        {
+            std::vector<RouteConnection> connections;
+            // Conservative rectangle covering the tiles probed or swept by simulation.
+            CellRange footprint;
+            std::vector<WalkSimulationResult> walksToCache;
+            // Movement ticks simulated for this build; reused walks add none.
+            int simulatedTicks = 0;
+        };
+
         // A traversal must land and stop within this many updates to become a
         // connection. Its duration in seconds depends on the caller's step.
         constexpr int MaximumConnectionSimulationTicks = 120;
@@ -297,7 +307,7 @@ namespace advanced_platformer
             const TileMap& map,
             Cell start,
             const PlatformerTraversalProfile& profile,
-            const PlatformerConnectionCache* walkCache,
+            const PlatformerConnectionCache& walkCache,
             int direction)
         {
             const int tileSize = map.tileSize();
@@ -307,17 +317,13 @@ namespace advanced_platformer
             do
             {
                 const int columns = destination.x - start.x;
-                const WalkSimulationResult* cached =
-                    walkCache != nullptr ? walkCache->cachedWalk(columns, profile) : nullptr;
+                const WalkSimulationResult* cached = walkCache.cachedWalk(columns, profile);
                 const WalkSimulationResult walk =
                     cached != nullptr ? *cached : simulateWalk(map, start, destination, profile);
                 if (cached == nullptr)
                 {
                     result.simulatedTicks += walk.simulatedTicks;
-                    if (walkCache != nullptr)
-                    {
-                        result.walksToCache.push_back(walk);
-                    }
+                    result.walksToCache.push_back(walk);
                 }
                 result.footprint = unionOf(
                     result.footprint,
@@ -566,60 +572,60 @@ namespace advanced_platformer
             return combined;
         }
 
+        BuiltPlatformerConnections buildPlatformerConnections(
+            const TileMap& map,
+            Cell cell,
+            const PlatformerTraversalProfile& profile,
+            const PlatformerConnectionCache& walkCache)
+        {
+            requirePositiveSeconds(profile.stepSeconds, "Navigation simulation step");
+            const ConnectionPlan plan = planPlatformerConnections(map, cell, profile.size);
+            BuiltPlatformerConnections combined{{}, plan.footprint, {}, 0};
+            for (const TraversalAttempt& attempt : plan.attempts)
+            {
+                BuiltPlatformerConnections attemptResult =
+                    attempt.traversal == Traversal::Walk
+                        ? buildWalkConnections(map, cell, profile, walkCache, attempt.direction)
+                        : buildAirborneConnection(map, cell, profile, attempt);
+                combined.footprint = unionOf(combined.footprint, attemptResult.footprint);
+                combined.simulatedTicks += attemptResult.simulatedTicks;
+                for (RouteConnection& connection : attemptResult.connections)
+                {
+                    keepCheapest(combined.connections, std::move(connection));
+                }
+                for (const WalkSimulationResult& walk : attemptResult.walksToCache)
+                {
+                    combined.walksToCache.push_back(walk);
+                }
+            }
+            if (profile.climb.has_value())
+            {
+                validateSurfaceClimbConfig(*profile.climb);
+                BuiltPlatformerConnections climbs =
+                    buildClimbConnections(map, cell, profile, *profile.climb);
+                combined.footprint = unionOf(combined.footprint, climbs.footprint);
+                combined.simulatedTicks += climbs.simulatedTicks;
+                for (RouteConnection& connection : climbs.connections)
+                {
+                    combined.connections.push_back(std::move(connection));
+                }
+            }
+            return combined;
+        }
     }
 
-    BuiltPlatformerConnections buildPlatformerConnections(
+    int cachePlatformerConnections(
         const TileMap& map,
-        Cell cell,
-        const PlatformerTraversalProfile& profile,
-        const PlatformerConnectionCache* walkCache)
-    {
-        requirePositiveSeconds(profile.stepSeconds, "Navigation simulation step");
-        const ConnectionPlan plan = planPlatformerConnections(map, cell, profile.size);
-        BuiltPlatformerConnections combined{{}, plan.footprint, {}, 0};
-        for (const TraversalAttempt& attempt : plan.attempts)
-        {
-            BuiltPlatformerConnections attemptResult =
-                attempt.traversal == Traversal::Walk
-                    ? buildWalkConnections(map, cell, profile, walkCache, attempt.direction)
-                    : buildAirborneConnection(map, cell, profile, attempt);
-            combined.footprint = unionOf(combined.footprint, attemptResult.footprint);
-            combined.simulatedTicks += attemptResult.simulatedTicks;
-            for (RouteConnection& connection : attemptResult.connections)
-            {
-                keepCheapest(combined.connections, std::move(connection));
-            }
-            for (const WalkSimulationResult& walk : attemptResult.walksToCache)
-            {
-                combined.walksToCache.push_back(walk);
-            }
-        }
-        if (profile.climb.has_value())
-        {
-            validateSurfaceClimbConfig(*profile.climb);
-            BuiltPlatformerConnections climbs =
-                buildClimbConnections(map, cell, profile, *profile.climb);
-            combined.footprint = unionOf(combined.footprint, climbs.footprint);
-            combined.simulatedTicks += climbs.simulatedTicks;
-            for (RouteConnection& connection : climbs.connections)
-            {
-                combined.connections.push_back(std::move(connection));
-            }
-        }
-        return combined;
-    }
-
-    void storePlatformerConnections(
         PlatformerConnectionCache& cache,
         Cell cell,
-        const PlatformerTraversalProfile& profile,
-        BuiltPlatformerConnections built)
+        const PlatformerTraversalProfile& profile)
     {
+        BuiltPlatformerConnections built = buildPlatformerConnections(map, cell, profile, cache);
         for (const WalkSimulationResult& walk : built.walksToCache)
         {
             cache.storeWalk(profile, walk);
         }
         cache.storeConnections(cell, profile, std::move(built.connections), built.footprint);
+        return built.simulatedTicks;
     }
-
 }

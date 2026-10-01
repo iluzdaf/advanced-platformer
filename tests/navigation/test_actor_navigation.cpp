@@ -27,6 +27,7 @@
 #include "advanced_platformer/physics/body.hpp"
 #include "advanced_platformer/timing/frame_profile.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
+#include "support/cell_connections.hpp"
 #include "support/actor_builder.hpp"
 #include "support/fixed_step.hpp"
 #include "support/route_connections.hpp"
@@ -38,7 +39,6 @@ namespace
 {
     using advanced_platformer::Actor;
     using advanced_platformer::boundsAtSurface;
-    using advanced_platformer::buildPlatformerConnections;
     using advanced_platformer::Cell;
     using advanced_platformer::cellAtFeet;
     using advanced_platformer::ClimbSurface;
@@ -360,7 +360,7 @@ TEST_CASE(
         tests::TileMapBuilder({"..........", "....##....", "..........", "##########"});
     const Actor platformer = platformerAt({{2, 2}});
     const std::vector<RouteConnection> connections =
-        buildPlatformerConnections(
+        tests::connectionsFrom(
             platform, {2, 2}, platformerTraversalProfileFor(platformer, tests::FixedStepSeconds))
             .connections;
     const RouteConnection& up = tests::jumpUpFrom(connections, 2);

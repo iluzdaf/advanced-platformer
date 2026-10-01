@@ -610,7 +610,8 @@ feet extend past a ledge, and turns its route of locations into the waypoints a
 caller receives.
 
 `platformer_connections` builds the connections leaving every location of a cell
-the body can rest at. It tries each traversal the profile allows with the real
+the body can rest at, and stores them in the [connection cache](#the-connection-cache)
+with any flat walks it simulated, so the next cell can reuse them. It tries each traversal the profile allows with the real
 physics at the caller's step, and each success becomes a connection. The NPC system
 passes its current tick's step, so a planned move and the real one run the same
 physics. A connection records the surface it leaves and the surface it reaches, and

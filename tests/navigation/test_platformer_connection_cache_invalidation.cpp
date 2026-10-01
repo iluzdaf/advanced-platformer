@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <utility>
 #include <vector>
 
 #include <glm/vec2.hpp>
@@ -262,13 +261,11 @@ TEST_CASE("A broken floor takes a walk away and gives a fall", "[navigation][cac
     const int dropped = advanced_platformer::frameStatisticCount(breaking, "Cells dropped");
     REQUIRE(dropped > 0);
     REQUIRE(cache.cachedCellCount(profile) == cachedBeforeBreak - dropped);
-    auto firstBuild = advanced_platformer::buildPlatformerConnections(map, {1, 0}, profile, &cache);
-    advanced_platformer::storePlatformerConnections(cache, {1, 0}, profile, std::move(firstBuild));
+    advanced_platformer::cachePlatformerConnections(map, cache, {1, 0}, profile);
     const std::vector<RouteConnection>* afterBreak = cache.cachedConnections({1, 0}, profile);
     REQUIRE(afterBreak != nullptr);
     REQUIRE_FALSE(walksTo(*afterBreak, {6, 0}));
-    auto edgeBuild = advanced_platformer::buildPlatformerConnections(map, {2, 0}, profile, &cache);
-    advanced_platformer::storePlatformerConnections(cache, {2, 0}, profile, std::move(edgeBuild));
+    advanced_platformer::cachePlatformerConnections(map, cache, {2, 0}, profile);
     const std::vector<RouteConnection>* fromTheEdge = cache.cachedConnections({2, 0}, profile);
     REQUIRE(fromTheEdge != nullptr);
     REQUIRE(
