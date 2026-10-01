@@ -127,23 +127,41 @@ namespace advanced_platformer
     sol::table luaSnapshot(sol::state& lua, const NpcActivitySnapshot& snapshot)
     {
         sol::table result = lua.create_table();
+        const auto optionalVector = [&lua](const std::optional<glm::vec2>& value)
+        {
+            return value.has_value() ? sol::make_object(lua, luaVector(lua, *value))
+                                     : sol::make_object(lua, sol::lua_nil);
+        };
         result["feet"] = luaVector(lua, snapshot.feet);
-        result["targetFeet"] = snapshot.targetFeet.has_value()
-                                   ? sol::make_object(lua, luaVector(lua, *snapshot.targetFeet))
-                                   : sol::make_object(lua, sol::lua_nil);
+        result["center"] = luaVector(lua, snapshot.center);
+        result["targetFeet"] = optionalVector(snapshot.targetFeet);
+        result["lastKnownTargetFeet"] = luaVector(lua, snapshot.lastKnownTargetFeet);
+        result["targetCenter"] = optionalVector(snapshot.targetCenter);
         if (snapshot.patrol.has_value())
         {
             result["patrol"] = lua.create_table_with(
                 "firstFeet",
                 luaVector(lua, snapshot.patrol->firstFeet),
                 "secondFeet",
-                luaVector(lua, snapshot.patrol->secondFeet));
+                luaVector(lua, snapshot.patrol->secondFeet),
+                "headingToSecond",
+                snapshot.patrol->headingToSecond);
         }
         else
         {
             result["patrol"] = sol::lua_nil;
         }
+        if (snapshot.footing.has_value())
+        {
+            result["footing"] = lua.create_table_with(
+                "left", snapshot.footing->left, "right", snapshot.footing->right);
+        }
+        else
+        {
+            result["footing"] = sol::lua_nil;
+        }
         result["stateElapsed"] = snapshot.facts.stateElapsed;
+        result["hasRoute"] = snapshot.hasRoute;
         result["routeComplete"] = snapshot.routeComplete;
 
         sol::table facts = lua.create_table();
@@ -196,7 +214,8 @@ namespace advanced_platformer
              "contactDamage",
              "routeTo",
              "aimAt",
-             "clearRoute"},
+             "clearRoute",
+             "turnPatrol"},
             "an activity command");
 
         const auto readVector = [&](std::string_view name, glm::vec2& destination)
@@ -244,6 +263,7 @@ namespace advanced_platformer
         readOptionalVector("routeTo", command.routeTo);
         readOptionalVector("aimAt", command.aimAt);
         readBoolean("clearRoute", command.clearRoute);
+        readBoolean("turnPatrol", command.turnPatrol);
         return command;
     }
 }

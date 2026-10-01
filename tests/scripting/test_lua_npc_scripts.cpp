@@ -90,6 +90,58 @@ TEST_CASE("A Lua activity reads a copied snapshot and returns a command", "[lua]
     REQUIRE(scripts.diagnostics().empty());
 }
 
+TEST_CASE(
+    "A snapshot's centres, footing, route and patrol heading reach Lua as fields",
+    "[lua][npc]")
+{
+    LuaNpcScripts scripts;
+    scripts.loadScriptText(
+        "example",
+        R"(
+            return {
+                activities = {
+                    decide = {
+                        update = function(self, snapshot)
+                            if snapshot.footing == nil then
+                                return { jumpPressed = snapshot.targetCenter == nil }
+                            end
+                            return {
+                                direction = snapshot.center,
+                                aimAt = snapshot.targetCenter,
+                                routeTo = snapshot.lastKnownTargetFeet,
+                                clearRoute = snapshot.hasRoute,
+                                turnPatrol = snapshot.footing.left and not snapshot.footing.right
+                                    and snapshot.patrol.headingToSecond
+                            }
+                        end
+                    }
+                }
+            }
+        )",
+        "command.lua");
+
+    NpcActivitySnapshot walker = commandSnapshot();
+    walker.center = {12.0F, 28.0F};
+    walker.targetCenter = {{56.0F, 72.0F}};
+    walker.lastKnownTargetFeet = {50.0F, 78.0F};
+    walker.footing = advanced_platformer::NpcFooting{true, false};
+    walker.hasRoute = true;
+    scripts.enter(FirstActor, Activity, walker);
+    const advanced_platformer::NpcActivityCommand command =
+        scripts.update(FirstActor, Activity, walker, 0.5F);
+    REQUIRE(command.intentions.direction == glm::vec2{12.0F, 28.0F});
+    REQUIRE(command.aimAt == glm::vec2{56.0F, 72.0F});
+    REQUIRE(command.routeTo == glm::vec2{50.0F, 78.0F});
+    REQUIRE(command.clearRoute);
+    REQUIRE(command.turnPatrol);
+
+    // A flyer with no living target has neither footing nor a target centre.
+    NpcActivitySnapshot flyer = commandSnapshot();
+    scripts.enter(SecondActor, Activity, flyer);
+    REQUIRE(scripts.update(SecondActor, Activity, flyer, 0.5F).intentions.jumpPressed);
+    REQUIRE(scripts.diagnostics().empty());
+}
+
 TEST_CASE("Lua receives independent run and range facts", "[lua][npc]")
 {
     LuaNpcScripts scripts;

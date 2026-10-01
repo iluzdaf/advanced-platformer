@@ -506,9 +506,11 @@ regression tests cover this case.
 
 The scripting target provides the protected Lua runtime used by scripted machine activities.
 The core-facing boundary contains no Lua types. `NpcActivitySnapshot` is a copied,
-read-only-in-effect view of position, target, patrol endpoints, facts, state time, route
-completion, and tuning.
-`NpcActivityCommand` carries only intentions and requests to aim, route, or clear a route.
+read-only-in-effect view of the NPC's feet and body centre, its target's known and last
+known feet and body centre, its patrol ends and heading, a walker's footing to either
+side, facts, state time, whether it holds a route and has finished it, and tuning.
+`NpcActivityCommand` carries only intentions and requests to aim, route, clear a route, or
+turn the patrol round.
 Applying those requests, including pathfinding, remains engine work.
 
 `LuaNpcScripts` loads each script into its own environment and requires it to return named
@@ -531,8 +533,11 @@ and restart discard that state for every actor before replacing the world.
 Machine JSON keeps the short string form for built-in activities. A Lua activity uses
 `{"kind":"lua","script":"rat","activity":"flee"}`. The application loads referenced
 files from `assets/scripts` at startup and rejects missing scripts or activities.
-The rat uses Lua to choose a flee goal while C++ follows the path and handles
-biting. The spider's Lua patrol and pursuit route it over walls and ceilings the same
+`common.lua` provides idle, patrol, chase, bite, shoot, search, retreat and watch as Lua
+activities, and every shipped machine uses them instead of the built-in ones: the
+`pursuer` machine for the zombie and bat, `keep_distance` for the zombie soldier, and the
+rat's patrol and bite. The rat uses its own Lua to choose a flee goal while C++ follows the
+path. The spider's Lua patrol and pursuit route it over walls and ceilings the same
 way. The boar's Lua charge activity requests ordinary walking, ledge avoidance,
 and contact damage; its machine uses facts to choose wake and recovery transitions.
 Scripts cannot create noise events or apply damage directly.

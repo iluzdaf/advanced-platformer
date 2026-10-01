@@ -46,6 +46,7 @@ namespace advanced_platformer
             Actor& actor,
             NpcBrain& brain,
             PathFollower& follower,
+            const Actor* target,
             NpcMachine& machine,
             const NpcFacts& facts)
         {
@@ -57,7 +58,13 @@ namespace advanced_platformer
             else
             {
                 enterScriptedActivity(
-                    update, actor, brain, follower, std::get<LuaNpcActivity>(activity), facts);
+                    update,
+                    actor,
+                    brain,
+                    follower,
+                    target,
+                    std::get<LuaNpcActivity>(activity),
+                    facts);
             }
             machine.activityEntered = true;
         }
@@ -67,12 +74,13 @@ namespace advanced_platformer
             Actor& actor,
             const NpcBrain& brain,
             const PathFollower& follower,
+            const Actor* target,
             const NpcActivity& activity,
             const NpcFacts& facts)
         {
             if (const auto* scripted = std::get_if<LuaNpcActivity>(&activity))
             {
-                exitScriptedActivity(update, actor, brain, follower, *scripted, facts);
+                exitScriptedActivity(update, actor, brain, follower, target, *scripted, facts);
             }
         }
 
@@ -93,7 +101,7 @@ namespace advanced_platformer
                 return;
             }
             updateScriptedActivity(
-                update, actor, brain, follower, std::get<LuaNpcActivity>(activity), facts);
+                update, actor, brain, follower, target, std::get<LuaNpcActivity>(activity), facts);
         }
 
         void updateMachineState(
@@ -110,7 +118,7 @@ namespace advanced_platformer
             const bool fired = advanceNpcMachine(machine, facts, update.deltaTime).has_value();
             if (fired && machine.activityEntered)
             {
-                exitMachineActivity(update, actor, brain, follower, previous, facts);
+                exitMachineActivity(update, actor, brain, follower, target, previous, facts);
                 machine.activityEntered = false;
             }
 
@@ -122,7 +130,7 @@ namespace advanced_platformer
             }
             if (!machine.activityEntered)
             {
-                enterMachineActivity(update, actor, brain, follower, machine, activeFacts);
+                enterMachineActivity(update, actor, brain, follower, target, machine, activeFacts);
             }
             updateMachineActivity(update, actor, brain, follower, target, machine, activeFacts);
         }
