@@ -1,21 +1,24 @@
 #include "actor_definition.hpp"
+
 #include "animation_catalog.hpp"
+#include "machine_catalog.hpp"
+
 #include <cstddef>
 #include <optional>
 #include <stdexcept>
 #include <string>
-#include "advanced_platformer/actor/actor.hpp"
 #include <utility>
+
+#include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_validation.hpp"
 #include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/math/aabb.hpp"
-#include "advanced_platformer/render/animation.hpp"
-#include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/navigation/path_follower.hpp"
+#include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
-#include "machine_catalog.hpp"
+#include "advanced_platformer/render/animation.hpp"
 
 namespace advanced_platformer
 {

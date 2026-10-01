@@ -10,8 +10,9 @@
 
 #include <glm/vec2.hpp>
 
-#include "item_catalog.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
+
+#include "item_catalog.hpp"
 
 namespace advanced_platformer
 {

@@ -1,27 +1,49 @@
 #include "actor_catalog.hpp"
-#include "machine_catalog.hpp"
+
+#include "actor_definition.hpp"
+#include "animation_catalog.hpp"
 #include "content_diagnostics.hpp"
 #include "content_glaze.hpp"
 #include "content_validation.hpp"
-#include "animation_catalog.hpp"
-#include "content/actor_definition.hpp"
+#include "machine_catalog.hpp"
+
+#include <array>
+#include <filesystem>
+#include <format>
+#include <map>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <utility>
+
+#include <glaze/glaze.hpp>
+#include <glm/vec2.hpp>
+
 #include "advanced_platformer/combat/combat.hpp"
-#include "advanced_platformer/movement/platformer_movement.hpp"
 #include "advanced_platformer/movement/flying_movement.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/render/sprite.hpp"
-#include <filesystem>
-#include <format>
-#include <array>
-#include <map>
-#include <utility>
-#include <optional>
-#include <stdexcept>
-#include <glaze/glaze.hpp>
-#include <glm/vec2.hpp>
-#include <string_view>
-#include <string>
+
+template <>
+struct glz::from<glz::JSON, advanced_platformer::Team>
+    : advanced_platformer::NamedEnumReader<advanced_platformer::Team>
+{
+};
+
+template <>
+struct glz::from<glz::JSON, advanced_platformer::Facing>
+    : advanced_platformer::NamedEnumReader<advanced_platformer::Facing>
+{
+};
+
+template <>
+struct glz::from<glz::JSON, advanced_platformer::NpcTactic>
+    : advanced_platformer::NamedEnumReader<advanced_platformer::NpcTactic>
+{
+};
 
 namespace advanced_platformer
 {
@@ -46,28 +68,7 @@ namespace advanced_platformer
             std::pair{std::string_view{"pursuer"}, NpcTactic::Pursuer},
             std::pair{std::string_view{"keepDistance"}, NpcTactic::KeepDistance}};
     };
-}
 
-template <>
-struct glz::from<glz::JSON, advanced_platformer::Team>
-    : advanced_platformer::NamedEnumReader<advanced_platformer::Team>
-{
-};
-
-template <>
-struct glz::from<glz::JSON, advanced_platformer::Facing>
-    : advanced_platformer::NamedEnumReader<advanced_platformer::Facing>
-{
-};
-
-template <>
-struct glz::from<glz::JSON, advanced_platformer::NpcTactic>
-    : advanced_platformer::NamedEnumReader<advanced_platformer::NpcTactic>
-{
-};
-
-namespace advanced_platformer
-{
     // actors.json as written: its member names are the file's keys. Glaze reflects only types
     // with linkage, so these cannot go in an anonymous namespace. The movement and senses
     // configs are read as they are, keeping C++ defaults for what a file leaves out; the attack
@@ -241,6 +242,32 @@ namespace advanced_platformer
         return result;
     }
 
+    void validateActorAtlasRegions(
+        const ActorCatalog& catalog,
+        glm::ivec2 atlasSize,
+        std::string_view sourceName)
+    {
+        for (const auto& [name, definition] : catalog.definitions)
+        {
+            if (definition.ranged.has_value())
+            {
+                requireInAtlas(
+                    definition.ranged->projectileSprite.region,
+                    atlasSize,
+                    sourceName,
+                    fieldPath(fieldPath(fieldPath("actors", name), "ranged"), "sprite"));
+            }
+        }
+    }
+
+    ActorCatalog loadActorCatalog(
+        const std::filesystem::path& path,
+        const AnimationCatalog& animations,
+        const MachineCatalog& machines)
+    {
+        return parseActorCatalog(loadContentText(path), path.string(), animations, machines);
+    }
+
     void validateActorCatalog(
         const ActorCatalog& catalog,
         const AnimationCatalog& animations,
@@ -273,14 +300,6 @@ namespace advanced_platformer
         }
     }
 
-    ActorCatalog loadActorCatalog(
-        const std::filesystem::path& path,
-        const AnimationCatalog& animations,
-        const MachineCatalog& machines)
-    {
-        return parseActorCatalog(loadContentText(path), path.string(), animations, machines);
-    }
-
     const ActorDefinition& actorDefinition(const ActorCatalog& catalog, const std::string& name)
     {
         const auto found = catalog.definitions.find(name);
@@ -289,23 +308,5 @@ namespace advanced_platformer
             throw std::invalid_argument(std::format("unknown actor definition '{}'", name));
         }
         return found->second;
-    }
-
-    void validateActorAtlasRegions(
-        const ActorCatalog& catalog,
-        glm::ivec2 atlasSize,
-        std::string_view sourceName)
-    {
-        for (const auto& [name, definition] : catalog.definitions)
-        {
-            if (definition.ranged.has_value())
-            {
-                requireInAtlas(
-                    definition.ranged->projectileSprite.region,
-                    atlasSize,
-                    sourceName,
-                    fieldPath(fieldPath(fieldPath("actors", name), "ranged"), "sprite"));
-            }
-        }
     }
 }

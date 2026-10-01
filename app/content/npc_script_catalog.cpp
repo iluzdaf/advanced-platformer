@@ -1,5 +1,6 @@
 #include "npc_script_catalog.hpp"
 
+#include "lua_npc_scripts.hpp"
 #include "machine_catalog.hpp"
 
 #include <filesystem>
@@ -11,7 +12,6 @@
 
 #include "advanced_platformer/npc/npc_activity.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
-#include "lua_npc_scripts.hpp"
 
 namespace advanced_platformer
 {

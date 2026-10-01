@@ -1,6 +1,8 @@
 #include "machine_catalog.hpp"
+
 #include "content_diagnostics.hpp"
 #include "content_glaze.hpp"
+
 #include <array>
 #include <cstddef>
 #include <filesystem>
@@ -12,7 +14,9 @@
 #include <string_view>
 #include <variant>
 #include <vector>
+
 #include <glaze/glaze.hpp>
+
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_activity.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"

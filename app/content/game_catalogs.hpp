@@ -1,15 +1,17 @@
 #pragma once
 
 #include <filesystem>
+
 #include <glm/vec2.hpp>
+
 #include "actor_catalog.hpp"
 #include "animation_catalog.hpp"
-#include "tile_catalog.hpp"
-#include "item_catalog.hpp"
-#include "pickup_catalog.hpp"
 #include "exit_catalog.hpp"
 #include "hud_catalog.hpp"
+#include "item_catalog.hpp"
 #include "machine_catalog.hpp"
+#include "pickup_catalog.hpp"
+#include "tile_catalog.hpp"
 
 namespace advanced_platformer
 {

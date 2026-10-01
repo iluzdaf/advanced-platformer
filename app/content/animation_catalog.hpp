@@ -3,7 +3,9 @@
 #include <map>
 #include <string>
 #include <string_view>
+
 #include <glm/vec2.hpp>
+
 #include "advanced_platformer/render/animation.hpp"
 
 namespace advanced_platformer

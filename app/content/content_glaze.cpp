@@ -1,5 +1,7 @@
 #include "content_glaze.hpp"
+
 #include "content_diagnostics.hpp"
+
 #include <algorithm>
 #include <cstddef>
 #include <filesystem>
@@ -9,7 +11,9 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+
 #include <glaze/glaze.hpp>
+
 #include "advanced_platformer/render/sprite.hpp"
 
 namespace advanced_platformer
@@ -89,6 +93,15 @@ namespace advanced_platformer
         }
     }
 
+    Sprite spriteFrom(const SpriteJson& json)
+    {
+        Sprite sprite;
+        sprite.region = {json.position, json.size};
+        sprite.size = json.displaySize.value_or(json.size);
+        sprite.anchor = json.anchor.value_or(SpriteAnchor::BodyFeet);
+        return sprite;
+    }
+
     std::string loadContentText(const std::filesystem::path& path)
     {
         std::ifstream file(path);
@@ -99,15 +112,6 @@ namespace advanced_platformer
                     "Could not open content file '{}'", std::filesystem::absolute(path).string()));
         }
         return {std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
-    }
-
-    Sprite spriteFrom(const SpriteJson& json)
-    {
-        Sprite sprite;
-        sprite.region = {json.position, json.size};
-        sprite.size = json.displaySize.value_or(json.size);
-        sprite.anchor = json.anchor.value_or(SpriteAnchor::BodyFeet);
-        return sprite;
     }
 
     void failContentRead(

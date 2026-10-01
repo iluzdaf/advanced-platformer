@@ -4,10 +4,13 @@
 #include <optional>
 #include <string>
 #include <string_view>
+
 #include <glm/vec2.hpp>
-#include "item_catalog.hpp"
+
 #include "advanced_platformer/render/sprite.hpp"
 #include "advanced_platformer/world/pickup.hpp"
+
+#include "item_catalog.hpp"
 
 namespace advanced_platformer
 {

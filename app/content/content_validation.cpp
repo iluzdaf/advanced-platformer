@@ -1,5 +1,8 @@
 #include "content_validation.hpp"
+
 #include "content_diagnostics.hpp"
+#include "level_data.hpp"
+#include "tile_catalog.hpp"
 
 #include <cstddef>
 #include <format>
@@ -15,9 +18,6 @@
 #include "advanced_platformer/math/validation.hpp"
 #include "advanced_platformer/render/sprite.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
-#include "tile_catalog.hpp"
-#include "level_data.hpp"
-#include "advanced_platformer/math/validation.hpp"
 
 namespace advanced_platformer
 {

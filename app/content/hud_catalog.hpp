@@ -1,7 +1,9 @@
 #pragma once
 #include <filesystem>
 #include <string_view>
+
 #include <glm/vec2.hpp>
+
 #include "advanced_platformer/render/sprite.hpp"
 
 namespace advanced_platformer
