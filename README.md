@@ -255,8 +255,9 @@ Pull-request CI checks each changed C++ file, and every first-party file that in
 a changed header, directly or through other headers. Adding a new `.cpp` file and
 listing it in its manifest under `cmake/sources/` checks only the new code, but
 changing only a manifest checks the whole tree. So do changes to the analysis rules,
-the CI workflow, the global build configuration, or `tools/tidy_targets.py`, which
-picks the files. Local `tidy` builds always check the whole tree. CMake configuration
+the CI workflow, the global build configuration, the third-party libraries under
+`external/` (including a submodule moving to another commit), or
+`tools/tidy_targets.py`, which picks the files. Local `tidy` builds always check the whole tree. CMake configuration
 fails with a focused error if an `app/`, `src/`, or enabled `tests/` source is missing
 from its target's manifest.
 

@@ -5,7 +5,8 @@ that includes it, directly or through other headers. This walks the project incl
 graph backwards and prints that complete set.
 
 With no --since, every first-party C++ source and header is printed. Changes to the
-analysis rules or global build configuration also select the whole tree. Source-only
+analysis rules, global build configuration, or third-party libraries, including a
+submodule moving to another commit, also select the whole tree. Source-only
 manifest changes rely on the changed C++ paths, unless no C++ path changed with them.
 Removed headers select the whole tree because their former includers cannot be traced;
 removed source files do not select files that no longer exist.
@@ -22,6 +23,7 @@ FULL_TREE_RULES = (
     ".clang-tidy",
     ".github/workflows/ci.yml",
     "CMakeLists.txt",
+    ".gitmodules",
     "CMakePresets.json",
     "cmake/Dependencies.cmake",
     "cmake/ProjectOptions.cmake",
@@ -30,6 +32,7 @@ FULL_TREE_RULES = (
     "tools/tidy_targets.py",
 )
 SOURCE_MANIFEST_DIRECTORY = Path("cmake/sources")
+THIRD_PARTY_DIRECTORY = Path("external")
 INCLUDE = re.compile(r'^\s*#\s*include\s*"([^"]+)"', re.MULTILINE)
 
 
@@ -87,7 +90,11 @@ def merge_base(reference):
 
 
 def changed_since(reference):
-    watched = list(ROOTS) + list(FULL_TREE_RULES) + [str(SOURCE_MANIFEST_DIRECTORY)]
+    watched = (
+        list(ROOTS)
+        + list(FULL_TREE_RULES)
+        + [str(SOURCE_MANIFEST_DIRECTORY), str(THIRD_PARTY_DIRECTORY)]
+    )
     result = subprocess.run(
         ["git", "diff", "--name-only", "--no-renames", reference, "--"] + watched,
         capture_output=True,
@@ -109,6 +116,9 @@ def changed_since(reference):
 def selected_paths(paths, changed):
     """Select changed C++ paths, preserving conservative configuration fallbacks."""
     if any(str(path) in FULL_TREE_RULES for path in changed):
+        return paths
+    # A library's headers reach first-party code without a first-party path changing.
+    if any(THIRD_PARTY_DIRECTORY in path.parents for path in changed):
         return paths
 
     available = set(paths)
