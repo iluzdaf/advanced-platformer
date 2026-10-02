@@ -179,8 +179,8 @@ A component object may leave out any field to keep its default, so `{}` is all d
 | `contactDamage` | `damage` (1)                                                                                                                                                                                                                       |
 
 A `sprite`, here and for items, pickups and exits, has `position` and `size`, the atlas
-region; `displaySize`, the drawn size (default `size`); and `anchor`, `feet` (default) or
-`center`.
+region, and `anchor`, `feet` (default) or `center`. A sprite draws at its region's size:
+one atlas pixel is one world pixel. To change how big something looks, change the art.
 
 ## State machines
 

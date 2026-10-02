@@ -14,7 +14,6 @@
 namespace
 {
     constexpr glm::ivec2 Atlas{256, 256};
-    // Starts inside the atlas and runs four pixels past its right edge.
     constexpr advanced_platformer::SpriteRegion PastTheEdge{{244.0F, 0.0F}, {16.0F, 16.0F}};
 }
 
@@ -61,7 +60,7 @@ TEST_CASE("A region past the atlas is reported by its file and field", "[app][co
     SECTION("A pickup sprite")
     {
         auto& [name, definition] = *catalogs.pickups.begin();
-        definition.sprite = advanced_platformer::Sprite{0, PastTheEdge, {16.0F, 16.0F}};
+        definition.sprite = advanced_platformer::Sprite{0, PastTheEdge};
         expected = "pickups.json: pickups." + name + ".sprite";
     }
     SECTION("An exit sprite")

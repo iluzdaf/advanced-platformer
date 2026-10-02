@@ -26,8 +26,6 @@ namespace advanced_platformer
         constexpr float DeathFadeSeconds = 0.2F;
         constexpr float HitFlashSeconds = 0.1F;
         constexpr float HitFlashAmount = 0.1F;
-        // The door flashes white as it opens and the player fades into it; both follow
-        // how far through ExitOpenSeconds the opening is.
         constexpr float ExitOpenFlashAmount = 0.5F;
         constexpr float PickupBobHeight = 2.0F;
         constexpr float PickupBobPeriodSeconds = 1.0F;
@@ -53,7 +51,6 @@ namespace advanced_platformer
             return wasRecentlyDamaged ? HitFlashAmount : 0.0F;
         }
 
-        // 0 until the exit is entered, 1 once it has fully opened.
         float exitOpenProgress(const World& world)
         {
             const auto& exit = world.exit();
@@ -77,7 +74,6 @@ namespace advanced_platformer
 
         float pickupPhaseOffset(int tileSize, const Aabb& bounds)
         {
-            // Spread level-start pickups across four phases instead of bobbing in lockstep.
             const Cell cell = cellAt(tileSize, bounds.topLeft);
             int phaseIndex = (cell.x + cell.y) % PickupBobPhaseCount;
             if (phaseIndex < 0)
@@ -228,13 +224,14 @@ namespace advanced_platformer
             for (const Projectile& projectile : world.projectiles())
             {
                 const glm::vec2 projectileCenter = centerOf(projectile.bounds);
-                const glm::vec2 spritePosition = projectileCenter - projectile.sprite.size * 0.5F;
+                const glm::vec2 spritePosition =
+                    projectileCenter - projectile.sprite.region.size * 0.5F;
                 const float rotationRadians =
                     std::atan2(projectile.velocity.y, projectile.velocity.x);
                 scene.sprites.push_back(
                     {projectile.sprite.textureId,
                      worldToScreen(camera, spritePosition),
-                     projectile.sprite.size,
+                     projectile.sprite.region.size,
                      projectile.sprite.region,
                      false,
                      rotationRadians});
@@ -249,7 +246,7 @@ namespace advanced_platformer
                     std::clamp(burst.lifetimeRemaining / burst.duration, 0.0F, 1.0F);
                 const float progress = 1.0F - remainingFraction;
                 const float scale = 1.0F + progress * (ProjectileBurstFinalScale - 1.0F);
-                const glm::vec2 size = burst.sprite.size * scale;
+                const glm::vec2 size = burst.sprite.region.size * scale;
                 const glm::vec2 position = burst.center - size * 0.5F;
                 const float rotationRadians = std::atan2(burst.direction.y, burst.direction.x);
                 scene.sprites.push_back(

@@ -20,8 +20,6 @@ namespace advanced_platformer
 {
     namespace
     {
-        // Where the key or value an error points at begins. Glaze may point just past a
-        // string's opening quote, or partway through a number it could not read.
         std::size_t tokenStart(std::string_view text, std::size_t offset)
         {
             if (offset >= text.size() || text[offset] == '"')
@@ -41,8 +39,6 @@ namespace advanced_platformer
             return start;
         }
 
-        // The key or value beginning here: a quoted string without its quotes, or the text up
-        // to the next delimiter.
         std::string_view tokenAt(std::string_view text, std::size_t start)
         {
             const std::string_view rest = text.substr(start);
@@ -54,7 +50,6 @@ namespace advanced_platformer
             return rest.substr(0, rest.find_first_of(",}] \t\r\n"));
         }
 
-        // Glaze's name for the error, in words: "unexpected end", "expected comma".
         std::string codeName(const glz::error_ctx& error)
         {
             std::string name(glz::meta<glz::error_code>::keys[static_cast<std::size_t>(error.ec)]);
@@ -97,7 +92,6 @@ namespace advanced_platformer
     {
         Sprite sprite;
         sprite.region = {json.position, json.size};
-        sprite.size = json.displaySize.value_or(json.size);
         sprite.anchor = json.anchor.value_or(SpriteAnchor::BodyFeet);
         return sprite;
     }
@@ -119,8 +113,6 @@ namespace advanced_platformer
         std::string_view sourceName,
         const glz::error_ctx& readError)
     {
-        // Text that is not JSON at all is a syntax error, reported where the syntax breaks,
-        // rather than a shape error at wherever the read gave up.
         const glz::error_ctx syntaxError = glz::validate_json(text);
         const bool isSyntaxError = bool(syntaxError);
         const glz::error_ctx& error = isSyntaxError ? syntaxError : readError;

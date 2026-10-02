@@ -28,13 +28,12 @@ namespace
                                                .at({16.0F, 32.0F})
                                                .platforming()
                                                .climbing()
-                                               .withSprite({0, {}, SpriteSize});
+                                               .withSprite({0, {{0.0F, 0.0F}, SpriteSize}});
         tests::surfaceClimb(actor).surface = surface;
         actor.facing = facing;
         return actor;
     }
 
-    // Turned as the renderer turns a sprite: clockwise on a screen whose y points down.
     glm::vec2 turn(glm::vec2 direction, float radians)
     {
         const float cosine = std::cos(radians);
@@ -43,8 +42,6 @@ namespace
             direction.x * cosine - direction.y * sine, direction.x * sine + direction.y * cosine};
     }
 
-    // Where the art's feet and head point once mirrored and turned. The art stands on a
-    // floor facing right.
     glm::vec2 feetDirection(const ActorSpritePlacement& placement)
     {
         return turn({0.0F, 1.0F}, placement.rotationRadians);
@@ -65,7 +62,6 @@ namespace
         return std::abs(value - expected) < 0.001F;
     }
 
-    // The turned rectangle, found from its corners, is what the placement says it covers.
     void requireVisibleIsTurnedDrawn(const ActorSpritePlacement& placement)
     {
         const glm::vec2 centre = advanced_platformer::centerOf(placement.drawn);
@@ -149,7 +145,6 @@ TEST_CASE("A climber's sprite stands its feet on the surface it holds", "[render
 
 TEST_CASE("A climber's head leads the way it goes", "[render][sprite][climb]")
 {
-    // On a ceiling the head points the way the climber faces.
     REQUIRE(pointsAlong(
         headDirection(
             advanced_platformer::placeActorSprite(climber(ClimbSurface::Ceiling, Facing::Right))),
@@ -159,7 +154,6 @@ TEST_CASE("A climber's head leads the way it goes", "[render][sprite][climb]")
             advanced_platformer::placeActorSprite(climber(ClimbSurface::Ceiling, Facing::Left))),
         {-1.0F, 0.0F}));
 
-    // On a wall it points the climb's wall heading.
     for (const ClimbSurface wall : {ClimbSurface::LeftWall, ClimbSurface::RightWall})
     {
         advanced_platformer::Actor actor = climber(wall, Facing::Right);

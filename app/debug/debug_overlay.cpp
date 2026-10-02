@@ -53,8 +53,7 @@ namespace advanced_platformer
             float atlasWidth)
         {
             if (!isFiniteNonNegative(sprite.region.position) ||
-                !isFinitePositive(sprite.region.size) || !isFinitePositive(sprite.size) ||
-                atlasWidth < sprite.region.size.x)
+                !isFinitePositive(sprite.region.size) || atlasWidth < sprite.region.size.x)
             {
                 throw std::logic_error("Debug overlay requires a valid sprite region");
             }
@@ -148,7 +147,6 @@ namespace advanced_platformer
             return info;
         }
 
-        // The actors the overlay shows: those the camera can see, a tile beyond its edges.
         std::vector<const Actor*> actorsInView(const World& world, const Aabb& view)
         {
             std::vector<const Actor*> shown;
@@ -200,8 +198,6 @@ namespace advanced_platformer
             return nearest;
         }
 
-        // The bounds of the cell under the cursor when its tile can break, for the hint
-        // that B breaks it; nothing off the map or over a tile that cannot.
         std::optional<Aabb> breakableCellUnderCursor(
             const TileMap& map,
             std::optional<glm::vec2> cursorWorld)

@@ -14,24 +14,10 @@
 
 #include "advanced_platformer/render/sprite.hpp"
 
-// Content files read with Glaze through structs that mirror them: their member names are the
-// file's keys. These declarations teach Glaze the shared shapes those structs use.
-
 namespace advanced_platformer
 {
-    // The names a content file writes for an enum's values, in the order an error lists them.
-    // Specialize it with a Names array of {name, value} pairs, and read the enum with
-    // NamedEnumReader:
-    //
-    //   template <> struct ContentNames<ItemEffect>
-    //   {
-    //       static constexpr std::array Names{
-    //           std::pair{std::string_view{"none"}, ItemEffect::None}, ...};
-    //   };
-    //   template <> struct glz::from<glz::JSON, ItemEffect> : NamedEnumReader<ItemEffect> {};
     template <class Enum> struct ContentNames;
 
-    // "a", "a or b", "a, b or c".
     template <std::size_t Count> std::string listOfNames(const auto& names)
     {
         std::string list;
@@ -46,8 +32,6 @@ namespace advanced_platformer
         return list;
     }
 
-    // Reads an enum from one of its ContentNames. An unknown name is an error that lists the
-    // names it could have been.
     template <class Enum> struct NamedEnumReader
     {
         template <auto Options> static void op(Enum& value, auto&& context, auto&& it, auto&& end)
@@ -75,8 +59,6 @@ namespace advanced_platformer
         }
     };
 
-    // A struct read from an object that may leave any member out, which then keeps its C++
-    // default. Unknown keys are still errors. The struct's member names are the keys.
     template <class T> class WithDefaults
     {
     public:
@@ -122,7 +104,6 @@ template <class T> struct glz::from<glz::JSON, advanced_platformer::WithDefaults
     }
 };
 
-// A vector is written as [x, y], with exactly two numbers.
 template <> struct glz::from<glz::JSON, glm::vec2>
 {
     template <auto Options> static void op(glm::vec2& value, auto&& context, auto&& it, auto&& end)
@@ -147,31 +128,22 @@ template <> struct glz::from<glz::JSON, glm::vec2>
 
 namespace advanced_platformer
 {
-    // A sprite as a content file writes it: a region of the atlas, with an optional display
-    // size, which defaults to the region's, and an optional anchor.
     struct SpriteJson
     {
         glm::vec2 position{};
         glm::vec2 size{};
-        std::optional<glm::vec2> displaySize;
         std::optional<SpriteAnchor> anchor;
     };
 
     Sprite spriteFrom(const SpriteJson& json);
 
-    // The whole content file at this path, or an error naming its absolute path.
     std::string loadContentText(const std::filesystem::path& path);
 
-    // Reports a Glaze read error as "source: line L, column C: what was wrong", naming the
-    // key or value found there, or "invalid JSON: ..." when the text is not JSON at all.
     [[noreturn]] void failContentRead(
         std::string_view text,
         std::string_view sourceName,
         const glz::error_ctx& error);
 
-    // Reads a content file into the struct that mirrors it. Every key must be one the struct
-    // has, and every member must be present unless it is a std::optional. This checks shape
-    // only; the catalog's validator checks the values.
     template <class T> T readContent(std::string_view text, std::string_view sourceName)
     {
         T result{};

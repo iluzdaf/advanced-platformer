@@ -27,7 +27,7 @@ TEST_CASE(
         tests::ActorBuilder::sized({12.0F, 12.0F})
             .inCell({4, 1})
             .flying(0.0F)
-            .withSprite({0, {}, {1.0F, 1.0F}})
+            .withSprite({0, {{0.0F, 0.0F}, {1.0F, 1.0F}}})
             .withAnimator(tests::fullAnimator()));
 
     advanced_platformer::updateWorldPresentation(map, world, 0.0F);

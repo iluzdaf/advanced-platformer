@@ -12,10 +12,12 @@ namespace advanced_platformer
         {
         case SpriteAnchor::BodyFeet: {
             const glm::vec2 bodyFeet = feetOf(bodyBounds);
-            return {{bodyFeet.x - sprite.size.x * 0.5F, bodyFeet.y - sprite.size.y}, sprite.size};
+            return {
+                {bodyFeet.x - sprite.region.size.x * 0.5F, bodyFeet.y - sprite.region.size.y},
+                sprite.region.size};
         }
         case SpriteAnchor::BodyCenter:
-            return boxCenteredOn(centerOf(bodyBounds), sprite.size);
+            return boxCenteredOn(centerOf(bodyBounds), sprite.region.size);
         }
 
         throw std::invalid_argument("Sprite anchor is invalid");

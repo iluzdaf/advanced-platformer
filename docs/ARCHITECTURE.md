@@ -818,16 +818,13 @@ facing flips, projectile rotation, and draw order. They do not test the graphics
 The engine keeps visual and physical dimensions separate:
 
 - texture size is the full atlas size in source-image pixels;
-- `SpriteRegion` is one source rectangle inside that texture;
-- `Sprite::size` is the rectangle drawn in world pixels;
+- `SpriteRegion` is one source rectangle inside that texture, and a sprite draws at its
+  size: one atlas pixel is one world pixel;
 - `Body::bounds.size` is the collision rectangle in world pixels.
 
-A tile has only a `SpriteRegion` and no `Sprite::size`: it always fills one cell, so its
-region is the tile size square.
-Every other sprite in the same atlas chooses its world size independently.
-
-Matching sizes are assigned explicitly; the engine does not assume a sprite and body
-are equal. Actor sprites are normally positioned from the body's feet, which lets a
+How big something looks is decided by its art, so the atlas shows what the game draws.
+A tile's region is always the tile size square. The engine does not assume a sprite and
+body are equal. Actor sprites are normally positioned from the body's feet, which lets a
 tall image use a smaller collider. The bat additionally uses a centred sprite anchor so
 its smaller collider matches the creature in the middle of its frame.
 
@@ -860,10 +857,8 @@ all require animation clips.
 The supplied atlas is 256 by 256 pixels. Artwork sources and atlas tooling live outside this repository; what is here is
 the finished runtime atlas.
 
-Frames within a set must share one size. `SpriteRegion` supports arbitrary source
-rectangles, but playback changes only the region while `Sprite::size` and its anchor stay
-fixed, so mixed-size frames would stretch. Fixed-size example frames avoid this. A richer
-`AnimationFrame` carrying a display size and pivot is
+Frames within a set must share one size, so an animating actor's sprite neither jumps
+nor resizes from frame to frame. A richer `AnimationFrame` carrying a pivot is
 [future work](FUTURE_WORK.md); whatever form it takes, collision bodies must remain
 independent of animation frame dimensions.
 

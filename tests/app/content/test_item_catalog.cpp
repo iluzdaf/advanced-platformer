@@ -33,7 +33,7 @@ TEST_CASE("Item JSON resolves custom names to stable runtime IDs", "[app][items]
     REQUIRE(items[0].effect == advanced_platformer::ItemEffect::Heal);
     REQUIRE(items[0].effectAmount == 3);
     REQUIRE(items[0].icon.textureId == 6);
-    REQUIRE(items[0].icon.size == glm::vec2{8, 12});
+    REQUIRE(items[0].icon.region.size == glm::vec2{8, 12});
     REQUIRE_THROWS_AS(
         advanced_platformer::composeItemStack(catalog, {"missing", 1}), std::invalid_argument);
     REQUIRE_THROWS_AS(
@@ -42,8 +42,6 @@ TEST_CASE("Item JSON resolves custom names to stable runtime IDs", "[app][items]
 
 TEST_CASE("Item JSON names where a malformed file goes wrong", "[app][items][json]")
 {
-    // Shape errors come from reading the file, so they name a line and column and quote the
-    // key or value found there.
     auto itemJson = itemData();
     auto& item = itemJson["items"]["herb"];
     std::string expected;
@@ -90,7 +88,6 @@ TEST_CASE("Item JSON names where a malformed file goes wrong", "[app][items][jso
 
 TEST_CASE("Item JSON names the item a rule rejects", "[app][items][json]")
 {
-    // Rule errors come from validating what was read, so they name the item's path.
     auto itemJson = itemData();
     auto& item = itemJson["items"]["herb"];
     SECTION("Zero capacity")
@@ -109,9 +106,9 @@ TEST_CASE("Item JSON names the item a rule rejects", "[app][items][json]")
     {
         item["icon"]["position"] = tests::numbers({-1, 0});
     }
-    SECTION("Zero display size")
+    SECTION("Zero size")
     {
-        item["icon"]["displaySize"] = tests::numbers({0, 8});
+        item["icon"]["size"] = tests::numbers({0, 8});
     }
     REQUIRE_THROWS_WITH(
         advanced_platformer::parseItemCatalog(tests::dumpJson(itemJson), "items.json"),
@@ -121,7 +118,7 @@ TEST_CASE("Item JSON names the item a rule rejects", "[app][items][json]")
 TEST_CASE("Item definitions are validated without JSON", "[app][items][validation]")
 {
     auto catalog = advanced_platformer::parseItemCatalog(tests::dumpJson(itemData()), "fixture");
-    catalog.definitions.at("herb").icon.size.x = std::numeric_limits<float>::infinity();
+    catalog.definitions.at("herb").icon.region.size.x = std::numeric_limits<float>::infinity();
     REQUIRE_THROWS_AS(advanced_platformer::validateItemCatalog(catalog), std::invalid_argument);
     REQUIRE_THROWS_AS(
         advanced_platformer::loadItemCatalog("tests/fixtures/catalogs/missing-items.json"),

@@ -97,8 +97,6 @@ TEST_CASE("Game debug data retains actor definition names", "[app][debug]")
 
 TEST_CASE("Debug overlay data names a climbing NPC's navigation profile", "[app][debug]")
 {
-    // A climber's profile includes how it climbs, so the name is only found when the
-    // named profile includes it too.
     const auto levels = advanced_platformer::parseLevelCatalog(
         R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"climber_placement.json"}]})",
         "test catalog",
@@ -134,7 +132,6 @@ TEST_CASE("Debug overlay data marks a breakable tile under the cursor", "[app][d
     };
 
     REQUIRE_FALSE(overlayWithCursor(std::nullopt).breakableCellUnderCursor.has_value());
-    // The solid tile does not break; the glass one does, and is marked by its cell.
     REQUIRE_FALSE(overlayWithCursor(glm::vec2{4.0F, 20.0F}).breakableCellUnderCursor.has_value());
     const std::optional<advanced_platformer::Aabb> glass =
         overlayWithCursor(glm::vec2{20.0F, 20.0F}).breakableCellUnderCursor;
@@ -180,7 +177,7 @@ TEST_CASE("Debug overlay data reports player presentation and NPC state", "[app]
     const advanced_platformer::Actor player = tests::ActorBuilder::sized({12.0F, 12.0F})
                                                   .atFeet({38.0F, 208.0F})
                                                   .platforming()
-                                                  .withSprite({1, region, {32.0F, 24.0F}})
+                                                  .withSprite({1, region})
                                                   .withAnimator(animator);
 
     advanced_platformer::Actor npc =
@@ -279,7 +276,7 @@ TEST_CASE("Debug overlay data describes projectiles", "[app][debug]")
     owned.bounds = {{24.0F, 32.0F}, {4.0F, 2.0F}};
     owned.lifetimeRemaining = 1.25F;
     owned.owner = advanced_platformer::ActorId{7};
-    owned.sprite.size = {4.0F, 2.0F};
+    owned.sprite.region.size = {4.0F, 2.0F};
     world.addProjectile(owned);
 
     advanced_platformer::Projectile unowned = owned;
@@ -379,7 +376,7 @@ TEST_CASE("The overlay shows only what the camera can see", "[app][debug]")
     advanced_platformer::Projectile shown;
     shown.bounds = {{20.0F, 20.0F}, {4.0F, 2.0F}};
     shown.lifetimeRemaining = 1.0F;
-    shown.sprite.size = {4.0F, 2.0F};
+    shown.sprite.region.size = {4.0F, 2.0F};
     world.addProjectile(shown);
     advanced_platformer::Projectile hidden = shown;
     hidden.bounds.topLeft = {20.0F, edge.y + tile * 2.0F};
@@ -393,7 +390,6 @@ TEST_CASE("The overlay shows only what the camera can see", "[app][debug]")
     const advanced_platformer::DebugOverlay debug = advanced_platformer::makeDebugOverlay(
         world, map, cameraController, 128.0F, tests::FixedStepSeconds);
 
-    // A tile beyond the camera's edge is still shown; further out is not.
     REQUIRE(debug.actors.size() == 1);
     REQUIRE(debug.actors.front().id == beyondEdge);
     REQUIRE(debug.projectiles.size() == 1);
