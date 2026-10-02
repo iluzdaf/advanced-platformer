@@ -52,25 +52,22 @@ inside the atlas.
 ```json
 {
   "tileLegend": { ".": "empty", "#": "stone" },
-  "objectLegend": { "Z": { "type": "actor", "definition": "zombie" } },
-  "map": ["..Z.....", "########"],
+  "map": ["........", "########"],
   "playerSpawnCell": [1, 0],
-  "pickups": [{ "definition": "medicine_box", "spawnCell": [4, 0] }],
+  "actors": [{ "id": "zombie_1", "definition": "zombie", "spawnCell": [2, 0] }],
+  "pickups": [{ "id": "medicine_1", "definition": "medicine_box", "spawnCell": [4, 0] }],
   "exit": { "definition": "bunker_door", "spawnCell": [6, 0], "nextLevel": 2 }
 }
 ```
 
-| Field                                  | Required | Meaning                                                                            |
-| -------------------------------------- | -------- | ---------------------------------------------------------------------------------- |
-| `tileLegend`                           | Yes      | One-character map symbols to tile names in `tiles.json`.                           |
-| `objectLegend`                         | No       | One-character map symbols that place objects. See [Object legend](#object-legend). |
-| `map`                                  | Yes      | Rows of equal, nonzero length. Every symbol is in one legend.                      |
-| `playerSpawnCell` or `playerSpawnFeet` | Yes\*    | Where the player starts.                                                           |
-| `actors`                               | No       | Actor placements.                                                                  |
-| `pickups`                              | No       | Pickup placements.                                                                 |
-| `exit`                                 | Yes\*    | The exit placement. Without `nextLevel`, it completes the game.                    |
-
-\* Or a marker in `objectLegend`. A level has exactly one player and one exit.
+| Field                                  | Required | Meaning                                                         |
+| -------------------------------------- | -------- | --------------------------------------------------------------- |
+| `tileLegend`                           | Yes      | One-character map symbols to tile names in `tiles.json`.        |
+| `map`                                  | Yes      | Rows of equal, nonzero length. Every symbol is in `tileLegend`. |
+| `playerSpawnCell` or `playerSpawnFeet` | Yes      | Where the player starts.                                        |
+| `actors`                               | No       | Actor placements.                                               |
+| `pickups`                              | No       | Pickup placements.                                              |
+| `exit`                                 | Yes      | The exit placement. Without `nextLevel`, it completes the game. |
 
 ### Positions
 
@@ -80,26 +77,17 @@ that cell, and `…Feet` gives that point in world pixels.
 
 ### Placements
 
-| Placement | Fields                                                                                                                                                          |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Actor     | `definition` from `actors.json`; `spawnCell` or `spawnFeet`; optional `patrol` with `firstCell`/`firstFeet` and `secondCell`/`secondFeet`, absolute positions.  |
-| Pickup    | `definition` from `pickups.json`; `spawnCell` or `spawnFeet`.                                                                                                   |
-| Exit      | `definition` from `exits.json`; `spawnCell` or `spawnFeet`; optional `requirement` (`item`, positive `quantity`), `consumeItem` (default `false`), `nextLevel`. |
+| Placement | Fields                                                                                                                                                               |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Actor     | `id`; `definition` from `actors.json`; `spawnCell` or `spawnFeet`; optional `patrol` with `firstCell`/`firstFeet` and `secondCell`/`secondFeet`, absolute positions. |
+| Pickup    | `id`; `definition` from `pickups.json`; `spawnCell` or `spawnFeet`.                                                                                                  |
+| Exit      | `definition` from `exits.json`; `spawnCell` or `spawnFeet`; optional `requirement` (`item`, positive `quantity`), `consumeItem` (default `false`), `nextLevel`.      |
+
+An `id` names one actor or pickup placement. It is nonempty and unique among the
+level's actors and pickups.
 
 Bodies come from definitions, never placements. A pickup falls until it rests on a
 tile, and falls again if that tile breaks.
-
-### Object legend
-
-An entry has a `type`, `player`, `actor`, `pickup` or `exit`, and the same fields as
-that placement except its position, which each marked cell supplies. A player entry has
-no other fields.
-
-- A marked cell becomes empty terrain.
-- A symbol cannot be in both legends.
-- Explicit placements come first, then markers in row order, left to right.
-- Every marker of a symbol shares its entry. Use an explicit placement for an object
-  with its own patrol, on non-empty terrain, or off a cell's centre.
 
 ## Tiles
 

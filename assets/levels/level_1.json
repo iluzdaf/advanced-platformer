@@ -1,31 +1,5 @@
 {
   "tileLegend": { ".": "empty", "#": "stone", "G": "grass", "X": "glass" },
-  "objectLegend": {
-    "P": { "type": "player" },
-    "Z": {
-      "type": "actor",
-      "definition": "zombie"
-    },
-    "K": { "type": "pickup", "definition": "key" },
-    "E": {
-      "type": "exit",
-      "definition": "bunker_door",
-      "requirement": {
-        "item": "key",
-        "quantity": 1
-      },
-      "consumeItem": true,
-      "nextLevel": 2
-    },
-    "C": {
-      "type": "pickup",
-      "definition": "coin_pile"
-    },
-    "H": {
-      "type": "pickup",
-      "definition": "health_potion"
-    }
-  },
   "map": [
     "...................................................",
     "...................................................",
@@ -36,16 +10,18 @@
     ".........................................#.........",
     ".........................................#.........",
     ".........................................#.........",
-    ".........................................#..K......",
+    ".........................................#.........",
     ".........................................##XXX#####",
     "...................................................",
     ".................................#####.............",
-    "......C.......GG......H........#########...........",
-    ".P...###..Z..###..Z..###.GGGGG.#########.........E.",
+    "..............GG...............#########...........",
+    ".....###.....###.....###.GGGGG.#########...........",
     "###################################################"
   ],
+  "playerSpawnCell": [1, 14],
   "actors": [
     {
+      "id": "zombie_1",
       "definition": "zombie",
       "spawnCell": [27, 14],
       "patrol": {
@@ -54,8 +30,46 @@
       }
     },
     {
+      "id": "zombie_2",
       "definition": "zombie",
       "spawnCell": [44, 9]
+    },
+    {
+      "id": "zombie_3",
+      "definition": "zombie",
+      "spawnCell": [10, 14]
+    },
+    {
+      "id": "zombie_4",
+      "definition": "zombie",
+      "spawnCell": [18, 14]
     }
-  ]
+  ],
+  "pickups": [
+    {
+      "id": "key_1",
+      "definition": "key",
+      "spawnCell": [44, 9]
+    },
+    {
+      "id": "coin_pile_1",
+      "definition": "coin_pile",
+      "spawnCell": [6, 13]
+    },
+    {
+      "id": "health_potion_1",
+      "definition": "health_potion",
+      "spawnCell": [22, 13]
+    }
+  ],
+  "exit": {
+    "definition": "bunker_door",
+    "spawnCell": [49, 14],
+    "requirement": {
+      "item": "key",
+      "quantity": 1
+    },
+    "consumeItem": true,
+    "nextLevel": 2
+  }
 }

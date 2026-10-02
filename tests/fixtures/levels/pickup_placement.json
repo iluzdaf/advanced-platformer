@@ -1,14 +1,14 @@
 {
   "tileLegend": { ".": "empty", "#": "stone" },
-  "objectLegend": {
-    "P": { "type": "player" },
-    "K": { "type": "pickup", "definition": "door_key" },
-    "E": {
-      "type": "exit",
-      "definition": "test_door",
-      "requirement": { "item": "key", "quantity": 1 }
-    }
-  },
-  "map": [".....", "P.K.E", "#####"],
-  "pickups": [{ "definition": "medicine_box", "spawnCell": [1, 1] }]
+  "map": [".....", ".....", "#####"],
+  "playerSpawnCell": [0, 1],
+  "pickups": [
+    { "id": "medicine", "definition": "medicine_box", "spawnCell": [1, 1] },
+    { "id": "key", "definition": "door_key", "spawnCell": [2, 1] }
+  ],
+  "exit": {
+    "definition": "test_door",
+    "spawnCell": [4, 1],
+    "requirement": { "item": "key", "quantity": 1 }
+  }
 }

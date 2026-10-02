@@ -5,6 +5,7 @@
   "actors": [],
   "pickups": [
     {
+      "id": "key",
       "definition": "door_key",
       "spawnCell": [2, 2]
     }

@@ -2,7 +2,6 @@
 #include <catch2/matchers/catch_matchers.hpp>
 
 #include <limits>
-#include <optional>
 #include <stdexcept>
 
 #include "content/content_validation.hpp"
@@ -31,29 +30,6 @@ TEST_CASE("Exit settings are validated without JSON", "[app][content][validation
         "exit.nextLevel: level number must be positive");
     exit.nextLevel = -1;
     REQUIRE_THROWS_AS(advanced_platformer::validateExitSettings(exit), std::invalid_argument);
-}
-
-TEST_CASE("Unique placement validation retains authoring origins", "[app][content][validation]")
-{
-    REQUIRE_NOTHROW(advanced_platformer::validateSinglePlacement({{"map[0][1]", 'P'}}, "player"));
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::validateSinglePlacement({}, "player"),
-        "player: expected exactly one placement");
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::validateSinglePlacement({}, "exit"),
-        "exit: expected exactly one placement");
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::validateSinglePlacement(
-            {{"map[0][1]", 'P'}, {"map[0][2]", 'P'}}, "player"),
-        "map[0][2]: second player marker 'P'; player already placed at map[0][1]");
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::validateSinglePlacement(
-            {{"exit", std::nullopt}, {"map[0][3]", 'E'}}, "exit"),
-        "map[0][3]: second exit marker 'E'; exit already placed at exit");
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::validateSinglePlacement(
-            {{"playerSpawnCell", std::nullopt}, {"playerSpawnFeet", std::nullopt}}, "player"),
-        "playerSpawnFeet: second player placement; player already placed at playerSpawnCell");
 }
 
 TEST_CASE(
@@ -138,19 +114,13 @@ TEST_CASE("Tile catalog validation rejects invalid C++ definitions", "[app][cont
     REQUIRE_THROWS_AS(advanced_platformer::validateTileCatalog(catalog), std::invalid_argument);
 }
 
-TEST_CASE("Legend symbols are unambiguous independently of JSON", "[app][content][validation]")
+TEST_CASE("Tile legend symbols are unambiguous independently of JSON", "[app][content][validation]")
 {
-    REQUIRE_NOTHROW(advanced_platformer::validateLegendSymbols({".", "#"}, {"P", "Z"}));
+    REQUIRE_NOTHROW(advanced_platformer::validateLegendSymbols({".", "#"}));
+    REQUIRE_THROWS_AS(advanced_platformer::validateLegendSymbols({"long"}), std::invalid_argument);
+    REQUIRE_THROWS_AS(advanced_platformer::validateLegendSymbols({""}), std::invalid_argument);
     REQUIRE_THROWS_AS(
-        advanced_platformer::validateLegendSymbols({"long"}, {}), std::invalid_argument);
-    REQUIRE_THROWS_AS(
-        advanced_platformer::validateLegendSymbols({"."}, {""}), std::invalid_argument);
-    REQUIRE_THROWS_AS(
-        advanced_platformer::validateLegendSymbols({"."}, {"."}), std::invalid_argument);
-    REQUIRE_THROWS_AS(
-        advanced_platformer::validateLegendSymbols({".", "."}, {}), std::invalid_argument);
-    REQUIRE_THROWS_AS(
-        advanced_platformer::validateLegendSymbols({"."}, {"P", "P"}), std::invalid_argument);
+        advanced_platformer::validateLegendSymbols({".", "."}), std::invalid_argument);
 }
 
 TEST_CASE(
@@ -169,5 +139,5 @@ TEST_CASE(
         "map[1]: expected 2 columns, got 1");
     REQUIRE_THROWS_WITH(
         advanced_platformer::validateMapRows({".?"}, {{'.', "empty"}}),
-        "map[0][1]: unknown symbol '?'; define it in tileLegend or objectLegend");
+        "map[0][1]: unknown symbol '?'; define it in tileLegend");
 }

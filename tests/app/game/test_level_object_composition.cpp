@@ -52,7 +52,7 @@ TEST_CASE("Exit item references resolve through the item catalog", "[app][pickup
         Catch::Matchers::ContainsSubstring("requirement.item: unknown item 'missing'"));
 }
 
-TEST_CASE("Unknown unused pickup legend references identify their source", "[app][pickups]")
+TEST_CASE("Unknown pickup definitions identify their placement", "[app][pickups]")
 {
     const auto levelCatalog = advanced_platformer::parseLevelCatalog(
         R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"unknown_pickup.json"}]})",
@@ -63,14 +63,13 @@ TEST_CASE("Unknown unused pickup legend references identify their source", "[app
     REQUIRE_THROWS_WITH(
         advanced_platformer::composeGameLevel(levelCatalog, 1, 0, gameCatalogs),
         Catch::Matchers::ContainsSubstring(
-            "unknown_pickup.json: objectLegend.K.definition: unknown pickup definition 'missing'"));
+            "unknown_pickup.json: pickups[0].definition: unknown pickup definition 'missing'"));
 }
 
 TEST_CASE("Level composition reuses the supplied session item catalog", "[app][pickups]")
 {
     const auto levelCatalog =
         advanced_platformer::loadLevelCatalog("tests/fixtures/levels/levels.json");
-    // An extra item shifts generated IDs; both levels must use this session's item catalog.
     const auto itemCatalog = advanced_platformer::parseItemCatalog(
         R"({"items":{
         "aaa":{"name":"Extra item","icon":{"position":[0,0],"size":[8,8]},"maximumStack":1},
@@ -109,7 +108,7 @@ TEST_CASE("Level exit placement combines a definition with completion settings",
     REQUIRE(exit->requirement.has_value());
 }
 
-TEST_CASE("Unknown unused exit definitions retain the legend path", "[app][exits]")
+TEST_CASE("Unknown exit definitions identify their placement", "[app][exits]")
 {
     const auto levelCatalog = advanced_platformer::parseLevelCatalog(
         R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"unknown_exit.json"}]})",
@@ -120,5 +119,5 @@ TEST_CASE("Unknown unused exit definitions retain the legend path", "[app][exits
     REQUIRE_THROWS_WITH(
         advanced_platformer::composeGameLevel(levelCatalog, 1, 0, gameCatalogs),
         Catch::Matchers::ContainsSubstring(
-            "unknown_exit.json: objectLegend.E.definition: unknown exit definition 'missing'"));
+            "unknown_exit.json: exit.definition: unknown exit definition 'missing'"));
 }
