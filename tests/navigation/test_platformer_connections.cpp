@@ -289,6 +289,63 @@ TEST_CASE(
     REQUIRE(tests::connectionsFrom(map, {2, 2}, walker).connections.empty());
 }
 
+TEST_CASE(
+    "A tile-sized climber changes between wall and ceiling at the same position",
+    "[navigation][platformer][climb]")
+{
+    using advanced_platformer::ClimbSurface;
+    const advanced_platformer::TileMap map =
+        tests::TileMapBuilder({".ccc.", "c...c", "c...c", "ccccc"})
+            .where('c', tests::Tile{}.blocksMovement().climbable());
+    const auto side = static_cast<float>(tests::TileSize);
+    const advanced_platformer::SurfaceClimbConfig climbConfig{.speed = 60.0F};
+    const PlatformerTraversalProfile climber{
+        .size = {side, side}, .stepSeconds = tests::FixedStepSeconds, .climb = climbConfig};
+
+    for (const Cell cell : {Cell{1, 1}, Cell{3, 1}})
+    {
+        const ClimbSurface wall = cell.x == 1 ? ClimbSurface::LeftWall : ClimbSurface::RightWall;
+        const std::vector<RouteConnection> connections =
+            tests::connectionsFrom(map, cell, climber).connections;
+        for (const ClimbSurface from : {wall, ClimbSurface::Ceiling})
+        {
+            const ClimbSurface to = from == wall ? ClimbSurface::Ceiling : wall;
+            CAPTURE(cell.x, from, to);
+            const auto connection = std::ranges::find_if(
+                connections,
+                [cell, from, to](const RouteConnection& candidate)
+                {
+                    return candidate.sourceSurface == from &&
+                           candidate.step.destination.cell == cell &&
+                           candidate.step.destination.surface == to;
+                });
+            REQUIRE(connection != connections.end());
+
+            const advanced_platformer::Aabb bounds =
+                advanced_platformer::boundsAtSurface(tests::TileSize, {cell, from}, climber.size);
+            advanced_platformer::Body body{bounds, {0.0F, 0.0F}};
+            advanced_platformer::PlatformerMovement movement{climber.movement};
+            advanced_platformer::SurfaceClimb climb{climbConfig, from};
+            const advanced_platformer::InputProgram& inputs = connection->step.inputs;
+            const long ticks =
+                std::lround(advanced_platformer::durationOf(inputs) / climber.stepSeconds);
+            for (long tick = 0; tick < ticks; ++tick)
+            {
+                advanced_platformer::updateSurfaceClimbMovement(
+                    map,
+                    body,
+                    movement,
+                    climb,
+                    advanced_platformer::replayInput(
+                        inputs, static_cast<float>(tick) * climber.stepSeconds),
+                    climber.stepSeconds);
+            }
+            REQUIRE(climb.surface == to);
+            REQUIRE(body.bounds.topLeft == bounds.topLeft);
+        }
+    }
+}
+
 TEST_CASE("A climber cannot hold an unmarked wall", "[navigation][platformer][climb]")
 {
     const advanced_platformer::TileMap map =

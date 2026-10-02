@@ -405,6 +405,22 @@ TEST_CASE(
     REQUIRE(followsToTheEnd(map, pathOf(result), climberAt(start), 2000));
 }
 
+TEST_CASE(
+    "A climber acquires a wall when walking stops short of contact",
+    "[navigation][platformer][climb]")
+{
+    const TileMap map = tests::TileMapBuilder({".ccc.", "c...c", "c...c", "c...c", "ccccc"})
+                            .where('c', tests::Tile{}.blocksMovement().climbable());
+    const auto side = static_cast<float>(tests::TileSize);
+    const Actor climber = tests::ActorBuilder::sized({side, side})
+                              .atFeet(feetIn({1, 3}) + glm::vec2{1.0F, 0.0F})
+                              .platforming()
+                              .climbing(ClimbConfig);
+    const NavigationPathResult result = findPath(map, climber, feetIn({3, 1}));
+    REQUIRE(result.status == NavigationPathStatus::Found);
+    REQUIRE(followsToTheEnd(map, pathOf(result), climber, 1000));
+}
+
 TEST_CASE("A search never simulates or writes to the cache", "[navigation][cache]")
 {
     const TileMap map =
