@@ -1,6 +1,7 @@
 {
   "tileLegend": { ".": "empty", "#": "stone" },
-  "objectLegend": { "P": { "type": "player" }, "Z": { "type": "actor", "definition": "missing" } },
-  "map": [".......", "P......", "#######"],
+  "map": [".......", ".......", "#######"],
+  "playerSpawnCell": [0, 1],
+  "actors": [{ "id": "stranger", "definition": "missing", "spawnCell": [3, 1] }],
   "exit": { "definition": "test_door", "spawnCell": [6, 1] }
 }

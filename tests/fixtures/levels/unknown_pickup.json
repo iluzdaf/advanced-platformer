@@ -1,9 +1,7 @@
 {
   "tileLegend": { ".": "empty", "#": "stone" },
-  "objectLegend": {
-    "P": { "type": "player" },
-    "K": { "type": "pickup", "definition": "missing" },
-    "E": { "type": "exit", "definition": "test_door" }
-  },
-  "map": [".....", "P...E", "#####"]
+  "map": [".....", ".....", "#####"],
+  "playerSpawnCell": [0, 1],
+  "pickups": [{ "id": "mystery", "definition": "missing", "spawnCell": [2, 1] }],
+  "exit": { "definition": "test_door", "spawnCell": [4, 1] }
 }

@@ -84,5 +84,5 @@ TEST_CASE("Level composition reports unknown actor definitions", "[app][actors]"
     REQUIRE_THROWS_WITH(
         advanced_platformer::composeGameLevel(invalidLevelCatalog, 1, 0, gameCatalogs),
         Catch::Matchers::ContainsSubstring(
-            "objectLegend.Z.definition: unknown actor definition 'missing'"));
+            "actors[0].definition: unknown actor definition 'missing'"));
 }

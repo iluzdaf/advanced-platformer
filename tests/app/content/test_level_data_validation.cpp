@@ -54,14 +54,16 @@ TEST_CASE("Explicit level placements reject unknown fields", "[app][content][jso
     SECTION("Actor")
     {
         level["actors"] = tests::list({tests::object(
-            {{"definition", "guard"},
+            {{"id", "guard"},
+             {"definition", "guard"},
              {"spawnCell", tests::numbers({1, 0})},
              {"patroll", tests::emptyObject()}})});
     }
     SECTION("Patrol")
     {
         level["actors"] = tests::list({tests::object(
-            {{"definition", "guard"},
+            {{"id", "guard"},
+             {"definition", "guard"},
              {"spawnCell", tests::numbers({1, 0})},
              {"patrol",
               tests::object(
@@ -72,7 +74,10 @@ TEST_CASE("Explicit level placements reject unknown fields", "[app][content][jso
     SECTION("Pickup")
     {
         level["pickups"] = tests::list({tests::object(
-            {{"definition", "key"}, {"spawnCell", tests::numbers({2, 0})}, {"quantitty", 3}})});
+            {{"id", "key"},
+             {"definition", "key"},
+             {"spawnCell", tests::numbers({2, 0})},
+             {"quantitty", 3}})});
     }
     SECTION("Exit")
     {
@@ -104,7 +109,6 @@ TEST_CASE("Present placement lists must be arrays", "[app][content][json]")
         Catch::Matchers::StartsWith("placements.json: line 1, column ") &&
             Catch::Matchers::EndsWith("expected a list, found 'coins'"));
 
-    // A null list is read as one left out.
     level = minimalLevel();
     level["pickups"] = nullptr;
     REQUIRE(
@@ -112,7 +116,7 @@ TEST_CASE("Present placement lists must be arrays", "[app][content][json]")
             .pickups.empty());
 }
 
-TEST_CASE("Levels without object markers may omit placement arrays", "[app][content][json]")
+TEST_CASE("Levels may omit placement arrays", "[app][content][json]")
 {
     const auto data = advanced_platformer::parseLevelData(
         R"({
@@ -160,32 +164,33 @@ TEST_CASE("Level maps require rectangular rows", "[app][content][json]")
 TEST_CASE("Actor placements need a non-empty definition", "[app][content][json]")
 {
     auto level = minimalLevel();
-    level["actors"] =
-        tests::list({tests::object({{"definition", ""}, {"spawnCell", tests::numbers({1, 0})}})});
+    level["actors"] = tests::list({tests::object(
+        {{"id", "guard"}, {"definition", ""}, {"spawnCell", tests::numbers({1, 0})}})});
 
-    REQUIRE_THROWS_AS(
-        advanced_platformer::parseLevelData(tests::dumpJson(level), "empty actor name"),
-        std::invalid_argument);
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"),
+        "level.json: actors[0].definition: actor definition name cannot be empty");
 }
 
 TEST_CASE("Actor placements choose a cell or feet, not both", "[app][content][json]")
 {
     auto level = minimalLevel();
     level["actors"] = tests::list({tests::object(
-        {{"definition", "guard"},
+        {{"id", "guard"},
+         {"definition", "guard"},
          {"spawnCell", tests::numbers({1, 0})},
          {"spawnFeet", tests::numbers({24, 16})}})});
 
-    REQUIRE_THROWS_AS(
-        advanced_platformer::parseLevelData(tests::dumpJson(level), "ambiguous actor"),
-        std::invalid_argument);
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"),
+        "level.json: actors[0]: supply exactly one of 'spawnCell' or 'spawnFeet'");
 }
 
 TEST_CASE("Pickup placements take their stack from a definition", "[app][content][json]")
 {
     auto level = minimalLevel();
-    level["pickups"] = tests::list(
-        {tests::object({{"definition", "treasure"}, {"spawnCell", tests::numbers({1, 0})}})});
+    level["pickups"] = tests::list({tests::object(
+        {{"id", "chest"}, {"definition", "treasure"}, {"spawnCell", tests::numbers({1, 0})}})});
     const char* expected = "";
     SECTION("No definition")
     {
@@ -215,12 +220,12 @@ TEST_CASE("Pickup placements take their stack from a definition", "[app][content
 TEST_CASE("Pickup definition names cannot be empty", "[app][content][json]")
 {
     auto level = minimalLevel();
-    level["pickups"] =
-        tests::list({tests::object({{"definition", ""}, {"spawnCell", tests::numbers({1, 0})}})});
+    level["pickups"] = tests::list({tests::object(
+        {{"id", "chest"}, {"definition", ""}, {"spawnCell", tests::numbers({1, 0})}})});
 
-    REQUIRE_THROWS_AS(
-        advanced_platformer::parseLevelData(tests::dumpJson(level), "placement.json"),
-        std::invalid_argument);
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"),
+        "level.json: pickups[0].definition: pickup definition name cannot be empty");
 }
 
 TEST_CASE("Missing level JSON is rejected at the file boundary", "[app][content][json]")

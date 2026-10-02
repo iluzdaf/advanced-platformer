@@ -16,8 +16,6 @@
 
 namespace advanced_platformer
 {
-    // A position as the level file gives it: a map cell, or feet in world pixels. The file
-    // never knows the tile size, so cells stay cells until level composition has the map.
     using LevelPosition = std::variant<Cell, glm::vec2>;
 
     struct PatrolPlacement
@@ -28,6 +26,7 @@ namespace advanced_platformer
 
     struct ActorPlacement
     {
+        std::string id;
         std::string definitionName;
         LevelPosition spawn;
         std::optional<PatrolPlacement> patrol;
@@ -35,6 +34,7 @@ namespace advanced_platformer
 
     struct PickupPlacement
     {
+        std::string id;
         std::string definitionName;
         LevelPosition spawn;
     };
@@ -48,15 +48,12 @@ namespace advanced_platformer
         std::optional<int> nextLevel;
     };
 
-    // Parsed authoring data; level composition turns this into a runtime GameLevel.
     struct LevelData
     {
         std::map<char, std::string> tileLegend;
         std::vector<std::string> mapRows;
         LevelPosition playerSpawn;
         std::vector<ActorPlacement> actors;
-        // Includes unused legend templates so catalog references can all be checked.
-        // Each key is a diagnostic JSON path; its value is the referenced definition name.
         std::map<std::string, std::string> actorReferences;
         std::map<std::string, std::string> pickupReferences;
         std::map<std::string, std::string> exitReferences;

@@ -5,8 +5,6 @@
 #include "content_validation.hpp"
 #include "item_catalog.hpp"
 
-#include <algorithm>
-#include <array>
 #include <cstddef>
 #include <filesystem>
 #include <format>
@@ -14,7 +12,6 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <utility>
 #include <vector>
 
 #include <glaze/glaze.hpp>
@@ -22,13 +19,6 @@
 
 #include "advanced_platformer/math/coordinates.hpp"
 
-// The type of an object legend entry, defined with the file's other shapes below.
-namespace advanced_platformer
-{
-    enum class LevelObjectType;
-}
-
-// A map cell is written as [column, row], with exactly two whole numbers.
 template <> struct glz::from<glz::JSON, advanced_platformer::Cell>
 {
     template <auto Options>
@@ -52,34 +42,8 @@ template <> struct glz::from<glz::JSON, advanced_platformer::Cell>
     }
 };
 
-template <>
-struct glz::from<glz::JSON, advanced_platformer::LevelObjectType>
-    : advanced_platformer::NamedEnumReader<advanced_platformer::LevelObjectType>
-{
-};
-
 namespace advanced_platformer
 {
-    enum class LevelObjectType
-    {
-        Player,
-        Actor,
-        Pickup,
-        Exit
-    };
-
-    template <> struct ContentNames<LevelObjectType>
-    {
-        static constexpr std::array Names{
-            std::pair{std::string_view{"player"}, LevelObjectType::Player},
-            std::pair{std::string_view{"actor"}, LevelObjectType::Actor},
-            std::pair{std::string_view{"pickup"}, LevelObjectType::Pickup},
-            std::pair{std::string_view{"exit"}, LevelObjectType::Exit}};
-    };
-
-    // A level file as written: its member names are the file's keys. Glaze reflects only types
-    // with linkage, so these cannot go in an anonymous namespace. A placement gives its position
-    // as a cell or as feet; the reader checks it gives exactly one.
     struct PatrolJson
     {
         std::optional<Cell> firstCell;
@@ -96,6 +60,7 @@ namespace advanced_platformer
 
     struct ActorPlacementJson
     {
+        std::string id;
         std::string definition;
         std::optional<Cell> spawnCell;
         std::optional<glm::vec2> spawnFeet;
@@ -104,6 +69,7 @@ namespace advanced_platformer
 
     struct PickupPlacementJson
     {
+        std::string id;
         std::string definition;
         std::optional<Cell> spawnCell;
         std::optional<glm::vec2> spawnFeet;
@@ -119,22 +85,9 @@ namespace advanced_platformer
         std::optional<int> nextLevel;
     };
 
-    // An object legend entry: a placement without a position, which comes from each map cell
-    // marked with its symbol. The reader checks a type uses only its own fields.
-    struct ObjectTemplateJson
-    {
-        LevelObjectType type = LevelObjectType::Player;
-        std::optional<std::string> definition;
-        std::optional<PatrolJson> patrol;
-        std::optional<RequirementJson> requirement;
-        std::optional<bool> consumeItem;
-        std::optional<int> nextLevel;
-    };
-
     struct LevelJson
     {
         std::map<std::string, std::string> tileLegend;
-        std::optional<std::map<std::string, ObjectTemplateJson>> objectLegend;
         std::vector<std::string> map;
         std::optional<Cell> playerSpawnCell;
         std::optional<glm::vec2> playerSpawnFeet;
@@ -186,6 +139,7 @@ namespace advanced_platformer
             const std::string& path)
         {
             ActorPlacement result;
+            result.id = nameFrom(json.id, "placement id", sourceName, fieldPath(path, "id"));
             result.definitionName = nameFrom(
                 json.definition,
                 "actor definition name",
@@ -222,6 +176,7 @@ namespace advanced_platformer
             const std::string& path)
         {
             PickupPlacement result;
+            result.id = nameFrom(json.id, "placement id", sourceName, fieldPath(path, "id"));
             result.definitionName = nameFrom(
                 json.definition,
                 "pickup definition name",
@@ -258,231 +213,31 @@ namespace advanced_platformer
             return result;
         }
 
-        // Rejects any field this template's type does not take.
-        void checkTemplateFields(
-            const ObjectTemplateJson& json,
+        void requireUniqueId(
+            std::map<std::string, std::string>& seen,
+            const std::string& id,
             std::string_view sourceName,
             const std::string& path)
         {
-            const std::array<std::pair<std::string_view, bool>, 5> given{{
-                {"definition", json.definition.has_value()},
-                {"patrol", json.patrol.has_value()},
-                {"requirement", json.requirement.has_value()},
-                {"consumeItem", json.consumeItem.has_value()},
-                {"nextLevel", json.nextLevel.has_value()},
-            }};
-            std::vector<std::string_view> allowed;
-            switch (json.type)
+            const auto [existing, inserted] = seen.emplace(id, path);
+            if (!inserted)
             {
-            case LevelObjectType::Player:
-                break;
-            case LevelObjectType::Actor:
-                allowed = {"definition", "patrol"};
-                break;
-            case LevelObjectType::Pickup:
-                allowed = {"definition"};
-                break;
-            case LevelObjectType::Exit:
-                allowed = {"definition", "requirement", "consumeItem", "nextLevel"};
-                break;
+                failJson(
+                    sourceName,
+                    fieldPath(path, "id"),
+                    std::format("id '{}' is already used by {}", id, existing->second));
             }
-            for (const auto& [key, isGiven] : given)
-            {
-                if (isGiven && !std::ranges::contains(allowed, key))
-                {
-                    failJson(sourceName, path, std::format("unknown field '{}'", key));
-                }
-            }
-        }
-
-        std::string requiredDefinition(
-            const ObjectTemplateJson& json,
-            std::string_view sourceName,
-            const std::string& path)
-        {
-            if (!json.definition.has_value())
-            {
-                failJson(sourceName, path, "missing 'definition'");
-            }
-            return *json.definition;
-        }
-
-        ActorPlacementJson actorAt(
-            const ObjectTemplateJson& json,
-            Cell cell,
-            std::string_view sourceName,
-            const std::string& path)
-        {
-            return {requiredDefinition(json, sourceName, path), cell, std::nullopt, json.patrol};
-        }
-
-        PickupPlacementJson pickupAt(
-            const ObjectTemplateJson& json,
-            Cell cell,
-            std::string_view sourceName,
-            const std::string& path)
-        {
-            return {requiredDefinition(json, sourceName, path), cell, std::nullopt};
-        }
-
-        ExitPlacementJson exitAt(
-            const ObjectTemplateJson& json,
-            Cell cell,
-            std::string_view sourceName,
-            const std::string& path)
-        {
-            return {
-                requiredDefinition(json, sourceName, path),
-                cell,
-                std::nullopt,
-                json.requirement,
-                json.consumeItem,
-                json.nextLevel};
-        }
-
-        // Checks every template before any map symbol uses it, and keeps the names they
-        // reference, including unused ones, so composition can check them against the
-        // catalogs with their legend paths.
-        void checkLegendTemplates(
-            const std::map<std::string, ObjectTemplateJson>& legend,
-            std::string_view sourceName,
-            LevelData& result)
-        {
-            const Cell anywhere{0, 0};
-            for (const auto& [symbol, json] : legend)
-            {
-                const std::string path = fieldPath("objectLegend", symbol);
-                checkTemplateFields(json, sourceName, path);
-                switch (json.type)
-                {
-                case LevelObjectType::Player:
-                    break;
-                case LevelObjectType::Actor: {
-                    const ActorPlacement placement =
-                        actorFrom(actorAt(json, anywhere, sourceName, path), sourceName, path);
-                    result.actorReferences.emplace(
-                        fieldPath(path, "definition"), placement.definitionName);
-                    break;
-                }
-                case LevelObjectType::Pickup: {
-                    const PickupPlacement placement =
-                        pickupFrom(pickupAt(json, anywhere, sourceName, path), sourceName, path);
-                    result.pickupReferences.emplace(
-                        fieldPath(path, "definition"), placement.definitionName);
-                    break;
-                }
-                case LevelObjectType::Exit: {
-                    const ExitPlacement placement =
-                        exitFrom(exitAt(json, anywhere, sourceName, path), sourceName, path);
-                    result.exitReferences.emplace(
-                        fieldPath(path, "definition"), placement.definitionName);
-                    if (placement.requirement.has_value())
-                    {
-                        result.itemReferences.emplace(
-                            fieldPath(path, "requirement.item"), placement.requirement->item);
-                    }
-                    break;
-                }
-                }
-            }
-        }
-
-        std::vector<PlacementOrigin> playerOrigins(
-            const std::optional<Cell>& cell,
-            const std::optional<glm::vec2>& feet)
-        {
-            std::vector<PlacementOrigin> result;
-            if (cell.has_value())
-            {
-                result.push_back({"playerSpawnCell", std::nullopt});
-            }
-            if (feet.has_value())
-            {
-                result.push_back({"playerSpawnFeet", std::nullopt});
-            }
-            return result;
         }
     }
 
     LevelData parseLevelData(std::string_view text, std::string_view sourceName)
     {
-        LevelJson file = readContent<LevelJson>(text, sourceName);
+        const LevelJson file = readContent<LevelJson>(text, sourceName);
         if (file.tileLegend.empty())
         {
             failJson(sourceName, "tileLegend", "expected a nonempty object");
         }
         LevelData result;
-        std::vector<ActorPlacementJson> actors =
-            file.actors.value_or(std::vector<ActorPlacementJson>{});
-        std::vector<PickupPlacementJson> pickups =
-            file.pickups.value_or(std::vector<PickupPlacementJson>{});
-
-        if (file.objectLegend.has_value())
-        {
-            const auto& legend = *file.objectLegend;
-            std::vector<std::string> tileSymbols;
-            std::vector<std::string> objectSymbols;
-            tileSymbols.reserve(file.tileLegend.size());
-            objectSymbols.reserve(legend.size());
-            for (const auto& entry : file.tileLegend)
-            {
-                tileSymbols.push_back(entry.first);
-            }
-            for (const auto& entry : legend)
-            {
-                objectSymbols.push_back(entry.first);
-            }
-            validateLegendSymbols(tileSymbols, objectSymbols, sourceName);
-            checkLegendTemplates(legend, sourceName, result);
-            for (const auto& entry : legend)
-            {
-                // The marker creates an object, not a terrain tile.
-                file.tileLegend[entry.first] = "empty";
-            }
-
-            // Turn each marked map cell into a placement, after the written-out ones.
-            auto players = playerOrigins(file.playerSpawnCell, file.playerSpawnFeet);
-            std::vector<PlacementOrigin> exits;
-            if (file.exit.has_value())
-            {
-                exits.push_back({"exit", std::nullopt});
-            }
-            for (std::size_t row = 0; row < file.map.size(); ++row)
-            {
-                const std::string& cells = file.map[row];
-                for (std::size_t column = 0; column < cells.size(); ++column)
-                {
-                    const auto found = legend.find(std::string(1, cells[column]));
-                    if (found == legend.end())
-                    {
-                        continue;
-                    }
-                    const ObjectTemplateJson& json = found->second;
-                    const std::string templatePath = fieldPath("objectLegend", found->first);
-                    const Cell cell{static_cast<int>(column), static_cast<int>(row)};
-                    const std::string location = indexPath(indexPath("map", row), column);
-                    switch (json.type)
-                    {
-                    case LevelObjectType::Player:
-                        players.push_back({location, cells[column]});
-                        validateSinglePlacement(players, "player", sourceName);
-                        file.playerSpawnCell = cell;
-                        break;
-                    case LevelObjectType::Exit:
-                        exits.push_back({location, cells[column]});
-                        validateSinglePlacement(exits, "exit", sourceName);
-                        file.exit = exitAt(json, cell, sourceName, templatePath);
-                        break;
-                    case LevelObjectType::Actor:
-                        actors.push_back(actorAt(json, cell, sourceName, templatePath));
-                        break;
-                    case LevelObjectType::Pickup:
-                        pickups.push_back(pickupAt(json, cell, sourceName, templatePath));
-                        break;
-                    }
-                }
-            }
-        }
 
         std::vector<std::string> tileSymbols;
         tileSymbols.reserve(file.tileLegend.size());
@@ -490,7 +245,7 @@ namespace advanced_platformer
         {
             tileSymbols.push_back(symbol);
         }
-        validateLegendSymbols(tileSymbols, {}, sourceName);
+        validateLegendSymbols(tileSymbols, sourceName);
         for (const auto& [symbol, tile] : file.tileLegend)
         {
             result.tileLegend.emplace(symbol.front(), tile);
@@ -502,8 +257,6 @@ namespace advanced_platformer
         result.mapRows = file.map;
         validateMapRows(result.mapRows, result.tileLegend, sourceName);
 
-        validateSinglePlacement(
-            playerOrigins(file.playerSpawnCell, file.playerSpawnFeet), "player", sourceName);
         if (!file.exit.has_value())
         {
             failJson(sourceName, "exit", "expected exactly one placement");
@@ -516,20 +269,27 @@ namespace advanced_platformer
             sourceName,
             "root");
 
+        std::map<std::string, std::string> ids;
+        const std::vector<ActorPlacementJson> actors =
+            file.actors.value_or(std::vector<ActorPlacementJson>{});
         result.actors.reserve(actors.size());
         for (std::size_t index = 0; index < actors.size(); ++index)
         {
             const std::string origin = indexPath("actors", index);
             result.actors.push_back(actorFrom(actors[index], sourceName, origin));
+            requireUniqueId(ids, result.actors.back().id, sourceName, origin);
             result.actorReferences.emplace(
                 fieldPath(origin, "definition"), result.actors.back().definitionName);
         }
 
+        const std::vector<PickupPlacementJson> pickups =
+            file.pickups.value_or(std::vector<PickupPlacementJson>{});
         result.pickups.reserve(pickups.size());
         for (std::size_t index = 0; index < pickups.size(); ++index)
         {
             const std::string origin = indexPath("pickups", index);
             result.pickups.push_back(pickupFrom(pickups[index], sourceName, origin));
+            requireUniqueId(ids, result.pickups.back().id, sourceName, origin);
             result.pickupReferences.emplace(
                 fieldPath(origin, "definition"), result.pickups.back().definitionName);
         }

@@ -45,7 +45,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_data.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_data_diagnostics.cpp
-        ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_data_object_validation.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_data_placement_validation.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_data_validation.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_machine_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_npc_script_catalog.cpp

@@ -6,101 +6,62 @@
 
 namespace
 {
-    tests::Json markerLevel()
+    tests::Json minimalLevel()
     {
         return tests::parseJson(R"({
             "tileLegend": {".": "empty", "#": "stone"},
-            "objectLegend": {
-                "P": {"type": "player"},
-                "E": {"type": "exit", "definition": "test_door"}
-            },
-            "map": ["PE"]
+            "map": ["...", "###"],
+            "playerSpawnCell": [0, 0],
+            "exit": {"definition": "test_door", "spawnCell": [2, 0]}
         })");
     }
 }
 
 TEST_CASE("Map diagnostics identify authored cells and row widths", "[app][content][json]")
 {
-    auto level = markerLevel();
+    auto level = minimalLevel();
     SECTION("Unknown symbol")
     {
-        level["map"] = tests::list({"P?E"});
+        level["map"][0] = ".?.";
         REQUIRE_THROWS_WITH(
             advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"),
-            "level.json: map[0][1]: unknown symbol '?'; define it in tileLegend or objectLegend");
+            "level.json: map[0][1]: unknown symbol '?'; define it in tileLegend");
     }
     SECTION("Row width")
     {
-        level["map"] = tests::list({"PE", "."});
+        level["map"][1] = "#";
         REQUIRE_THROWS_WITH(
             advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"),
-            "level.json: map[1]: expected 2 columns, got 1");
+            "level.json: map[1]: expected 3 columns, got 1");
     }
 }
 
-TEST_CASE("Duplicate-marker diagnostics identify both placements", "[app][content][json]")
+TEST_CASE("Placement diagnostics retain their paths", "[app][content][json]")
 {
-    auto level = markerLevel();
-    SECTION("Repeated player marker")
+    auto level = minimalLevel();
+    SECTION("Empty actor definition")
     {
-        level["map"] = tests::list({"PPE"});
+        level["actors"] = tests::list({tests::object(
+            {{"id", "guard"}, {"definition", ""}, {"spawnCell", tests::numbers({0, 0})}})});
         REQUIRE_THROWS_WITH(
             advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"),
-            "level.json: map[0][1]: second player marker 'P'; player already placed at map[0][0]");
+            "level.json: actors[0].definition: actor definition name cannot be empty");
     }
-    SECTION("Marker conflicts with an explicit exit")
+    SECTION("Empty exit definition")
     {
-        level["exit"] =
-            tests::object({{"definition", "test_door"}, {"spawnCell", tests::numbers({1, 0})}});
+        level["exit"]["definition"] = "";
         REQUIRE_THROWS_WITH(
             advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"),
-            "level.json: map[0][1]: second exit marker 'E'; exit already placed at exit");
-    }
-}
-
-TEST_CASE("Object-template diagnostics name authored legend fields", "[app][content][json]")
-{
-    auto level = markerLevel();
-    SECTION("Empty pickup definition")
-    {
-        level["objectLegend"]["K"] = tests::object({{"type", "pickup"}, {"definition", ""}});
-        REQUIRE_THROWS_WITH(
-            advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"),
-            "level.json: objectLegend.K.definition: pickup definition name cannot be empty");
+            "level.json: exit.definition: exit definition name cannot be empty");
     }
     SECTION("Invalid exit setting")
     {
-        level["objectLegend"]["E"]["consumeItem"] = 1;
+        level["exit"]["consumeItem"] = 1;
         REQUIRE_THROWS_WITH(
             advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"),
             Catch::Matchers::StartsWith("level.json: line 1, column ") &&
                 Catch::Matchers::EndsWith("expected true or false"));
     }
-    SECTION("Missing exit definition")
-    {
-        tests::eraseKey(level["objectLegend"]["E"], "definition");
-        REQUIRE_THROWS_WITH(
-            advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"),
-            "level.json: objectLegend.E: missing 'definition'");
-    }
-    SECTION("Empty exit definition")
-    {
-        level["objectLegend"]["E"]["definition"] = "";
-        REQUIRE_THROWS_WITH(
-            advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"),
-            "level.json: objectLegend.E.definition: exit definition name cannot be empty");
-    }
-}
-
-TEST_CASE("Explicit-placement diagnostics retain array paths", "[app][content][json]")
-{
-    auto level = markerLevel();
-    level["actors"] =
-        tests::list({tests::object({{"definition", ""}, {"spawnCell", tests::numbers({0, 0})}})});
-
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"),
-        "level.json: actors[0].definition: actor definition name cannot be empty");
 }
 
 TEST_CASE("JSON syntax diagnostics include one-based line and byte column", "[app][content][json]")

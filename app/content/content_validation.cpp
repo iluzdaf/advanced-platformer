@@ -70,32 +70,6 @@ namespace advanced_platformer
         }
     }
 
-    void validateSinglePlacement(
-        const std::vector<PlacementOrigin>& origins,
-        std::string_view kind,
-        std::string_view sourceName)
-    {
-        if (origins.empty())
-        {
-            failJson(sourceName, kind, "expected exactly one placement");
-        }
-        if (origins.size() > 1)
-        {
-            const auto& duplicate = origins[1];
-            const std::string description =
-                duplicate.marker ? std::format(" marker '{}'", *duplicate.marker) : " placement";
-            failJson(
-                sourceName,
-                duplicate.path,
-                std::format(
-                    "second {}{}; {} already placed at {}",
-                    kind,
-                    description,
-                    kind,
-                    origins.front().path));
-        }
-    }
-
     void validateTileCatalog(const TileCatalog& catalog)
     {
         if (catalog.tileSize <= 0)
@@ -182,7 +156,6 @@ namespace advanced_platformer
 
     void validateLegendSymbols(
         const std::vector<std::string>& tileSymbols,
-        const std::vector<std::string>& objectSymbols,
         std::string_view sourceName)
     {
         std::set<std::string> tiles;
@@ -195,23 +168,6 @@ namespace advanced_platformer
             if (!tiles.insert(symbol).second)
             {
                 failJson(sourceName, fieldPath("tileLegend", symbol), "repeated symbol");
-            }
-        }
-        std::set<std::string> objects;
-        for (const auto& symbol : objectSymbols)
-        {
-            const std::string path = fieldPath("objectLegend", symbol);
-            if (symbol.size() != 1)
-            {
-                failJson(sourceName, path, "symbols must be one character");
-            }
-            if (tiles.count(symbol) != 0)
-            {
-                failJson(sourceName, path, "symbol is also defined in tileLegend");
-            }
-            if (!objects.insert(symbol).second)
-            {
-                failJson(sourceName, path, "repeated symbol");
             }
         }
     }
@@ -248,9 +204,7 @@ namespace advanced_platformer
                     failJson(
                         sourceName,
                         indexPath(path, column),
-                        std::format(
-                            "unknown symbol '{}'; define it in tileLegend or objectLegend",
-                            symbol));
+                        std::format("unknown symbol '{}'; define it in tileLegend", symbol));
                 }
             }
         }

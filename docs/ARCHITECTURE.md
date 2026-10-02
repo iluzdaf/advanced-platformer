@@ -949,13 +949,14 @@ Validation has three boundaries:
    fields to catch misspellings. Every content file is read with Glaze, through
    `content_glaze`, into structs that mirror it: the structs are the shape, and Glaze
    rejects unknown keys, missing required members, and wrong types, reporting the line and
-   column. Shapes a struct cannot state, such as a level legend's per-type fields, are
-   checked by the reader after reading and reported by field path.
+   column. Rules a struct cannot state, such as a placement giving exactly one of a cell or
+   feet, or ids unique within a level, are checked by the reader after reading and
+   reported by field path.
    `content_diagnostics` builds the field paths and raises the errors, and carries no JSON
    dependency so the C++ validators can use it too.
 2. **Application content:** plain C++ validators check authoring rules.
-   [`content_validation.cpp`](../app/content/content_validation.cpp) covers legends, map rows,
-   placement counts, quantities, and exit settings. Actor, item, pickup, and exit catalog
+   [`content_validation.cpp`](../app/content/content_validation.cpp) covers the tile legend, map
+   rows, quantities, and exit settings. Actor, item, pickup, and exit catalog
    validators check their definitions, including unused entries. Composition resolves
    cross-file names and adds the originating field to reference errors.
 3. **Core invariants:** validators such as
