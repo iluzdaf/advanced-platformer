@@ -19,8 +19,6 @@
 #include <utility>
 #include <vector>
 
-// sol2 supports its public API through this umbrella header. Listing its internal headers
-// would couple the adapter to implementation details without improving include hygiene.
 // NOLINTBEGIN(misc-include-cleaner)
 #include <sol/sol.hpp>
 
@@ -96,14 +94,85 @@ namespace advanced_platformer
 
     struct LuaNpcScripts::Implementation
     {
+        struct Call
+        {
+            std::string source;
+            std::string script;
+            std::string activity;
+            std::string hook;
+            std::optional<ActorId> actor;
+        };
+
+        class CallScope
+        {
+        public:
+            CallScope(Implementation& implementation, Call call)
+                : implementation(implementation)
+            {
+                implementation.calling = std::move(call);
+            }
+
+            ~CallScope()
+            {
+                implementation.calling.reset();
+            }
+
+            CallScope(const CallScope&) = delete;
+            CallScope& operator=(const CallScope&) = delete;
+
+        private:
+            Implementation& implementation;
+        };
+
         sol::state lua;
         std::map<std::string, LoadedScript> scripts;
         std::map<ActivityOwner, sol::table> selves;
         std::vector<LuaScriptDiagnostic> reported;
+        std::optional<Call> calling;
 
         Implementation()
         {
             openSandbox(lua);
+            lua.set_function(
+                "print",
+                [this](sol::variadic_args arguments)
+                {
+                    const sol::protected_function tostring = lua["tostring"];
+                    std::string text;
+                    for (const sol::object argument : arguments)
+                    {
+                        if (!text.empty())
+                        {
+                            text.push_back('\t');
+                        }
+                        text.append(tostring(argument).get<std::string>());
+                    }
+                    recordPrint(std::move(text));
+                });
+        }
+
+        void recordPrint(std::string text)
+        {
+            const Call call = calling.value_or(Call{});
+            reported.push_back(
+                {call.source,
+                 call.script,
+                 call.activity,
+                 call.hook,
+                 call.actor,
+                 std::move(text),
+                 LuaScriptDiagnosticKind::Print});
+        }
+
+        Call callTo(ActorId actor, const NpcActivity& activity, std::string hook) const
+        {
+            const LoadedScript* script = scriptNamed(activity.script);
+            return {
+                script == nullptr ? std::string{} : script->source,
+                activity.script,
+                activity.activity,
+                std::move(hook),
+                actor};
         }
 
         LoadedScript* scriptNamed(std::string_view name)
@@ -205,6 +274,8 @@ namespace advanced_platformer
         sol::environment fresh(implementation->lua, sol::create, implementation->lua.globals());
         sol::protected_function_result result;
         {
+            const Implementation::CallScope call(
+                *implementation, {sourceName, script, {}, "load", std::nullopt});
             const InstructionBudget budget(implementation->lua.lua_state());
             result = implementation->lua.safe_script(
                 source, fresh, sol::script_pass_on_error, sourceName);
@@ -311,6 +382,8 @@ namespace advanced_platformer
         sol::protected_function hook = hookObject.as<sol::protected_function>();
         sol::protected_function_result result;
         {
+            const Implementation::CallScope call(
+                *implementation, implementation->callTo(actor, activity, "enter"));
             const InstructionBudget budget(implementation->lua.lua_state());
             result = hook(self, luaSnapshot(implementation->lua, snapshot));
         }
@@ -347,6 +420,8 @@ namespace advanced_platformer
             table->get<sol::object>("update").as<sol::protected_function>();
         sol::protected_function_result result;
         {
+            const Implementation::CallScope call(
+                *implementation, implementation->callTo(actor, activity, "update"));
             const InstructionBudget budget(implementation->lua.lua_state());
             result = hook(self->second, luaSnapshot(implementation->lua, snapshot), deltaTime);
         }
@@ -390,6 +465,8 @@ namespace advanced_platformer
                 sol::protected_function hook = hookObject.as<sol::protected_function>();
                 sol::protected_function_result result;
                 {
+                    const Implementation::CallScope call(
+                        *implementation, implementation->callTo(actor, activity, "exit"));
                     const InstructionBudget budget(implementation->lua.lua_state());
                     result = hook(self->second, luaSnapshot(implementation->lua, snapshot));
                 }
@@ -422,9 +499,9 @@ namespace advanced_platformer
         return implementation->reported;
     }
 
-    void LuaNpcScripts::clearDiagnostics()
+    std::vector<LuaScriptDiagnostic> LuaNpcScripts::takeDiagnostics()
     {
-        implementation->reported.clear();
+        return std::exchange(implementation->reported, {});
     }
 }
 

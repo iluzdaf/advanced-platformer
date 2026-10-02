@@ -10,6 +10,7 @@
 
 #include <cstddef>
 #include <optional>
+#include <vector>
 #include <stdexcept>
 #include <utility>
 
@@ -67,7 +68,6 @@ namespace advanced_platformer
             nextPlayer.health = previousPlayer->health;
             nextPlayer.inventory = previousPlayer->inventory;
         }
-        // Only player health and inventory carry over; the new world has fresh runtime state.
         replaceLevel(levelNumber, std::move(nextPlayer));
     }
 
@@ -139,8 +139,6 @@ namespace advanced_platformer
             throw std::logic_error("The game has no player after lifecycle update");
         }
         followTarget(cameraControllerValue(), level.map, player->body.bounds);
-        // Animations and fades pause with the simulation while the exit opens. The door's
-        // flash and the player's fade into it follow the world clock instead.
         if (!exitOpening(level.world))
         {
             updateWorldPresentation(level.map, level.world, deltaTime);
@@ -183,7 +181,6 @@ namespace advanced_platformer
                 screenToWorld(currentCamera(), internalCursor.value_or(glm::vec2{0.0F, 0.0F}));
         }
         navigation.profileIndex = navigationProfileIndex;
-        // Label navigation profiles from definitions that can use ground NPC navigation.
         for (const auto& [name, definition] : gameCatalogs.actors.definitions)
         {
             if (definition.platformer.has_value() && definition.senses.has_value())
@@ -271,7 +268,6 @@ namespace advanced_platformer
         }
         WorldRequests requests;
         requests.useItem(level.world.playerId(), slot);
-        // UI requests are applied while paused without advancing movement, combat or timers.
         applyWorldRequests(level.world, requests);
     }
 
@@ -344,5 +340,10 @@ namespace advanced_platformer
             throw std::logic_error("The game camera is not initialised");
         }
         return *cameraController;
+    }
+
+    std::vector<LuaScriptDiagnostic> Game::takeScriptDiagnostics()
+    {
+        return npcScripts.takeDiagnostics();
     }
 }

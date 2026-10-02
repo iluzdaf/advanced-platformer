@@ -9,11 +9,14 @@ namespace advanced_platformer
 
     constexpr ImU32 HudTextColour = IM_COL32(255, 255, 255, 255);
 
-    // Text over a one-pixel dark shadow, so it reads on any part of the scene.
-    void drawShadowedText(ImDrawList& drawList, ImVec2 position, ImU32 colour, const char* text);
+    void drawShadowedText(
+        ImDrawList& drawList,
+        ImVec2 position,
+        ImU32 colour,
+        const char* text,
+        float wrapWidth = 0.0F);
     void drawCenteredText(ImDrawList& drawList, float centerX, float y, const char* text);
 
-    // The atlas region stretched over the screen rectangle.
     void drawAtlasRegion(
         ImDrawList& drawList,
         const Texture& atlas,

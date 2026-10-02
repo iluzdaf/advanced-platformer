@@ -1,13 +1,14 @@
 #pragma once
 
+#include <functional>
+#include <string>
+
 #include <glm/vec2.hpp>
 
 struct GLFWwindow;
 
 namespace advanced_platformer
 {
-    // What the window reports at the start of a frame: its size in points, its
-    // framebuffer in pixels, which differs on high-DPI displays, and the cursor in points.
     struct WindowReading
     {
         glm::ivec2 size = {0, 0};
@@ -15,13 +16,13 @@ namespace advanced_platformer
         glm::vec2 cursor = {0.0F, 0.0F};
     };
 
-    // The game window and the OpenGL 3.3 core context it owns, for as long as it lives.
-    // GLFW starts before the window and stops after it. The window never shrinks below
-    // one internal image.
     class GameWindow
     {
     public:
-        GameWindow(const char* title, glm::ivec2 size);
+        GameWindow(
+            const char* title,
+            glm::ivec2 size,
+            std::function<void(std::string)> reportError);
         ~GameWindow();
 
         GameWindow(const GameWindow&) = delete;
@@ -30,24 +31,20 @@ namespace advanced_platformer
         GLFWwindow* handle() const;
         bool shouldClose() const;
         WindowReading read() const;
-        // Shows what was drawn, waiting for the display's next refresh.
         void present() const;
 
     private:
-        // Starts GLFW and stops it again. Declared before the window so GLFW is running
-        // when the window is created and still running when it is destroyed, even when
-        // the constructor throws part way.
         struct GlfwLibrary
         {
-            GlfwLibrary();
+            explicit GlfwLibrary(std::function<void(std::string)> reportError);
             ~GlfwLibrary();
             GlfwLibrary(const GlfwLibrary&) = delete;
             GlfwLibrary& operator=(const GlfwLibrary&) = delete;
+
+            std::function<void(std::string)> reportError;
         };
 
         GlfwLibrary library;
-        // Destroyed before the library stops GLFW. Should the constructor throw after the
-        // window exists, stopping GLFW destroys it too.
         GLFWwindow* window = nullptr;
     };
 }

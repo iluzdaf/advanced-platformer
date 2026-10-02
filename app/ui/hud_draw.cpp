@@ -9,16 +9,28 @@ namespace advanced_platformer
 {
     namespace
     {
-        // The text shadow's colour and how far down and right it falls, in window pixels.
         constexpr ImU32 ShadowColour = IM_COL32(0, 0, 0, 220);
         constexpr float ShadowOffset = 1.0F;
     }
 
-    void drawShadowedText(ImDrawList& drawList, ImVec2 position, ImU32 colour, const char* text)
+    void drawShadowedText(
+        ImDrawList& drawList,
+        ImVec2 position,
+        ImU32 colour,
+        const char* text,
+        float wrapWidth)
     {
+        ImFont* font = ImGui::GetFont();
+        const float size = ImGui::GetFontSize();
         drawList.AddText(
-            {position.x + ShadowOffset, position.y + ShadowOffset}, ShadowColour, text);
-        drawList.AddText(position, colour, text);
+            font,
+            size,
+            {position.x + ShadowOffset, position.y + ShadowOffset},
+            ShadowColour,
+            text,
+            nullptr,
+            wrapWidth);
+        drawList.AddText(font, size, position, colour, text, nullptr, wrapWidth);
     }
 
     void drawCenteredText(ImDrawList& drawList, float centerX, float y, const char* text)

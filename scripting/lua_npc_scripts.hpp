@@ -13,6 +13,12 @@
 
 namespace advanced_platformer
 {
+    enum class LuaScriptDiagnosticKind
+    {
+        Error,
+        Print,
+    };
+
     struct LuaScriptDiagnostic
     {
         std::string source;
@@ -21,10 +27,9 @@ namespace advanced_platformer
         std::string hook;
         std::optional<ActorId> actor;
         std::string message;
+        LuaScriptDiagnosticKind kind = LuaScriptDiagnosticKind::Error;
     };
 
-    // Owns the Lua VM, script environments and per-actor activity memory. Lua types stay
-    // private to the implementation.
     class LuaNpcScripts final : public NpcActivityScripts
     {
     public:
@@ -55,7 +60,7 @@ namespace advanced_platformer
         void forget(ActorId actor) override;
 
         const std::vector<LuaScriptDiagnostic>& diagnostics() const;
-        void clearDiagnostics();
+        std::vector<LuaScriptDiagnostic> takeDiagnostics();
 
     private:
         struct Implementation;
