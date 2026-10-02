@@ -32,6 +32,53 @@ execute_process(
         "-ignore-filename-regex=${IGNORED}" -format=html "-output-dir=${COVERAGE_DIR}/html"
     COMMAND_ERROR_IS_FATAL ANY
 )
+execute_process(
+    COMMAND
+        "${LLVM_COV}" export "${TESTS}" "-instr-profile=${COVERAGE_DIR}/tests.profdata"
+        "-ignore-filename-regex=${IGNORED}" -summary-only
+    OUTPUT_VARIABLE EXPORTED
+    COMMAND_ERROR_IS_FATAL ANY
+)
+
+set(SUMMARY "| Measure | Covered | Total | Cover |\n| --- | ---: | ---: | ---: |\n")
+foreach(measure lines functions regions branches)
+    string(
+        JSON covered
+        GET "${EXPORTED}"
+        data
+        0
+        totals
+        ${measure}
+        covered
+    )
+    string(
+        JSON count
+        GET "${EXPORTED}"
+        data
+        0
+        totals
+        ${measure}
+        count
+    )
+    if(count EQUAL 0)
+        set(cover "-")
+    else()
+        math(EXPR hundredths "(${covered} * 20000 / ${count} + 1) / 2")
+        math(EXPR whole "${hundredths} / 100")
+        math(EXPR fraction "${hundredths} % 100")
+        if(fraction LESS 10)
+            set(fraction "0${fraction}")
+        endif()
+        set(cover "${whole}.${fraction}%")
+    endif()
+    string(SUBSTRING "${measure}" 0 1 first)
+    string(TOUPPER "${first}" first)
+    string(SUBSTRING "${measure}" 1 -1 rest)
+    string(APPEND SUMMARY "| ${first}${rest} | ${covered} | ${count} | ${cover} |\n")
+endforeach()
+file(WRITE "${COVERAGE_DIR}/summary.md" "${SUMMARY}")
+
 file(READ "${COVERAGE_DIR}/report.txt" REPORT)
 message("${REPORT}")
+message("${SUMMARY}")
 message("Line-by-line coverage: ${COVERAGE_DIR}/html/index.html")

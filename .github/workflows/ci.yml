@@ -230,9 +230,9 @@ jobs:
         run: |
           {
             echo '## Coverage'
-            echo '```text'
-            tail -n 1 build/linux-coverage/coverage/report.txt
-            echo '```'
+            echo
+            cat build/linux-coverage/coverage/summary.md
+            echo
             echo '<details><summary>Every file</summary>'
             echo
             echo '```text'
