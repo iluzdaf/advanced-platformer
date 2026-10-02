@@ -1,3 +1,4 @@
+import argparse
 import os
 import re
 import shutil
@@ -73,6 +74,23 @@ def major_version_of(executable):
     return int(found.group(1)) if found else None
 
 
+FORMAT = {
+    "clang-format": ["-i"],
+    "gersemi": ["--in-place"],
+    "prettier": ["--write", "--log-level", "warn"],
+    "ruff": ["format", "--quiet"],
+    "stylua": [],
+}
+
+CHECK = {
+    "clang-format": ["--dry-run", "--Werror"],
+    "gersemi": ["--check"],
+    "prettier": ["--check", "--log-level", "warn"],
+    "ruff": ["format", "--check", "--quiet"],
+    "stylua": ["--check"],
+}
+
+
 def find_clang_format():
     major = llvm_major()
     directories = [entry.format(major=major) for entry in LLVM_BIN_DIRECTORIES]
@@ -80,60 +98,78 @@ def find_clang_format():
     for name in (f"clang-format-{major}", "clang-format"):
         found = shutil.which(name, path=search_path)
         if found and major_version_of(found) == major:
-            return [found, "-i"], None
+            return found, None
     return None, f"no clang-format {major}, which CI uses"
 
 
-def find_tool(name, *arguments):
-    found = shutil.which(name)
-    if found:
-        return [found, *arguments], None
-    return None, f"{name} is not installed"
-
-
-def commands():
-    return {
-        "clang-format": find_clang_format(),
-        "gersemi": find_tool("gersemi", "--in-place"),
-        "prettier": find_tool("prettier", "--write", "--log-level", "warn"),
-        "ruff": find_tool("ruff", "format", "--quiet"),
-        "stylua": find_tool("stylua"),
-    }
+def find(formatter):
+    if formatter == "clang-format":
+        return find_clang_format()
+    found = shutil.which(formatter)
+    return (found, None) if found else (None, f"{formatter} is not installed")
 
 
 def report(message):
-    print(f"pre-commit: {message}", file=sys.stderr)
+    print(f"format: {message}", file=sys.stderr)
+
+
+def group(paths):
+    groups = {}
+    for path in paths:
+        formatter = formatter_for(path)
+        if formatter:
+            groups.setdefault(formatter, []).append(path)
+    return groups
+
+
+def tracked():
+    return [path for path in git("ls-files", "-z") if (ROOT / path).is_file()]
+
+
+def staged():
+    paths = git("diff", "--cached", "--name-only", "-z", "--diff-filter=ACMR")
+    unstaged = set(git("diff", "--name-only", "-z"))
+    for path in paths:
+        if path in unstaged and formatter_for(path):
+            report(f"not formatted, it has unstaged edits: {path}")
+    return [path for path in paths if path not in unstaged]
+
+
+def run(groups, arguments, missing_fails):
+    failed = False
+    for formatter, paths in groups.items():
+        executable, missing = find(formatter)
+        if not executable:
+            report(f"{missing}, so these are not formatted: {' '.join(paths)}")
+            failed = failed or missing_fails
+            continue
+        command = [executable, *arguments[formatter], *paths]
+        if subprocess.run(command, cwd=ROOT, check=False).returncode != 0:
+            report(f"{formatter} did not pass")
+            failed = True
+    return failed
 
 
 def main():
-    staged = git("diff", "--cached", "--name-only", "-z", "--diff-filter=ACMR")
-    unstaged = set(git("diff", "--name-only", "-z"))
+    parser = argparse.ArgumentParser()
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--check", action="store_true", help="change nothing")
+    mode.add_argument("--staged", action="store_true", help="format and stage")
+    options = parser.parse_args()
 
-    groups = {}
-    for path in staged:
-        formatter = formatter_for(path)
-        if not formatter:
-            continue
-        if path in unstaged:
-            report(f"not formatted, it has unstaged edits: {path}")
-            continue
-        groups.setdefault(formatter, []).append(path)
+    if options.check:
+        return 1 if run(group(tracked()), CHECK, missing_fails=True) else 0
 
-    if not groups:
+    if options.staged:
+        groups = group(staged())
+        if run(groups, FORMAT, missing_fails=False):
+            return 1
+        paths = [path for paths in groups.values() for path in paths]
+        if paths:
+            git("add", "--", *paths)
         return 0
 
-    available = commands()
-    for formatter, paths in groups.items():
-        command, missing = available[formatter]
-        if not command:
-            report(f"{missing}, so these are not formatted: {' '.join(paths)}")
-            continue
-        if subprocess.run([*command, *paths], cwd=ROOT, check=False).returncode != 0:
-            report(f"{formatter} failed, so nothing was committed")
-            return 1
-        git("add", "--", *paths)
-
-    return 0
+    return 1 if run(group(tracked()), FORMAT, missing_fails=True) else 0
 
 
 if __name__ == "__main__":

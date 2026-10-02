@@ -1,6 +1,6 @@
 import unittest
 
-from format_staged import formatter_for
+from format import formatter_for
 
 
 class FormatterSelectionTests(unittest.TestCase):
@@ -46,7 +46,7 @@ class FormatterSelectionTests(unittest.TestCase):
         )
 
     def test_python(self):
-        self.assertFormatter("ruff", ["tools/format_staged.py"])
+        self.assertFormatter("ruff", ["tools/format.py"])
 
     def test_lua(self):
         self.assertFormatter(

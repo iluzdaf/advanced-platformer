@@ -38,8 +38,6 @@ jobs:
             @johnnymorganz/stylua-bin@$STYLUA
           prettier --version
           stylua --version
-          echo "PRETTIER_BIN=$(command -v prettier)" >> "$GITHUB_ENV"
-          echo "STYLUA_BIN=$(command -v stylua)" >> "$GITHUB_ENV"
       - name: Install the pinned Ruff
         uses: astral-sh/ruff-action@v4.1.0
         with:
@@ -53,30 +51,16 @@ jobs:
       - name: Install the pinned gersemi
         run: |
           pipx install "gersemi==$GERSEMI"
-          echo "GERSEMI_BIN=$(pipx environment --value PIPX_BIN_DIR)/gersemi" >> "$GITHUB_ENV"
+          pipx environment --value PIPX_BIN_DIR >> "$GITHUB_PATH"
           "$(pipx environment --value PIPX_BIN_DIR)/gersemi" --version
-      - name: Configure
-        run: >
-          cmake --preset linux-debug
-          -DPRETTIER_EXECUTABLE="$PRETTIER_BIN"
-          -DSTYLUA_EXECUTABLE="$STYLUA_BIN"
-          -DGERSEMI_EXECUTABLE="$GERSEMI_BIN"
       - name: Check formatting
-        run: cmake --build --preset linux-debug --target format-check
-      - name: Check CMake formatting
-        run: cmake --build --preset linux-debug --target format-cmake-check
-      - name: Check JSON formatting
-        run: cmake --build --preset linux-debug --target format-json-check
-      - name: Check YAML formatting
-        run: cmake --build --preset linux-debug --target format-yaml-check
-      - name: Check Markdown formatting
-        run: cmake --build --preset linux-debug --target format-markdown-check
-      - name: Check Python formatting and lint
-        run: cmake --build --preset linux-debug --target format-python-check lint-python
+        run: python3 tools/format.py --check
       - name: Test repository tooling
         run: python3 -m unittest discover -s tools -p 'test_*.py'
-      - name: Check Lua formatting
-        run: cmake --build --preset linux-debug --target format-lua-check
+      - name: Configure
+        run: cmake --preset linux-debug
+      - name: Check Python lint
+        run: cmake --build --preset linux-debug --target lint-python
       - name: Check Lua lint
         run: cmake --build --preset linux-debug --target lint-lua
 

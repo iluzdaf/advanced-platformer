@@ -205,81 +205,37 @@ uv tool install gersemi==0.29.2
 
 `pipx install gersemi==0.29.2` works as well. Both install into `~/.local/bin`; put it on
 your `PATH` with `uv tool update-shell` or `pipx ensurepath`, then restart your shell and VS
-Code. The gersemi extension runs whichever `gersemi` the `PATH` finds, and CMake finds it
-when you configure again.
+Code. The gersemi extension and `tools/format.py` run whichever `gersemi` the `PATH` finds.
 
-### Pre-commit hook
+Format every first-party file, or check them without changing anything:
 
-Turn on the hook that formats what you commit:
+```sh
+python3 tools/format.py
+python3 tools/format.py --check
+```
+
+[`tools/format.py`](tools/format.py) decides which files each tool covers. It skips
+`external/` and anything git does not track. A missing tool fails the run and is named.
+clang-format counts as missing unless it is LLVM 23, the version CI uses.
+
+Turn on the pre-commit hook to format what you commit:
 
 ```sh
 git config core.hooksPath .githooks
 ```
 
-It runs [`tools/format_staged.py`](tools/format_staged.py), which formats each staged
-file that a format target covers, using the tool in the table above, and stages the result.
+The hook runs `tools/format.py --staged`, which formats the staged files and stages the
+result. A file with unstaged edits is left as staged and named, because staging the
+formatted file would sweep the rest of your edits into the commit. A missing tool is
+skipped and named. A formatter that fails, for example on a file that does not parse,
+stops the commit. `git commit --no-verify` skips the hook.
 
-- A file with unstaged edits is left as staged, and the hook names it. Staging the
-  formatted file would sweep the rest of your edits into the commit.
-- A formatter that is not installed is skipped, and the hook names the files it left.
-  clang-format counts as missing unless it is LLVM 23, the version CI uses.
-- If a formatter fails, for example on a file that does not parse, the commit stops.
-
-Linters and clang-tidy are left to CI. `git commit --no-verify` skips the hook.
-
-Format first-party CMake, or check it without changing files:
+Check Python and Lua lint findings, and run the tests for the scripts in `tools/`, as CI
+does:
 
 ```sh
-cmake --build --preset mac-debug --target format-cmake
-cmake --build --preset mac-debug --target format-cmake-check
-```
-
-Format first-party C++, or check it without changing files:
-
-```sh
-cmake --build --preset mac-debug --target format
-cmake --build --preset mac-debug --target format-check
-```
-
-Format first-party JSON, or check it without changing files:
-
-```sh
-cmake --build --preset mac-debug --target format-json
-cmake --build --preset mac-debug --target format-json-check
-```
-
-Format first-party YAML, or check it without changing files:
-
-```sh
-cmake --build --preset mac-debug --target format-yaml
-cmake --build --preset mac-debug --target format-yaml-check
-```
-
-Format first-party Markdown, or check it without changing files:
-
-```sh
-cmake --build --preset mac-debug --target format-markdown
-cmake --build --preset mac-debug --target format-markdown-check
-```
-
-Format first-party Python, or check its formatting and lint findings:
-
-```sh
-cmake --build --preset mac-debug --target format-python
-cmake --build --preset mac-debug --target format-python-check lint-python
-```
-
-Run the tests for the scripts in `tools/`, as CI does:
-
-```sh
+cmake --build --preset mac-debug --target lint-python lint-lua
 python3 -m unittest discover -s tools -p 'test_*.py'
-```
-
-Format first-party Lua, or check its formatting and lint findings:
-
-```sh
-cmake --build --preset mac-debug --target format-lua
-cmake --build --preset mac-debug --target format-lua-check lint-lua
 ```
 
 Luacheck only allows what scripts can use in the game. [`.luacheckrc`](.luacheckrc)
@@ -287,20 +243,13 @@ lists the allowed globals, and `openSandbox` in
 [`scripting/lua_sandbox.cpp`](scripting/lua_sandbox.cpp) opens the same libraries at run
 time. Keep the two in step.
 
-The C++ targets skip `external/`; the CMake targets cover `CMakeLists.txt` and `cmake/`;
-the JSON targets cover `assets/`, `tests/fixtures/`, `.vscode/`, `CMakePresets.json`,
-`.luarc.json` and `.prettierrc`; the YAML targets cover `.github/`, `.clang-format`,
-`.clang-tidy`, `.clangd` and `.gersemirc`; the Markdown targets cover the
-root documentation and `docs/`; the Python targets cover `tools/`; and the Lua targets
-cover `assets/` and `tests/fixtures/`. CMake reports any unavailable tool while
-configuring and omits only its targets. Use `-DCLANG_FORMAT_EXECUTABLE=`,
-`-DPRETTIER_EXECUTABLE=`, `-DRUFF_EXECUTABLE=`, `-DSTYLUA_EXECUTABLE=`,
-`-DLUACHECK_EXECUTABLE=`, or `-DGERSEMI_EXECUTABLE=` to choose a specific one.
+CMake reports a missing Ruff or Luacheck while configuring and omits only its lint
+target. Use `-DRUFF_EXECUTABLE=` or `-DLUACHECK_EXECUTABLE=` to choose a specific one.
 
 CI runs clang-format from LLVM 23, gersemi 0.29.2, Prettier 3.9.8, Ruff 0.16.8, StyLua
-2.5.2, and Luacheck 1.2.0, and a pull request cannot merge until their checks pass. clang-format
-comes from your LLVM, so it matches CI when your LLVM does; the other tools need not.
-If yours format differently, CI fails and you reformat with the commands above.
+2.5.2, and Luacheck 1.2.0, and a pull request cannot merge until their checks pass.
+clang-format comes from your LLVM, so it matches CI when your LLVM does; the other tools
+need not. If yours format differently, CI fails and you reformat with `tools/format.py`.
 
 ## Static analysis
 

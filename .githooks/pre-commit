@@ -1,2 +1,2 @@
 #!/bin/sh
-exec python3 "$(git rev-parse --show-toplevel)/tools/format_staged.py"
+exec python3 "$(git rev-parse --show-toplevel)/tools/format.py" --staged
