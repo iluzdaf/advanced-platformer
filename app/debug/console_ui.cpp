@@ -1,7 +1,9 @@
 #include "console_ui.hpp"
 
 #include "console_log.hpp"
+#include "debug_draw.hpp"
 #include "debug_ui_layout.hpp"
+#include "ui/hud_draw.hpp"
 
 #include <imgui.h>
 
@@ -10,7 +12,7 @@ namespace advanced_platformer
     namespace
     {
         constexpr float WindowHeightFraction = 1.0F / 3.0F;
-        constexpr ImVec4 ErrorColour = {1.0F, 0.45F, 0.4F, 1.0F};
+        constexpr ImU32 ConsoleErrorColour = IM_COL32(255, 112, 96, 255);
     }
 
     void drawConsole(ConsoleView& view, const ConsoleLog& log)
@@ -31,31 +33,31 @@ namespace advanced_platformer
         }
         ImGui::SetNextWindowPos(topLeft, ImGuiCond_Always);
         ImGui::SetNextWindowSize(size, ImGuiCond_Always);
-        ImGui::SetNextWindowBgAlpha(0.75F);
-        constexpr ImGuiWindowFlags Flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-                                           ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse |
-                                           ImGuiWindowFlags_NoSavedSettings;
-        if (!ImGui::Begin("Console", nullptr, Flags))
+        constexpr ImGuiWindowFlags Flags = ImGuiWindowFlags_NoDecoration |
+                                           ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoMove |
+                                           ImGuiWindowFlags_NoSavedSettings |
+                                           ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoScrollbar;
+        if (!ImGui::Begin("Console##overlay", nullptr, Flags))
         {
             ImGui::End();
             return;
         }
+        ImDrawList* drawList = ImGui::GetWindowDrawList();
+        const float wrapWidth = ImGui::GetContentRegionAvail().x;
+        const ImVec2 start = ImGui::GetCursorScreenPos();
+        ImVec2 position = start;
         if (log.entries().empty())
         {
-            ImGui::TextDisabled("Nothing logged yet.");
+            drawTextLine(*drawList, position, "Nothing logged yet.", TextDetailColour);
         }
         for (const ConsoleEntry& entry : log.entries())
         {
-            if (entry.level == ConsoleLevel::Error)
-            {
-                ImGui::PushStyleColor(ImGuiCol_Text, ErrorColour);
-            }
-            ImGui::TextWrapped("%s", entry.text.c_str());
-            if (entry.level == ConsoleLevel::Error)
-            {
-                ImGui::PopStyleColor();
-            }
+            const ImU32 colour =
+                entry.level == ConsoleLevel::Error ? ConsoleErrorColour : TextDetailColour;
+            drawShadowedText(*drawList, position, colour, entry.text.c_str(), wrapWidth);
+            position.y += ImGui::CalcTextSize(entry.text.c_str(), nullptr, false, wrapWidth).y;
         }
+        ImGui::Dummy({wrapWidth, position.y - start.y});
         const bool atBottom = ImGui::GetScrollY() >= ImGui::GetScrollMaxY();
         if (log.written() != view.shownWritten && atBottom)
         {
