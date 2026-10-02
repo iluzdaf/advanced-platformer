@@ -824,6 +824,15 @@ Functions in `app/content` and `app/game` name what they do:
 | `compose...`  | `composeActor(definition, ...)`      | Authoring data and runtime context, such as a spawn position, to a value. |
 | a noun        | `itemDefinition(catalog, name)`      | A lookup that throws when the name is unknown.                            |
 
+### Hot reload
+
+What a reload keeps and replaces is in [Hot reload](CONTENT.md#hot-reload). Builds other
+than Release define `ADVANCED_PLATFORMER_SOURCE_ASSETS`, and the application polls an
+`AssetWatcher` on that directory. `Game::reload` is all or nothing: it loads and composes
+everything first and merges into a copy of the live level with `reloadLevel`, so an error
+changes nothing. The merge keeps the live `World`, so actor ids, the clock and
+projectiles carry over.
+
 ## Presentation
 
 ### Scene construction and rendering

@@ -11,6 +11,7 @@
 #include "content/level_catalog.hpp"
 #include "content/game_catalogs.hpp"
 #include "content/hud_catalog.hpp"
+#include "game/level_reload.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/render/camera.hpp"
 #include "advanced_platformer/render/sprite.hpp"
@@ -21,6 +22,7 @@ namespace advanced_platformer
     constexpr float LockedExitHintSeconds = 1.0F;
 
     struct FrameProfile;
+    struct GameContent;
     struct Health;
     struct InputIntentions;
     struct RenderScene;
@@ -55,6 +57,8 @@ namespace advanced_platformer
         void useInventoryItem(std::size_t slot);
         bool breakTileAt(glm::vec2 internalPosition);
         void restart();
+        void restartLevel();
+        LevelReload reload(GameContent content);
         int levelNumber() const;
         bool complete() const;
         std::optional<glm::vec2> levelExitScreenPosition() const;
@@ -66,7 +70,7 @@ namespace advanced_platformer
     private:
         void loadLevel(int levelNumber);
         void replaceLevel(int levelNumber, Actor player);
-        void startLevel(Actor player);
+        void startCamera();
         CameraController& cameraControllerValue();
         const CameraController& cameraControllerValue() const;
         Camera currentCamera() const;

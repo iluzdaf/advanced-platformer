@@ -209,7 +209,7 @@ namespace advanced_platformer
         glDeleteProgram(shader);
     }
 
-    int SpriteRenderer::loadTexture(const std::string& path)
+    Image loadImage(const std::string& path)
     {
         int width = 0;
         int height = 0;
@@ -224,21 +224,51 @@ namespace advanced_platformer
                     stbi_failure_reason()));
         }
 
+        Image image;
+        image.width = width;
+        image.height = height;
+        const std::size_t size =
+            static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * 4U;
+        image.pixels.assign(pixels, pixels + size);
+        stbi_image_free(pixels);
+        return image;
+    }
+
+    int SpriteRenderer::loadTexture(const Image& image)
+    {
         Texture texture;
-        texture.width = width;
-        texture.height = height;
         glGenTextures(1, &texture.handle);
+        textures.push_back(texture);
+        const int textureId = static_cast<int>(textures.size() - 1);
+        replaceTexture(textureId, image);
+        return textureId;
+    }
+
+    void SpriteRenderer::replaceTexture(int textureId, const Image& image)
+    {
+        if (textureId < 0 || static_cast<std::size_t>(textureId) >= textures.size())
+        {
+            throw std::out_of_range("Unknown texture ID");
+        }
+
+        Texture& texture = textures[static_cast<std::size_t>(textureId)];
+        texture.width = image.width;
+        texture.height = image.height;
         glBindTexture(GL_TEXTURE_2D, texture.handle);
         glTexImage2D(
-            GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-        stbi_image_free(pixels);
+            GL_TEXTURE_2D,
+            0,
+            GL_RGBA8,
+            image.width,
+            image.height,
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            image.pixels.data());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-        textures.push_back(texture);
-        return static_cast<int>(textures.size() - 1);
     }
 
     Texture SpriteRenderer::texture(int textureId) const

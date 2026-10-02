@@ -8,9 +8,29 @@ do. Movement, combat and pathfinding stay in C++.
 - Errors name the file and either a field path (`items.herb.maximumStack`, `map[2][7]`)
   or a line and column (`items.json: line 5, column 7: unknown field 'maximimStack'`).
 - Every shared definition is validated, even when no level uses it.
-- Shared catalogs and Lua scripts load once at startup; restart the game to reload them.
-  A level file loads when the level starts.
+- Shared catalogs and Lua scripts load at startup, and a level file when the level
+  starts. Debug builds also reload them while the game runs; see [Hot reload](#hot-reload).
 - Units are pixels, seconds and pixels per second. Sprite regions are atlas pixels.
+
+## Hot reload
+
+Builds other than Release read `assets/` from the source tree, not the copy beside the
+executable, and check it four times a second. Once a change has settled, the game loads
+every catalog, script, the atlas and the current level's file again. If anything fails,
+the console shows the error and the game keeps running what it had. Otherwise the game
+applies the new content without restarting:
+
+- Actors and pickups are matched to their placements by `id`. A kept one stays where it
+  is, keeps what it was doing, and takes its new definition, spawn and patrol. Health is
+  kept but capped at the new maximum.
+- A new `id` spawns. An `id` gone from the file removes its actor or pickup. An actor
+  killed or a pickup collected stays gone while its `id` remains.
+- The player keeps their position, health and items, matched to items by name.
+- Tiles broken in play stay broken. Machines resume in the state with the same name, or
+  the first state, and every activity starts again under the new scripts.
+
+The console reports what was kept, spawned and removed. F5 restarts the current level
+from its file, keeping the player's health and items.
 
 ## Files
 

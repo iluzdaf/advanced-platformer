@@ -11,19 +11,23 @@
 #include <cstdint>
 #include <format>
 #include <optional>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <variant>
+#include <vector>
 
 #include <glm/vec2.hpp>
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/world/level_exit.hpp"
 #include "advanced_platformer/world/pickup.hpp"
+#include "advanced_platformer/world/level_validation.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
 
 namespace advanced_platformer
@@ -149,6 +153,9 @@ namespace advanced_platformer
         TileMap map = composeTileMap(data.mapRows, data.tileLegend, tiles);
         World world(composeItems(items, textureId));
         std::unordered_map<std::uint32_t, std::string> actorDefinitionNames;
+        std::unordered_map<std::uint32_t, std::string> actorPlacementIds;
+        std::vector<std::string> pickupPlacementIds;
+        std::set<std::string> placedIds;
         for (const auto& placement : data.actors)
         {
             try
@@ -161,6 +168,7 @@ namespace advanced_platformer
                     makePatrol(map, placement.patrol),
                     catalogs.machines));
                 actorDefinitionNames.emplace(id.value, placement.definitionName);
+                actorPlacementIds.emplace(id.value, placement.id);
             }
             catch (const std::invalid_argument& error)
             {
@@ -174,8 +182,16 @@ namespace advanced_platformer
         }
         for (const auto& placement : data.pickups)
         {
-            world.addPickup(makePickup(map, placement, pickups, items, textureId));
+            Pickup pickup = makePickup(map, placement, pickups, items, textureId);
+            pickup.placement = pickupPlacementIds.size();
+            pickupPlacementIds.push_back(placement.id);
+            world.addPickup(pickup);
         }
+        for (const auto& [actor, id] : actorPlacementIds)
+        {
+            placedIds.insert(id);
+        }
+        placedIds.insert(pickupPlacementIds.begin(), pickupPlacementIds.end());
         world.setExit(makeExit(map, textureId, data.exit, items, exits));
         const glm::vec2 playerSpawnFeet = feetOf(map, data.playerSpawn);
         return {
@@ -183,12 +199,31 @@ namespace advanced_platformer
             std::move(map),
             std::move(world),
             playerSpawnFeet,
-            std::move(actorDefinitionNames)};
+            std::move(actorDefinitionNames),
+            std::move(actorPlacementIds),
+            std::move(pickupPlacementIds),
+            std::move(placedIds)};
     }
 
     Actor composePlayer(const GameCatalogs& catalogs, int textureId)
     {
         const auto& actors = catalogs.actors;
         return composeActor(actorDefinition(actors, actors.player), catalogs.animations, textureId);
+    }
+
+    GameLevel composeStartedLevel(
+        const LevelCatalog& catalog,
+        int levelNumber,
+        int textureId,
+        const GameCatalogs& catalogs,
+        Actor player)
+    {
+        GameLevel level = composeGameLevel(catalog, levelNumber, textureId, catalogs);
+        moveFeetTo(player.body.bounds, level.playerSpawnFeet);
+        const ActorId playerId = level.world.addActor(std::move(player));
+        level.actorDefinitionNames.emplace(playerId.value, catalogs.actors.player);
+        level.world.setPlayer(playerId, level.playerSpawnFeet);
+        validateLevelActors(level.map, level.world, level.number);
+        return level;
     }
 }

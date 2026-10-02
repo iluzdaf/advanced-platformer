@@ -7,6 +7,8 @@
 #include "content/level_catalog.hpp"
 #include "content/game_catalogs.hpp"
 #include "content/hud_catalog.hpp"
+#include "content/game_content.hpp"
+#include "level_reload.hpp"
 
 #include <cstddef>
 #include <optional>
@@ -45,11 +47,12 @@ namespace advanced_platformer
         : levelCatalog(std::move(levelCatalog)),
           gameCatalogs(std::move(gameCatalogs)),
           npcScripts(std::move(npcScripts)),
-          level(composeGameLevel(
+          level(composeStartedLevel(
               this->levelCatalog,
               this->levelCatalog.startLevel,
               textureId,
-              this->gameCatalogs)),
+              this->gameCatalogs,
+              composePlayer(this->gameCatalogs, textureId))),
           atlasTextureId(textureId),
           simulationStepSeconds(stepSeconds)
     {
@@ -57,7 +60,7 @@ namespace advanced_platformer
         {
             throw std::invalid_argument("The game's simulation step must be finite and positive");
         }
-        startLevel(composePlayer(this->gameCatalogs, atlasTextureId));
+        startCamera();
     }
 
     void Game::loadLevel(int levelNumber)
@@ -73,23 +76,19 @@ namespace advanced_platformer
 
     void Game::replaceLevel(int levelNumber, Actor player)
     {
+        GameLevel next = composeStartedLevel(
+            levelCatalog, levelNumber, atlasTextureId, gameCatalogs, std::move(player));
         for (const Actor& actor : level.world.actors())
         {
             npcScripts.forget(actor.id);
         }
-        level = composeGameLevel(levelCatalog, levelNumber, atlasTextureId, gameCatalogs);
-        startLevel(std::move(player));
+        level = std::move(next);
+        startCamera();
     }
 
-    void Game::startLevel(Actor player)
+    void Game::startCamera()
     {
-        moveFeetTo(player.body.bounds, level.playerSpawnFeet);
-        const ActorId playerId = level.world.addActor(std::move(player));
-        level.actorDefinitionNames.emplace(playerId.value, gameCatalogs.actors.player);
-        level.world.setPlayer(playerId, level.playerSpawnFeet);
-        validateLevelActors(level.map, level.world, level.number);
-
-        const Actor* playerActor = level.world.findActor(playerId);
+        const Actor* playerActor = level.world.findActor(level.world.playerId());
         if (playerActor == nullptr)
         {
             throw std::logic_error("The game could not initialise its camera");
@@ -284,8 +283,43 @@ namespace advanced_platformer
 
     void Game::restart()
     {
-        gameComplete = false;
         replaceLevel(levelCatalog.startLevel, composePlayer(gameCatalogs, atlasTextureId));
+        gameComplete = false;
+    }
+
+    void Game::restartLevel()
+    {
+        if (!gameComplete)
+        {
+            loadLevel(level.number);
+        }
+    }
+
+    LevelReload Game::reload(GameContent content)
+    {
+        GameLevel fresh = composeStartedLevel(
+            content.levelCatalog,
+            level.number,
+            atlasTextureId,
+            content.gameCatalogs,
+            composePlayer(content.gameCatalogs, atlasTextureId));
+        GameLevel next = level;
+        LevelReload result = reloadLevel(
+            next, std::move(fresh), matchItemIds(gameCatalogs.items, content.gameCatalogs.items));
+
+        level = std::move(next);
+        levelCatalog = std::move(content.levelCatalog);
+        gameCatalogs = std::move(content.gameCatalogs);
+        npcScripts = std::move(content.npcScripts);
+        CameraController& camera = cameraControllerValue();
+        camera.deadZoneSize = levelCatalog.cameraDeadZone;
+        const Actor* player = level.world.findActor(level.world.playerId());
+        if (player != nullptr)
+        {
+            followTarget(camera, level.map, player->body.bounds);
+        }
+        queueNavigationFill(level.map, level.world, simulationStepSeconds);
+        return result;
     }
 
     int Game::levelNumber() const
