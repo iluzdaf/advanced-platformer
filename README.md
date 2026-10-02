@@ -173,7 +173,7 @@ It runs the tests under instrumentation and prints line, function, region and br
 coverage for `app/`, `src/`, `include/` and `scripting/`, leaving out `external/` and
 the tests themselves. The line-by-line report is at
 `build/mac-coverage/coverage/html/index.html`. Only code built into the test executable is
-counted, so the window, renderer and ImGui code does not appear. [ARCHITECTURE.md](docs/ARCHITECTURE.md#coverage) explains each column.
+counted, so the window, renderer and ImGui code does not appear. The table and the HTML report are `llvm-cov`'s own output; Clang's [Interpreting reports](https://clang.llvm.org/docs/SourceBasedCodeCoverage.html#interpreting-reports) explains their regions, functions, lines and branches.
 
 ## Formatting
 

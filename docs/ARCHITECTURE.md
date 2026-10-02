@@ -985,30 +985,3 @@ shipped content test only that it is valid.
 
 OpenGL and ImGui integration remain a manual run; automated graphics-context tests are
 avoided. [README.md](../README.md#continuous-integration) lists what CI checks.
-
-### Coverage
-
-Coverage is Clang's source-based coverage: the compiler records which parts of the
-project's code each test run reaches, and `llvm-cov` reports it for `app/`, `src/`,
-`include/` and `scripting/`. Only code built into the test executable is measured, so the
-window, renderer and ImGui code is absent rather than shown as uncovered. The summary
-table gives the totals of four measures; the report gives them for every file:
-
-| Column           | Meaning                                                                                                                                                                              |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Regions          | Spans of code that always run together, such as a function body, each side of an `if`, a loop body, or each operand of `&&` and `\|\|`. The finest measure: a line can hold several. |
-| Missed Regions   | Regions the tests never ran.                                                                                                                                                         |
-| Cover            | The share of regions that ran.                                                                                                                                                       |
-| Functions        | Functions with code in the file. A template counts once, however many instantiations it has.                                                                                         |
-| Missed Functions | Functions the tests never called.                                                                                                                                                    |
-| Executed         | The share of functions called at least once.                                                                                                                                         |
-| Lines            | Lines with executable code; blank lines, comments and declarations alone do not count.                                                                                               |
-| Missed Lines     | Lines no test ran any part of. A line that ran counts as covered even if one of its regions did not.                                                                                 |
-| Cover            | The share of lines that ran.                                                                                                                                                         |
-| Branches         | Each way a condition can go, true and false: `if (a)` has two, and `if (a && b)` has four, two for each operand.                                                                     |
-| Missed Branches  | Ways a condition never went in any test, such as an error check that never failed.                                                                                                   |
-| Cover            | The share of branches taken.                                                                                                                                                         |
-
-Lines are the easiest to read but the coarsest; missed branches point most directly at
-untested decisions. The HTML report shows each line's run count and highlights missed
-regions and branches in place.
