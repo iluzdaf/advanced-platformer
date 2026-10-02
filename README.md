@@ -208,6 +208,25 @@ your `PATH` with `uv tool update-shell` or `pipx ensurepath`, then restart your 
 Code. The gersemi extension runs whichever `gersemi` the `PATH` finds, and CMake finds it
 when you configure again.
 
+### Pre-commit hook
+
+Turn on the hook that formats what you commit:
+
+```sh
+git config core.hooksPath .githooks
+```
+
+It runs [`tools/format_staged.py`](tools/format_staged.py), which formats each staged
+file that a format target covers, using the tool in the table above, and stages the result.
+
+- A file with unstaged edits is left as staged, and the hook names it. Staging the
+  formatted file would sweep the rest of your edits into the commit.
+- A formatter that is not installed is skipped, and the hook names the files it left.
+  clang-format counts as missing unless it is LLVM 23, the version CI uses.
+- If a formatter fails, for example on a file that does not parse, the commit stops.
+
+Linters and clang-tidy are left to CI. `git commit --no-verify` skips the hook.
+
 Format first-party CMake, or check it without changing files:
 
 ```sh
@@ -346,6 +365,7 @@ tools/         repository quality and maintenance scripts
 docs/          reading route, architecture, content format, and future work
 external/      third-party libraries, as pinned git submodules
 .github/       continuous-integration workflow
+.githooks/     opt-in git hooks
 ```
 
 ## License
