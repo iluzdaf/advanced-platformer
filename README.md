@@ -177,111 +177,64 @@ counted, so the window, renderer and ImGui code does not appear. The table and t
 
 ## Formatting
 
-`.clang-format` defines the C and C++ style; `.gersemirc` defines the CMake style;
-`.prettierrc` covers JSON, YAML, and Markdown. Ruff formats and checks first-party Python. `.stylua.toml` formats Lua 5.4,
-while `.luacheckrc` limits linted globals to the libraries exposed by the protected
-runtime. `.luarc.json` configures LuaLS for Lua 5.4 and leaves formatting to StyLua.
-`.editorconfig` supplies shared whitespace rules.
-
-|           | Config          | Tool                            | VS Code                                 |
-| --------- | --------------- | ------------------------------- | --------------------------------------- |
-| C and C++ | `.clang-format` | clang-format 23                 | on save, through clangd                 |
-| CMake     | `.gersemirc`    | gersemi 0.29.2                  | on save, through the gersemi extension  |
-| JSON      | `.prettierrc`   | Prettier 3.9.8                  | on save, through the Prettier extension |
-| YAML      | `.prettierrc`   | Prettier 3.9.8                  | on save, through the Prettier extension |
-| Markdown  | `.prettierrc`   | Prettier 3.9.8                  | on save, through the Prettier extension |
-| Python    | Ruff defaults   | Ruff 0.16.8                     | on save, through the Ruff extension     |
-| Lua       | `.stylua.toml`  | StyLua 2.5.2 and Luacheck 1.2.0 | on save, through the StyLua extension   |
-
-VS Code reads `.clang-format` and `.editorconfig` without an extension. It also
-recommends LuaLS for Lua diagnostics.
-
-On macOS, install the Lua command-line tools and the pinned gersemi with:
+Format every first-party file, check them as CI does, or turn on the pre-commit hook:
 
 ```sh
-brew install stylua luacheck
-uv tool install gersemi==0.29.2
+python3 tools/format.py
+python3 tools/format.py --check
+git config core.hooksPath .githooks
 ```
 
-`pipx install gersemi==0.29.2` works as well. Both install into `~/.local/bin`; put it on
-your `PATH` with `uv tool update-shell` or `pipx ensurepath`, then restart your shell and VS
-Code. The gersemi extension runs whichever `gersemi` the `PATH` finds, and CMake finds it
-when you configure again.
+| Files                | Formatter       | Config          | Install on macOS                  | VS Code on save    |
+| -------------------- | --------------- | --------------- | --------------------------------- | ------------------ |
+| C and C++            | clang-format 23 | `.clang-format` | `brew install llvm`               | clangd             |
+| CMake                | gersemi 0.29.2  | `.gersemirc`    | `uv tool install gersemi==0.29.2` | gersemi extension  |
+| JSON, YAML, Markdown | Prettier 3.9.8  | `.prettierrc`   | `brew install prettier`           | Prettier extension |
+| Python               | Ruff 0.16.8     | Ruff defaults   | `uv tool install ruff==0.16.8`    | Ruff extension     |
+| Lua                  | StyLua 2.5.2    | `.stylua.toml`  | `brew install stylua`             | StyLua extension   |
 
-Format first-party CMake, or check it without changing files:
+The versions are the ones CI runs. clang-format has to match, so `tools/format.py` treats
+any other version as missing. The other tools may format differently at another version,
+and CI catches that. `uv tool` installs into `~/.local/bin`; `uv tool update-shell` puts
+it on your `PATH`. `.editorconfig` supplies shared whitespace rules.
+
+[`tools/format.py`](tools/format.py) decides which files each tool covers, skipping
+`external/` and anything git does not track. A missing tool fails the run.
+
+The hook runs `tools/format.py --staged`, which formats the staged files and stages them.
+
+- A file with unstaged edits is left as staged and named, so the rest of your edits stay
+  out of the commit.
+- A missing tool is skipped and named.
+- A formatter that fails, for example on a file that does not parse, stops the commit.
+
+`git commit --no-verify` skips the hook.
+
+## Linting
+
+| Files  | Linter         | Config        | Install on macOS        |
+| ------ | -------------- | ------------- | ----------------------- |
+| Python | Ruff 0.16.8    | Ruff defaults | as above                |
+| Lua    | Luacheck 1.2.0 | `.luacheckrc` | `brew install luacheck` |
 
 ```sh
-cmake --build --preset mac-debug --target format-cmake
-cmake --build --preset mac-debug --target format-cmake-check
+cmake --build --preset mac-debug --target lint-python lint-lua
 ```
 
-Format first-party C++, or check it without changing files:
+CMake leaves out the target of a linter it cannot find. `-DRUFF_EXECUTABLE=` or
+`-DLUACHECK_EXECUTABLE=` picks a specific one.
 
-```sh
-cmake --build --preset mac-debug --target format
-cmake --build --preset mac-debug --target format-check
-```
-
-Format first-party JSON, or check it without changing files:
-
-```sh
-cmake --build --preset mac-debug --target format-json
-cmake --build --preset mac-debug --target format-json-check
-```
-
-Format first-party YAML, or check it without changing files:
-
-```sh
-cmake --build --preset mac-debug --target format-yaml
-cmake --build --preset mac-debug --target format-yaml-check
-```
-
-Format first-party Markdown, or check it without changing files:
-
-```sh
-cmake --build --preset mac-debug --target format-markdown
-cmake --build --preset mac-debug --target format-markdown-check
-```
-
-Format first-party Python, or check its formatting and lint findings:
-
-```sh
-cmake --build --preset mac-debug --target format-python
-cmake --build --preset mac-debug --target format-python-check lint-python
-```
+Luacheck only allows what scripts can use in the game. [`.luacheckrc`](.luacheckrc)
+lists the allowed globals, and `openSandbox` in
+[`scripting/lua_sandbox.cpp`](scripting/lua_sandbox.cpp) opens the same libraries at run
+time. Keep the two in step. `.luarc.json` configures LuaLS, which VS Code recommends for
+Lua diagnostics.
 
 Run the tests for the scripts in `tools/`, as CI does:
 
 ```sh
 python3 -m unittest discover -s tools -p 'test_*.py'
 ```
-
-Format first-party Lua, or check its formatting and lint findings:
-
-```sh
-cmake --build --preset mac-debug --target format-lua
-cmake --build --preset mac-debug --target format-lua-check lint-lua
-```
-
-Luacheck only allows what scripts can use in the game. [`.luacheckrc`](.luacheckrc)
-lists the allowed globals, and `openSandbox` in
-[`scripting/lua_sandbox.cpp`](scripting/lua_sandbox.cpp) opens the same libraries at run
-time. Keep the two in step.
-
-The C++ targets skip `external/`; the CMake targets cover `CMakeLists.txt` and `cmake/`;
-the JSON targets cover `assets/`, `tests/fixtures/`, `.vscode/`, `CMakePresets.json`,
-`.luarc.json` and `.prettierrc`; the YAML targets cover `.github/`, `.clang-format`,
-`.clang-tidy`, `.clangd` and `.gersemirc`; the Markdown targets cover the
-root documentation and `docs/`; the Python targets cover `tools/`; and the Lua targets
-cover `assets/` and `tests/fixtures/`. CMake reports any unavailable tool while
-configuring and omits only its targets. Use `-DCLANG_FORMAT_EXECUTABLE=`,
-`-DPRETTIER_EXECUTABLE=`, `-DRUFF_EXECUTABLE=`, `-DSTYLUA_EXECUTABLE=`,
-`-DLUACHECK_EXECUTABLE=`, or `-DGERSEMI_EXECUTABLE=` to choose a specific one.
-
-CI runs clang-format from LLVM 23, gersemi 0.29.2, Prettier 3.9.8, Ruff 0.16.8, StyLua
-2.5.2, and Luacheck 1.2.0, and a pull request cannot merge until their checks pass. clang-format
-comes from your LLVM, so it matches CI when your LLVM does; the other tools need not.
-If yours format differently, CI fails and you reformat with the commands above.
 
 ## Static analysis
 
@@ -346,6 +299,7 @@ tools/         repository quality and maintenance scripts
 docs/          reading route, architecture, content format, and future work
 external/      third-party libraries, as pinned git submodules
 .github/       continuous-integration workflow
+.githooks/     opt-in git hooks
 ```
 
 ## License
