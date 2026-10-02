@@ -138,8 +138,9 @@ GitHub Actions runs the jobs below. The names are the ones shown on a pull reque
 | Headers stand alone          | `ubuntu-24.04` | Compiles every public header on its own.                                                                                                              | pull requests only                 |
 | Static analysis (1/3 to 3/3) | `ubuntu-24.04` | Runs clang-tidy, with warnings as errors, on the files the pull request affects (see [Static analysis](#static-analysis)), split across three shards. | pull requests only                 |
 | Static analysis              | `ubuntu-24.04` | Passes only if every static analysis shard passed. This is the check branch protection requires.                                                      | pull requests only                 |
+| Coverage                     | `ubuntu-24.04` | Builds with coverage instrumentation, runs the tests, and summarises which of the project's lines they ran. Report only.                              | pushes to `main` and pull requests |
 
-The jobs other than build and test are skipped on pushes because branch protection
+The jobs other than build and test, and coverage, are skipped on pushes because branch protection
 already ran them on the pull request.
 
 Every job runs on Linux and installs the same toolchain through
@@ -156,6 +157,23 @@ them, shallowly.
 The build and test job uses a pinned `sccache` release backed by GitHub Actions'
 cache service. Only compiler outputs are cached; generated build directories are not.
 None of this affects local builds.
+
+## Coverage
+
+Coverage uses Clang's source-based coverage and the `llvm-profdata` and `llvm-cov` beside
+the compiler. Configure the coverage preset, build, and run the `coverage` target:
+
+```sh
+cmake --preset mac-coverage
+cmake --build --preset mac-coverage
+cmake --build --preset mac-coverage --target coverage
+```
+
+It runs the tests under instrumentation and prints line, function, region and branch
+coverage for `app/`, `src/`, `include/` and `scripting/`, leaving out `external/` and
+the tests themselves. The line-by-line report is at
+`build/mac-coverage/coverage/html/index.html`. Only code built into the test executable is
+counted, so the window, renderer and ImGui code does not appear. The table and the HTML report are `llvm-cov`'s own output; Clang's [Interpreting reports](https://clang.llvm.org/docs/SourceBasedCodeCoverage.html#interpreting-reports) explains their regions, functions, lines and branches.
 
 ## Formatting
 

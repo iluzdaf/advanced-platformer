@@ -53,6 +53,24 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
+    },
+    {
+      "name": "mac-coverage",
+      "displayName": "macOS Coverage",
+      "inherits": "mac",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "ADVANCED_PLATFORMER_COVERAGE": true
+      }
+    },
+    {
+      "name": "linux-coverage",
+      "displayName": "Linux Coverage (headless, for CI)",
+      "inherits": "linux",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "ADVANCED_PLATFORMER_COVERAGE": true
+      }
     }
   ],
   "buildPresets": [
@@ -67,6 +85,14 @@
     {
       "name": "linux-debug",
       "configurePreset": "linux-debug"
+    },
+    {
+      "name": "mac-coverage",
+      "configurePreset": "mac-coverage"
+    },
+    {
+      "name": "linux-coverage",
+      "configurePreset": "linux-coverage"
     }
   ],
   "testPresets": [

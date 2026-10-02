@@ -14,6 +14,7 @@ target_include_directories(advanced_platformer_core PUBLIC ${CMAKE_CURRENT_SOURC
 target_compile_features(advanced_platformer_core PUBLIC cxx_std_26)
 target_link_libraries(advanced_platformer_core PUBLIC advanced_platformer_glm)
 enable_project_warnings(advanced_platformer_core)
+enable_project_coverage(advanced_platformer_core)
 
 add_library(advanced_platformer_scripting)
 include(cmake/sources/Scripting.cmake)
@@ -28,6 +29,7 @@ target_link_libraries(
     PRIVATE advanced_platformer_sol2
 )
 enable_project_warnings(advanced_platformer_scripting)
+enable_project_coverage(advanced_platformer_scripting)
 
 add_executable(advanced_platformer)
 include(cmake/sources/Application.cmake)
@@ -44,6 +46,7 @@ target_link_libraries(
         glfw
 )
 enable_project_warnings(advanced_platformer)
+enable_project_coverage(advanced_platformer)
 
 add_custom_target(
     game_assets
@@ -80,6 +83,7 @@ if(BUILD_TESTING)
         PRIVATE advanced_platformer_scripting advanced_platformer_json Catch2::Catch2WithMain
     )
     enable_project_warnings(advanced_platformer_tests)
+    enable_project_coverage(advanced_platformer_tests)
     add_custom_target(
         test_fixtures
         COMMAND
@@ -103,6 +107,10 @@ if(BUILD_TESTING)
         advanced_platformer_tests
         WORKING_DIRECTORY $<TARGET_FILE_DIR:advanced_platformer_tests>
     )
+
+    if(ADVANCED_PLATFORMER_COVERAGE)
+        include(cmake/Coverage.cmake)
+    endif()
 endif()
 
 include(cmake/SourceRegistration.cmake)
