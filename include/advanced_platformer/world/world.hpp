@@ -26,7 +26,6 @@ namespace advanced_platformer
     struct NoiseEvent
     {
         ActorId source;
-        // Captured when emitted, not looked up from the actor when heard.
         glm::vec2 feet = {0.0F, 0.0F};
         NoiseKind kind = NoiseKind::Landing;
     };
@@ -34,14 +33,13 @@ namespace advanced_platformer
     class World
     {
     public:
-        // Definitions are immutable for the lifetime of a world; IDs may be shared across levels.
         explicit World(std::vector<ItemDefinition> items = {});
         const ItemDefinition& itemDefinition(ItemId id) const;
+        const std::vector<ItemDefinition>& items() const;
+        void replaceItemDefinitions(std::vector<ItemDefinition> items);
         void addPickup(Pickup pickup);
-        // Collection can erase pickups. Do not retain references/indexes across request batches.
         std::vector<Pickup>& pickups();
         const std::vector<Pickup>& pickups() const;
-        // Used when applying queued pickup requests, after iteration has finished.
         void collectPickup(std::size_t index);
         void setExit(LevelExit exit);
         const std::optional<LevelExit>& exit() const;
@@ -49,37 +47,24 @@ namespace advanced_platformer
         bool levelComplete() const;
         void completeLevel();
 
-        // Elapsed active fixed-step time for this world. A double, and so are the stamps
-        // taken from it, so a stamp keeps its precision however long a session runs.
         double simulationTimeSeconds() const;
-        // How long ago a stamp taken from this clock was, or nothing without a stamp. A
-        // stamp ahead of the clock is rejected. An age is small, so it is a float.
         std::optional<float> secondsSince(const std::optional<double>& timeSeconds) const;
-        // The simulation loop calls this once at the start of each active update.
         void advanceSimulationTime(float deltaTime);
-        // Events emitted after sensing are delivered on the next fixed update.
-        // Sensing takes the batch once and shares it with every NPC before discarding it.
         void emitNoise(NoiseEvent event);
         std::vector<NoiseEvent> takeNoises();
 
         ActorId addActor(Actor actor);
         bool removeActor(ActorId id);
 
-        // Adding or removing actors invalidates returned pointers. Keep ActorId values across
-        // world mutations and use these pointers only for temporary access.
         Actor* findActor(ActorId id);
         const Actor* findActor(ActorId id) const;
 
-        // Systems may modify existing actors through this collection. Adding or removing actors
-        // must go through addActor() and removeActor() so World can preserve its invariants.
         std::vector<Actor>& actors();
         const std::vector<Actor>& actors() const;
 
         void addProjectile(Projectile projectile);
         bool removeProjectile(std::size_t index);
 
-        // Systems may modify existing projectiles through this collection. Adding or removing
-        // projectiles must go through World so projectile data remains valid.
         std::vector<Projectile>& projectiles();
         const std::vector<Projectile>& projectiles() const;
 
@@ -93,14 +78,10 @@ namespace advanced_platformer
         glm::vec2 playerSpawnFeet() const;
         void respawnPlayer();
 
-        // The platformer connections this world's searches have found, for the map it is
-        // simulated with. The world goes with its level, so what one search simulated
-        // serves every later one; a tile broken during play drops only what it touched.
         PlatformerConnectionCache& platformerConnections();
         const PlatformerConnectionCache& platformerConnections() const;
 
     private:
-        // A stamp on the world clock may be unset, but never ahead of the clock.
         void requireWithinSimulationTime(const std::optional<double>& time, const char* what) const;
 
         std::vector<ItemDefinition> itemDefinitions;

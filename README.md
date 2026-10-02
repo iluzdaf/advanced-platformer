@@ -54,6 +54,9 @@ cd build/mac-debug
 ./advanced_platformer
 ```
 
+Debug builds read `assets/` from the source tree and reload it while the game runs when a
+file there changes. See [Hot reload](docs/CONTENT.md#hot-reload).
+
 Press F1 in the game to open the [debug overlay](#debug-overlay), which shows frame
 timings among other things. For performance numbers, build and run the release preset
 instead. The debug build has no optimisation, so its timings may not be an accurate
@@ -82,20 +85,21 @@ ctest --preset mac-debug -R "Pickup" --output-on-failure
 
 ## Playing the example game
 
-| Action                                        | Controls                                  |
-| --------------------------------------------- | ----------------------------------------- |
-| Move                                          | A and D, or the left and right arrow keys |
-| Jump                                          | W, Up, or Space                           |
-| Aim                                           | Mouse                                     |
-| Fire                                          | Left mouse button                         |
-| Collect an item                               | Walk over it                              |
-| Open or close the inventory (pauses the game) | Q, or click the bag at the bottom-left    |
-| Drink a health potion                         | Click it in the open inventory            |
-| Restart from the starting level               | R, at the completion message              |
-| Pause or resume the simulation                | P                                         |
-| Run one simulation step while paused          | . (full stop)                             |
-| Toggle the debug overlay                      | F1                                        |
-| Close the window                              | Escape                                    |
+| Action                                              | Controls                                  |
+| --------------------------------------------------- | ----------------------------------------- |
+| Move                                                | A and D, or the left and right arrow keys |
+| Jump                                                | W, Up, or Space                           |
+| Aim                                                 | Mouse                                     |
+| Fire                                                | Left mouse button                         |
+| Collect an item                                     | Walk over it                              |
+| Open or close the inventory (pauses the game)       | Q, or click the bag at the bottom-left    |
+| Drink a health potion                               | Click it in the open inventory            |
+| Restart from the starting level                     | R, at the completion message              |
+| Restart the current level, keeping health and items | F5                                        |
+| Pause or resume the simulation                      | P                                         |
+| Run one simulation step while paused                | . (full stop)                             |
+| Toggle the debug overlay                            | F1                                        |
+| Close the window                                    | Escape                                    |
 
 The hearts at the top-left show the player's current and maximum health.
 

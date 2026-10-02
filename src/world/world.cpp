@@ -57,19 +57,29 @@ namespace advanced_platformer
     }
 
     World::World(std::vector<ItemDefinition> items)
-        : itemDefinitions(std::move(items))
     {
-        for (std::size_t index = 0; index < itemDefinitions.size(); ++index)
+        replaceItemDefinitions(std::move(items));
+    }
+
+    void World::replaceItemDefinitions(std::vector<ItemDefinition> items)
+    {
+        for (std::size_t index = 0; index < items.size(); ++index)
         {
-            validateItemDefinition(itemDefinitions[index]);
+            validateItemDefinition(items[index]);
             for (std::size_t previous = 0; previous < index; ++previous)
             {
-                if (itemDefinitions[previous].id == itemDefinitions[index].id)
+                if (items[previous].id == items[index].id)
                 {
                     throw std::invalid_argument("Item IDs must be unique");
                 }
             }
         }
+        itemDefinitions = std::move(items);
+    }
+
+    const std::vector<ItemDefinition>& World::items() const
+    {
+        return itemDefinitions;
     }
 
     void World::requireWithinSimulationTime(const std::optional<double>& time, const char* what)

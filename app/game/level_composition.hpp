@@ -1,8 +1,10 @@
 #pragma once
 
 #include <cstdint>
+#include <set>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include <glm/vec2.hpp>
 
@@ -15,22 +17,28 @@ namespace advanced_platformer
     struct LevelCatalog;
     struct GameCatalogs;
 
-    // Runtime map and world, composed from LevelData and shared definitions.
     struct GameLevel
     {
         int number = 0;
         TileMap map;
         World world;
         glm::vec2 playerSpawnFeet = {0.0F, 0.0F};
-        // Content names stay outside core actors; debug views resolve them by ID.
         std::unordered_map<std::uint32_t, std::string> actorDefinitionNames;
+        std::unordered_map<std::uint32_t, std::string> actorPlacementIds;
+        std::vector<std::string> pickupPlacementIds;
+        std::set<std::string> placedIds;
     };
 
-    // Game::startLevel inserts the player; only the requested level file is read here.
     GameLevel composeGameLevel(
         const LevelCatalog& catalog,
         int levelNumber,
         int textureId,
         const GameCatalogs& catalogs);
     Actor composePlayer(const GameCatalogs& catalogs, int textureId);
+    GameLevel composeStartedLevel(
+        const LevelCatalog& catalog,
+        int levelNumber,
+        int textureId,
+        const GameCatalogs& catalogs,
+        Actor player);
 }

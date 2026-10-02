@@ -7,8 +7,15 @@ namespace advanced_platformer
 {
     struct RenderScene;
 
-    // A loaded texture. The SpriteRenderer owns and deletes it; copies are only for drawing
-    // with.
+    struct Image
+    {
+        int width = 0;
+        int height = 0;
+        std::vector<unsigned char> pixels;
+    };
+
+    Image loadImage(const std::string& path);
+
     struct Texture
     {
         unsigned int handle = 0;
@@ -25,7 +32,8 @@ namespace advanced_platformer
         SpriteRenderer(const SpriteRenderer&) = delete;
         SpriteRenderer& operator=(const SpriteRenderer&) = delete;
 
-        int loadTexture(const std::string& path);
+        int loadTexture(const Image& image);
+        void replaceTexture(int textureId, const Image& image);
         Texture texture(int textureId) const;
         void render(const RenderScene& scene, int framebufferWidth, int framebufferHeight);
 

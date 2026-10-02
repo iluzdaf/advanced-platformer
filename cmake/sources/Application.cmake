@@ -18,11 +18,13 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/app/content/actor_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/actor_definition.cpp
         ${PROJECT_SOURCE_DIR}/app/content/animation_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/asset_watcher.cpp
         ${PROJECT_SOURCE_DIR}/app/content/content_diagnostics.cpp
         ${PROJECT_SOURCE_DIR}/app/content/content_glaze.cpp
         ${PROJECT_SOURCE_DIR}/app/content/content_validation.cpp
         ${PROJECT_SOURCE_DIR}/app/content/exit_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/game_catalogs.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/game_content.cpp
         ${PROJECT_SOURCE_DIR}/app/content/hud_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/item_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/level_catalog.cpp
@@ -33,6 +35,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/app/content/tile_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/game/game.cpp
         ${PROJECT_SOURCE_DIR}/app/game/level_composition.cpp
+        ${PROJECT_SOURCE_DIR}/app/game/level_reload.cpp
         ${PROJECT_SOURCE_DIR}/app/graphics/display_viewport.cpp
         ${PROJECT_SOURCE_DIR}/app/graphics/game_window.cpp
         ${PROJECT_SOURCE_DIR}/app/graphics/imgui_session.cpp

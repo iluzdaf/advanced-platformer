@@ -2,6 +2,9 @@
 
 #include <cstddef>
 #include <cstdlib>
+#include <exception>
+#include <filesystem>
+#include <format>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -14,13 +17,13 @@
 
 #include <imgui.h>
 
-#include "content/game_catalogs.hpp"
-#include "content/level_catalog.hpp"
-#include "content/npc_script_catalog.hpp"
+#include "content/asset_watcher.hpp"
+#include "content/game_content.hpp"
 #include "debug/console_log.hpp"
 #include "debug/debug_tools.hpp"
 #include "debug/frame_profile_ui.hpp"
 #include "game/game.hpp"
+#include "game/level_reload.hpp"
 #include "graphics/display_viewport.hpp"
 #include "graphics/game_window.hpp"
 #include "graphics/imgui_session.hpp"
@@ -38,6 +41,15 @@ namespace advanced_platformer
 {
     namespace
     {
+#ifdef ADVANCED_PLATFORMER_SOURCE_ASSETS
+        constexpr const char* AssetDirectory = ADVANCED_PLATFORMER_SOURCE_ASSETS;
+        constexpr bool WatchAssets = true;
+#else
+        constexpr const char* AssetDirectory = "assets";
+        constexpr bool WatchAssets = false;
+#endif
+        constexpr float AssetPollSeconds = 0.25F;
+
         struct ApplicationContext
         {
             InputState input;
@@ -51,6 +63,7 @@ namespace advanced_platformer
             bool stepRequested = false;
             bool playInterrupted = false;
             bool restartRequested = false;
+            bool restartLevelRequested = false;
         };
 
         std::optional<InputButton> buttonForKey(int key)
@@ -87,6 +100,11 @@ namespace advanced_platformer
             if (key == GLFW_KEY_R && action == GLFW_PRESS)
             {
                 context->restartRequested = true;
+                return;
+            }
+            if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
+            {
+                context->restartLevelRequested = true;
                 return;
             }
             if (key == GLFW_KEY_P && action == GLFW_PRESS)
@@ -182,6 +200,35 @@ namespace advanced_platformer
             context->input.setButton(InputButton::PrimaryAttack, action == GLFW_PRESS);
         }
 
+        std::filesystem::path atlasPath(const std::filesystem::path& assetDirectory)
+        {
+            return assetDirectory / "textures" / "sprites.png";
+        }
+
+        void reloadContent(
+            Game& game,
+            SpriteRenderer& renderer,
+            int atlas,
+            Texture& atlasTexture,
+            const std::filesystem::path& assetDirectory,
+            ConsoleLog& console)
+        {
+            try
+            {
+                const Image image = loadImage(atlasPath(assetDirectory).string());
+                const LevelReload reload =
+                    game.reload(loadGameContent(assetDirectory, {image.width, image.height}));
+                renderer.replaceTexture(atlas, image);
+                atlasTexture = renderer.texture(atlas);
+                console.write(ConsoleLevel::Info, describeReload(reload));
+            }
+            catch (const std::exception& error)
+            {
+                console.write(
+                    ConsoleLevel::Error, std::format("Could not reload content: {}", error.what()));
+            }
+        }
+
         InputIntentions playerIntentions(
             ApplicationContext& context,
             const Game& game,
@@ -219,23 +266,27 @@ namespace advanced_platformer
         glfwSetMouseButtonCallback(window.handle(), handleMouseButton);
         const ImGuiSession imgui(window.handle());
 
+        const std::filesystem::path assetDirectory = AssetDirectory;
         SpriteRenderer renderer;
-        const int atlas = renderer.loadTexture("assets/textures/sprites.png");
-        const Texture atlasTexture = renderer.texture(atlas);
+        const int atlas = renderer.loadTexture(loadImage(atlasPath(assetDirectory).string()));
+        Texture atlasTexture = renderer.texture(atlas);
         FixedStep fixedStep;
-        LevelCatalog levelCatalog = loadLevelCatalog("assets/levels/levels.json");
-        GameCatalogs gameCatalogs =
-            loadGameCatalogs("assets/catalogs", {atlasTexture.width, atlasTexture.height});
-        LuaNpcScripts npcScripts;
-        loadNpcActivityScripts(npcScripts, gameCatalogs.machines, "assets/scripts");
+        GameContent content =
+            loadGameContent(assetDirectory, {atlasTexture.width, atlasTexture.height});
         Game game(
             atlas,
-            std::move(levelCatalog),
-            std::move(gameCatalogs),
-            std::move(npcScripts),
+            std::move(content.levelCatalog),
+            std::move(content.gameCatalogs),
+            std::move(content.npcScripts),
             static_cast<float>(fixedStep.stepSeconds()));
         DebugTools debugTools;
         Stopwatch frameClock;
+        std::optional<AssetWatcher> assetWatcher;
+        if (WatchAssets)
+        {
+            assetWatcher.emplace(assetDirectory);
+        }
+        Stopwatch assetPollClock;
 
         while (!window.shouldClose())
         {
@@ -252,6 +303,30 @@ namespace advanced_platformer
                     context.playInterrupted = true;
                 }
                 context.restartRequested = false;
+            }
+            if (context.restartLevelRequested)
+            {
+                try
+                {
+                    game.restartLevel();
+                    context.playInterrupted = true;
+                }
+                catch (const std::exception& error)
+                {
+                    console.write(
+                        ConsoleLevel::Error,
+                        std::format("Could not restart the level: {}", error.what()));
+                }
+                context.restartLevelRequested = false;
+            }
+            if (assetWatcher.has_value() && assetPollClock.elapsedSeconds() >= AssetPollSeconds)
+            {
+                assetPollClock.lapSeconds();
+                if (assetWatcher->poll())
+                {
+                    reloadContent(game, renderer, atlas, atlasTexture, assetDirectory, console);
+                    context.playInterrupted = true;
+                }
             }
 
             const WindowReading reading = window.read();
