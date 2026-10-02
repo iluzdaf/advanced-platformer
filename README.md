@@ -148,6 +148,11 @@ PyPI and LLVM 23 from apt.llvm.org, with its libc++, clang-format and clang-tidy
 than the runner's own. The jobs configure with the `linux-debug` preset, which builds
 GLFW without a display backend, so nothing needs a window.
 
+Every job restores the submodules through
+[`checkout-submodules`](.github/actions/checkout-submodules/action.yml), from a cache keyed
+on the tree of `external/`, which changes whenever a submodule moves. Only a miss fetches
+them, shallowly.
+
 The build and test job uses a pinned `sccache` release backed by GitHub Actions'
 cache service. Only compiler outputs are cached; generated build directories are not.
 None of this affects local builds.

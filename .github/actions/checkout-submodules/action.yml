@@ -1,0 +1,23 @@
+name: Check out submodules
+description: >
+  Restores the third-party submodules from a cache keyed on the external directory's tree,
+  which changes whenever a submodule moves, and fetches them only on a miss.
+
+runs:
+  using: composite
+  steps:
+    - name: Name the submodules by what they are pinned to
+      shell: bash
+      run: echo "EXTERNAL_TREE=$(git rev-parse HEAD:external)" >> "$GITHUB_ENV"
+    - name: Restore submodules
+      id: submodules
+      uses: actions/cache@v6
+      with:
+        path: |
+          external
+          .git/modules
+        key: submodules-${{ runner.os }}-${{ env.EXTERNAL_TREE }}
+    - name: Fetch submodules
+      if: steps.submodules.outputs.cache-hit != 'true'
+      shell: bash
+      run: git submodule update --init --recursive --depth 1
