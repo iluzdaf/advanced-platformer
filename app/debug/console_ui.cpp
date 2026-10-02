@@ -5,6 +5,8 @@
 #include "debug_ui_layout.hpp"
 #include "ui/hud_draw.hpp"
 
+#include <algorithm>
+
 #include <imgui.h>
 
 namespace advanced_platformer
@@ -43,9 +45,16 @@ namespace advanced_platformer
             return;
         }
         ImDrawList* drawList = ImGui::GetWindowDrawList();
-        const float wrapWidth = ImGui::GetContentRegionAvail().x;
+        const ImVec2 available = ImGui::GetContentRegionAvail();
+        const float wrapWidth = available.x;
+        float contentHeight = log.entries().empty() ? ImGui::GetTextLineHeight() : 0.0F;
+        for (const ConsoleEntry& entry : log.entries())
+        {
+            contentHeight += ImGui::CalcTextSize(entry.text.c_str(), nullptr, false, wrapWidth).y;
+        }
+        const float textHeight = std::max(contentHeight, available.y);
         const ImVec2 start = ImGui::GetCursorScreenPos();
-        ImVec2 position = start;
+        ImVec2 position = {start.x, start.y + textHeight - contentHeight};
         if (log.entries().empty())
         {
             drawTextLine(*drawList, position, "Nothing logged yet.", TextDetailColour);
@@ -57,8 +66,9 @@ namespace advanced_platformer
             drawShadowedText(*drawList, position, colour, entry.text.c_str(), wrapWidth);
             position.y += ImGui::CalcTextSize(entry.text.c_str(), nullptr, false, wrapWidth).y;
         }
-        ImGui::Dummy({wrapWidth, position.y - start.y});
-        const bool atBottom = ImGui::GetScrollY() >= ImGui::GetScrollMaxY();
+        ImGui::Dummy({wrapWidth, textHeight});
+        const bool atBottom =
+            view.shownWritten == 0 || ImGui::GetScrollY() >= ImGui::GetScrollMaxY();
         if (log.written() != view.shownWritten && atBottom)
         {
             ImGui::SetScrollHereY(1.0F);
