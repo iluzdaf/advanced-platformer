@@ -1,3 +1,5 @@
+option(ADVANCED_PLATFORMER_COVERAGE "Instrument the project's code for coverage" OFF)
+
 foreach(language C CXX)
     if(
         NOT CMAKE_${language}_COMPILER_ID STREQUAL "Clang"
@@ -56,4 +58,11 @@ function(enable_project_warnings target)
             -Wshorten-64-to-32
             -Wno-missing-designated-field-initializers
     )
+endfunction()
+
+function(enable_project_coverage target)
+    if(ADVANCED_PLATFORMER_COVERAGE)
+        target_compile_options(${target} PRIVATE -fprofile-instr-generate -fcoverage-mapping)
+        target_link_options(${target} PRIVATE -fprofile-instr-generate)
+    endif()
 endfunction()

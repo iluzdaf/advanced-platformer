@@ -193,3 +193,55 @@ jobs:
         run: '"$SCCACHE_PATH" --show-stats'
       - name: Test
         run: ctest --preset linux-debug
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-24.04
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Check out submodules
+        uses: ./.github/actions/checkout-submodules
+      - name: Install toolchain
+        uses: ./.github/actions/install-toolchain
+        with:
+          cmake: ${{ env.CMAKE }}
+          llvm: ${{ env.LLVM }}
+      - name: Install LLVM's coverage tools and profile runtime
+        run: >
+          sudo apt-get install -y -qq --no-install-recommends
+          "llvm-$LLVM" "libclang-rt-$LLVM-dev"
+      - name: Set up compiler cache
+        uses: mozilla-actions/sccache-action@v0.0.11
+        with:
+          version: v0.17.0
+      - name: Configure
+        run: >
+          cmake --preset linux-coverage
+          -DCMAKE_C_COMPILER_LAUNCHER="$SCCACHE_PATH"
+          -DCMAKE_CXX_COMPILER_LAUNCHER="$SCCACHE_PATH"
+      - name: Build
+        run: cmake --build --preset linux-coverage --parallel 3
+      - name: Measure coverage
+        run: cmake --build --preset linux-coverage --target coverage
+      - name: Summarise coverage
+        run: |
+          {
+            echo '## Coverage'
+            echo '```text'
+            tail -n 1 build/linux-coverage/coverage/report.txt
+            echo '```'
+            echo '<details><summary>Every file</summary>'
+            echo
+            echo '```text'
+            cat build/linux-coverage/coverage/report.txt
+            echo '```'
+            echo '</details>'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload line-by-line coverage
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-html
+          path: build/linux-coverage/coverage/html
