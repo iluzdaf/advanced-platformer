@@ -28,14 +28,14 @@ TEST_CASE("Pickup definitions compose bounds and optional world sprites", "[app]
         throw std::logic_error("Missing sprite override");
     }
     REQUIRE(medicine.sprite->textureId == 7);
-    REQUIRE(medicine.sprite->size == glm::vec2{24, 16});
+    REQUIRE(medicine.sprite->region.size == glm::vec2{24, 16});
     REQUIRE(medicine.sprite->anchor == advanced_platformer::SpriteAnchor::BodyCenter);
-    REQUIRE(advanced_platformer::itemDefinition(items, "medicine").icon.size == glm::vec2{8, 8});
+    REQUIRE(
+        advanced_platformer::itemDefinition(items, "medicine").icon.region.size == glm::vec2{8, 8});
 }
 
 TEST_CASE("Pickup JSON validates every definition including unused entries", "[app][pickups][json]")
 {
-    // Shape errors name a line and column; rule errors name the definition.
     const auto items = advanced_platformer::loadItemCatalog("tests/fixtures/catalogs/items.json");
     auto pickupJson = tests::parseJson(
         R"({"pickups":{"unused":{"item":"key","quantity":1,"bodySize":[10,12]}}})");

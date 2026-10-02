@@ -41,13 +41,13 @@ namespace
 TEST_CASE("Pickups and exits produce camera-relative sprite commands", "[world][render][pickups]")
 {
     auto definitions = items();
-    definitions[0].icon = {7, {{4.0F, 8.0F}, {6.0F, 10.0F}}, {6.0F, 10.0F}};
+    definitions[0].icon = {7, {{4.0F, 8.0F}, {6.0F, 10.0F}}};
     advanced_platformer::World world(definitions);
     world.addPickup(pickupAt({20.0F, 20.0F}, {12.0F, 16.0F}, {1, 1}));
     world.advanceSimulationTime(0.5F);
     advanced_platformer::LevelExit exit;
     exit.bounds = {{50.0F, 20.0F}, {16.0F, 32.0F}};
-    exit.sprite = advanced_platformer::Sprite{8, {{8.0F, 8.0F}, {16.0F, 32.0F}}, {16.0F, 32.0F}};
+    exit.sprite = advanced_platformer::Sprite{8, {{8.0F, 8.0F}, {16.0F, 32.0F}}};
     world.setExit(exit);
     const advanced_platformer::TileMap map = tests::TileMapBuilder({"......", "......", "......"});
     advanced_platformer::Camera camera;
@@ -66,7 +66,7 @@ TEST_CASE(
     "[world][render][pickups]")
 {
     auto definitions = items();
-    definitions[0].icon = {7, {{4.0F, 8.0F}, {6.0F, 10.0F}}, {6.0F, 10.0F}};
+    definitions[0].icon = {7, {{4.0F, 8.0F}, {6.0F, 10.0F}}};
     advanced_platformer::World world(definitions);
     world.addPickup(pickupAt({0.0F, 0.0F}, {16.0F, 16.0F}, {1, 1}));
     world.addPickup(pickupAt({16.0F, 0.0F}, {16.0F, 16.0F}, {1, 1}));
@@ -90,7 +90,7 @@ TEST_CASE("Pickup sprite overrides leave inventory icons unchanged", "[world][re
 {
     advanced_platformer::World world(items());
     const advanced_platformer::Sprite sprite{
-        7, {{24, 8}, {12, 10}}, {24, 20}, advanced_platformer::SpriteAnchor::BodyCenter};
+        7, {{24, 8}, {24, 20}}, advanced_platformer::SpriteAnchor::BodyCenter};
     advanced_platformer::Pickup pickup = pickupAt({20.0F, 20.0F}, {8.0F, 8.0F}, {1, 1});
     pickup.sprite = sprite;
     world.addPickup(pickup);

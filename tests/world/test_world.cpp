@@ -83,7 +83,6 @@ TEST_CASE("World measures how long ago a stamp on its clock was", "[world][time]
     world.advanceSimulationTime(0.5F);
     REQUIRE(world.secondsSince(0.25F) == 0.25F);
     REQUIRE_FALSE(world.secondsSince(std::nullopt).has_value());
-    // A stamp cannot come from before the world began or from its future.
     REQUIRE_THROWS_AS(world.secondsSince(-0.1F), std::invalid_argument);
     REQUIRE_THROWS_AS(world.secondsSince(0.75F), std::invalid_argument);
 }
@@ -203,7 +202,7 @@ TEST_CASE("World adds and removes projectiles through its public interface", "[w
     advanced_platformer::World world;
     advanced_platformer::Projectile first;
     first.bounds = {{8.0F, 8.0F}, {4.0F, 2.0F}};
-    first.sprite.size = {4.0F, 2.0F};
+    first.sprite.region.size = {4.0F, 2.0F};
     advanced_platformer::Projectile second = first;
     second.bounds.topLeft = {16.0F, 8.0F};
 
@@ -221,7 +220,7 @@ TEST_CASE("World validates and owns projectile bursts", "[world][projectile]")
     advanced_platformer::World world;
     advanced_platformer::ProjectileBurst burst;
     burst.center = {8.0F, 8.0F};
-    burst.sprite.size = {4.0F, 2.0F};
+    burst.sprite.region.size = {4.0F, 2.0F};
 
     world.addProjectileBurst(burst);
 

@@ -25,8 +25,6 @@
 
 namespace advanced_platformer
 {
-    // animations.json as written: its member names are the file's keys. Glaze reflects only
-    // types with linkage, so these cannot go in an anonymous namespace.
     struct FrameJson
     {
         glm::vec2 position{};
@@ -40,7 +38,6 @@ namespace advanced_platformer
         bool looping = false;
     };
 
-    // Every set has all six clips.
     struct AnimationSetJson
     {
         ClipJson idle;
@@ -58,7 +55,6 @@ namespace advanced_platformer
 
     namespace
     {
-        // Each clip's member in an AnimationSetJson, in the order sets list their clips.
         constexpr std::array<std::pair<AnimationName, ClipJson AnimationSetJson::*>, 6>
             ClipMembers = {
                 {{AnimationName::Idle, &AnimationSetJson::idle},
@@ -82,7 +78,6 @@ namespace advanced_platformer
              {"attack", AnimationName::Attack},
              {"death", AnimationName::Death}}};
 
-        // The clip's field name in animations.json, as in "idle".
         std::string_view clipName(AnimationName name)
         {
             for (const ClipEntry& entry : Clips)
@@ -133,9 +128,7 @@ namespace advanced_platformer
                     const auto& frame = clip.frames[index];
                     Sprite sprite;
                     sprite.region = frame;
-                    sprite.size = frame.size;
                     validateContentSprite(sprite);
-                    // Playback changes the source rectangle, not the sprite's display size.
                     if (frame.size != set.clips.front().frames.front().size)
                     {
                         throw std::invalid_argument("all frames in a set must use the same size");

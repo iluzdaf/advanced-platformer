@@ -27,7 +27,6 @@
 
 namespace
 {
-    // Each kind of thing draws from its own texture, so a scene can be searched for it.
     constexpr int PlayerTexture = 1;
     constexpr int NpcTexture = 2;
     constexpr int PickupTexture = 3;
@@ -54,7 +53,7 @@ namespace
 
     advanced_platformer::Sprite square(int textureId, float size)
     {
-        return {textureId, {{0.0F, 0.0F}, {size, size}}, {size, size}};
+        return {textureId, {{0.0F, 0.0F}, {size, size}}};
     }
 
     advanced_platformer::World worldWithPickupItem()
@@ -94,7 +93,7 @@ TEST_CASE("A render scene contains visible tiles followed by the player", "[rend
         tests::TileMapBuilder({".xxx", "...."})
             .where('x', tests::Tile().blocksMovement().blocksSight().withSprite(tileRegion));
     const advanced_platformer::Camera camera{{16.0F, 0.0F}, {32.0F, 16.0F}};
-    const advanced_platformer::Sprite player{9, {{2.0F, 0.0F}, {1.0F, 1.0F}}, {10.0F, 14.0F}};
+    const advanced_platformer::Sprite player{9, {{2.0F, 0.0F}, {10.0F, 14.0F}}};
     const advanced_platformer::Aabb playerBounds{{20.0F, 2.0F}, {8.0F, 12.0F}};
     advanced_platformer::Actor actor = tests::ActorBuilder::sized(playerBounds.size)
                                            .at(playerBounds.topLeft)
@@ -143,7 +142,7 @@ TEST_CASE("Facing right does not flip the player sprite", "[render][scene]")
 {
     const advanced_platformer::TileMap map = tests::TileMapBuilder({"..", "##"});
     const advanced_platformer::Camera camera{{0.0F, 0.0F}, {32.0F, 32.0F}};
-    const advanced_platformer::Sprite player{1, {{1.0F, 0.0F}, {1.0F, 1.0F}}, {12.0F, 12.0F}};
+    const advanced_platformer::Sprite player{1, {{1.0F, 0.0F}, {12.0F, 12.0F}}};
     advanced_platformer::World world;
     world.addActor(
         tests::ActorBuilder::sized({12.0F, 12.0F})
@@ -169,7 +168,6 @@ TEST_CASE("A centre-anchored sprite surrounds a smaller flying body", "[render][
             .withSprite(
                 {1,
                  {{0.0F, 96.0F}, {32.0F, 24.0F}},
-                 {32.0F, 24.0F},
                  advanced_platformer::SpriteAnchor::BodyCenter}));
 
     const advanced_platformer::RenderScene scene =
@@ -202,7 +200,7 @@ TEST_CASE("Dying actors fade during the final part of their death", "[render][sc
         tests::ActorBuilder::sized({8.0F, 8.0F})
             .at({4.0F, 4.0F})
             .platforming()
-            .withSprite({1, {{0.0F, 0.0F}, {8.0F, 8.0F}}, {8.0F, 8.0F}}));
+            .withSprite({1, {{0.0F, 0.0F}, {8.0F, 8.0F}}}));
 
     const auto aliveScene = advanced_platformer::buildRenderScene(map, 1, camera, world);
     REQUIRE(aliveScene.sprites.back().opacity == 1.0F);
@@ -221,11 +219,10 @@ TEST_CASE("Actors with active hit feedback produce a white flash", "[render][sce
 {
     const advanced_platformer::TileMap map = tests::TileMapBuilder({".."});
     const advanced_platformer::Camera camera{{0.0F, 0.0F}, {32.0F, 16.0F}};
-    advanced_platformer::Actor actor =
-        tests::ActorBuilder::sized({8.0F, 8.0F})
-            .at({4.0F, 4.0F})
-            .platforming()
-            .withSprite({1, {{0.0F, 0.0F}, {8.0F, 8.0F}}, {8.0F, 8.0F}});
+    advanced_platformer::Actor actor = tests::ActorBuilder::sized({8.0F, 8.0F})
+                                           .at({4.0F, 4.0F})
+                                           .platforming()
+                                           .withSprite({1, {{0.0F, 0.0F}, {8.0F, 8.0F}}});
     actor.lastDamageTimeSeconds = 0.0F;
     advanced_platformer::World world;
     world.addActor(actor);
@@ -246,7 +243,7 @@ TEST_CASE("Projectile sprites are centred and rotated in their direction", "[ren
     advanced_platformer::Projectile projectile;
     projectile.bounds = {{20.0F, 10.0F}, {4.0F, 2.0F}};
     projectile.velocity = {0.0F, -10.0F};
-    projectile.sprite = {3, {{2.0F, 0.0F}, {1.0F, 1.0F}}, {6.0F, 4.0F}};
+    projectile.sprite = {3, {{2.0F, 0.0F}, {6.0F, 4.0F}}};
     advanced_platformer::World world;
     world.addProjectile(projectile);
 
@@ -268,7 +265,7 @@ TEST_CASE("Projectile bursts expand and fade around their world position", "[ren
     advanced_platformer::ProjectileBurst burst;
     burst.center = {20.0F, 10.0F};
     burst.direction = {0.0F, -1.0F};
-    burst.sprite = {3, {{2.0F, 0.0F}, {1.0F, 1.0F}}, {6.0F, 4.0F}};
+    burst.sprite = {3, {{2.0F, 0.0F}, {6.0F, 4.0F}}};
     burst.lifetimeRemaining = 0.05F;
     advanced_platformer::World world;
     world.addProjectileBurst(burst);
@@ -303,7 +300,6 @@ TEST_CASE("NPCs and pickups the player cannot see are not drawn", "[render][scen
         advanced_platformer::buildRenderScene(map, TileTexture, camera, world);
 
     REQUIRE(spritesFrom(scene, PlayerTexture) == 1);
-    // Only the NPC in the open.
     REQUIRE(spritesFrom(scene, NpcTexture) == 1);
     REQUIRE(spritesFrom(scene, PickupTexture) == 0);
 }

@@ -22,7 +22,7 @@ namespace
         advanced_platformer::Actor actor = tests::ActorBuilder::sized({12.0F, 12.0F})
                                                .at({0.0F, 0.0F})
                                                .platforming()
-                                               .withSprite({0, {}, {1.0F, 1.0F}})
+                                               .withSprite({0, {{0.0F, 0.0F}, {1.0F, 1.0F}}})
                                                .withAnimator(animator);
         tests::platformerMovement(actor).grounded = true;
         return actor;
@@ -114,7 +114,6 @@ TEST_CASE(
     actor.body.velocity = {60.0F, 0.0F};
     REQUIRE(animate() == advanced_platformer::AnimationName::Move);
 
-    // Letting go, it falls.
     tests::surfaceClimb(actor).surface = advanced_platformer::ClimbSurface::None;
     actor.body.velocity = {0.0F, 60.0F};
     REQUIRE(animate() == advanced_platformer::AnimationName::Fall);

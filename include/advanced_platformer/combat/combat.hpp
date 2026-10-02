@@ -30,21 +30,17 @@ namespace advanced_platformer
     struct RangedWeapon
     {
         int damage = 1;
-        // Collision dimensions measured in world pixels.
         glm::vec2 projectileSize = {4.0F, 2.0F};
         float projectileSpeed = 180.0F;
         float projectileLifetime = 2.0F;
         float shootDuration = 0.15F;
         float recoveryDuration = 0.20F;
-        // Whether its shots break tiles that declare what they break into.
         bool breaksTiles = false;
 
         RangedPhase phase = RangedPhase::Ready;
         float phaseTimeRemaining = 0.0F;
-        // Simulation-clock stamp for presentation; hearing uses separate noise events.
         std::optional<double> lastFiredTimeSeconds;
-        // Its display size is independent of projectileSize, just like an actor sprite and body.
-        Sprite projectileSprite = {0, {}, {4.0F, 2.0F}};
+        Sprite projectileSprite = {0, {{0.0F, 0.0F}, {4.0F, 2.0F}}};
     };
 
     enum class BitePhase
@@ -58,7 +54,6 @@ namespace advanced_platformer
     struct BiteAttack
     {
         int damage = 1;
-        // The active collision box is placed reach pixels beyond the actor's facing edge.
         glm::vec2 hitboxSize = {10.0F, 8.0F};
         float reach = 4.0F;
         float windupDuration = 0.12F;
@@ -70,8 +65,6 @@ namespace advanced_platformer
         std::vector<ActorId> actorsHit;
     };
 
-    // Body-overlap damage, independent of movement and the primary attack.
-    // Each uninterrupted contactDamage intention can hit each opponent once.
     struct ContactDamage
     {
         int damage = 1;
@@ -88,8 +81,6 @@ namespace advanced_platformer
         std::optional<ActorId> owner;
         Team team = Team::Neutral;
         Sprite sprite;
-        // Copied from the weapon that fired it, since the weapon is gone by the time
-        // the projectile reaches a tile.
         bool breaksTiles = false;
     };
 

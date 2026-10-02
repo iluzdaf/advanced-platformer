@@ -35,7 +35,7 @@ namespace
         projectile.damage = 1;
         projectile.lifetimeRemaining = 2.0F;
         projectile.team = advanced_platformer::Team::Player;
-        projectile.sprite.size = projectile.bounds.size;
+        projectile.sprite.region.size = projectile.bounds.size;
         return projectile;
     }
 
@@ -44,7 +44,6 @@ namespace
         return tests::TileMapBuilder({"..........", "..........", ".........."});
     }
 
-    // One tile at column 3 of the top row, on the projectile's path.
     advanced_platformer::TileMap mapWithTileInPath(tests::Tile tile)
     {
         return tests::TileMapBuilder({"...X......", "..........", ".........."}).where('X', tile);
@@ -214,7 +213,6 @@ TEST_CASE("A projectile that breaks tiles clears the glass it stops at", "[comba
 
     REQUIRE(map.tileAt({3, 0}) == 0);
     REQUIRE_FALSE(map.blocksMovement({3, 0}));
-    // The shot is still spent on the tile it broke rather than carrying on through.
     REQUIRE(world.projectiles().empty());
     REQUIRE(world.projectileBursts().size() == 1);
 }
@@ -224,7 +222,6 @@ TEST_CASE("A projectile without the flag stops at glass and leaves it", "[combat
     advanced_platformer::TileMap map =
         mapWithTileInPath(tests::Tile().blocksMovement().breaksInto('.'));
     advanced_platformer::World world;
-    // makeProjectile leaves breaksTiles false, as an enemy weapon does.
     world.addProjectile(makeProjectile());
     advanced_platformer::WorldRequests requests;
 
@@ -266,8 +263,6 @@ TEST_CASE("One shot cannot open a hole for another in the same frame", "[combat]
 
     advanced_platformer::updateProjectiles(map, world, requests, 1.0F);
 
-    // Both shots were traced against the glass before any of it broke, so neither
-    // travelled past it. Glass spans x 48 to 64 on the row the shots follow.
     for (const advanced_platformer::Projectile& projectile : world.projectiles())
     {
         REQUIRE(projectile.bounds.topLeft.x < 48.0F);
