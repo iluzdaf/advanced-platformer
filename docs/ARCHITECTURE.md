@@ -8,7 +8,7 @@ Use this as a reference when working on a particular feature:
 | Area                      | Section                                                                   | What it covers                                                              |
 | ------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | Orientation               | [Purpose and scope](#purpose-and-scope)                                   | What the repository is and is not.                                          |
-|                           | [Project shape](#project-shape)                                           | Targets, folders, and the dependency boundary.                              |
+|                           | [Project shape](#project-shape)                                           | Targets, folders, the dependency boundary, and headers over modules.        |
 |                           | [Runtime flow](#runtime-flow)                                             | The fixed step and the order systems run in.                                |
 |                           | [Coordinates](#coordinates)                                               | Axes and feet positions.                                                    |
 |                           | [Time](#time)                                                             | The step, timers, stamps, and which to use.                                 |
@@ -115,6 +115,35 @@ The project uses three simple forms rather than making every concept a class:
 This keeps state visible, makes inputs and outputs explicit, and lets tests call one
 piece of behaviour with small values. A class is used when it provides a useful
 ownership boundary, not merely to group functions with a familiar subject name.
+
+### Headers, not modules
+
+The code uses headers, not C++20 modules. Modules would bring real gains:
+
+- `import std;` would parse the standard library once instead of in every source file;
+- the compiler would enforce what each part exports, which the project now does by
+  convention, with anonymous namespaces and `scripting/`'s private headers;
+- no file's includes or macros could change how another file reads a type.
+
+The costs fall on the tools the project relies on:
+
+- clangd, the editor's code intelligence, supports modules only experimentally;
+- clang-tidy handles them poorly, and CI fails on `misc-include-cleaner`, which is built
+  around `#include`;
+- `tools/tidy_targets.py` finds the files a change affects by following `#include` lines,
+  and the header self-containment check assumes headers;
+- CMake must scan every source before it compiles, which serialises part of the build
+  and can disturb the compile database clangd reads; its module support is best on Ninja,
+  not the Unix Makefiles generator the presets use, and `import std` needs an
+  experimental opt-in;
+- sccache caches module builds poorly, so CI's compile cache would hit less;
+- the third-party libraries are headers either way, so their parse cost stays.
+
+Revisit this when clangd and clang-tidy support modules fully. If build time becomes the
+problem first, measure it with `-ftime-trace`, and try precompiled headers for the
+standard library and Glaze before modules: they keep most of the speed-up without
+disturbing the tools. If modules are tried, start with `import std;` alone on a branch
+and check that clangd and clang-tidy still cope.
 
 ## Runtime flow
 
