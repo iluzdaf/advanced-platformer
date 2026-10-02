@@ -374,6 +374,11 @@ namespace advanced_platformer
                 {
                     intentions.direction.x = offset.x / distancePerTick;
                 }
+                else
+                {
+                    intentions.direction.x =
+                        destination.surface == ClimbSurface::LeftWall ? -1.0F : 1.0F;
+                }
             }
             else
             {
@@ -386,6 +391,18 @@ namespace advanced_platformer
                 else if (std::abs(offset[acrossSurface]) > ClimbArrivalDistance)
                 {
                     intentions.direction[acrossSurface] = offset[acrossSurface] / distancePerTick;
+                }
+                else if (from.surface != destination.surface)
+                {
+                    if (destination.surface == ClimbSurface::Ceiling)
+                    {
+                        intentions.direction.x =
+                            from.surface == ClimbSurface::LeftWall ? -1.0F : 1.0F;
+                    }
+                    else
+                    {
+                        intentions.direction.y = -1.0F;
+                    }
                 }
             }
             intentions.direction = glm::clamp(intentions.direction, -1.0F, 1.0F);

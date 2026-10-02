@@ -25,14 +25,10 @@ namespace advanced_platformer
 {
     namespace
     {
-        // Platformers accept a pixel of feet-position error. Flyers use a tighter
-        // tolerance and shorten their final movement to land on the cell's feet point.
         constexpr float ArrivalDistance = 1.0F;
         constexpr float FlyingArrivalDistance = 0.001F;
-        // In pixels per second: residual horizontal speed below this counts as stopped.
         constexpr float StoppedSpeed = 0.001F;
 
-        // -1, 0 or 1: the horizontal input that moves from one position towards the other.
         float directionTowards(float from, float to)
         {
             if (to < from)
@@ -42,24 +38,18 @@ namespace advanced_platformer
             return to > from ? 1.0F : 0.0F;
         }
 
-        // Within the arrival distance on each axis separately, a square rather than a circle.
         bool arrivedAt(glm::vec2 feet, glm::vec2 point)
         {
             return std::abs(point.x - feet.x) <= ArrivalDistance &&
                    std::abs(point.y - feet.y) <= ArrivalDistance;
         }
 
-        // Standing still on the ground at the point. A walk ends this way, and a jump or
-        // fall must start this way, because its inputs were recorded from a standing start.
         bool stoppedAt(const Body& body, const PlatformerMovement& movement, glm::vec2 point)
         {
             return movement.grounded && arrivedAt(feetOf(body.bounds), point) &&
                    std::abs(body.velocity.x) <= StoppedSpeed;
         }
 
-        // Walks towards the takeoff and lets go early enough to brake to a stop within
-        // arrival distance, so the actor arrives stopped instead of overshooting. Nothing
-        // in the air or on another row, where walking would not help.
         InputIntentions approachAndBrake(
             const Body& body,
             const PlatformerMovement& movement,
@@ -80,8 +70,6 @@ namespace advanced_platformer
                 return intentions;
             }
 
-            // With no input, the actor slides v² / 2a before stopping. Hold the direction
-            // only while that slide would still stop short of the takeoff.
             const float direction = directionTowards(feet.x, takeoff.x);
             const float speedTowardTarget = body.velocity.x * direction;
             const float deceleration = movement.config.groundDeceleration;
@@ -96,8 +84,6 @@ namespace advanced_platformer
             return intentions;
         }
 
-        // Travels the held surface to the start of a climb: along a ceiling sideways,
-        // along a wall up or down. Nothing once there.
         std::optional<InputIntentions> climbTowards(
             const Body& body,
             const SurfaceClimb& climb,
@@ -114,22 +100,17 @@ namespace advanced_platformer
             }
             InputIntentions approach;
             approach.climbGrip = ClimbGrip::Hold;
-            // Full speed until the start is within a tick's travel, then only that fraction
-            // of it, so the last tick stops on the start instead of passing it.
             const float direction = std::clamp(remaining / maximumStep, -1.0F, 1.0F);
             (alongCeiling ? approach.direction.x : approach.direction.y) = direction;
             return approach;
         }
 
-        // What following one step gives this tick: the intentions to move with, or that the
-        // step is done, so the follower can go straight on to the next one.
         struct StepProgress
         {
             bool complete = false;
             InputIntentions intentions;
         };
 
-        // Walks to the waypoint and is done once standing still on it.
         StepProgress followWalkStep(
             const Body& body,
             const PlatformerMovement& movement,
@@ -142,9 +123,6 @@ namespace advanced_platformer
             return {false, approachAndBrake(body, movement, waypoint.feet)};
         }
 
-        // A jump or fall runs in three phases: getting to the takeoff and stopping there,
-        // replaying the recorded inputs, then waiting to land. programElapsed says which
-        // phase it is in: zero before the replay starts, the program's duration after it.
         StepProgress followAirborneStep(
             const Body& body,
             const PlatformerMovement& movement,
@@ -157,14 +135,11 @@ namespace advanced_platformer
             {
                 throw std::invalid_argument("Jump and fall path steps require an input program");
             }
-            // The recorded inputs assume a stationary takeoff at the previous waypoint.
             if (follower.programElapsed == 0.0F && !stoppedAt(body, movement, takeoff))
             {
                 return {false, approachAndBrake(body, movement, takeoff)};
             }
 
-            // Play the inputs at the current time, then move the time on, so the first
-            // tick plays the program's start.
             const float programDuration = durationOf(waypoint.inputs);
             if (follower.programElapsed < programDuration)
             {
@@ -174,27 +149,19 @@ namespace advanced_platformer
                     std::min(programDuration, follower.programElapsed + deltaTime);
                 return {false, intentions};
             }
-            // After the program runs out, wait without input until the actor lands and
-            // stops. A landing may stop short of the waypoint along its row; the next
-            // step starts by walking there.
             if (!movement.grounded || std::abs(body.velocity.x) > StoppedSpeed)
             {
                 return {};
             }
             if (std::abs(feetOf(body.bounds).y - waypoint.feet.y) > ArrivalDistance)
             {
-                // Landed on another row; the NPC plans again.
                 clearPath(follower);
                 return {};
             }
-            // Ready for the next step, which starts from its own approach.
             follower.programElapsed = 0.0F;
             return {true, {}};
         }
 
-        // The recorded inputs start where the climb starts: a climber already holding a
-        // surface travels along it there, one standing walks there and stops, and one
-        // in the air grabs whatever it touches.
         StepProgress followClimbStep(
             const Body& body,
             const PlatformerMovement& movement,
@@ -208,8 +175,6 @@ namespace advanced_platformer
             {
                 throw std::invalid_argument("Climb path steps require an input program");
             }
-            // Zero elapsed means the replay has not started, so the climber is still
-            // getting to the start. Each branch falls through to the replay once there.
             if (follower.programElapsed == 0.0F)
             {
                 if (climb.surface != ClimbSurface::None)
@@ -230,6 +195,12 @@ namespace advanced_platformer
                 {
                     return {false, approachAndBrake(body, movement, start)};
                 }
+                else if (
+                    waypoint.feet == start &&
+                    waypoint.inputs.front().intentions.climbGrip == ClimbGrip::Hold)
+                {
+                    return {false, waypoint.inputs.front().intentions};
+                }
             }
 
             const float duration = durationOf(waypoint.inputs);
@@ -245,13 +216,10 @@ namespace advanced_platformer
                 follower.programElapsed = 0.0F;
                 return {true, {}};
             }
-            // The climb ended somewhere else; the NPC plans again. A climber still on a
-            // surface keeps its grip, since the intentions leave it as it is.
             clearPath(follower);
             return {};
         }
 
-        // Where the step at this index starts: the previous waypoint, or the path's start.
         glm::vec2 stepStart(const NavigationPath& path, std::size_t index)
         {
             return index == 0 ? path.startFeet : path.waypoints[index - 1].feet;
@@ -311,7 +279,6 @@ namespace advanced_platformer
             const float distance = glm::length(offset);
             if (distance > FlyingArrivalDistance)
             {
-                // Straight at the waypoint, and no further than it this tick.
                 InputIntentions intentions;
                 intentions.direction = maximumMovement > 0.0F && distance <= maximumMovement
                                            ? offset / maximumMovement
@@ -336,14 +303,9 @@ namespace advanced_platformer
             return {};
         }
 
-        // Follow the current step. A step that is already done hands straight on to the
-        // next, so several can finish in one tick; the first unfinished one gives the
-        // intentions. A step that goes wrong clears the path and reports itself unfinished,
-        // so the loop returns before looking at the path again.
         while (follower.nextStep < follower.path->waypoints.size())
         {
             const Waypoint& waypoint = follower.path->waypoints[follower.nextStep];
-            // Where this step's recorded inputs, if any, were recorded from.
             const glm::vec2 start = stepStart(*follower.path, follower.nextStep);
             StepProgress progress;
             switch (waypoint.traversal)

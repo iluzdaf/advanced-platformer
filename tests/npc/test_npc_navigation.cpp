@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
 
 #include <cstddef>
 #include <vector>
@@ -6,6 +7,7 @@
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/actor/actor_system.hpp"
 #include "advanced_platformer/combat/attack_system.hpp"
+#include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
@@ -62,7 +64,8 @@ TEST_CASE("A climbing NPC patrols over a wall and ceiling", "[npc][navigation][c
     tests::loadPursuerScript(scripts);
     const glm::vec2 first = advanced_platformer::feetInCell(tests::TileSize, {2, 5});
     const glm::vec2 second = advanced_platformer::feetInCell(tests::TileSize, {11, 5});
-    advanced_platformer::Actor npc = tests::ActorBuilder::sized({12.0F, 12.0F})
+    const float bodySide = GENERATE(12.0F, static_cast<float>(tests::TileSize));
+    advanced_platformer::Actor npc = tests::ActorBuilder::sized({bodySide, bodySide})
                                          .atFeet(first)
                                          .platforming()
                                          .climbing({60.0F})
@@ -74,15 +77,21 @@ TEST_CASE("A climbing NPC patrols over a wall and ceiling", "[npc][navigation][c
 
     bool climbedCeiling = false;
     bool reachedSecondFloor = false;
-    for (int tick = 0; tick < 2000 && !reachedSecondFloor; ++tick)
+    bool returnedToFirstFloor = false;
+    for (int tick = 0; tick < 4000 && !returnedToFirstFloor; ++tick)
     {
         advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
         climbedCeiling = climbedCeiling || tests::surfaceClimb(world, npcId).surface ==
                                                advanced_platformer::ClimbSurface::Ceiling;
-        reachedSecondFloor = !tests::patrol(world, npcId).headingToSecond;
+        const advanced_platformer::Cell cell = advanced_platformer::cellAtFeet(
+            tests::TileSize, advanced_platformer::feetOf(tests::actor(world, npcId).body.bounds));
+        reachedSecondFloor = reachedSecondFloor || cell == advanced_platformer::Cell{11, 5};
+        returnedToFirstFloor = reachedSecondFloor && cell == advanced_platformer::Cell{2, 5};
     }
+    CAPTURE(bodySide);
     REQUIRE(climbedCeiling);
     REQUIRE(reachedSecondFloor);
+    REQUIRE(returnedToFirstFloor);
 }
 
 TEST_CASE("A climbing NPC holds the ceiling at the end of its patrol", "[npc][navigation][climb]")
@@ -116,7 +125,6 @@ TEST_CASE("A climbing NPC holds the ceiling at the end of its patrol", "[npc][na
     REQUIRE(
         tests::surfaceClimb(world, npcId).surface == advanced_platformer::ClimbSurface::Ceiling);
 
-    // Turning back for the floor starts along the ceiling, not by letting go.
     for (int tick = 0; tick < 10; ++tick)
     {
         advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
@@ -168,14 +176,12 @@ TEST_CASE("A walking NPC's search reads the fill's cache and never simulates", "
     tests::perception(world, npcId).targetVisible = false;
     const advanced_platformer::PlatformerConnectionCache& cache = world.platformerConnections();
 
-    // Before the fill, the search stores nothing: it queues the cell it needs and waits.
     const advanced_platformer::FrameProfile waiting = profiledNpcUpdate(map, world, scripts);
     REQUIRE(advanced_platformer::frameStatisticCount(waiting, "Path searches") == 1);
     REQUIRE(advanced_platformer::frameStatisticCount(waiting, "Paths deferred") == 1);
     REQUIRE(cache.size() == 0);
     REQUIRE_FALSE(pathFollower(world, npcId).path.has_value());
 
-    // Once the fill has cached the map, the search finds a route and writes nothing.
     tests::prepareNavigationCache(map, world);
     const std::size_t cachedAfterFill = cache.size();
     const advanced_platformer::FrameProfile searched = profiledNpcUpdate(map, world, scripts);
@@ -213,8 +219,6 @@ TEST_CASE("An NPC's search after a break waits for the fill and asks again", "[n
     tests::perception(world, npcId).targetVisible = false;
     const advanced_platformer::FrameProfile waiting = profiledNpcUpdate(map, world, scripts);
 
-    // The search synced with the map first, so the cells the break touched were dropped;
-    // it met one and gave up rather than simulate it, and the NPC asks again next step.
     REQUIRE(advanced_platformer::frameStatisticCount(waiting, "Tile breaks applied") == 1);
     REQUIRE(
         advanced_platformer::frameStatisticCount(waiting, "Cells dropped") ==
@@ -224,9 +228,6 @@ TEST_CASE("An NPC's search after a break waits for the fill and asks again", "[n
     REQUIRE(world.platformerConnections().cellsPending(profile) > 0);
     REQUIRE_FALSE(pathFollower(world, npcId).path.has_value());
 
-    // The fill recaches the dropped cells over the steps that follow, charged to
-    // the profile, and the next search goes through. The cell over the hole, which
-    // nothing can stand on now, is cached as having no connections.
     int filledTicks = 0;
     const std::size_t pending = world.platformerConnections().cellsPending(profile);
     for (std::size_t step = 0;
@@ -278,11 +279,9 @@ TEST_CASE("An NPC plans its path again after a break", "[npc][navigation]")
     REQUIRE(advanced_platformer::frameStatisticCount(planned, "Path searches") == 1);
     REQUIRE(pathFollower(world, npcId).path.has_value());
 
-    // With the path planned and the map as it was, the next step searches nothing.
     const advanced_platformer::FrameProfile settled = profiledNpcUpdate(map, world, scripts);
     REQUIRE(advanced_platformer::frameStatisticCount(settled, "Path searches") == 0);
 
-    // A break may have cut the path, so it is planned again though the goal is the same.
     REQUIRE(map.breakTile({7, 2}));
     const advanced_platformer::FrameProfile broken = profiledNpcUpdate(map, world, scripts);
     REQUIRE(advanced_platformer::frameStatisticCount(broken, "Path searches") == 1);
@@ -310,7 +309,6 @@ TEST_CASE("An unreachable patrol heads as close as it can without retrying", "[n
     REQUIRE(follower.goal == advanced_platformer::feetInCell(tests::TileSize, {7, 1}));
     REQUIRE(tests::actor(world, npcId).intentions.direction.x > 0.0F);
 
-    // The path still serves the same goal, so the NPC keeps following it.
     advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
     REQUIRE(follower.path.has_value());
     REQUIRE(follower.nextStep == 0);
@@ -334,7 +332,6 @@ TEST_CASE("A patrol goal that moves is planned for at once", "[npc][navigation]"
     const advanced_platformer::PathFollower& follower = tests::pathFollower(world, npcId);
     REQUIRE(follower.goal == advanced_platformer::feetInCell(tests::TileSize, {7, 1}));
 
-    // A few pixels is not worth planning again; half a tile is.
     tests::patrol(world, npcId).secondFeet = {124.0F, 32.0F};
     advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
     REQUIRE(follower.goal == advanced_platformer::feetInCell(tests::TileSize, {7, 1}));
