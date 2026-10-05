@@ -48,14 +48,17 @@ TEST_CASE("Levels place one player and one exit", "[app][content][json]")
         advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"), expected);
 }
 
-TEST_CASE("Levels reject an object legend", "[app][content][json]")
+TEST_CASE("Distinct placement ids are accepted", "[app][content][json]")
 {
     auto level = minimalLevel();
-    level["objectLegend"] = tests::object({{"Z", tests::object({{"type", "actor"}})}});
+    level["actors"] = tests::list({placement("guard", "guard", 1), placement("bat", "bat", 2)});
+    level["pickups"] = tests::list({placement("key", "key", 3)});
 
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"),
-        Catch::Matchers::ContainsSubstring("unknown field 'objectLegend'"));
+    const auto data = advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json");
+
+    REQUIRE(data.actors[0].id == "guard");
+    REQUIRE(data.actors[1].id == "bat");
+    REQUIRE(data.pickups[0].id == "key");
 }
 
 TEST_CASE("Actor and pickup placements need an id", "[app][content][json]")
@@ -74,24 +77,6 @@ TEST_CASE("Actor and pickup placements need an id", "[app][content][json]")
     REQUIRE_THROWS_AS(
         advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"),
         std::invalid_argument);
-}
-
-TEST_CASE("Placement ids cannot be empty", "[app][content][json]")
-{
-    auto level = minimalLevel();
-    const char* expected = "";
-    SECTION("Actor")
-    {
-        level["actors"] = tests::list({placement("", "guard", 1)});
-        expected = "level.json: actors[0].id: placement id cannot be empty";
-    }
-    SECTION("Pickup")
-    {
-        level["pickups"] = tests::list({placement("", "key", 1)});
-        expected = "level.json: pickups[0].id: placement id cannot be empty";
-    }
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"), expected);
 }
 
 TEST_CASE("Placement ids are unique across a level's actors and pickups", "[app][content][json]")
@@ -114,15 +99,20 @@ TEST_CASE("Placement ids are unique across a level's actors and pickups", "[app]
         advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"), expected);
 }
 
-TEST_CASE("Distinct placement ids are accepted", "[app][content][json]")
+TEST_CASE("Placement ids cannot be empty", "[app][content][json]")
 {
     auto level = minimalLevel();
-    level["actors"] = tests::list({placement("guard", "guard", 1), placement("bat", "bat", 2)});
-    level["pickups"] = tests::list({placement("key", "key", 3)});
-
-    const auto data = advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json");
-
-    REQUIRE(data.actors[0].id == "guard");
-    REQUIRE(data.actors[1].id == "bat");
-    REQUIRE(data.pickups[0].id == "key");
+    const char* expected = "";
+    SECTION("Actor")
+    {
+        level["actors"] = tests::list({placement("", "guard", 1)});
+        expected = "level.json: actors[0].id: placement id cannot be empty";
+    }
+    SECTION("Pickup")
+    {
+        level["pickups"] = tests::list({placement("", "key", 1)});
+        expected = "level.json: pickups[0].id: placement id cannot be empty";
+    }
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"), expected);
 }

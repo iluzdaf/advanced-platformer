@@ -35,7 +35,6 @@ namespace
         snapshot.facts.movementBlocked = true;
         snapshot.facts.stateElapsed = 0.25F;
         snapshot.routeComplete = true;
-        snapshot.tuning["speed"] = 3.0F;
         return snapshot;
     }
 }
@@ -52,7 +51,7 @@ TEST_CASE("A Lua activity reads a copied snapshot and returns a command", "[lua]
                         update = function(self, snapshot, dt)
                             snapshot.feet.x = 999
                             return {
-                                direction = {x = snapshot.tuning.speed * dt, y = 0},
+                                direction = {x = 3 * dt, y = 0},
                                 aimAt = snapshot.targetFeet,
                                 routeTo = snapshot.patrol.secondFeet,
                                 primaryAttackPressed = snapshot.facts.targetKnown,

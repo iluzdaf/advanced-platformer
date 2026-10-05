@@ -15,8 +15,6 @@
 #include "advanced_platformer/math/validation.hpp"
 #include "advanced_platformer/npc/npc_activity_scripts.hpp"
 
-// sol2 supports its public API through this umbrella header. Listing its internal headers
-// would couple the adapter to implementation details without improving include hygiene.
 // NOLINTBEGIN(misc-include-cleaner)
 #include <sol/sol.hpp>
 
@@ -49,7 +47,6 @@ namespace advanced_platformer
             return object.as<bool>();
         }
 
-        // Leaving the field out keeps the grip, so only a change needs naming.
         ClimbGrip climbGrip(const sol::object& object, std::string_view field)
         {
             if (object.get_type() == sol::type::string)
@@ -179,13 +176,6 @@ namespace advanced_platformer
         facts["searches"] = snapshot.facts.searches;
         facts["searchTimeUp"] = snapshot.facts.searchTimeUp;
         result["facts"] = facts;
-
-        sol::table tuning = lua.create_table();
-        for (const auto& [name, value] : snapshot.tuning)
-        {
-            tuning[name] = value;
-        }
-        result["tuning"] = tuning;
         return result;
     }
 
