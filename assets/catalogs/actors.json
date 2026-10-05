@@ -12,7 +12,7 @@
         "ranged": {
           "projectileLifetime": 0.9,
           "breaksTiles": true,
-          "sprite": { "position": [32, 192], "size": [8, 4] }
+          "sprite": { "position": [32, 216], "size": [8, 4] }
         }
       },
       "secondaryAttack": { "bite": {} }
@@ -118,7 +118,7 @@
           "projectileLifetime": 0.75,
           "shootDuration": 0.3,
           "recoveryDuration": 0.8,
-          "sprite": { "position": [64, 192], "size": [8, 4] }
+          "sprite": { "position": [64, 216], "size": [8, 4] }
         }
       }
     }

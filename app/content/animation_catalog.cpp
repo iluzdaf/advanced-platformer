@@ -13,7 +13,6 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <utility>
 #include <vector>
 
 #include <glaze/glaze.hpp>
@@ -22,6 +21,24 @@
 #include "advanced_platformer/math/validation.hpp"
 #include "advanced_platformer/render/animation.hpp"
 #include "advanced_platformer/render/sprite.hpp"
+
+// NOLINTBEGIN(readability-identifier-naming)
+template <> struct glz::meta<advanced_platformer::AnimationName>
+{
+    static constexpr std::array
+        keys{"idle", "move", "jump", "fall", "shoot", "bite", "pounce", "death"};
+    static constexpr std::array value{
+        advanced_platformer::AnimationName::Idle,
+        advanced_platformer::AnimationName::Move,
+        advanced_platformer::AnimationName::Jump,
+        advanced_platformer::AnimationName::Fall,
+        advanced_platformer::AnimationName::Shoot,
+        advanced_platformer::AnimationName::Bite,
+        advanced_platformer::AnimationName::Pounce,
+        advanced_platformer::AnimationName::Death};
+};
+
+// NOLINTEND(readability-identifier-naming)
 
 namespace advanced_platformer
 {
@@ -38,77 +55,37 @@ namespace advanced_platformer
         bool looping = false;
     };
 
-    struct AnimationSetJson
-    {
-        ClipJson idle;
-        ClipJson move;
-        ClipJson jump;
-        ClipJson fall;
-        ClipJson attack;
-        ClipJson death;
-    };
+    using AnimationSetJson = std::map<AnimationName, ClipJson>;
 
     struct AnimationsJson
     {
         std::map<std::string, AnimationSetJson> animations;
     };
 
-    namespace
+    const char* clipName(AnimationName name)
     {
-        constexpr std::array<std::pair<AnimationName, ClipJson AnimationSetJson::*>, 6>
-            ClipMembers = {
-                {{AnimationName::Idle, &AnimationSetJson::idle},
-                 {AnimationName::Move, &AnimationSetJson::move},
-                 {AnimationName::Jump, &AnimationSetJson::jump},
-                 {AnimationName::Fall, &AnimationSetJson::fall},
-                 {AnimationName::Attack, &AnimationSetJson::attack},
-                 {AnimationName::Death, &AnimationSetJson::death}}};
-
-        struct ClipEntry
+        constexpr auto& Keys = glz::meta<AnimationName>::keys;
+        constexpr auto& Values = glz::meta<AnimationName>::value;
+        for (std::size_t index = 0; index < Values.size(); ++index)
         {
-            std::string_view name;
-            AnimationName type;
-        };
-
-        constexpr std::array<ClipEntry, 6> Clips = {
-            {{"idle", AnimationName::Idle},
-             {"move", AnimationName::Move},
-             {"jump", AnimationName::Jump},
-             {"fall", AnimationName::Fall},
-             {"attack", AnimationName::Attack},
-             {"death", AnimationName::Death}}};
-
-        std::string_view clipName(AnimationName name)
-        {
-            for (const ClipEntry& entry : Clips)
+            if (Values[index] == name)
             {
-                if (entry.type == name)
-                {
-                    return entry.name;
-                }
+                return Keys[index];
             }
-            throw std::logic_error("An animation clip has no catalog name");
         }
+        throw std::logic_error("An animation clip has no catalog name");
     }
 
     void validateAnimationSet(const AnimationSet& set)
     {
+        if (findClip(set, AnimationName::Idle) == nullptr)
+        {
+            failJson({}, "idle", "required clip is missing");
+        }
         std::set<AnimationName> names;
         for (const auto& clip : set.clips)
         {
-            std::string name;
-            for (const ClipEntry& entry : Clips)
-            {
-                if (clip.name == entry.type)
-                {
-                    name = entry.name;
-                    break;
-                }
-            }
-            if (name.empty())
-            {
-                throw std::invalid_argument("unknown animation clip");
-            }
+            const std::string_view name = clipName(clip.name);
             if (!names.insert(clip.name).second)
             {
                 failJson({}, name, "duplicate animation clip");
@@ -140,14 +117,6 @@ namespace advanced_platformer
                 }
             }
         }
-        for (const ClipEntry& entry : Clips)
-        {
-            if (names.count(entry.type) == 0)
-            {
-                throw std::invalid_argument(
-                    std::format("{}: required clip is missing", entry.name));
-            }
-        }
     }
 
     void validateAnimationCatalog(const AnimationCatalog& catalog)
@@ -169,6 +138,22 @@ namespace advanced_platformer
         }
     }
 
+    namespace
+    {
+        AnimationClip clipFrom(AnimationName name, const ClipJson& json)
+        {
+            AnimationClip clip;
+            clip.name = name;
+            clip.frameDuration = json.frameDuration;
+            clip.looping = json.looping;
+            for (const FrameJson& frame : json.frames)
+            {
+                clip.frames.push_back({frame.position, frame.size});
+            }
+            return clip;
+        }
+    }
+
     AnimationCatalog parseAnimationCatalog(std::string_view text, std::string_view sourceName)
     {
         const auto file = readContent<AnimationsJson>(text, sourceName);
@@ -176,18 +161,9 @@ namespace advanced_platformer
         for (const auto& [name, json] : file.animations)
         {
             AnimationSet set;
-            for (const auto& [type, member] : ClipMembers)
+            for (const auto& [type, clipJson] : json)
             {
-                const ClipJson& clipJson = json.*member;
-                AnimationClip clip;
-                clip.name = type;
-                clip.frameDuration = clipJson.frameDuration;
-                clip.looping = clipJson.looping;
-                for (const FrameJson& frame : clipJson.frames)
-                {
-                    clip.frames.push_back({frame.position, frame.size});
-                }
-                set.clips.push_back(clip);
+                set.clips.push_back(clipFrom(type, clipJson));
             }
             catalog.emplace(name, set);
         }

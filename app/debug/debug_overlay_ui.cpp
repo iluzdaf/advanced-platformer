@@ -5,6 +5,7 @@
 #include "debug_ui_layout.hpp"
 #include "navigation_debug.hpp"
 #include "navigation_debug_ui.hpp"
+#include "content/animation_catalog.hpp"
 #include "graphics/display_viewport.hpp"
 
 #include <cstddef>
@@ -16,7 +17,6 @@
 
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/navigation/traversal.hpp"
-#include "advanced_platformer/render/animation.hpp"
 #include "ui/hud_draw.hpp"
 
 namespace advanced_platformer
@@ -24,27 +24,6 @@ namespace advanced_platformer
     namespace
     {
         constexpr float ActorTextGap = 4.0F;
-
-        const char* nameOf(AnimationName animation)
-        {
-            switch (animation)
-            {
-            case AnimationName::Idle:
-                return "Idle";
-            case AnimationName::Move:
-                return "Move";
-            case AnimationName::Jump:
-                return "Jump";
-            case AnimationName::Fall:
-                return "Fall";
-            case AnimationName::Attack:
-                return "Attack";
-            case AnimationName::Death:
-                return "Death";
-            }
-
-            return "Unknown";
-        }
 
         const char* nameOf(Traversal traversal)
         {
@@ -323,7 +302,7 @@ namespace advanced_platformer
             {
                 labelPosition.y += lineHeight;
                 drawShadowedText(
-                    drawList, labelPosition, WorldLabelColour, nameOf(actor.animation.value()));
+                    drawList, labelPosition, WorldLabelColour, clipName(actor.animation.value()));
             }
             if (actor.machineState.has_value())
             {

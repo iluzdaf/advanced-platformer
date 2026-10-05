@@ -281,8 +281,21 @@ have the base, math, string and table libraries.
 
 ## Animation sets
 
-`animations.json` holds sets by name. A set has the clips `idle`, `move`, `jump`, `fall`,
-`attack` and `death`, all required.
+`animations.json` holds sets by name. A set holds any of these clips; only `idle` is
+required. Each frame the game goes down the table and shows the first clip whose state
+holds and that the set has, so a missing clip falls through to the next row: a jump with no
+`jump` clip shows `fall`, a bite with no `bite` clip shows whatever the body is doing.
+
+| Priority | Clip     | Shown while                                 |
+| -------- | -------- | ------------------------------------------- |
+| 1        | `death`  | Dying.                                      |
+| 2        | `pounce` | A pounce is in the air.                     |
+| 3        | `bite`   | A bite is winding up, active or recovering. |
+| 4        | `shoot`  | A ranged weapon is in its shoot phase.      |
+| 5        | `jump`   | Airborne and rising.                        |
+| 6        | `fall`   | Airborne.                                   |
+| 7        | `move`   | On the ground and moving.                   |
+| 8        | `idle`   | Always; required.                           |
 
 ```json
 "move": {
