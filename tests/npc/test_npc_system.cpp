@@ -49,29 +49,6 @@ namespace
     }
 }
 
-TEST_CASE("NPC behaviour rejects invalid timing", "[npc][validation]")
-{
-    const advanced_platformer::TileMap map = tests::TileMapBuilder({"...", "...", "###"});
-    advanced_platformer::World world;
-    tests::RecordingNpcScripts scripts;
-
-    REQUIRE_THROWS_AS(
-        advanced_platformer::updateNpcBehaviour(map, world, -0.1F, scripts), std::invalid_argument);
-}
-
-TEST_CASE("An NPC without a state machine cannot act", "[npc][validation]")
-{
-    const advanced_platformer::TileMap map = tests::TileMapBuilder({"...", "...", "###"});
-    advanced_platformer::World world;
-    const advanced_platformer::ActorId npcId = world.addActor(makeNpc({8.0F, 28.0F}));
-    actor(world, npcId).machine.reset();
-    tests::RecordingNpcScripts scripts;
-
-    REQUIRE_THROWS_AS(
-        advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts), std::logic_error);
-    REQUIRE(scripts.calls.empty());
-}
-
 TEST_CASE("A machine reacts to landing and blocked walking facts", "[npc][machine][movement]")
 {
     const advanced_platformer::TileMap map =
@@ -91,7 +68,7 @@ TEST_CASE("A machine reacts to landing and blocked walking facts", "[npc][machin
                                .state("stunned", advanced_platformer::NpcActivity{"test", "rest"})
                                .transition("sleep", "charge")
                                .when("heardLanding", true)
-                               .when("targetOnSameRun", true)
+                               .when("targetOnSameSurface", true)
                                .when("targetWithinNoticeDistance", true)
                                .transition("charge", "stunned")
                                .when("movementBlocked", true))
@@ -130,4 +107,27 @@ TEST_CASE("A machine reacts to landing and blocked walking facts", "[npc][machin
     REQUIRE(scripts.calls.back().snapshot.facts.movementBlocked);
     REQUIRE_FALSE(actor(world, npcId).intentions.contactDamage);
     REQUIRE(actor(world, npcId).intentions.direction.x == 0.0F);
+}
+
+TEST_CASE("NPC behaviour rejects invalid timing", "[npc][validation]")
+{
+    const advanced_platformer::TileMap map = tests::TileMapBuilder({"...", "...", "###"});
+    advanced_platformer::World world;
+    tests::RecordingNpcScripts scripts;
+
+    REQUIRE_THROWS_AS(
+        advanced_platformer::updateNpcBehaviour(map, world, -0.1F, scripts), std::invalid_argument);
+}
+
+TEST_CASE("An NPC without a state machine cannot act", "[npc][validation]")
+{
+    const advanced_platformer::TileMap map = tests::TileMapBuilder({"...", "...", "###"});
+    advanced_platformer::World world;
+    const advanced_platformer::ActorId npcId = world.addActor(makeNpc({8.0F, 28.0F}));
+    actor(world, npcId).machine.reset();
+    tests::RecordingNpcScripts scripts;
+
+    REQUIRE_THROWS_AS(
+        advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts), std::logic_error);
+    REQUIRE(scripts.calls.empty());
 }

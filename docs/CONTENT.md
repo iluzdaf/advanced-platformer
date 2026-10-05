@@ -221,21 +221,21 @@ fires.
 
 ### Facts
 
-| Fact                           | True when                                                             | Notes                                                                 |
-| ------------------------------ | --------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `targetKnown`                  | The NPC remembers a living target.                                    | Sight or a heard noise refreshes it; it lasts `targetMemoryDuration`. |
-| `targetVisible`                | The NPC sees the target.                                              | Within `noticeDistance` with clear line of sight.                     |
-| `targetInBiteRange`            | The visible target overlaps the NPC's bite hitbox.                    | Needs `bite`.                                                         |
-| `biteReady`                    | The NPC's bite is ready.                                              | Needs no target.                                                      |
-| `targetInSights`               | The target is visible and the NPC has `ranged`.                       | Ignores aim and reload.                                               |
-| `targetWithinStandoffDistance` | The remembered target is nearer than `standoffDistance`.              | Measured to its last known feet.                                      |
-| `heardLanding`                 | The NPC heard the player land on its ground run.                      | For one update.                                                       |
-| `targetOnSameRun`              | The NPC and its remembered target stand on the same continuous floor. | Ignores distance and sight.                                           |
-| `targetWithinNoticeDistance`   | The remembered target is within `noticeDistance`.                     | Ignores ground and sight.                                             |
-| `movementBlocked`              | The NPC hit a wall, or its ledge guard stopped it.                    | From the last movement update.                                        |
-| `hasPatrol`                    | The NPC has a patrol.                                                 |                                                                       |
-| `searches`                     | `searchDuration` is positive.                                         |                                                                       |
-| `searchTimeUp`                 | The time in this state has reached `searchDuration`.                  |                                                                       |
+| Fact                           | True when                                                          | Notes                                                                 |
+| ------------------------------ | ------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| `targetKnown`                  | The NPC remembers a living target.                                 | Sight or a heard noise refreshes it; it lasts `targetMemoryDuration`. |
+| `targetVisible`                | The NPC sees the target.                                           | Within `noticeDistance` with clear line of sight.                     |
+| `targetInBiteRange`            | The visible target overlaps the NPC's bite hitbox.                 | Needs `bite`.                                                         |
+| `biteReady`                    | The NPC's bite is ready.                                           | Needs no target.                                                      |
+| `targetInSights`               | The target is visible and the NPC has `ranged`.                    | Ignores aim and reload.                                               |
+| `targetWithinStandoffDistance` | The remembered target is nearer than `standoffDistance`.           | Measured to its last known feet.                                      |
+| `heardLanding`                 | The NPC heard the player land on its ground run.                   | For one update.                                                       |
+| `targetOnSameSurface`          | The NPC can reach its grounded target without leaving its surface. | A climber may use walls and ceilings. Ignores distance and sight.     |
+| `targetWithinNoticeDistance`   | The remembered target is within `noticeDistance`.                  | Ignores ground and sight.                                             |
+| `movementBlocked`              | The NPC hit a wall, or its ledge guard stopped it.                 | From the last movement update.                                        |
+| `hasPatrol`                    | The NPC has a patrol.                                              |                                                                       |
+| `searches`                     | `searchDuration` is positive.                                      |                                                                       |
+| `searchTimeUp`                 | The time in this state has reached `searchDuration`.               |                                                                       |
 
 ### Lua activities
 

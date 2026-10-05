@@ -55,11 +55,21 @@
         { "name": "pursue", "does": { "script": "spider", "activity": "pursue" } }
       ],
       "transitions": [
-        { "from": "patrol", "to": "pursue", "when": { "targetVisible": true } },
+        {
+          "from": "patrol",
+          "to": "pursue",
+          "when": { "targetVisible": true, "targetOnSameSurface": true }
+        },
         {
           "from": "pursue",
           "to": "patrol",
           "when": { "targetKnown": false, "biteReady": true },
+          "after": 1.5
+        },
+        {
+          "from": "pursue",
+          "to": "patrol",
+          "when": { "targetOnSameSurface": false, "biteReady": true },
           "after": 1.5
         }
       ]
@@ -76,7 +86,7 @@
           "to": "charge",
           "when": {
             "heardLanding": true,
-            "targetOnSameRun": true,
+            "targetOnSameSurface": true,
             "targetWithinNoticeDistance": true
           }
         },
@@ -84,10 +94,15 @@
         {
           "from": "stunned",
           "to": "charge",
-          "when": { "targetOnSameRun": true, "targetWithinNoticeDistance": true },
+          "when": { "targetOnSameSurface": true, "targetWithinNoticeDistance": true },
           "after": 1.5
         },
-        { "from": "stunned", "to": "sleep", "when": { "targetOnSameRun": false }, "after": 1.5 },
+        {
+          "from": "stunned",
+          "to": "sleep",
+          "when": { "targetOnSameSurface": false },
+          "after": 1.5
+        },
         {
           "from": "stunned",
           "to": "sleep",

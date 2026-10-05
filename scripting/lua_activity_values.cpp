@@ -169,7 +169,7 @@ namespace advanced_platformer
         facts["targetInSights"] = snapshot.facts.targetInSights;
         facts["targetWithinStandoffDistance"] = snapshot.facts.targetWithinStandoffDistance;
         facts["heardLanding"] = snapshot.facts.heardLanding;
-        facts["targetOnSameRun"] = snapshot.facts.targetOnSameRun;
+        facts["targetOnSameSurface"] = snapshot.facts.targetOnSameSurface;
         facts["targetWithinNoticeDistance"] = snapshot.facts.targetWithinNoticeDistance;
         facts["movementBlocked"] = snapshot.facts.movementBlocked;
         facts["hasPatrol"] = snapshot.facts.hasPatrol;

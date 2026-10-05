@@ -6,6 +6,7 @@
 #include "advanced_platformer/combat/attack_system.hpp"
 #include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_senses.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
@@ -32,11 +33,24 @@ namespace advanced_platformer
                    standoffDistance;
         }
 
-        bool targetIsOnSameRun(const TileMap& map, const Actor& actor, const Actor& target)
+        bool targetIsOnSameSurface(const TileMap& map, const Actor& actor, const Actor& target)
         {
-            return actor.platformerMovement.has_value() && actor.platformerMovement->grounded &&
-                   target.platformerMovement.has_value() && target.platformerMovement->grounded &&
-                   onSameGroundRun(map, actor.body.bounds, target.body.bounds);
+            if (!actor.platformerMovement.has_value() || !target.platformerMovement.has_value() ||
+                !target.platformerMovement->grounded)
+            {
+                return false;
+            }
+            const ClimbSurface surface =
+                actor.surfaceClimb.has_value() ? actor.surfaceClimb->surface : ClimbSurface::None;
+            if (surface == ClimbSurface::None && !actor.platformerMovement->grounded)
+            {
+                return false;
+            }
+            if (actor.surfaceClimb.has_value())
+            {
+                return onSameClimbSurface(map, actor.body.bounds, surface, target.body.bounds);
+            }
+            return onSameGroundRun(map, actor.body.bounds, target.body.bounds);
         }
 
         bool targetIsWithinNoticeDistance(const Actor& actor, const Actor& target)
@@ -66,7 +80,7 @@ namespace advanced_platformer
         facts.targetWithinStandoffDistance =
             target != nullptr && targetIsWithinStandoffDistance(actor, brain);
         facts.heardLanding = perception.heardLanding;
-        facts.targetOnSameRun = target != nullptr && targetIsOnSameRun(map, actor, *target);
+        facts.targetOnSameSurface = target != nullptr && targetIsOnSameSurface(map, actor, *target);
         facts.targetWithinNoticeDistance =
             target != nullptr && targetIsWithinNoticeDistance(actor, *target);
         facts.movementBlocked =

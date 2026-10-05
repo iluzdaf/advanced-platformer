@@ -23,7 +23,6 @@ using tests::NpcMachineBuilder;
 
 namespace
 {
-    // Rest until a target is known, hunt until it is lost for half a second.
     NpcStateMachine restAndHunt()
     {
         return NpcMachineBuilder::named("test")
@@ -36,7 +35,6 @@ namespace
             .after(0.5F);
     }
 
-    // Whether a lone rest-to-hunt transition asking `when` fires on these facts.
     bool fires(const std::map<std::string, bool>& when, const advanced_platformer::NpcFacts& facts)
     {
         NpcStateMachine definition = NpcMachineBuilder::named("test")
@@ -49,15 +47,79 @@ namespace
     }
 }
 
-TEST_CASE("Machine conditions compose run and range facts independently", "[npc][fsm]")
+TEST_CASE(
+    "A started machine is in its first state and fires the first transition that holds",
+    "[npc][fsm]")
+{
+    NpcMachine machine = advanced_platformer::startNpcMachine(restAndHunt());
+    REQUIRE(advanced_platformer::activeNpcMachineState(machine).name == "rest");
+    REQUIRE(
+        advanced_platformer::activeNpcMachineState(machine).does ==
+        advanced_platformer::NpcActivity{"test", "idle"});
+
+    REQUIRE(
+        advanced_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts(), 0.1F) ==
+        std::nullopt);
+    REQUIRE(
+        advanced_platformer::advanceNpcMachine(
+            machine, NpcFactsBuilder::facts().knowingTarget(), 0.1F) == 0);
+    REQUIRE(advanced_platformer::activeNpcMachineState(machine).name == "hunt");
+    REQUIRE(machine.lastFired == 0);
+}
+
+TEST_CASE("Among transitions from one state the first that holds wins", "[npc][fsm]")
+{
+    NpcMachine machine = advanced_platformer::startNpcMachine(
+        NpcMachineBuilder::named("test")
+            .state("rest", tests::testActivity("idle"))
+            .state("hunt", tests::testActivity("chase"))
+            .state("flee", tests::testActivity("retreat"))
+            .transition("rest", "flee")
+            .when("targetWithinStandoffDistance", true)
+            .transition("rest", "hunt")
+            .when("targetKnown", true));
+
+    REQUIRE(
+        advanced_platformer::advanceNpcMachine(
+            machine, NpcFactsBuilder::facts().targetWithinStandoffDistance(), 0.1F) == 0);
+    REQUIRE(advanced_platformer::activeNpcMachineState(machine).name == "flee");
+}
+
+TEST_CASE("A transition with a hold fires once its conditions have held that long", "[npc][fsm]")
+{
+    NpcMachine machine = advanced_platformer::startNpcMachine(restAndHunt());
+    advanced_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts().knowingTarget(), 0.1F);
+
+    REQUIRE(
+        advanced_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts(), 0.3F) ==
+        std::nullopt);
+    REQUIRE(
+        advanced_platformer::advanceNpcMachine(
+            machine, NpcFactsBuilder::facts().knowingTarget(), 0.1F) == std::nullopt);
+    REQUIRE(
+        advanced_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts(), 0.3F) ==
+        std::nullopt);
+    REQUIRE(advanced_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts(), 0.2F) == 1);
+    REQUIRE(advanced_platformer::activeNpcMachineState(machine).name == "rest");
+}
+
+TEST_CASE("A transition fires when every fact answers as asked", "[npc][fsm]")
+{
+    const advanced_platformer::NpcFacts facts = NpcFactsBuilder::facts().targetInSights();
+    REQUIRE(fires({{"targetKnown", true}, {"targetInSights", true}}, facts));
+    REQUIRE_FALSE(fires({{"targetKnown", true}, {"hasPatrol", true}}, facts));
+    REQUIRE(fires({}, facts));
+}
+
+TEST_CASE("Machine conditions compose surface and range facts independently", "[npc][fsm]")
 {
     advanced_platformer::NpcFacts facts;
     SECTION("Neither condition")
     {
     }
-    SECTION("Only the same run")
+    SECTION("Only the same surface")
     {
-        facts.targetOnSameRun = true;
+        facts.targetOnSameSurface = true;
     }
     SECTION("Only notice distance")
     {
@@ -65,15 +127,15 @@ TEST_CASE("Machine conditions compose run and range facts independently", "[npc]
     }
     SECTION("Both conditions")
     {
-        facts.targetOnSameRun = true;
+        facts.targetOnSameSurface = true;
         facts.targetWithinNoticeDistance = true;
     }
-    REQUIRE(fires({{"targetOnSameRun", true}}, facts) == facts.targetOnSameRun);
+    REQUIRE(fires({{"targetOnSameSurface", true}}, facts) == facts.targetOnSameSurface);
     REQUIRE(
         fires({{"targetWithinNoticeDistance", true}}, facts) == facts.targetWithinNoticeDistance);
     REQUIRE(
-        fires({{"targetOnSameRun", true}, {"targetWithinNoticeDistance", true}}, facts) ==
-        (facts.targetOnSameRun && facts.targetWithinNoticeDistance));
+        fires({{"targetOnSameSurface", true}, {"targetWithinNoticeDistance", true}}, facts) ==
+        (facts.targetOnSameSurface && facts.targetWithinNoticeDistance));
 }
 
 TEST_CASE("Every fact row answers from the facts and an unknown name has no row", "[npc][fsm]")
@@ -88,14 +150,6 @@ TEST_CASE("Every fact row answers from the facts and an unknown name has no row"
     REQUIRE(
         advanced_platformer::npcFactRow("hasPatrol")->holds(NpcFactsBuilder::facts().withPatrol()));
     REQUIRE(advanced_platformer::npcFactRow("cornered") == nullptr);
-}
-
-TEST_CASE("A transition fires when every fact answers as asked", "[npc][fsm]")
-{
-    const advanced_platformer::NpcFacts facts = NpcFactsBuilder::facts().targetInSights();
-    REQUIRE(fires({{"targetKnown", true}, {"targetInSights", true}}, facts));
-    REQUIRE_FALSE(fires({{"targetKnown", true}, {"hasPatrol", true}}, facts));
-    REQUIRE(fires({}, facts));
 }
 
 TEST_CASE("A state machine rejects states and transitions it cannot run", "[npc][fsm][validation]")
@@ -145,64 +199,6 @@ TEST_CASE("A state machine rejects states and transitions it cannot run", "[npc]
     REQUIRE_THROWS_WITH(
         advanced_platformer::validateNpcStateMachine(machine), ContainsSubstring(expected));
     REQUIRE_THROWS_AS(advanced_platformer::startNpcMachine(machine), std::invalid_argument);
-}
-
-TEST_CASE(
-    "A started machine is in its first state and fires the first transition that holds",
-    "[npc][fsm]")
-{
-    NpcMachine machine = advanced_platformer::startNpcMachine(restAndHunt());
-    REQUIRE(advanced_platformer::activeNpcMachineState(machine).name == "rest");
-    REQUIRE(
-        advanced_platformer::activeNpcMachineState(machine).does ==
-        advanced_platformer::NpcActivity{"test", "idle"});
-
-    REQUIRE(
-        advanced_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts(), 0.1F) ==
-        std::nullopt);
-    REQUIRE(
-        advanced_platformer::advanceNpcMachine(
-            machine, NpcFactsBuilder::facts().knowingTarget(), 0.1F) == 0);
-    REQUIRE(advanced_platformer::activeNpcMachineState(machine).name == "hunt");
-    REQUIRE(machine.lastFired == 0);
-}
-
-TEST_CASE("A transition with a hold fires once its conditions have held that long", "[npc][fsm]")
-{
-    NpcMachine machine = advanced_platformer::startNpcMachine(restAndHunt());
-    advanced_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts().knowingTarget(), 0.1F);
-
-    // Lost for 0.3 s, seen again, then lost: the hold starts over.
-    REQUIRE(
-        advanced_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts(), 0.3F) ==
-        std::nullopt);
-    REQUIRE(
-        advanced_platformer::advanceNpcMachine(
-            machine, NpcFactsBuilder::facts().knowingTarget(), 0.1F) == std::nullopt);
-    REQUIRE(
-        advanced_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts(), 0.3F) ==
-        std::nullopt);
-    REQUIRE(advanced_platformer::advanceNpcMachine(machine, NpcFactsBuilder::facts(), 0.2F) == 1);
-    REQUIRE(advanced_platformer::activeNpcMachineState(machine).name == "rest");
-}
-
-TEST_CASE("Among transitions from one state the first that holds wins", "[npc][fsm]")
-{
-    NpcMachine machine = advanced_platformer::startNpcMachine(
-        NpcMachineBuilder::named("test")
-            .state("rest", tests::testActivity("idle"))
-            .state("hunt", tests::testActivity("chase"))
-            .state("flee", tests::testActivity("retreat"))
-            .transition("rest", "flee")
-            .when("targetWithinStandoffDistance", true)
-            .transition("rest", "hunt")
-            .when("targetKnown", true));
-
-    // Both the flee and the hunt transitions hold; the flee is listed first.
-    REQUIRE(
-        advanced_platformer::advanceNpcMachine(
-            machine, NpcFactsBuilder::facts().targetWithinStandoffDistance(), 0.1F) == 0);
-    REQUIRE(advanced_platformer::activeNpcMachineState(machine).name == "flee");
 }
 
 TEST_CASE("A machine that was not started cannot advance", "[npc][fsm][validation]")

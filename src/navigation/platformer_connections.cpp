@@ -482,30 +482,6 @@ namespace advanced_platformer
             return result;
         }
 
-        std::vector<RouteLocation> climbDestinationsFrom(RouteLocation from)
-        {
-            const Cell cell = from.cell;
-            switch (from.surface)
-            {
-            case ClimbSurface::None:
-                return {{cell, ClimbSurface::LeftWall}, {cell, ClimbSurface::RightWall}};
-            case ClimbSurface::LeftWall:
-            case ClimbSurface::RightWall:
-                return {
-                    {cell, ClimbSurface::None},
-                    {{cell.x, cell.y - 1}, from.surface},
-                    {{cell.x, cell.y + 1}, from.surface},
-                    {cell, ClimbSurface::Ceiling}};
-            case ClimbSurface::Ceiling:
-                return {
-                    {{cell.x - 1, cell.y}, ClimbSurface::Ceiling},
-                    {{cell.x + 1, cell.y}, ClimbSurface::Ceiling},
-                    {cell, ClimbSurface::LeftWall},
-                    {cell, ClimbSurface::RightWall}};
-            }
-            return {};
-        }
-
         BuiltPlatformerConnections buildClimbConnections(
             const TileMap& map,
             Cell cell,
