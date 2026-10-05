@@ -14,7 +14,8 @@
           "breaksTiles": true,
           "sprite": { "position": [32, 192], "size": [8, 4] }
         }
-      }
+      },
+      "secondaryAttack": { "bite": {} }
     },
     "zombie": {
       "bodySize": [12, 20],
