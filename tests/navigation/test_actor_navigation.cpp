@@ -399,10 +399,29 @@ TEST_CASE(
     };
     REQUIRE(passes({{2, 3}, ClimbSurface::LeftWall}));
     REQUIRE(passes({{6, 2}, ClimbSurface::Ceiling}));
-    REQUIRE(passes({{11, 3}, ClimbSurface::RightWall}));
+    REQUIRE(hasStep(path, Traversal::Fall));
     REQUIRE(cellAtFeet(tests::TileSize, endOf(result)) == Cell{11, 5});
 
     REQUIRE(followsToTheEnd(map, pathOf(result), climberAt(start), 2000));
+}
+
+TEST_CASE(
+    "A climber on a ceiling lets go to reach the floor below",
+    "[navigation][platformer][climb]")
+{
+    const TileMap room =
+        tests::TileMapBuilder({"cccccc", "c....c", "c....c", "c....c", "c....c", "######"})
+            .where('c', tests::Tile{}.blocksMovement().climbable());
+    const RouteLocation start{{3, 1}, ClimbSurface::Ceiling};
+
+    const NavigationPathResult result = findPath(room, climberAt(start), feetIn({3, 4}));
+
+    REQUIRE(result.status == NavigationPathStatus::Found);
+    const NavigationPath path = pathOf(result);
+    REQUIRE(path.waypoints.size() == 1);
+    REQUIRE(path.waypoints.front().traversal == Traversal::Fall);
+    REQUIRE(cellOf(endOf(result)) == Cell{3, 4});
+    REQUIRE(followsToTheEnd(room, path, climberAt(start), 120));
 }
 
 TEST_CASE(

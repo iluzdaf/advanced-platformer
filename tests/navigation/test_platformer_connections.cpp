@@ -283,9 +283,11 @@ TEST_CASE(
             upTheWall.connections,
             [](const RouteConnection& connection)
             {
-                return connection.step.traversal == Traversal::Climb &&
+                return (connection.step.traversal == Traversal::Climb ||
+                        connection.step.traversal == Traversal::Fall) &&
                        connection.sourceSurface == ClimbSurface::LeftWall;
             }));
+    REQUIRE(hasConnection(upTheWall.connections, {2, 4}, Traversal::Fall));
     REQUIRE(tests::connectionsFrom(map, {2, 2}, walker).connections.empty());
 }
 
@@ -344,6 +346,73 @@ TEST_CASE(
             REQUIRE(body.bounds.topLeft == bounds.topLeft);
         }
     }
+}
+
+TEST_CASE(
+    "A climber lets go of a wall or ceiling and falls to the floor below",
+    "[navigation][platformer][climb]")
+{
+    using advanced_platformer::ClimbSurface;
+    const advanced_platformer::TileMap room =
+        tests::TileMapBuilder({"cccccc", "c....c", "c....c", "c....c", "c....c", "######"})
+            .where('c', tests::Tile{}.blocksMovement().climbable());
+    const advanced_platformer::SurfaceClimbConfig climbConfig{.speed = 60.0F};
+    const PlatformerTraversalProfile climber{
+        .size = SmallBody, .stepSeconds = tests::FixedStepSeconds, .climb = climbConfig};
+    const auto fallsFrom = [&room, &climber](Cell cell, ClimbSurface surface)
+    {
+        std::vector<RouteConnection> falls;
+        for (const RouteConnection& connection :
+             tests::connectionsFrom(room, cell, climber).connections)
+        {
+            if (connection.step.traversal == Traversal::Fall && connection.sourceSurface == surface)
+            {
+                falls.push_back(connection);
+            }
+        }
+        return falls;
+    };
+
+    const std::vector<RouteConnection> fromCeiling = fallsFrom({2, 1}, ClimbSurface::Ceiling);
+    REQUIRE(fromCeiling.size() == 1);
+    REQUIRE(fromCeiling.front().step.destination == advanced_platformer::RouteLocation{{2, 4}});
+    REQUIRE(fromCeiling.front().cost > 0);
+    REQUIRE_FALSE(fromCeiling.front().step.inputs.empty());
+    REQUIRE(
+        fromCeiling.front().step.inputs.front().intentions.climbGrip ==
+        advanced_platformer::ClimbGrip::Release);
+
+    const std::vector<RouteConnection> fromWall = fallsFrom({1, 2}, ClimbSurface::LeftWall);
+    REQUIRE(fromWall.size() == 1);
+    REQUIRE(fromWall.front().step.destination == advanced_platformer::RouteLocation{{1, 4}});
+
+    REQUIRE(fallsFrom({1, 4}, ClimbSurface::LeftWall).empty());
+    REQUIRE(fallsFrom({2, 1}, ClimbSurface::None).empty());
+
+    advanced_platformer::Body body{
+        advanced_platformer::boundsAtSurface(
+            tests::TileSize, {{2, 1}, ClimbSurface::Ceiling}, climber.size),
+        {0.0F, 0.0F}};
+    advanced_platformer::PlatformerMovement movement{climber.movement};
+    advanced_platformer::SurfaceClimb climb{climbConfig, ClimbSurface::Ceiling};
+    const advanced_platformer::InputProgram& inputs = fromCeiling.front().step.inputs;
+    const long ticks = std::lround(advanced_platformer::durationOf(inputs) / climber.stepSeconds);
+    for (long tick = 0; tick < ticks; ++tick)
+    {
+        advanced_platformer::updateSurfaceClimbMovement(
+            room,
+            body,
+            movement,
+            climb,
+            advanced_platformer::replayInput(
+                inputs, static_cast<float>(tick) * climber.stepSeconds),
+            climber.stepSeconds);
+    }
+    REQUIRE(climb.surface == ClimbSurface::None);
+    REQUIRE(movement.grounded);
+    REQUIRE(
+        advanced_platformer::cellAtFeet(
+            tests::TileSize, advanced_platformer::feetOf(body.bounds)) == Cell{2, 4});
 }
 
 TEST_CASE("A climber cannot hold an unmarked wall", "[navigation][platformer][climb]")
