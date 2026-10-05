@@ -11,6 +11,7 @@
 #include <utility>
 
 #include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_attacks.hpp"
 #include "advanced_platformer/actor/actor_validation.hpp"
 #include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/combat/attack.hpp"
@@ -28,7 +29,7 @@ namespace advanced_platformer
 {
     namespace
     {
-        std::optional<Attack> freshAttack(const std::optional<Attack>& definition, int textureId)
+        std::optional<Attack> freshAttack(const std::optional<Attack>& definition)
         {
             if (!definition.has_value())
             {
@@ -46,7 +47,6 @@ namespace advanced_platformer
                 weapon->phase = RangedPhase::Ready;
                 weapon->phaseTimeRemaining = 0.0F;
                 weapon->lastFiredTimeSeconds = std::nullopt;
-                weapon->projectileSprite.textureId = textureId;
             }
             else if (auto* contact = std::get_if<ContactDamage>(&attack))
             {
@@ -120,8 +120,12 @@ namespace advanced_platformer
             throw std::invalid_argument("A state machine requires senses");
         }
         actor.patrol = patrol;
-        actor.primaryAttack = freshAttack(definition.primaryAttack, textureId);
-        actor.secondaryAttack = freshAttack(definition.secondaryAttack, textureId);
+        actor.primaryAttack = freshAttack(definition.primaryAttack);
+        actor.secondaryAttack = freshAttack(definition.secondaryAttack);
+        if (RangedWeapon* weapon = findAttack<RangedWeapon>(actor))
+        {
+            weapon->projectileSprite.textureId = textureId;
+        }
         if (!definition.animations.empty())
         {
             Animator animator;
