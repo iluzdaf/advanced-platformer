@@ -34,24 +34,16 @@ namespace advanced_platformer
 {
     namespace
     {
-        // Added to the cost of every jump, so saving a little time does not make a
-        // grounded actor hop.
         constexpr int JumpStartPenaltyTicks = 30;
 
-        // Every place in a cell a body can rest: its floor, walls and ceiling.
         constexpr std::array<ClimbSurface, 4> Surfaces{
             ClimbSurface::None,
             ClimbSurface::LeftWall,
             ClimbSurface::RightWall,
             ClimbSurface::Ceiling};
 
-        // In pixels: how far a body may sit off a surface and still rest on it.
         constexpr float RestingTolerance = 1.0F;
 
-        // Where a body is resting, judged from its bounds alone. Of the places near it the
-        // profile can rest at, it picks the one whose resting bounds are within a pixel of
-        // the body across the surface, and nearest along it, up to a tile away. Nothing if
-        // the body rests nowhere, such as in the air.
         std::optional<RouteLocation> restingLocationOf(
             const TileMap& map,
             const Aabb& bounds,
@@ -99,7 +91,6 @@ namespace advanced_platformer
             return resting;
         }
 
-        // Turns a route into a path: the body's resting feet at each place on the route.
         NavigationPath waypointsOf(int tileSize, const Route& route, glm::vec2 bodySize)
         {
             NavigationPath path{feetOf(boundsAtSurface(tileSize, route.start, bodySize)), {}};
@@ -114,8 +105,6 @@ namespace advanced_platformer
             return path;
         }
 
-        // What the caller gets from a route: Found if it ends in the goal cell, Unreachable
-        // if not, with the path and how far the path's end is from the goal.
         NavigationPathResult pathResultOf(
             int tileSize,
             const Route& route,
@@ -131,15 +120,11 @@ namespace advanced_platformer
             return {status, std::move(path), remaining};
         }
 
-        // The number of cells between two cells along the grid. Each flight moves one cell
-        // for a cost of 1, so the guess is never more than the real cost.
         int manhattanHeuristic(Cell cell, Cell goal)
         {
             return std::abs(cell.x - goal.x) + std::abs(cell.y - goal.y);
         }
 
-        // Fills connections with a flight, costing 1, to each open cell next to this one.
-        // One search passes the same connections for every cell, reusing their storage.
         void flyingConnections(
             const TileMap& map,
             Cell cell,
@@ -159,8 +144,6 @@ namespace advanced_platformer
             }
         }
 
-        // The cheapest flight from the cell at the flyer's feet to the goal cell, through
-        // open cells. No result if the flyer's feet are off the map.
         std::optional<NavigationPathResult> findFlyingPath(
             const TileMap& map,
             const Aabb& body,
@@ -183,7 +166,8 @@ namespace advanced_platformer
             int cellsExpanded = 0;
             std::vector<RouteConnection> leaving;
             const ConnectionFunction connections =
-                [&map, profile, &cellsExpanded, &leaving](RouteLocation location)
+                [&map, profile, &cellsExpanded, &leaving](
+                    RouteLocation location) -> std::optional<std::span<const RouteConnection>>
             {
                 const PhaseScope connectionPhase(profile, "Navigation", "Connection retrieval");
                 ++cellsExpanded;
@@ -204,11 +188,6 @@ namespace advanced_platformer
             return pathResultOf(tileSize, *result.route, body.size, goal, goalFeet);
         }
 
-        // Guesses the ticks left from a cell to the goal cell: the time to cross the whole
-        // columns between them at the profile's fastest speed. A body's feet in the one
-        // cell and in the other are at least that far apart, whatever surface it holds,
-        // and the guess leaves out acceleration, braking, obstacles and height, so it is
-        // never more than the real cost.
         int platformerTickHeuristic(
             int tileSize,
             Cell cell,
@@ -237,8 +216,6 @@ namespace advanced_platformer
             return static_cast<int>(std::ceil(distance / (maximumSpeed * profile.stepSeconds)));
         }
 
-        // The cost of a connection to the platformer search, which adds the start penalty
-        // to a jump's simulated ticks. The cached costs stay the simulated ticks.
         int withJumpStartPenalty(const RouteConnection& connection)
         {
             if (connection.step.traversal != Traversal::Jump)
@@ -262,11 +239,6 @@ namespace advanced_platformer
             }
         }
 
-        // The cheapest path over floors, and for a climber walls and ceilings, from where
-        // the body rests to the goal cell. It only reads the cache and never runs movement.
-        // If the cache does not hold a cell the search needs yet, that cell goes to the
-        // front of the fill and the result is Deferred. No result if the body rests
-        // nowhere.
         std::optional<NavigationPathResult> findPlatformerPath(
             const TileMap& map,
             const Aabb& body,
@@ -295,26 +267,20 @@ namespace advanced_platformer
 
             int cellsExpanded = 0;
             const ConnectionFunction connections =
-                [&profile, &cache, frameProfile, &cellsExpanded](RouteLocation location)
+                [&profile, &cache, frameProfile, &cellsExpanded](
+                    RouteLocation location) -> std::optional<std::span<const RouteConnection>>
             {
                 const PhaseScope connectionPhase(
                     frameProfile, "Navigation", "Connection retrieval");
 
-                ++cellsExpanded;
-
-                // 1. Read the cell's connections from the cache. One entry holds the
-                //    connections leaving every surface of the cell. The search only
-                //    expands cells the cache holds, so this never misses.
                 const std::vector<RouteConnection>* cellConnections =
                     cache.cachedConnections(location.cell, profile);
                 if (cellConnections == nullptr)
                 {
-                    throw std::logic_error("The search expanded a cell the cache does not hold");
+                    return std::nullopt;
                 }
+                ++cellsExpanded;
 
-                // 2. Hand back the connections that leave this location's surface, without
-                //    copying them. A floor expands with floor connections, a wall with that
-                //    wall's climbs. The cache keeps each surface's connections together.
                 const auto [first, last] = std::ranges::equal_range(
                     *cellConnections, location.surface, {}, &RouteConnection::sourceSurface);
                 return std::span<const RouteConnection>(first, last);
@@ -323,23 +289,11 @@ namespace advanced_platformer
             const HeuristicFunction heuristic = [tileSize, &profile](Cell cell, Cell goalCell)
             { return platformerTickHeuristic(tileSize, cell, goalCell, profile); };
 
-            // The search pauses at a cell the cache does not hold yet, until the fill
-            // builds it.
-            const ExpansionReady canExpand = [&cache, &profile](RouteLocation location)
-            { return cache.cachedConnections(location.cell, profile) != nullptr; };
-
             RouteSearchResult result;
             {
                 const PhaseScope algorithmPhase(frameProfile, "Navigation", "Search algorithm");
-                // 3. Charge each jump the start penalty as the search adds up costs.
                 result = findLowestCostRoute(
-                    start,
-                    goal,
-                    map.size(),
-                    connections,
-                    heuristic,
-                    canExpand,
-                    withJumpStartPenalty);
+                    start, goal, map.size(), connections, heuristic, withJumpStartPenalty);
             }
 
             addFrameStatistic(frameProfile, "Navigation", "Cells expanded", cellsExpanded);
