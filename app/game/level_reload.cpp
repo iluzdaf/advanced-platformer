@@ -21,6 +21,7 @@
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/pounce.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/navigation/platformer_connection_cache.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
@@ -310,6 +311,12 @@ namespace advanced_platformer
             const SurfaceClimbConfig config = rebuilt.surfaceClimb->config;
             rebuilt.surfaceClimb = live.surfaceClimb;
             rebuilt.surfaceClimb->config = config;
+        }
+        if (rebuilt.pounce.has_value() && live.pounce.has_value())
+        {
+            rebuilt.pounce->phase = live.pounce->phase;
+            rebuilt.pounce->phaseTimeRemaining = live.pounce->phaseTimeRemaining;
+            rebuilt.pounce->launchedFrom = live.pounce->launchedFrom;
         }
         if (rebuilt.animator.has_value() && live.animator.has_value())
         {

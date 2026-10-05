@@ -23,6 +23,7 @@
 #include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/movement/flying_movement.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/pounce.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/render/sprite.hpp"
@@ -96,6 +97,7 @@ namespace advanced_platformer
         std::optional<WithDefaults<PlatformerMovementConfig>> platformer;
         std::optional<WithDefaults<FlyingMovement>> flying;
         std::optional<WithDefaults<SurfaceClimbConfig>> surfaceClimb;
+        std::optional<WithDefaults<PounceConfig>> pounce;
         std::optional<WithDefaults<NpcSenses>> senses;
         std::optional<std::string> machine;
         std::optional<BiteJson> bite;
@@ -181,6 +183,7 @@ namespace advanced_platformer
             result.platformer = configFrom(json.platformer);
             result.flying = configFrom(json.flying);
             result.surfaceClimb = configFrom(json.surfaceClimb);
+            result.pounce = configFrom(json.pounce);
             result.senses = configFrom(json.senses);
             setIfGiven(result.machine, json.machine);
             if (json.bite.has_value())

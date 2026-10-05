@@ -8,6 +8,7 @@
 #include "advanced_platformer/inventory/inventory.hpp"
 #include "advanced_platformer/movement/flying_movement.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/pounce.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/navigation/path_follower.hpp"
 #include "advanced_platformer/npc/npc.hpp"
@@ -38,6 +39,7 @@ namespace advanced_platformer
         std::optional<PlatformerMovement> platformerMovement;
         std::optional<FlyingMovement> flyingMovement;
         std::optional<SurfaceClimb> surfaceClimb;
+        std::optional<Pounce> pounce;
         Facing facing = Facing::Right;
 
         LifeState life = LifeState::Alive;
@@ -46,8 +48,6 @@ namespace advanced_platformer
 
         std::optional<Sprite> sprite;
         std::optional<Animator> animator;
-        // How much of the actor the player's screen shows, eased towards what the player can
-        // see of it. Unset until first presented.
         std::optional<float> screenVisibility;
         std::optional<Health> health;
         std::optional<Inventory> inventory;
@@ -57,7 +57,6 @@ namespace advanced_platformer
         std::optional<ContactDamage> contactDamage;
         std::optional<NpcBrain> brain;
         std::optional<NpcPerception> perception;
-        // The data-driven machine that chooses an NPC's activity.
         std::optional<NpcMachine> machine;
         std::optional<NpcSenses> senses;
         std::optional<Patrol> patrol;

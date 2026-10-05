@@ -147,6 +147,7 @@ team, and life state, plus optional components.
 | -------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------- |
 | Movement             | `PlatformerMovement` or `FlyingMovement`                               | Exactly one                                             |
 | Climbing             | `SurfaceClimb`                                                         | Requires platformer movement                            |
+| Pounce               | `Pounce`                                                               | Requires platformer movement                            |
 | NPC control          | `NpcBrain`, `NpcPerception`, `NpcSenses`, `PathFollower`, `NpcMachine` | Required together; `Patrol` is optional                 |
 | Primary attack       | `BiteAttack` or `RangedWeapon`                                         | At most one                                             |
 | Contact damage       | `ContactDamage`, with an optional `Knockback`                          | Independent of the primary attack                       |
@@ -172,11 +173,12 @@ team, and life state, plus optional components.
 - Facing follows horizontal aim, then intended movement, then keeps its value. It flips
   the sprite and places a bite.
 
-| Movement         | Rule                                                                                                                                  |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Platformer       | Acceleration and braking, variable-height jumps, coyote time, jump buffering, normal and jump-release gravity, and a fall-speed limit |
-| Flying           | Normalised two-axis input at a configured speed; no gravity                                                                           |
-| Surface climbing | Holding a climbable wall or ceiling and moving along it; letting go or losing contact returns to platformer movement                  |
+| Movement         | Rule                                                                                                                                                                                                               |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Platformer       | Acceleration and braking, variable-height jumps, coyote time, jump buffering, normal and jump-release gravity, and a fall-speed limit                                                                              |
+| Flying           | Normalised two-axis input at a configured speed; no gravity                                                                                                                                                        |
+| Surface climbing | Holding a climbable wall or ceiling and moving along it; letting go or losing contact returns to platformer movement                                                                                               |
+| Pounce           | A leap along the aim at `speed` from a floor, with at least `lift` upward, or from a wall or ceiling; in flight steering is ignored and gravity bends the arc, and landing or grabbing a surface starts a recovery |
 
 - Movement produces velocity; `moveBody` moves the body and stops it on the axis that
   hit a tile. Platformer movement, flying movement, and pickups share it. Gravity's
@@ -189,9 +191,9 @@ team, and life state, plus optional components.
 - Movement records whether a wall or the ledge guard blocked the last update; NPC policy
   reads it as `movementBlocked`. `contactDamage` separately asks combat for overlap
   damage.
-- A further ability follows `SurfaceClimb`: an optional component with its own
-  configuration and state, between intentions and collision, falling back to platformer
-  movement.
+- Further abilities follow `SurfaceClimb` and `Pounce`: an optional component with its
+  own configuration and state, between intentions and collision, falling back to
+  platformer movement.
 
 ## Tile map, collision, and validation
 

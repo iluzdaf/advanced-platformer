@@ -7,6 +7,7 @@
 #include "advanced_platformer/actor/actor_system.hpp"
 #include "advanced_platformer/input/input_state.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/pounce.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
 #include "advanced_platformer/world/world.hpp"
@@ -58,6 +59,26 @@ TEST_CASE("An actor's optional climb component uses its climb request", "[actor]
         tests::surfaceClimb(tests::actor(world, id)).surface ==
         advanced_platformer::ClimbSurface::LeftWall);
     REQUIRE(moved.body.bounds.topLeft.y < 36.0F);
+}
+
+TEST_CASE("An actor's optional pounce leaps through actor movement", "[actor][movement]")
+{
+    const advanced_platformer::TileMap floor = tests::TileMapBuilder({"..........", "##########"});
+    advanced_platformer::World world;
+    const auto id = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F}).atFeet({40.0F, 16.0F}).platforming());
+    advanced_platformer::Actor& pouncer = tests::actor(world, id);
+    pouncer.pounce = advanced_platformer::Pounce{};
+    tests::platformerMovement(pouncer).grounded = true;
+    pouncer.intentions.pouncePressed = true;
+    pouncer.intentions.aimDirection = {1.0F, 0.0F};
+
+    advanced_platformer::updateActorMovement(floor, world, 0.1F);
+
+    REQUIRE(tests::actor(world, id).body.velocity.x == 200.0F);
+    REQUIRE(
+        tests::actor(world, id).pounce.value_or(advanced_platformer::Pounce{}).phase ==
+        advanced_platformer::PouncePhase::Airborne);
 }
 
 TEST_CASE("Dying actors ignore intentions but continue falling", "[actor][movement][lifecycle]")

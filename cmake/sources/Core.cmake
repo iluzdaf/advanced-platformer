@@ -18,6 +18,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/src/math/validation.cpp
         ${PROJECT_SOURCE_DIR}/src/movement/flying_movement.cpp
         ${PROJECT_SOURCE_DIR}/src/movement/platformer_movement.cpp
+        ${PROJECT_SOURCE_DIR}/src/movement/pounce.cpp
         ${PROJECT_SOURCE_DIR}/src/movement/surface_climb.cpp
         ${PROJECT_SOURCE_DIR}/src/navigation/actor_navigation.cpp
         ${PROJECT_SOURCE_DIR}/src/navigation/navigation_fill.cpp

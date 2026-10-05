@@ -8,6 +8,7 @@
 
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/movement/pounce.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/navigation/platformer_cells.hpp"
@@ -194,6 +195,45 @@ TEST_CASE("A climber's surface reaches its target along walls and ceilings", "[n
     brain(world, npcId).target = targetId;
 
     REQUIRE(factsOf(map, world, npcId).targetOnSameSurface == expected);
+}
+
+TEST_CASE("Pounce facts follow the phase and the visible target's distance", "[npc][facts]")
+{
+    const advanced_platformer::TileMap map =
+        tests::TileMapBuilder({"............", "............", "############"});
+    advanced_platformer::World world;
+    glm::vec2 targetFeet{56.0F, 32.0F};
+    bool visible = true;
+    bool inRange = true;
+    advanced_platformer::PouncePhase phase = advanced_platformer::PouncePhase::Ready;
+    SECTION("A visible target within range")
+    {
+    }
+    SECTION("A target beyond range")
+    {
+        targetFeet.x = 120.0F;
+        inRange = false;
+    }
+    SECTION("A target out of sight")
+    {
+        visible = false;
+        inRange = false;
+    }
+    SECTION("In the air")
+    {
+        phase = advanced_platformer::PouncePhase::Airborne;
+    }
+    const auto targetId = world.addActor(makePlayer(targetFeet));
+    const auto npcId = addWalkingNpc(world);
+    actor(world, npcId).pounce = advanced_platformer::Pounce{{.range = 40.0F}, phase};
+    brain(world, npcId).target = targetId;
+    tests::perception(world, npcId).targetVisible = visible;
+
+    const advanced_platformer::NpcFacts facts = factsOf(map, world, npcId);
+
+    REQUIRE(facts.targetInPounceRange == inRange);
+    REQUIRE(facts.pounceReady == (phase == advanced_platformer::PouncePhase::Ready));
+    REQUIRE(facts.pouncing == (phase == advanced_platformer::PouncePhase::Airborne));
 }
 
 TEST_CASE("Heard landings and blocked walking are facts", "[npc][facts]")

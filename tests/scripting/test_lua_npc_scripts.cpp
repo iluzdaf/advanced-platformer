@@ -33,6 +33,7 @@ namespace
         snapshot.facts.targetWithinNoticeDistance = true;
         snapshot.facts.targetWithinStandoffDistance = true;
         snapshot.facts.movementBlocked = true;
+        snapshot.facts.pounceReady = true;
         snapshot.facts.stateElapsed = 0.25F;
         snapshot.routeComplete = true;
         return snapshot;
@@ -58,6 +59,7 @@ TEST_CASE("A Lua activity reads a copied snapshot and returns a command", "[lua]
                                 climbGrip = snapshot.facts.targetKnown and "hold" or "release",
                                 jumpHeld = snapshot.facts.heardLanding and snapshot.facts.targetOnSameSurface,
                                 jumpPressed = snapshot.facts.movementBlocked,
+                                pounce = snapshot.facts.pounceReady,
                                 avoidLedges = snapshot.facts.targetWithinStandoffDistance,
                                 contactDamage = snapshot.facts.targetWithinNoticeDistance,
                                 clearRoute = snapshot.routeComplete
@@ -77,6 +79,7 @@ TEST_CASE("A Lua activity reads a copied snapshot and returns a command", "[lua]
     REQUIRE(command.intentions.direction.x == 1.5F);
     REQUIRE(command.intentions.direction.y == 0.0F);
     REQUIRE(command.intentions.primaryAttackPressed);
+    REQUIRE(command.intentions.pouncePressed);
     REQUIRE(command.intentions.climbGrip == advanced_platformer::ClimbGrip::Hold);
     REQUIRE(command.intentions.jumpHeld);
     REQUIRE(command.intentions.jumpPressed);

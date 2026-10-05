@@ -6,6 +6,7 @@
 #include <stdexcept>
 
 #include "content/actor_catalog.hpp"
+#include "advanced_platformer/movement/pounce.hpp"
 #include "content/actor_definition.hpp"
 #include "content/animation_catalog.hpp"
 #include "content/machine_catalog.hpp"
@@ -100,13 +101,57 @@ TEST_CASE("Climbing requires platformer movement and positive speed", "[app][act
         Catch::Matchers::ContainsSubstring("actors.json:"));
 }
 
+TEST_CASE("A pounce requires platformer movement and valid settings", "[app][actors][json]")
+{
+    auto actorJson = tests::parseJson(
+        R"({"player":"hero","actors":{"hero":{"bodySize":[12,12],"platformer":{},
+        "pounce":{"speed":220},"health":2,"inventorySlots":1}}})");
+    SECTION("Flying actor")
+    {
+        tests::eraseKey(actorJson["actors"]["hero"], "platformer");
+        actorJson["actors"]["hero"]["flying"] = tests::object({{"speed", 60}});
+    }
+    SECTION("Invalid speed")
+    {
+        actorJson["actors"]["hero"]["pounce"]["speed"] = 0;
+    }
+    SECTION("Runtime phase")
+    {
+        actorJson["actors"]["hero"]["pounce"]["phase"] = "airborne";
+        REQUIRE_THROWS_WITH(
+            advanced_platformer::parseActorCatalog(tests::dumpJson(actorJson), "actors.json", {}),
+            Catch::Matchers::EndsWith("unknown field 'phase'"));
+    }
+
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::parseActorCatalog(tests::dumpJson(actorJson), "actors.json", {}),
+        Catch::Matchers::ContainsSubstring("actors.json:"));
+}
+
+TEST_CASE("Pounce settings keep the C++ defaults a file leaves out", "[app][actors][json]")
+{
+    const auto catalog = advanced_platformer::parseActorCatalog(
+        R"({"player":"hero","actors":{"hero":{"bodySize":[12,12],"platformer":{},
+        "pounce":{"speed":220},"health":2,"inventorySlots":1}}})",
+        "actors.json",
+        {});
+
+    const advanced_platformer::PounceConfig pounce =
+        advanced_platformer::actorDefinition(catalog, "hero")
+            .pounce.value_or(advanced_platformer::PounceConfig{.speed = 0.0F});
+
+    REQUIRE(pounce.speed == 220.0F);
+    REQUIRE(pounce.lift == 120.0F);
+    REQUIRE(pounce.range == 64.0F);
+    REQUIRE(pounce.recoveryDuration == 0.5F);
+}
+
 TEST_CASE(
     "Actor JSON rejects malformed and invalid definitions including unused ones",
     "[app][actors][json]")
 {
     auto actorJson = tests::parseJson(
         R"({"player":"hero","actors":{"hero":{"bodySize":[12,20],"platformer":{},"health":3,"inventorySlots":2}}})");
-    // Shape errors name a line and column; rule errors name the actor.
     std::string start = "actors.json: actors.";
     std::string end;
     SECTION("Missing body size")

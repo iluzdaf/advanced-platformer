@@ -13,6 +13,9 @@ namespace advanced_platformer
         bool targetVisible = false;
         bool targetInBiteRange = false;
         bool biteReady = false;
+        bool targetInPounceRange = false;
+        bool pounceReady = false;
+        bool pouncing = false;
         bool targetInSights = false;
         bool targetWithinStandoffDistance = false;
         bool heardLanding = false;

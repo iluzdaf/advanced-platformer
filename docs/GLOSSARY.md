@@ -27,16 +27,17 @@ belong to.
 
 ## Movement
 
-| Term        | Meaning                                                                                                                  |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Platformer  | An actor with platformer movement: it walks, jumps and falls under gravity. The player is one.                           |
-| Flyer       | An actor with flying movement: it moves in any direction and ignores gravity.                                            |
-| Climber     | A platformer that can also hold climbable walls and ceilings. See `SurfaceClimb`.                                        |
-| Surface     | Where a body rests in a cell: its floor, its left or right wall, or its ceiling. Only a climber uses walls and ceilings. |
-| Grounded    | Standing on something solid this step.                                                                                   |
-| Coyote time | A short window after walking off a ledge in which a jump still works.                                                    |
-| Jump buffer | A short window in which a jump pressed just before landing still happens on landing.                                     |
-| Traversal   | A kind of move between two places: walk, fall, jump, climb or fly.                                                       |
+| Term        | Meaning                                                                                                                                    |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Platformer  | An actor with platformer movement: it walks, jumps and falls under gravity. The player is one.                                             |
+| Flyer       | An actor with flying movement: it moves in any direction and ignores gravity.                                                              |
+| Climber     | A platformer that can also hold climbable walls and ceilings. See `SurfaceClimb`.                                                          |
+| Pounce      | A leap along the aim from whatever the actor rests on: floor, wall or ceiling. The spider damages by contact while it flies. See `Pounce`. |
+| Surface     | Where a body rests in a cell: its floor, its left or right wall, or its ceiling. Only a climber uses walls and ceilings.                   |
+| Grounded    | Standing on something solid this step.                                                                                                     |
+| Coyote time | A short window after walking off a ledge in which a jump still works.                                                                      |
+| Jump buffer | A short window in which a jump pressed just before landing still happens on landing.                                                       |
+| Traversal   | A kind of move between two places: walk, fall, jump, climb or fly.                                                                         |
 
 ## NPC behaviour
 

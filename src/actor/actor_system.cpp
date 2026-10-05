@@ -7,6 +7,7 @@
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/movement/flying_movement.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/pounce.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
 #include "advanced_platformer/world/world.hpp"
@@ -23,7 +24,14 @@ namespace advanced_platformer
             {
                 PlatformerMovement& movement = *actor.platformerMovement;
                 const bool wasGrounded = movement.grounded;
-                if (actor.surfaceClimb.has_value())
+                if (actor.pounce.has_value())
+                {
+                    SurfaceClimb* climb =
+                        actor.surfaceClimb.has_value() ? &*actor.surfaceClimb : nullptr;
+                    updatePounceMovement(
+                        map, actor.body, movement, climb, *actor.pounce, intentions, deltaTime);
+                }
+                else if (actor.surfaceClimb.has_value())
                 {
                     updateSurfaceClimbMovement(
                         map, actor.body, movement, *actor.surfaceClimb, intentions, deltaTime);

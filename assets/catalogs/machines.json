@@ -52,26 +52,29 @@
     "spider": {
       "states": [
         { "name": "patrol", "does": { "script": "spider", "activity": "patrol" } },
-        { "name": "pursue", "does": { "script": "spider", "activity": "pursue" } }
+        { "name": "pursue", "does": { "script": "spider", "activity": "pursue" } },
+        { "name": "pounce", "does": { "script": "spider", "activity": "pounce" } }
       ],
       "transitions": [
+        {
+          "from": ["patrol", "pursue"],
+          "to": "pounce",
+          "when": { "targetInPounceRange": true, "pounceReady": true }
+        },
         {
           "from": "patrol",
           "to": "pursue",
           "when": { "targetVisible": true, "targetOnSameSurface": true }
         },
+        { "from": "pursue", "to": "patrol", "when": { "targetKnown": false }, "after": 1.5 },
         {
           "from": "pursue",
           "to": "patrol",
-          "when": { "targetKnown": false, "biteReady": true },
+          "when": { "targetOnSameSurface": false },
           "after": 1.5
         },
-        {
-          "from": "pursue",
-          "to": "patrol",
-          "when": { "targetOnSameSurface": false, "biteReady": true },
-          "after": 1.5
-        }
+        { "from": "pounce", "to": "pursue", "when": { "pounceReady": true, "targetKnown": true } },
+        { "from": "pounce", "to": "patrol", "when": { "pounceReady": true, "targetKnown": false } }
       ]
     },
     "boar": {
