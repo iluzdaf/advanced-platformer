@@ -24,7 +24,7 @@ return {
         stunned = {
             update = function(self, snapshot)
                 if
-                    snapshot.facts.targetOnSameRun
+                    snapshot.facts.targetOnSameSurface
                     and snapshot.facts.targetWithinNoticeDistance
                     and snapshot.targetFeet ~= nil
                 then

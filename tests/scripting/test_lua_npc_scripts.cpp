@@ -29,7 +29,7 @@ namespace
         snapshot.patrol = advanced_platformer::Patrol{{8.0F, 34.0F}, {80.0F, 34.0F}, true};
         snapshot.facts.targetKnown = true;
         snapshot.facts.heardLanding = true;
-        snapshot.facts.targetOnSameRun = true;
+        snapshot.facts.targetOnSameSurface = true;
         snapshot.facts.targetWithinNoticeDistance = true;
         snapshot.facts.targetWithinStandoffDistance = true;
         snapshot.facts.movementBlocked = true;
@@ -56,7 +56,7 @@ TEST_CASE("A Lua activity reads a copied snapshot and returns a command", "[lua]
                                 routeTo = snapshot.patrol.secondFeet,
                                 primaryAttackPressed = snapshot.facts.targetKnown,
                                 climbGrip = snapshot.facts.targetKnown and "hold" or "release",
-                                jumpHeld = snapshot.facts.heardLanding and snapshot.facts.targetOnSameRun,
+                                jumpHeld = snapshot.facts.heardLanding and snapshot.facts.targetOnSameSurface,
                                 jumpPressed = snapshot.facts.movementBlocked,
                                 avoidLedges = snapshot.facts.targetWithinStandoffDistance,
                                 contactDamage = snapshot.facts.targetWithinNoticeDistance,
@@ -134,32 +134,31 @@ TEST_CASE(
     REQUIRE(command.clearRoute);
     REQUIRE(command.turnPatrol);
 
-    // A flyer with no living target has neither footing nor a target centre.
     NpcActivitySnapshot flyer = commandSnapshot();
     scripts.enter(SecondActor, Activity, flyer);
     REQUIRE(scripts.update(SecondActor, Activity, flyer, 0.5F).intentions.jumpPressed);
     REQUIRE(scripts.diagnostics().empty());
 }
 
-TEST_CASE("Lua receives independent run and range facts", "[lua][npc]")
+TEST_CASE("Lua receives independent surface and range facts", "[lua][npc]")
 {
     LuaNpcScripts scripts;
     scripts.loadScriptText("example", R"(
         return {activities={decide={update=function(self, snapshot)
-            return {jumpHeld=snapshot.facts.targetOnSameRun,
+            return {jumpHeld=snapshot.facts.targetOnSameSurface,
                     contactDamage=snapshot.facts.targetWithinNoticeDistance}
         end}}}
     )");
     NpcActivitySnapshot snapshot;
     scripts.enter(FirstActor, Activity, snapshot);
-    for (const bool sameRun : {false, true})
+    for (const bool sameSurface : {false, true})
     {
         for (const bool withinRange : {false, true})
         {
-            snapshot.facts.targetOnSameRun = sameRun;
+            snapshot.facts.targetOnSameSurface = sameSurface;
             snapshot.facts.targetWithinNoticeDistance = withinRange;
             const auto command = scripts.update(FirstActor, Activity, snapshot, 0.1F);
-            REQUIRE(command.intentions.jumpHeld == sameRun);
+            REQUIRE(command.intentions.jumpHeld == sameSurface);
             REQUIRE(command.intentions.contactDamage == withinRange);
         }
     }

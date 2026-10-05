@@ -1,6 +1,7 @@
 #include "advanced_platformer/npc/npc_senses.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <optional>
 #include <stdexcept>
 #include <vector>
@@ -14,7 +15,9 @@
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/navigation/platformer_cells.hpp"
+#include "advanced_platformer/navigation/route.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/world/sight.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
@@ -43,7 +46,6 @@ namespace advanced_platformer
             return glm::dot(offset, offset) <= senses.noticeDistance * senses.noticeDistance;
         }
 
-        // Within notice distance, with a line of sight between the two centres.
         bool canSeeTarget(
             const TileMap& map,
             const Aabb& observer,
@@ -83,7 +85,6 @@ namespace advanced_platformer
                 {
                     continue;
                 }
-                // Shots travel through walls; landings are heard only on this run.
                 if (noise.kind == NoiseKind::Landing)
                 {
                     if (!npc.actor.platformerMovement.has_value() ||
@@ -111,6 +112,17 @@ namespace advanced_platformer
             rememberTarget(npc.brain, target, npc.senses);
             npc.perception.targetVisible = true;
             return true;
+        }
+
+        std::vector<RouteLocation> surfaceNeighbours(RouteLocation location)
+        {
+            std::vector<RouteLocation> neighbours = climbDestinationsFrom(location);
+            if (location.surface == ClimbSurface::None)
+            {
+                neighbours.push_back({{location.cell.x - 1, location.cell.y}, ClimbSurface::None});
+                neighbours.push_back({{location.cell.x + 1, location.cell.y}, ClimbSurface::None});
+            }
+            return neighbours;
         }
 
         void decayTargetMemory(const World& world, NpcBrain& brain, float deltaTime)
@@ -146,6 +158,57 @@ namespace advanced_platformer
             }
         }
         return true;
+    }
+
+    bool onSameClimbSurface(
+        const TileMap& map,
+        const Aabb& climber,
+        ClimbSurface surface,
+        const Aabb& target)
+    {
+        const int tileSize = map.tileSize();
+        const RouteLocation goal{cellAtFeet(tileSize, feetOf(target)), ClimbSurface::None};
+        const RouteLocation start{
+            surface == ClimbSurface::Ceiling
+                ? cellAt(tileSize, {centerOf(climber).x, climber.topLeft.y})
+                : cellAtFeet(tileSize, feetOf(climber)),
+            surface};
+        if (!map.contains(start.cell))
+        {
+            return false;
+        }
+
+        const auto indexOf = [&map](RouteLocation location)
+        {
+            const auto cell =
+                static_cast<std::size_t>(location.cell.y) * static_cast<std::size_t>(map.width()) +
+                static_cast<std::size_t>(location.cell.x);
+            return cell * 4U + static_cast<std::size_t>(location.surface);
+        };
+        std::vector<bool> visited(
+            static_cast<std::size_t>(map.width()) * static_cast<std::size_t>(map.height()) * 4U);
+        std::vector<RouteLocation> pending{start};
+        visited[indexOf(start)] = true;
+        while (!pending.empty())
+        {
+            const RouteLocation location = pending.back();
+            pending.pop_back();
+            if (location == goal)
+            {
+                return true;
+            }
+            for (const RouteLocation next : surfaceNeighbours(location))
+            {
+                if (!map.contains(next.cell) || visited[indexOf(next)] ||
+                    !canOccupy(map, next, climber.size))
+                {
+                    continue;
+                }
+                visited[indexOf(next)] = true;
+                pending.push_back(next);
+            }
+        }
+        return false;
     }
 
     const Actor* livingTarget(const World& world, const NpcBrain& brain)
@@ -186,8 +249,6 @@ namespace advanced_platformer
             bool sawTarget = false;
             if (sensesPlayer)
             {
-                // Hearing still records events when the target is visible; fresh sight
-                // then takes priority over the last heard position.
                 heardNoise = hearNoises(map, npc, *player, noises);
                 sawTarget = observeTarget(map, npc, *player);
             }

@@ -1,6 +1,7 @@
 #include "advanced_platformer/navigation/platformer_cells.hpp"
 
 #include <stdexcept>
+#include <vector>
 
 #include <glm/vec2.hpp>
 
@@ -16,8 +17,6 @@ namespace advanced_platformer
 {
     namespace
     {
-        // Clear of movement-blocking tiles and inside the map's blocking sides and
-        // bottom. The map is open above its top edge, as it is for collision.
         bool bodyFits(const TileMap& map, const Aabb& bounds)
         {
             if (bounds.topLeft.x < 0.0F || rightOf(bounds) > map.pixelWidth() ||
@@ -100,12 +99,34 @@ namespace advanced_platformer
         {
             return false;
         }
-        // What holds the body up: the cell below for the floor, or a climbable tile
-        // beside or above it.
         if (location.surface == ClimbSurface::None)
         {
             return map.blocksMovement({location.cell.x, location.cell.y + 1});
         }
         return touchesClimbable(map, bounds, location.surface);
+    }
+
+    std::vector<RouteLocation> climbDestinationsFrom(RouteLocation from)
+    {
+        const Cell cell = from.cell;
+        switch (from.surface)
+        {
+        case ClimbSurface::None:
+            return {{cell, ClimbSurface::LeftWall}, {cell, ClimbSurface::RightWall}};
+        case ClimbSurface::LeftWall:
+        case ClimbSurface::RightWall:
+            return {
+                {cell, ClimbSurface::None},
+                {{cell.x, cell.y - 1}, from.surface},
+                {{cell.x, cell.y + 1}, from.surface},
+                {cell, ClimbSurface::Ceiling}};
+        case ClimbSurface::Ceiling:
+            return {
+                {{cell.x - 1, cell.y}, ClimbSurface::Ceiling},
+                {{cell.x + 1, cell.y}, ClimbSurface::Ceiling},
+                {cell, ClimbSurface::LeftWall},
+                {cell, ClimbSurface::RightWall}};
+        }
+        return {};
     }
 }

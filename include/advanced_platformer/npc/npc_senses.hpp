@@ -1,5 +1,7 @@
 #pragma once
 
+#include "advanced_platformer/movement/surface_climb.hpp"
+
 namespace advanced_platformer
 {
     class TileMap;
@@ -8,10 +10,13 @@ namespace advanced_platformer
     struct Actor;
     struct NpcBrain;
 
-    // The actor the brain remembers, while it is still alive; otherwise nothing.
     const Actor* livingTarget(const World& world, const NpcBrain& brain);
 
-    // Checks for a supported walk run beneath both feet; does not check grounded state.
     bool onSameGroundRun(const TileMap& map, const Aabb& observer, const Aabb& target);
+    bool onSameClimbSurface(
+        const TileMap& map,
+        const Aabb& climber,
+        ClimbSurface surface,
+        const Aabb& target);
     void updateNpcSenses(const TileMap& map, World& world, float deltaTime);
 }

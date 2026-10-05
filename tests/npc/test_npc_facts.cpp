@@ -8,6 +8,10 @@
 
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/navigation/platformer_cells.hpp"
+#include "advanced_platformer/navigation/route.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_facts.hpp"
 #include "advanced_platformer/npc/npc_senses.hpp"
@@ -16,6 +20,7 @@
 #include "support/actor_builder.hpp"
 #include "support/actor_components.hpp"
 #include "support/tile_map_builder.hpp"
+#include "support/tile_size.hpp"
 
 using tests::actor;
 using tests::brain;
@@ -27,7 +32,6 @@ namespace
         return tests::ActorBuilder::sized({12.0F, 12.0F}).atFeet(feet).platforming();
     }
 
-    // A grounded walker at (24, 32) that notices within 32 pixels.
     advanced_platformer::ActorId addWalkingNpc(advanced_platformer::World& world)
     {
         const advanced_platformer::ActorId npcId = world.addActor(
@@ -55,11 +59,11 @@ namespace
     }
 }
 
-TEST_CASE("Same-run and notice-distance facts are independent", "[npc][facts]")
+TEST_CASE("Same-surface and notice-distance facts are independent", "[npc][facts]")
 {
     struct ExpectedFacts
     {
-        bool sameRun;
+        bool sameSurface;
         bool withinNoticeDistance;
     };
 
@@ -90,19 +94,18 @@ TEST_CASE("Same-run and notice-distance facts are independent", "[npc][facts]")
         {
             brain(world, npcId).target = targetId;
         }
-        // These facts intentionally use current geometry, not visibility or last-known feet.
         brain(world, npcId).lastKnownTargetFeet = {24.0F, 32.0F};
         return factsOf(map, world, npcId);
     };
 
-    constexpr ExpectedFacts SameRunAndWithinNotice{true, true};
-    constexpr ExpectedFacts SameRunOnly{true, false};
+    constexpr ExpectedFacts SameSurfaceAndWithinNotice{true, true};
+    constexpr ExpectedFacts SameSurfaceOnly{true, false};
     constexpr ExpectedFacts WithinNoticeOnly{false, true};
     constexpr ExpectedFacts Neither{false, false};
     std::vector<Scenario> scenarios{
-        {"Same run at the inclusive notice boundary", SameRunAndWithinNotice}};
+        {"Same surface at the inclusive notice boundary", SameSurfaceAndWithinNotice}};
 
-    Scenario beyondNotice{"Same run beyond notice distance", SameRunOnly};
+    Scenario beyondNotice{"Same surface beyond notice distance", SameSurfaceOnly};
     beyondNotice.targetFeet.x = 120.0F;
     scenarios.push_back(beyondNotice);
 
@@ -132,9 +135,65 @@ TEST_CASE("Same-run and notice-distance facts are independent", "[npc][facts]")
         INFO(scenario.name);
         const auto facts = observeFacts(scenario);
         REQUIRE_FALSE(facts.targetVisible);
-        REQUIRE(facts.targetOnSameRun == scenario.expected.sameRun);
+        REQUIRE(facts.targetOnSameSurface == scenario.expected.sameSurface);
         REQUIRE(facts.targetWithinNoticeDistance == scenario.expected.withinNoticeDistance);
     }
+}
+
+TEST_CASE("A climber's surface reaches its target along walls and ceilings", "[npc][facts]")
+{
+    const advanced_platformer::TileMap map =
+        tests::TileMapBuilder({"cccccccc", "c......c", "c..cc..c", "c......c", "########"})
+            .where('c', tests::Tile().blocksMovement().climbable());
+    advanced_platformer::RouteLocation climberAt{{2, 3}, advanced_platformer::ClimbSurface::None};
+    bool climberGrounded = true;
+    bool targetGrounded = true;
+    bool expected = true;
+    SECTION("Standing on the target's floor")
+    {
+    }
+    SECTION("On a wall that comes down to the target's floor")
+    {
+        climberAt = {{1, 2}, advanced_platformer::ClimbSurface::LeftWall};
+    }
+    SECTION("On a ceiling joined to the target's floor by a wall")
+    {
+        climberAt = {{3, 1}, advanced_platformer::ClimbSurface::Ceiling};
+    }
+    SECTION("On the side of a block that touches nothing else")
+    {
+        climberAt = {{2, 2}, advanced_platformer::ClimbSurface::RightWall};
+        expected = false;
+    }
+    SECTION("In the air")
+    {
+        climberGrounded = false;
+        expected = false;
+    }
+    SECTION("Below an airborne target")
+    {
+        targetGrounded = false;
+        expected = false;
+    }
+
+    advanced_platformer::World world;
+    const auto targetId = world.addActor(makePlayer({88.0F, 64.0F}));
+    tests::platformerMovement(actor(world, targetId)).grounded = targetGrounded;
+    const glm::vec2 climberSize{8.0F, 8.0F};
+    const advanced_platformer::Aabb bounds =
+        advanced_platformer::boundsAtSurface(tests::TileSize, climberAt, climberSize);
+    const auto npcId = world.addActor(
+        tests::ActorBuilder::sized(climberSize)
+            .at(bounds.topLeft)
+            .platforming()
+            .climbing()
+            .thinking({32.0F, 1.0F}));
+    tests::surfaceClimb(actor(world, npcId)).surface = climberAt.surface;
+    tests::platformerMovement(actor(world, npcId)).grounded =
+        climberGrounded && climberAt.surface == advanced_platformer::ClimbSurface::None;
+    brain(world, npcId).target = targetId;
+
+    REQUIRE(factsOf(map, world, npcId).targetOnSameSurface == expected);
 }
 
 TEST_CASE("Heard landings and blocked walking are facts", "[npc][facts]")
