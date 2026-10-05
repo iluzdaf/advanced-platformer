@@ -14,8 +14,9 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 - Third-party source is git submodules under `external/`, each pinned to one commit.
   Versions and licences are in [THIRD_PARTY.md](../THIRD_PARTY.md).
 - Out of scope: slopes, one-way or moving platforms, rigid-body physics, actors pushing
-  one another, multiplayer, scripting beyond NPC activities, save games, an editor, an
-  animation graph, a general ECS, and homing or piercing projectiles.
+  one another, multiplayer, scripting beyond NPC activities and presentation effects,
+  save games, an editor, an animation graph, a general ECS, and homing or piercing
+  projectiles.
 
 | Target                          | What it owns                                                                                                            | Dependencies                                                              |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
@@ -63,9 +64,10 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 - Input is cleared while the inventory is open, the game is complete, play was
   interrupted, or ImGui captures the keyboard. Without a gameplay cursor, only the
   attack is cleared.
-- `Game::update` writes player intentions, runs the simulation, handles completion, then
-  updates the camera and `updateWorldPresentation` (animation and cover fades). Those
-  pause with the game while the exit opens.
+- `Game::update` writes player intentions, runs the simulation, handles completion,
+  updates the camera, then runs `updateWorldPresentation`: world events through the
+  presentation scripts, the camera shake, and animation and cover fades, which pause
+  while the exit opens.
 - Rendering reads the resulting state at the available frame rate and never advances
   time.
 
@@ -241,7 +243,7 @@ team, and life state, plus optional components.
 
 - Sight detects the living opponent player within notice distance with clear line of
   sight, and stores the player's ID and feet.
-- Shots and landings emit `NoiseEvent` values with the source's feet at emission. The
+- Shots and landings record `WorldEvent` values with the actor's feet at the time. The
   next sensing update offers the batch to every NPC, then discards it. Shots are heard
   through walls; a landing needs a grounded observer on the same ground run. Both use
   notice distance.
@@ -288,6 +290,10 @@ Each NPC update has three steps:
 - A failed script replacement leaves the previous script in place. Removing an actor,
   replacing a level, or reloading content discards script-owned state.
 - Scripts cannot emit noise or apply damage directly.
+- `LuaPresentationScript` implements the core's `PresentationScripts` interface, as
+  `LuaNpcScripts` implements `NpcActivityScripts`, running `presentation.lua` in the
+  same sandbox with the same protected calls, budget, and diagnostics. It returns
+  effects, never intentions; see [Effects](#effects).
 
 ## Navigation
 
@@ -456,6 +462,9 @@ to the traversal profile. The search itself does not change.
   state and timers.
 - `CameraController` starts centred on the player, moves only to return the player to a
   dead zone sized by the level catalog, clamps to the map, and rounds to internal pixels.
+- `CameraShake` offsets only the drawn view. A shake has a duration and a magnitude,
+  fades linearly, and a new one replaces it. Follow, aim, and the debug overlay use the
+  steady camera.
 - `DisplayViewport` is shared by rendering, aiming, HUD, and debug UI, so they agree
   about letterboxing and high-DPI coordinates.
 - Core tests cover scene construction, camera transforms, visible tiles, placement,
@@ -467,6 +476,23 @@ to the traversal profile. The search itself does not change.
 | `SpriteRegion` | A source rectangle, drawn at one world pixel per source pixel; a tile's region is the tile size |
 | Body bounds    | Collision size, independent of the sprite                                                       |
 | Sprite anchor  | Art placed at the body's feet (default) or centre; it does not change collision                 |
+
+### Effects
+
+- A simulation step records `WorldEvent` values: the actor, its feet, the kind, and for
+  a knockback the velocity. Senses take the audible kinds; `Game` takes them all after
+  the step.
+- `updateWorldPresentation` offers each event to `PresentationScripts`, an interface
+  the core owns and the Lua script implements, and applies the effects it returns. The
+  one effect is `shake`, with a duration and a magnitude.
+- Continuous presentation derived from world state, such as animation and cover fades,
+  is engine code. Discrete effects answering an event are the script's decision.
+
+| Hook          | Event                     |
+| ------------- | ------------------------- |
+| `onLanding`   | A platformer actor landed |
+| `onShot`      | A ranged weapon fired     |
+| `onKnockback` | A hit threw its target    |
 
 ### Animation
 

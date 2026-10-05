@@ -62,7 +62,7 @@ namespace advanced_platformer
             weapon.phase = RangedPhase::Shoot;
             weapon.phaseTimeRemaining = weapon.shootDuration;
             weapon.lastFiredTimeSeconds = world.simulationTimeSeconds();
-            world.emitNoise({actor.id, feetOf(actor.body.bounds), NoiseKind::Shot});
+            world.recordEvent({actor.id, feetOf(actor.body.bounds), WorldEventKind::Shot});
             requests.spawnProjectile(makeProjectile(actor, weapon));
         }
 

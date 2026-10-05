@@ -3,6 +3,9 @@
 #include <limits>
 #include <optional>
 #include <stdexcept>
+#include <vector>
+
+#include <glm/vec2.hpp>
 
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
@@ -198,6 +201,36 @@ TEST_CASE("NPC composition does not require a bite attack", "[world][actor]")
     const advanced_platformer::ActorId npcId = world.addActor(npc);
 
     REQUIRE(world.findActor(npcId) != nullptr);
+}
+
+TEST_CASE("World events reach the senses only when audible", "[world][events]")
+{
+    advanced_platformer::World world;
+    const advanced_platformer::ActorId id =
+        world.addActor(tests::ActorBuilder::sized({8.0F, 8.0F}).at({0.0F, 0.0F}).platforming());
+
+    world.recordEvent({id, {4.0F, 8.0F}, advanced_platformer::WorldEventKind::Landing});
+    world.recordEvent(
+        {id, {4.0F, 8.0F}, advanced_platformer::WorldEventKind::Knockback, {90.0F, -60.0F}});
+
+    REQUIRE(world.takeNoises().size() == 1);
+    REQUIRE(world.takeNoises().empty());
+    const std::vector<advanced_platformer::WorldEvent> events = world.takeEvents();
+    REQUIRE(events.size() == 2);
+    REQUIRE(events.back().kind == advanced_platformer::WorldEventKind::Knockback);
+    REQUIRE(events.back().velocity == glm::vec2{90.0F, -60.0F});
+    REQUIRE(world.takeEvents().empty());
+
+    REQUIRE_THROWS_AS(
+        world.recordEvent({{}, {0.0F, 0.0F}, advanced_platformer::WorldEventKind::Landing}),
+        std::invalid_argument);
+    REQUIRE_THROWS_AS(
+        world.recordEvent(
+            {id,
+             {0.0F, 0.0F},
+             advanced_platformer::WorldEventKind::Knockback,
+             {std::numeric_limits<float>::infinity(), 0.0F}}),
+        std::invalid_argument);
 }
 
 TEST_CASE("World adds and removes projectiles through its public interface", "[world][projectile]")

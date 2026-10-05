@@ -6,6 +6,7 @@
 #include <glm/vec2.hpp>
 
 #include "game/game.hpp"
+#include "lua_presentation_script.hpp"
 #include "content/game_catalogs.hpp"
 #include "content/level_catalog.hpp"
 #include "advanced_platformer/actor/actor.hpp"
@@ -63,6 +64,7 @@ TEST_CASE(
         advanced_platformer::loadLevelCatalog("tests/fixtures/levels/levels.json"),
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
         advanced_platformer::LuaNpcScripts{},
+        advanced_platformer::LuaPresentationScript{},
         tests::FixedStepSeconds);
     const auto initialHealth = game.playerHealth();
     const auto initialInventory = game.playerInventory();
@@ -109,6 +111,7 @@ TEST_CASE(
         advanced_platformer::loadLevelCatalog("tests/fixtures/levels/locked_levels.json"),
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
         advanced_platformer::LuaNpcScripts{},
+        advanced_platformer::LuaPresentationScript{},
         tests::FixedStepSeconds);
     REQUIRE_FALSE(game.lockedExitHintIcon().has_value());
 
@@ -125,14 +128,12 @@ TEST_CASE(
     REQUIRE(icon.region.position == glm::vec2{0.0F, 0.0F});
     REQUIRE(icon.region.size == glm::vec2{8.0F, 8.0F});
 
-    // Standing still in the door keeps the hint up well past its linger.
     for (int tick = 0; tick < 120; ++tick)
     {
         game.update({}, tests::FixedStepSeconds);
     }
     REQUIRE(game.lockedExitHintIcon().has_value());
 
-    // Walking on to the key leaves the door behind, and the hint lapses.
     for (int tick = 0; tick < 120; ++tick)
     {
         game.update(walkRight, tests::FixedStepSeconds);

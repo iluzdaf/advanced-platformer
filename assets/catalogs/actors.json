@@ -85,7 +85,8 @@
           "speed": 220,
           "range": 72,
           "recoveryDuration": 0.6,
-          "damage": 1
+          "damage": 1,
+          "knockback": { "speed": 180, "lift": 140 }
         }
       }
     },

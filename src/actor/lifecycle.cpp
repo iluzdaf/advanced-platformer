@@ -6,6 +6,7 @@
 
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/validation.hpp"
 #include "advanced_platformer/world/world.hpp"
 #include "advanced_platformer/world/world_requests.hpp"
@@ -50,6 +51,11 @@ namespace advanced_platformer
                 {
                     actor->platformerMovement->grounded = false;
                 }
+                world.recordEvent(
+                    {actor->id,
+                     feetOf(actor->body.bounds),
+                     WorldEventKind::Knockback,
+                     *request.knockback});
             }
             if (actor->health->current == 0)
             {

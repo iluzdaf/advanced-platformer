@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <stdexcept>
 
 #include <glm/vec2.hpp>
@@ -38,9 +39,6 @@ namespace advanced_platformer
             requireFinite(camera.position, "Camera position");
         }
 
-        // Where the camera's edge settles on one axis: a map smaller than the viewport sits
-        // centred in it, otherwise the camera stops at the map's edges. Whole pixels keep the
-        // tiles crisp.
         float settleAxis(float cameraPosition, float mapSize, float viewportSize)
         {
             if (mapSize <= viewportSize)
@@ -130,5 +128,52 @@ namespace advanced_platformer
     glm::vec2 screenToWorld(const Camera& camera, glm::vec2 screenPosition)
     {
         return screenPosition + camera.position;
+    }
+
+    CameraShake::CameraShake(std::uint32_t seed)
+        : generator(seed)
+    {
+    }
+
+    void CameraShake::start(float shakeDuration, float shakeMagnitude)
+    {
+        if (!isFinitePositive(shakeDuration) || !isFinitePositive(shakeMagnitude))
+        {
+            throw std::invalid_argument("A camera shake needs a positive duration and magnitude");
+        }
+        duration = shakeDuration;
+        magnitude = shakeMagnitude;
+        elapsed = 0.0F;
+        running = true;
+        current = {0.0F, 0.0F};
+    }
+
+    void CameraShake::update(float deltaTime)
+    {
+        requireSeconds(deltaTime, "Camera shake time step");
+        if (!running)
+        {
+            current = {0.0F, 0.0F};
+            return;
+        }
+        elapsed += deltaTime;
+        if (elapsed >= duration)
+        {
+            running = false;
+            current = {0.0F, 0.0F};
+            return;
+        }
+        const float fading = magnitude * (1.0F - elapsed / duration);
+        current = {unit(generator) * fading, unit(generator) * fading};
+    }
+
+    glm::vec2 CameraShake::offset() const
+    {
+        return current;
+    }
+
+    bool CameraShake::active() const
+    {
+        return running;
     }
 }

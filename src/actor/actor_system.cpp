@@ -46,7 +46,8 @@ namespace advanced_platformer
                 }
                 if (!wasGrounded && movement.grounded && actor.life == LifeState::Alive)
                 {
-                    world.emitNoise({actor.id, feetOf(actor.body.bounds), NoiseKind::Landing});
+                    world.recordEvent(
+                        {actor.id, feetOf(actor.body.bounds), WorldEventKind::Landing});
                 }
             }
             else if (actor.flyingMovement.has_value())

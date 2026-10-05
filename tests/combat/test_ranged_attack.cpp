@@ -50,8 +50,8 @@ TEST_CASE("A ranged weapon queues a projectile in its aim direction", "[combat][
         0.25);
     const auto noises = world.takeNoises();
     REQUIRE(noises.size() == 1);
-    REQUIRE(noises.front().source == shooter);
-    REQUIRE(noises.front().kind == advanced_platformer::NoiseKind::Shot);
+    REQUIRE(noises.front().actor == shooter);
+    REQUIRE(noises.front().kind == advanced_platformer::WorldEventKind::Shot);
     REQUIRE(
         noises.front().feet ==
         advanced_platformer::feetOf(tests::actor(world, shooter).body.bounds));

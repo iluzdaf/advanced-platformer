@@ -11,6 +11,8 @@
 #include "level_reload.hpp"
 
 #include <cstddef>
+#include <iterator>
+#include <cmath>
 #include <optional>
 #include <variant>
 #include <vector>
@@ -32,6 +34,9 @@
 #include "advanced_platformer/render/render_scene.hpp"
 #include "advanced_platformer/render/sprite.hpp"
 #include "lua_npc_scripts.hpp"
+#include "advanced_platformer/world/world.hpp"
+#include "lua_script_diagnostic.hpp"
+#include "lua_presentation_script.hpp"
 #include "advanced_platformer/world/level_exit.hpp"
 #include "advanced_platformer/world/level_validation.hpp"
 #include "advanced_platformer/world/world_requests.hpp"
@@ -44,10 +49,12 @@ namespace advanced_platformer
         LevelCatalog levelCatalog,
         GameCatalogs gameCatalogs,
         LuaNpcScripts npcScripts,
+        LuaPresentationScript presentation,
         float stepSeconds)
         : levelCatalog(std::move(levelCatalog)),
           gameCatalogs(std::move(gameCatalogs)),
           npcScripts(std::move(npcScripts)),
+          presentation(std::move(presentation)),
           level(composeStartedLevel(
               this->levelCatalog,
               this->levelCatalog.startLevel,
@@ -139,10 +146,7 @@ namespace advanced_platformer
             throw std::logic_error("The game has no player after lifecycle update");
         }
         followTarget(cameraControllerValue(), level.map, player->body.bounds);
-        if (!exitOpening(level.world))
-        {
-            updateWorldPresentation(level.map, level.world, deltaTime);
-        }
+        updateWorldPresentation(level.map, level.world, deltaTime, presentation, cameraShake);
     }
 
     glm::vec2 Game::playerAimDirection(glm::vec2 screenPosition) const
@@ -165,7 +169,7 @@ namespace advanced_platformer
         }
 
         return buildRenderScene(
-            level.map, player->sprite.value().textureId, currentCamera(), level.world);
+            level.map, player->sprite.value().textureId, renderCamera(), level.world);
     }
 
     DebugOverlay Game::debugOverlay(
@@ -313,6 +317,7 @@ namespace advanced_platformer
         levelCatalog = std::move(content.levelCatalog);
         gameCatalogs = std::move(content.gameCatalogs);
         npcScripts = std::move(content.npcScripts);
+        presentation = std::move(content.presentation);
         CameraController& camera = cameraControllerValue();
         camera.deadZoneSize = levelCatalog.cameraDeadZone;
         const Actor* player = level.world.findActor(level.world.playerId());
@@ -341,7 +346,7 @@ namespace advanced_platformer
         {
             return std::nullopt;
         }
-        return worldToScreen(currentCamera(), topCenterOf(levelExit.value().bounds));
+        return worldToScreen(renderCamera(), topCenterOf(levelExit.value().bounds));
     }
 
     std::optional<Sprite> Game::lockedExitHintIcon() const
@@ -380,6 +385,20 @@ namespace advanced_platformer
 
     std::vector<LuaScriptDiagnostic> Game::takeScriptDiagnostics()
     {
-        return npcScripts.takeDiagnostics();
+        std::vector<LuaScriptDiagnostic> diagnostics = npcScripts.takeDiagnostics();
+        std::vector<LuaScriptDiagnostic> effects = presentation.takeDiagnostics();
+        diagnostics.insert(
+            diagnostics.end(),
+            std::make_move_iterator(effects.begin()),
+            std::make_move_iterator(effects.end()));
+        return diagnostics;
+    }
+
+    Camera Game::renderCamera() const
+    {
+        Camera camera = currentCamera();
+        const glm::vec2 offset = cameraShake.offset();
+        camera.position += glm::vec2{std::round(offset.x), std::round(offset.y)};
+        return camera;
     }
 }

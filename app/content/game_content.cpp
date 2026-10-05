@@ -17,6 +17,7 @@ namespace advanced_platformer
         content.gameCatalogs = loadGameCatalogs(assetDirectory / "catalogs", atlasSize);
         loadNpcActivityScripts(
             content.npcScripts, content.gameCatalogs.machines, assetDirectory / "scripts");
+        content.presentation.loadScript(assetDirectory / "scripts" / "presentation.lua");
         return content;
     }
 }

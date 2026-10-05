@@ -3,6 +3,7 @@ target_sources(
     PRIVATE
         ${PROJECT_SOURCE_DIR}/scripting/lua_activity_values.cpp
         ${PROJECT_SOURCE_DIR}/scripting/lua_npc_scripts.cpp
+        ${PROJECT_SOURCE_DIR}/scripting/lua_presentation_script.cpp
         ${PROJECT_SOURCE_DIR}/scripting/lua_sandbox.cpp
         ${PROJECT_SOURCE_DIR}/scripting/lua_vec2.cpp
 )

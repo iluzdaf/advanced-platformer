@@ -63,6 +63,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_frame_selection.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_game_debug.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_navigation_debug.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/game/test_game_presentation.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/game/test_game_reload.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/game/test_level_composition.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/game/test_level_object_composition.cpp
@@ -99,6 +100,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/render/test_animation.cpp
         ${PROJECT_SOURCE_DIR}/tests/render/test_animation_system.cpp
         ${PROJECT_SOURCE_DIR}/tests/render/test_camera.cpp
+        ${PROJECT_SOURCE_DIR}/tests/render/test_camera_shake.cpp
         ${PROJECT_SOURCE_DIR}/tests/render/test_cover_fade.cpp
         ${PROJECT_SOURCE_DIR}/tests/render/test_level_object_render.cpp
         ${PROJECT_SOURCE_DIR}/tests/render/test_presentation.cpp
@@ -109,6 +111,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/scripting/test_lua_npc_script_output.cpp
         ${PROJECT_SOURCE_DIR}/tests/scripting/test_lua_vec2.cpp
         ${PROJECT_SOURCE_DIR}/tests/scripting/test_lua_npc_world_integration.cpp
+        ${PROJECT_SOURCE_DIR}/tests/scripting/test_lua_presentation_script.cpp
         ${PROJECT_SOURCE_DIR}/tests/support/test_actor_builder.cpp
         ${PROJECT_SOURCE_DIR}/tests/support/test_npc_machine_builder.cpp
         ${PROJECT_SOURCE_DIR}/tests/support/test_tile_map_builder.cpp

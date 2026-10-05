@@ -71,12 +71,12 @@ namespace advanced_platformer
             const TileMap& map,
             SensingNpc& npc,
             const Actor& target,
-            const std::vector<NoiseEvent>& noises)
+            const std::vector<WorldEvent>& noises)
         {
             bool heardNoise = false;
-            for (const NoiseEvent& noise : noises)
+            for (const WorldEvent& noise : noises)
             {
-                if (noise.source != target.id)
+                if (noise.actor != target.id)
                 {
                     continue;
                 }
@@ -85,7 +85,7 @@ namespace advanced_platformer
                 {
                     continue;
                 }
-                if (noise.kind == NoiseKind::Landing)
+                if (noise.kind == WorldEventKind::Landing)
                 {
                     if (!npc.actor.platformerMovement.has_value() ||
                         !npc.actor.platformerMovement->grounded ||
@@ -226,7 +226,7 @@ namespace advanced_platformer
         requireSeconds(deltaTime, "NPC senses time step");
 
         const Actor* player = world.findActor(world.playerId());
-        const std::vector<NoiseEvent> noises = world.takeNoises();
+        const std::vector<WorldEvent> noises = world.takeNoises();
         for (Actor& actor : world.actors())
         {
             if (!actor.brain.has_value())

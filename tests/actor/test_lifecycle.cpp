@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <limits>
 #include <stdexcept>
+#include <vector>
 
 #include <glm/vec2.hpp>
 
@@ -81,6 +82,11 @@ TEST_CASE("Damage with knockback sets the target's velocity, even when fatal", "
     REQUIRE(thrown.body.velocity == glm::vec2{90.0F, -60.0F});
     REQUIRE_FALSE(tests::component<advanced_platformer::PlatformerMovement>(thrown).grounded);
     REQUIRE(tests::component<advanced_platformer::Health>(thrown).current == health - 1);
+    const std::vector<advanced_platformer::WorldEvent> events = world.takeEvents();
+    REQUIRE(events.size() == 1);
+    REQUIRE(events.front().kind == advanced_platformer::WorldEventKind::Knockback);
+    REQUIRE(events.front().actor == id);
+    REQUIRE(events.front().velocity == glm::vec2{90.0F, -60.0F});
 }
 
 TEST_CASE("Fatal damage begins a timed death", "[actor][lifecycle]")

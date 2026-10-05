@@ -2,7 +2,6 @@
 
 #include <filesystem>
 #include <memory>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -10,26 +9,10 @@
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/npc/npc_activity.hpp"
 #include "advanced_platformer/npc/npc_activity_scripts.hpp"
+#include "lua_script_diagnostic.hpp"
 
 namespace advanced_platformer
 {
-    enum class LuaScriptDiagnosticKind
-    {
-        Error,
-        Print,
-    };
-
-    struct LuaScriptDiagnostic
-    {
-        std::string source;
-        std::string script;
-        std::string activity;
-        std::string hook;
-        std::optional<ActorId> actor;
-        std::string message;
-        LuaScriptDiagnosticKind kind = LuaScriptDiagnosticKind::Error;
-    };
-
     class LuaNpcScripts final : public NpcActivityScripts
     {
     public:

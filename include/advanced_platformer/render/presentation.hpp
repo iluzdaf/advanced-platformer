@@ -2,9 +2,15 @@
 
 namespace advanced_platformer
 {
+    class CameraShake;
+    class PresentationScripts;
     class TileMap;
     class World;
 
-    // Presents the simulated world without changing gameplay. Runs after the simulation.
-    void updateWorldPresentation(const TileMap& map, World& world, float deltaTime);
+    void updateWorldPresentation(
+        const TileMap& map,
+        World& world,
+        float deltaTime,
+        PresentationScripts& scripts,
+        CameraShake& shake);
 }

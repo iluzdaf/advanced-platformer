@@ -7,6 +7,7 @@
 #include "advanced_platformer/npc/npc_activity.hpp"
 #include "advanced_platformer/npc/npc_activity_scripts.hpp"
 #include "lua_npc_scripts.hpp"
+#include "lua_script_diagnostic.hpp"
 
 namespace
 {

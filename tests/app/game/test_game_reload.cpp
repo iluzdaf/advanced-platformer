@@ -9,6 +9,7 @@
 #include "game/game.hpp"
 #include "game/level_reload.hpp"
 #include "lua_npc_scripts.hpp"
+#include "lua_presentation_script.hpp"
 #include "support/atlas_size.hpp"
 #include "support/fixed_step.hpp"
 
@@ -22,7 +23,8 @@ namespace
                 "fixture",
                 "tests/fixtures/levels"),
             advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
-            advanced_platformer::LuaNpcScripts{}};
+            advanced_platformer::LuaNpcScripts{},
+            advanced_platformer::LuaPresentationScript{}};
     }
 
     advanced_platformer::Game game()
@@ -33,6 +35,7 @@ namespace
             std::move(loaded.levelCatalog),
             std::move(loaded.gameCatalogs),
             std::move(loaded.npcScripts),
+            std::move(loaded.presentation),
             tests::FixedStepSeconds};
     }
 }

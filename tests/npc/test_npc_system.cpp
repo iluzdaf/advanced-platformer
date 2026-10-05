@@ -79,7 +79,7 @@ TEST_CASE("A machine reacts to landing and blocked walking facts", "[npc][machin
     scripts.command.intentions.direction.x = 1.0F;
     scripts.command.intentions.avoidLedges = true;
     scripts.command.intentions.primaryAttackPressed = true;
-    world.emitNoise({playerId, {56.0F, 32.0F}, advanced_platformer::NoiseKind::Landing});
+    world.recordEvent({playerId, {56.0F, 32.0F}, advanced_platformer::WorldEventKind::Landing});
 
     advanced_platformer::updateNpcSenses(map, world, 0.1F);
     REQUIRE(tests::component<advanced_platformer::NpcPerception>(world, npcId).heardLanding);

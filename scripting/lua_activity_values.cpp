@@ -20,23 +20,29 @@
 
 namespace advanced_platformer
 {
+    float number(const sol::object& object, std::string_view field)
+    {
+        if (object.get_type() != sol::type::number)
+        {
+            throw std::invalid_argument(std::format("{} must be a number", field));
+        }
+        const double value = object.as<double>();
+        if (!std::isfinite(value) ||
+            value < -static_cast<double>(std::numeric_limits<float>::max()) ||
+            value > static_cast<double>(std::numeric_limits<float>::max()))
+        {
+            throw std::invalid_argument(std::format("{} must be finite", field));
+        }
+        return static_cast<float>(value);
+    }
+
+    sol::object luaVector(sol::state& lua, glm::vec2 value)
+    {
+        return sol::make_object(lua, value);
+    }
+
     namespace
     {
-        float number(const sol::object& object, std::string_view field)
-        {
-            if (object.get_type() != sol::type::number)
-            {
-                throw std::invalid_argument(std::format("{} must be a number", field));
-            }
-            const double value = object.as<double>();
-            if (!std::isfinite(value) ||
-                value < -static_cast<double>(std::numeric_limits<float>::max()) ||
-                value > static_cast<double>(std::numeric_limits<float>::max()))
-            {
-                throw std::invalid_argument(std::format("{} must be finite", field));
-            }
-            return static_cast<float>(value);
-        }
 
         bool boolean(const sol::object& object, std::string_view field)
         {
@@ -89,10 +95,6 @@ namespace advanced_platformer
                 number(table.get<sol::object>("y"), std::format("{}.y", field))};
         }
 
-        sol::object luaVector(sol::state& lua, glm::vec2 value)
-        {
-            return sol::make_object(lua, value);
-        }
     }
 
     void rejectUnknownFields(

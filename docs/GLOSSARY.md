@@ -42,18 +42,19 @@ belong to.
 
 ## NPC behaviour
 
-| Term       | Meaning                                                                                                         |
-| ---------- | --------------------------------------------------------------------------------------------------------------- |
-| NPC        | An actor with a brain, which decides its intentions instead of a player.                                        |
-| Senses     | How far an NPC notices and how long it remembers. Tuned in content.                                             |
-| Perception | What an NPC saw or heard in the latest sensing update. Replaced every update.                                   |
-| Brain      | What an NPC knows between updates: its target and its memory of where the target was.                           |
-| Target     | The actor an NPC is after, usually the player. Not the same as a goal.                                          |
-| Fact       | A yes-or-no answer about an NPC this update, such as `targetVisible` or `hasPatrol`, that its transitions test. |
-| State      | What an NPC is doing, such as patrol, chase or bite: a named state in its machine.                              |
-| Activity   | What a state does each step, written in Lua.                                                                    |
-| Patrol     | Two points an NPC walks or flies between while it has no target.                                                |
-| Noise      | An event other actors can hear, such as a landing or a shot.                                                    |
+| Term                | Meaning                                                                                                                                      |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| NPC                 | An actor with a brain, which decides its intentions instead of a player.                                                                     |
+| Senses              | How far an NPC notices and how long it remembers. Tuned in content.                                                                          |
+| Perception          | What an NPC saw or heard in the latest sensing update. Replaced every update.                                                                |
+| Brain               | What an NPC knows between updates: its target and its memory of where the target was.                                                        |
+| Target              | The actor an NPC is after, usually the player. Not the same as a goal.                                                                       |
+| Fact                | A yes-or-no answer about an NPC this update, such as `targetVisible` or `hasPatrol`, that its transitions test.                              |
+| State               | What an NPC is doing, such as patrol, chase or bite: a named state in its machine.                                                           |
+| Activity            | What a state does each step, written in Lua.                                                                                                 |
+| Patrol              | Two points an NPC walks or flies between while it has no target.                                                                             |
+| World event         | Something a simulation step recorded: a landing, a shot or a knockback. Senses hear the audible ones; the presentation script sees them all. |
+| Presentation script | `presentation.lua`: decides which effects answer a world event, and how strong. The engine applies them.                                     |
 
 ## Navigation
 

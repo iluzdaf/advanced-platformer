@@ -16,6 +16,8 @@
 #include "advanced_platformer/render/camera.hpp"
 #include "advanced_platformer/render/sprite.hpp"
 #include "lua_npc_scripts.hpp"
+#include "lua_script_diagnostic.hpp"
+#include "lua_presentation_script.hpp"
 
 namespace advanced_platformer
 {
@@ -37,6 +39,7 @@ namespace advanced_platformer
             LevelCatalog levelCatalog,
             GameCatalogs gameCatalogs,
             LuaNpcScripts npcScripts,
+            LuaPresentationScript presentation,
             float simulationStepSeconds);
 
         void update(
@@ -66,6 +69,8 @@ namespace advanced_platformer
         std::optional<Sprite> lockedExitHintIcon() const;
         const HudIcons& hudIcons() const;
         std::vector<LuaScriptDiagnostic> takeScriptDiagnostics();
+        Camera currentCamera() const;
+        Camera renderCamera() const;
 
     private:
         void loadLevel(int levelNumber);
@@ -73,13 +78,14 @@ namespace advanced_platformer
         void startCamera();
         CameraController& cameraControllerValue();
         const CameraController& cameraControllerValue() const;
-        Camera currentCamera() const;
 
         LevelCatalog levelCatalog;
         GameCatalogs gameCatalogs;
         LuaNpcScripts npcScripts;
+        LuaPresentationScript presentation;
         GameLevel level;
         std::optional<CameraController> cameraController;
+        CameraShake cameraShake;
         int atlasTextureId = 0;
         float simulationStepSeconds = 0.0F;
         bool gameComplete = false;

@@ -108,20 +108,32 @@ namespace advanced_platformer
         return elapsedSimulationTimeSeconds;
     }
 
-    void World::emitNoise(NoiseEvent event)
+    bool audible(WorldEventKind kind)
     {
-        if (!isValid(event.source) || !isFinite(event.feet))
-        {
-            throw std::invalid_argument("Noise events require a source and finite feet");
-        }
-        pendingNoises.push_back(event);
+        return kind == WorldEventKind::Landing || kind == WorldEventKind::Shot;
     }
 
-    std::vector<NoiseEvent> World::takeNoises()
+    void World::recordEvent(WorldEvent event)
     {
-        std::vector<NoiseEvent> events = std::move(pendingNoises);
-        pendingNoises.clear();
-        return events;
+        if (!isValid(event.actor) || !isFinite(event.feet) || !isFinite(event.velocity))
+        {
+            throw std::invalid_argument("World events require an actor and finite vectors");
+        }
+        if (audible(event.kind))
+        {
+            pendingNoises.push_back(event);
+        }
+        pendingEvents.push_back(event);
+    }
+
+    std::vector<WorldEvent> World::takeNoises()
+    {
+        return std::exchange(pendingNoises, {});
+    }
+
+    std::vector<WorldEvent> World::takeEvents()
+    {
+        return std::exchange(pendingEvents, {});
     }
 
     std::optional<float> World::secondsSince(const std::optional<double>& timeSeconds) const
