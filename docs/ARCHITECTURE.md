@@ -1,637 +1,324 @@
-# Advanced Platformer Architecture
+# Architecture
 
-This document explains the architecture that exists in the repository now: its main
-boundaries, data model, runtime flow, and the reasons behind them.
-
-Use this as a reference when working on a particular feature:
-
-| Area                      | Section                                                                   | What it covers                                                              |
-| ------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| Orientation               | [Purpose and scope](#purpose-and-scope)                                   | What the repository is and is not.                                          |
-|                           | [Project shape](#project-shape)                                           | Targets, folders, the dependency boundary, and headers over modules.        |
-|                           | [Runtime flow](#runtime-flow)                                             | The fixed step and the order systems run in.                                |
-|                           | [Coordinates](#coordinates)                                               | Axes and feet positions.                                                    |
-|                           | [Time](#time)                                                             | The step, timers, stamps, and which to use.                                 |
-| The data model            | [World ownership and identity](#world-ownership-and-identity)             | What the world owns.                                                        |
-|                           | [Actor composition](#actor-composition)                                   | How capabilities fit together.                                              |
-| Gameplay systems          | [Input and movement](#input-and-movement)                                 | Intentions, platformer and flying movement.                                 |
-|                           | [Tile map, collision, and validation](#tile-map-collision-and-validation) | Terrain and sweeps.                                                         |
-|                           | [NPC behaviour](#npc-behaviour)                                           | Sensing, memory, machines, and Lua activities.                              |
-|                           | [Navigation](#navigation)                                                 | Path search, following, simulated traversals, and the connection cache.     |
-|                           | [Combat, projectiles, and life cycle](#combat-projectiles-and-life-cycle) | Attacks and death.                                                          |
-|                           | [Inventory, pickups, and levels](#inventory-pickups-and-levels)           | The level loop and the [data-driven boundary](#data-driven-level-boundary). |
-| Presentation and practice | [Presentation](#presentation)                                             | Animation, rendering, camera, and UI.                                       |
-|                           | [Error handling and validation](#error-handling-and-validation)           | Which layer rejects what.                                                   |
-|                           | [Testing and quality checks](#testing-and-quality-checks)                 | How to verify it.                                                           |
-
-## Purpose and scope
-
-Advanced Platformer is a small C++26 engine with a complete example game. It separates
-gameplay rules from graphics so the major paths can be tested without opening a window.
-
-The current example includes:
-
-- responsive platformer movement with variable-height jumping, coyote time, and jump
-  buffering
-- arbitrary-sized AABB bodies colliding with movement-blocking tiles
-- scrolling maps and a dead-zone camera
-- actors assembled by composition
-- player and NPC control through the same `InputIntentions`
-- NPC sensing and target memory, with data-driven state machines running protected Lua
-  activities through a copied snapshot-and-command boundary
-- flying and platformer pathfinding
-- 360-degree projectiles and a timed bite attack
-- health, death, respawning, pickups, inventory, and three connected levels
-- sprite animation, an ImGui HUD, and an optional debug overlay
-
-The project deliberately does not try to provide slopes, one-way or moving platforms,
-dynamic rigid-body physics, actor pushing, multiplayer, general gameplay scripting beyond
-NPC activities, save games, an
-editor, an animation graph, a general ECS, or advanced projectile modifiers such as
-homing and piercing. OpenGL submission is checked manually rather than with automated
-graphics integration tests. Sketches for a few of these, including an editor and
-composable movement abilities, are kept in [FUTURE_WORK.md](FUTURE_WORK.md); none of
-them are implemented.
+The main boundaries, ownership rules, and update order in Advanced Platformer. Use
+[CONTENT.md](CONTENT.md) for the files under `assets`, including Lua activities and hot
+reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
+[README.md](../README.md) for building, running, and the quality checks.
 
 ## Project shape
 
-### Targets and dependency boundary
+- C++26, built with Homebrew LLVM. Gameplay rules run without a window.
+- Structs hold state; namespace functions update it. Classes own collections and
+  resources where lifetime and invariants matter: `World`, `Inventory`,
+  `CameraController`, `SpriteRenderer`.
+- Third-party source is git submodules under `external/`, each pinned to one commit.
+  Versions and licences are in [THIRD_PARTY.md](../THIRD_PARTY.md).
+- Out of scope: slopes, one-way or moving platforms, rigid-body physics, actors pushing
+  one another, multiplayer, scripting beyond NPC activities, save games, an editor, an
+  animation graph, a general ECS, and homing or piercing projectiles.
 
-The project has four main CMake targets:
-
-- `advanced_platformer_core` contains simulation and render-scene construction. It has
-  no dependency on GLFW, OpenGL, ImGui, or JSON parsing.
-- `advanced_platformer_scripting` owns the Lua VM and implements the NPC activity scripting
-  boundary without exposing Lua types to the core. It lives on its own in `scripting/`,
-  as the application does in `app/`. `lua_npc_scripts.hpp` is its interface; its other
-  headers use sol2 and are private to it.
-- `advanced_platformer` contains the executable, window, input adapter, OpenGL renderer,
-  and ImGui presentation.
-- `advanced_platformer_tests` contains Catch2 tests for the core and for the application
-  code that can be tested without a window.
-
-The boundary matters for tests: one can construct a `World`, run movement or a complete
-simulation tick, and inspect the result without needing a window or graphics context.
-
-Third-party libraries are git submodules under `external/`, each pinned to one upstream
-commit so everyone builds against the same source. The current dependencies include GLFW,
-glad, GLM, ImGui, ImPlot for the debug overlay's plots, imgui-node-editor for its machine
-window, Catch2, stb image loading, Glaze, Lua, and sol2. Lua and sol2
-are private to the scripting target rather than leaking through public headers.
+| Target                          | What it owns                                                                                                            | Dependencies                                                              |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `advanced_platformer_core`      | Simulation, navigation, and plain render-scene data                                                                     | GLM; no window, graphics API, JSON, or Lua                                |
+| `advanced_platformer_scripting` | The Lua runtime behind the NPC activity boundary; `lua_npc_scripts.hpp` is its interface, its other headers are private | Core, Lua, sol2                                                           |
+| `advanced_platformer`           | Application, content loading, graphics, UI, and debug tools                                                             | Core, scripting, GLFW, glad, ImGui, ImPlot, imgui-node-editor, stb, Glaze |
+| `advanced_platformer_tests`     | Catch2 tests for the core, scripting, and the application code that needs no window                                     | Core, scripting, Glaze, Catch2                                            |
 
 ### Application folders
 
-The application code is grouped by responsibility:
+| Location              | Responsibility                                                                                           |
+| --------------------- | -------------------------------------------------------------------------------------------------------- |
+| `app/application.cpp` | Window events, input, fixed steps, pause and single step, UI requests, hot reload, and rendering         |
+| `app/game`            | Session flow: `Game` owns the current level, catalogs, scripts, and camera; level composition and reload |
+| `app/content`         | Content definitions, Glaze loaders, catalogs, validators, and the asset watcher                          |
+| `app/graphics`        | Window and OpenGL context, ImGui session, viewport conversion, and sprite submission                     |
+| `app/ui`              | HUD, inventory, exit hint, and completion UI                                                             |
+| `app/debug`           | Debug snapshots and their ImGui presentation, the console, and the frame profile UI                      |
+| `scripting`           | Lua VM, sandbox, `vec2` binding, and the activity adapter                                                |
+| `assets`              | Levels, catalogs, Lua scripts, and the atlas                                                             |
 
-- `app/game` coordinates the game session and composes playable levels;
-- `app/content` contains content definitions, JSON loaders, catalogs, and validators;
-- `app/ui` contains player-facing HUD, inventory, and completion UI;
-- `app/debug` builds and presents optional debugging information;
-- `app/graphics` contains the game window and its OpenGL context, the ImGui session,
-  display-viewport conversion, and OpenGL sprite submission.
-
-`application.cpp` owns the outer loop: window events, input collection, fixed updates,
-UI, and rendering. `Game` owns the current `GameLevel` and camera controller.
-`GameLevel` keeps the level ID, `TileMap`, `World`, and player spawn together.
-`Game` translates application input into game input, invokes the engine, builds
-the render scene, and replaces the level during a transition.
-
-Example-specific content is kept out of general engine systems. Level geometry and
-placements, actors, animations, items, pickup definitions, and exit definitions live in
-`assets`. Their loaders and validators live in `app/content`; `app/game/level_composition.cpp`
-combines the loaded definitions and placements into a playable level.
-
-### Data, behaviour, and resources
-
-The project uses three simple forms rather than making every concept a class:
-
-- Plain structs hold state, such as `Body`, `PlatformerMovement`, `NpcBrain`, and
-  `Sprite`.
-- Namespace functions implement behaviour, such as `updatePlatformerMovement` and
-  `updateNpcBehaviour`.
-- Classes protect owned collections or external resources when invariants and lifetime
-  matter, such as `World`, `Inventory`, `CameraController`, and `SpriteRenderer`.
-
-This keeps state visible, makes inputs and outputs explicit, and lets tests call one
-piece of behaviour with small values. A class is used when it provides a useful
-ownership boundary, not merely to group functions with a familiar subject name.
+- `GameLevel` keeps the level number, map, world, player spawn, actor definition names,
+  and the placement id of each actor and pickup together. Replacing it starts a fresh
+  world.
 
 ### Headers, not modules
 
-The code uses headers, not C++20 modules. Modules would bring real gains:
-
-- `import std;` would parse the standard library once instead of in every source file;
-- the compiler would enforce what each part exports, which the project now does by
-  convention, with anonymous namespaces and `scripting/`'s private headers;
-- no file's includes or macros could change how another file reads a type.
-
-The costs fall on the tools the project relies on:
-
-- clangd, the editor's code intelligence, supports modules only experimentally;
-- clang-tidy handles them poorly, and CI fails on `misc-include-cleaner`, which is built
-  around `#include`;
-- `tools/tidy_targets.py` finds the files a change affects by following `#include` lines,
-  and the header self-containment check assumes headers;
-- CMake must scan every source before it compiles, which serialises part of the build
-  and can disturb the compile database clangd reads; its module support is best on Ninja,
-  not the Unix Makefiles generator the presets use, and `import std` needs an
-  experimental opt-in;
-- sccache caches module builds poorly, so CI's compile cache would hit less;
-- the third-party libraries are headers either way, so their parse cost stays.
-
-Revisit this when clangd and clang-tidy support modules fully. If build time becomes the
-problem first, measure it with `-ftime-trace`, and try precompiled headers for the
-standard library and Glaze before modules: they keep most of the speed-up without
-disturbing the tools. If modules are tried, start with `import std;` alone on a branch
-and check that clangd and clang-tidy still cope.
+- Modules would parse the standard library once, enforce what each part exports, and
+  stop one file's includes or macros changing how another reads a type.
+- The tools the project relies on do not support them well enough yet. clangd supports
+  modules experimentally. clang-tidy and `misc-include-cleaner` are built around
+  `#include`, as is `tools/tidy_targets.py`. CMake's module support is best on Ninja,
+  not the Makefiles generator the presets use. sccache caches module builds poorly.
+- Revisit when clangd and clang-tidy support modules fully. If build time becomes the
+  problem first, measure with `-ftime-trace` and try precompiled headers for the
+  standard library and Glaze before modules.
 
 ## Runtime flow
 
-The application gathers input and gives the player's intentions to `Game`.
-Simulation advances at a fixed 60 Hz (`FixedDeltaSeconds`, a `double` equal to
-`1.0 / 60.0`); rendering runs at the available
-frame rate. Frame time is clamped before it enters the fixed-step accumulator so a
-breakpoint or stall does not cause an excessive catch-up.
+- `application.cpp` gathers player input and applies UI requests before simulation.
+- `FixedStep` runs at 60 Hz (`FixedDeltaSeconds`) and clamps a frame to 0.25 s before it
+  enters the accumulator, so a stall does not cause a burst of catch-up steps.
+- The application owns pause and single step. The fixed step resets across a pause, as
+  across the inventory; the game only sees which steps it is asked to run.
+- Input is cleared while the inventory is open, the game is complete, play was
+  interrupted, or ImGui captures the keyboard. Without a gameplay cursor, only the
+  attack is cleared.
+- `Game::update` writes player intentions, runs the simulation, handles completion, then
+  updates the camera and `updateWorldPresentation` (animation and cover fades). Those
+  pause with the game while the exit opens.
+- Rendering reads the resulting state at the available frame rate and never advances
+  time.
 
-`updateWorldSimulation` is the authoritative gameplay order:
+[`updateWorldSimulation`](../src/world/world_simulation.cpp) owns this order:
 
-1. Advance the World's shared simulation clock.
-2. If the player has entered the exit and it is still opening, only update the exit.
-   The game is paused until the door opens.
-3. Update NPC sensing and target memory.
-4. Update NPC decisions, goals, paths, and intentions.
-5. Move every actor and resolve tile collision.
-6. Let pickups fall and resolve their tile collision.
-7. Advance attacks and evaluate active bite hitboxes.
-8. Move projectiles, find their earliest collision, and break the tiles they destroy.
-9. Advance existing projectile bursts and queue expired bursts for removal.
-10. Apply damage and advance actor life cycles.
-11. Detect automatic pickups.
-12. Apply queued world requests.
-13. Open the exit when the player enters it with what it needs, and complete the level
-    once it has had time to open.
+| Order | Work                                                                                              |
+| ----- | ------------------------------------------------------------------------------------------------- |
+| 1     | Return if the level is complete; otherwise advance the world clock                                |
+| 2     | While the exit is opening, update only the exit and return                                        |
+| 3     | Build queued navigation connections within the step's budget                                      |
+| 4     | Update NPC senses and target memory                                                               |
+| 5     | Advance NPC machines and run their Lua activities into intentions                                 |
+| 6     | Move actors, then pickups, resolving tile collision                                               |
+| 7     | Update attacks, projectiles, which may break tiles, and projectile bursts                         |
+| 8     | Apply damage and knockback, advance death timers, respawn the player                              |
+| 9     | Detect pickups                                                                                    |
+| 10    | Forget the Lua state of actors about to be removed, then apply queued requests                    |
+| 11    | Open the exit when the player enters it with what it needs; complete the level once it has opened |
 
-The player intentions are written before this sequence. The camera and
-`updateWorldPresentation` (actor animation and cover fades) run afterward on ordinary
-gameplay ticks because they present the resulting state. They pause with the game while
-the exit opens. Level completion takes the transition or completion path instead. Animation updates
-change state; they do not issue draw calls.
+- Systems update existing objects while iterating. Spawns, removals, damage, item use,
+  and collection go into `WorldRequests` and are applied after iteration.
+- `updateLifeState` alone applies damage. It stamps the hit on the world clock, sets a
+  knockback's velocity, and owns death timers and respawning.
+- For inventory clicks, `drawInterface` returns a slot request; the application passes
+  it to `Game::useInventoryItem`, which applies that request alone.
+- Each phase measures itself into the optional `FrameProfile`. Parent phases exclude
+  child time.
 
-Systems do not add or erase objects while another system may be traversing their
-collections. They append plain values to `WorldRequests`; the requests are applied near
-the end of the tick. This makes the mutation point explicit and avoids invalidating
-iterators and pointers during a system update.
+## Coordinates and time
 
-## Coordinates
+| Value           | Meaning                                                                                                   |
+| --------------- | --------------------------------------------------------------------------------------------------------- |
+| World axes      | X points right; Y points down                                                                             |
+| `Aabb::topLeft` | The corner physics moves and measures collision from                                                      |
+| Feet            | Middle of a body's bottom edge; spawns, placements, patrols, goals, and waypoints                         |
+| Cell            | A tile position. The tile catalog declares the tile size (16) and every cell calculation takes it         |
+| Internal image  | 320 × 180 pixels, integer-scaled and letterboxed in the window                                            |
+| `deltaTime`     | Seconds for one update, a `float`; `requireSeconds` allows zero and rejects negative or non-finite values |
+| Timer           | A `float` on the component its window belongs to, ticked by the one system that owns it                   |
+| Stamp           | An `std::optional<double>` of the world clock when something happened, empty until it does                |
 
-- Positive X points right.
-- Positive Y points down.
-- AABBs and tiles are placed by their top-left corner in world coordinates.
-- Actor spawns, pickup placement, exits, patrol points, and navigation destinations use
-  world coordinates, usually as feet, described below.
-- The internal resolution is 320 by 180 pixels.
-- Tiles are square. The tile catalog declares the tile size in world pixels, each `TileMap`
-  carries it, and every cell calculation takes that size rather than assuming one. The
-  game uses 16.
-- Window output is an integer-scaled internal image with letterboxing when required.
-
-A body has two points that code places it by, so the code never uses a general
-`setPosition`, which would leave the reader guessing which point it moves. Physics works
-with the top-left corner of the body's `Aabb`, where collision measures from. Content and
-ground navigation work with its feet, the middle of the bottom edge, where a standing
-body meets the ground and where a level author thinks of it standing. Each place names
-its point: `topLeft` for the corner, and the feet functions in
-[`aabb.hpp`](../include/advanced_platformer/math/aabb.hpp) to read a box's feet or to
-build or move a box by them.
-
-## Time
-
-Gameplay time is seconds in the fixed simulation step, as `float` except for the world
-clock and its stamps. Every system receives the step it ran as `deltaTime`;
-`requireSeconds` allows zero but rejects negative or non-finite values. Navigation
-simulation requires a positive step through `requirePositiveSeconds`. Rendering has
-no step and never advances time.
-
-A moment or a length of time takes one of two forms.
-
-**Timers.** A `float` on the component its window belongs to, ticked once a step by the
-one system that owns the component. A countdown is over at zero (`coyoteRemaining`,
-`phaseTimeRemaining`, `lifetimeRemaining`, `targetMemoryRemaining`,
-`deathTimeRemaining`); a count-up is compared against a length (`stateElapsed`,
-`programElapsed`). The length is a duration field beside it, such as
-`targetMemoryDuration`. A timer needs no clock, so it is tested by setting the value and
-stepping, and not updating its system freezes it. Its cost is order. Where the tick
-happens relative to other systems is a rule the reader has to know, which is why the
-bite state holds for the update it is entered on.
-
-**Stamps.** An `std::optional<double>` holding the world clock's value when something
-happened, empty until it first does (`lastDamageTimeSeconds`, `lastFiredTimeSeconds`,
-`lastLockedTouchTimeSeconds`, `openedTimeSeconds`). `World` advances the clock once at
-the start of every step. A writer takes `simulationTimeSeconds()`; a reader asks
-`secondsSince(stamp)` for its age and compares it against a window the reader owns, so
-one write serves every reader. Cover fading reads the shot stamp; hearing uses noise
-events. The hit flash's length is a rendering constant. A stamp belongs to the clock
-it was taken from. One from the future is rejected, respawn clears the damage stamp, and no
-actor carries a stamp into another world. The clock and its stamps are `double`, so a
-stamp keeps its precision however long a session runs, and an age is a `float`, being
-small.
-
-**Which to use.**
-
-- If one system owns a window's start, ticking, and end, use a timer. Other systems
-  may read the remaining duration without advancing it.
-- If the question is how long ago something happened, and several systems or rendering
-  ask it, use a stamp.
-- Rendering reads stamps, the clock, or simulation-owned timers and should not tick them.
-- Put a length that content tunes in a duration field in seconds, checked like every
-  other time.
+- Name the point being moved: `topLeft`, `feetOf`, `boxStandingOn`, or `moveFeetTo`.
+  There is no general `setPosition`.
+- Use a timer when one system owns a window's start and end: `coyoteRemaining`,
+  `phaseTimeRemaining`, `targetMemoryRemaining`, `deathTimeRemaining`, `stateElapsed`.
+  Use a stamp when several readers ask how long ago something happened:
+  `lastDamageTimeSeconds`, `lastFiredTimeSeconds`, `lastLockedTouchTimeSeconds`,
+  `openedTimeSeconds`.
+- `World` advances the clock once at the start of each active step. `secondsSince`
+  returns a stamp's age, or nothing when unset; a stamp from the future is rejected.
+  The clock and stamps are `double`, so precision holds however long a session runs;
+  an age is a `float`.
+- Rendering reads stamps, the clock, and timers; it never ticks them. The hit flash's
+  length is a rendering constant.
+- A length content tunes is a duration field in seconds, checked like every other time.
+- Timers and stamps belong to their world. Respawn clears the damage stamp, and nothing
+  carries a stamp into another world.
 
 ## World ownership and identity
 
-`World` owns actors, projectiles, their short-lived burst effects, pickups, item
-definitions, the current exit, and the level's platformer connection cache. An actor has a
-typed, monotonically increasing
-[`ActorId`](../include/advanced_platformer/actor/actor_id.hpp) rather than exposing its
-vector index. Zero is invalid. IDs are not reused within a world. `World::findActor` performs a
-linear search, which is appropriate for the example's small number of actors and keeps
-the public model simple.
-
-Pointers returned by `findActor` and references to world-owned data are temporary
-views. Adding or removing objects, replacing a level, or restarting can invalidate
-them. Code that must remember an actor stores its `ActorId` and performs another lookup
-when needed.
-
-Mutable actor and projectile collections let systems update existing component state.
-Structural changes still go through `World` or `WorldRequests`, preserving identity and
-collection invariants.
+- `World` owns actors, projectiles, bursts, pickups, item definitions, the exit, noise
+  events, the simulation clock, and the level's platformer connection cache.
+- `TileMap` belongs to `GameLevel`, beside `World`.
+- `World::addActor` validates the actor and assigns an `ActorId`. Zero is invalid; IDs
+  are not reused within a world.
+- `findActor` is a linear search. Keep IDs across updates and look actors up when needed.
+- Pointers and references into the world are temporary views. Adding or removing
+  objects, a reload, a restart, or a level change can invalidate them.
+- A reload keeps the live `World`, so IDs, the clock, and projectiles survive it. A
+  level change does not.
 
 ## Actor composition
 
-Players and NPCs are configurations of the same [`Actor`](../include/advanced_platformer/actor/actor.hpp),
-not subclasses. Every actor has a body, intentions, facing, and team. Optional
-components supply its capabilities.
+Players and NPCs are configurations of one
+[`Actor`](../include/advanced_platformer/actor/actor.hpp): a body, intentions, facing,
+team, and life state, plus optional components.
 
-### Composition recipe
+| Capability           | Components                                                             | Rule                                                    |
+| -------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------- |
+| Movement             | `PlatformerMovement` or `FlyingMovement`                               | Exactly one                                             |
+| Climbing             | `SurfaceClimb`                                                         | Requires platformer movement                            |
+| NPC control          | `NpcBrain`, `NpcPerception`, `NpcSenses`, `PathFollower`, `NpcMachine` | Required together; `Patrol` is optional                 |
+| Primary attack       | `BiteAttack` or `RangedWeapon`                                         | At most one                                             |
+| Contact damage       | `ContactDamage`, with an optional `Knockback`                          | Independent of the primary attack                       |
+| Presentation         | `Sprite` and `Animator`                                                | An animator needs a sprite and a complete animation set |
+| Health and inventory | `Health`, `Inventory`                                                  | Optional                                                |
 
-| Capability     | Components                                                             | Rule                                                                |
-| -------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| Movement       | `PlatformerMovement` or `FlyingMovement`                               | Exactly one is required.                                            |
-| Climbing       | `SurfaceClimb`                                                         | Optional; requires `PlatformerMovement`.                            |
-| NPC control    | `NpcBrain`, `NpcPerception`, `NpcSenses`, `PathFollower`, `NpcMachine` | Add these together; a `Patrol` is optional.                         |
-| Primary attack | `BiteAttack` or `RangedWeapon`                                         | At most one is configured.                                          |
-| Contact attack | `ContactDamage`                                                        | Can coexist with either primary attack and is requested separately. |
-| Presentation   | `Sprite` and `Animator`                                                | An animator needs a sprite and a complete animation set.            |
-
-The application writes player intentions; NPC activities write the same structure.
-An attacking actor needs a non-neutral team for opponent filtering. Health and
-inventory are optional components. Reusing a definition with a different spawn or
-patrol placement creates another actor without a new C++ type.
-
-`World::addActor` checks component combinations; level validation separately checks
-whether actors fit at their authored positions. Systems use the components they
-need rather than virtual dispatch.
+- Attack components need a non-neutral team for opponent filtering.
+- `World::addActor` checks component combinations. Level validation checks placement
+  against the map.
+- Systems read the components they need. There is no actor subclass or virtual dispatch.
+- Composing a definition creates fresh runtime state; the same definition placed again
+  is another actor.
 
 ## Input and movement
 
-### Shared intentions
+- Player input and Lua activities produce the same `InputIntentions`.
+- `InputState` keeps button edges until a fixed update consumes them.
+- `InputProgram` is a timed sequence of intentions that navigation records and replays.
+  The sequence and its replay belong to input, not to pathfinding.
+- The mouse passes through the display viewport and camera into a world aim. Clicks
+  outside the viewport are ignored, and gameplay input is cleared while ImGui captures
+  it.
+- Facing follows horizontal aim, then intended movement, then keeps its value. It flips
+  the sprite and places a bite.
 
-Player input and NPC decisions produce the same
-[`InputIntentions`](../include/advanced_platformer/input/input_state.hpp).
+| Movement         | Rule                                                                                                                                  |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Platformer       | Acceleration and braking, variable-height jumps, coyote time, jump buffering, normal and jump-release gravity, and a fall-speed limit |
+| Flying           | Normalised two-axis input at a configured speed; no gravity                                                                           |
+| Surface climbing | Holding a climbable wall or ceiling and moving along it; letting go or losing contact returns to platformer movement                  |
 
-An [`InputProgram`](../include/advanced_platformer/input/input_program.hpp) holds a timed sequence
-of intentions for navigation to replay. The sequence and replay rules belong to input,
-not to pathfinding.
-
-Platformer movement reads the horizontal direction; flying movement reads both axes.
-Aim is independent of travel direction. Facing is left or right, for sprite flipping and
-for which side a bite reaches, and one rule decides it after each movement update: aim
-wins when it points left or right, otherwise the way the actor is trying to move,
-otherwise it stays as it was. NPCs that look at a target express that as an aim.
-
-`avoidLedges` asks grounded walking to stop before unsupported floor, without changing
-its acceleration or preventing a deliberate jump. Platformer movement records whether
-a wall or this guard blocked the last update; NPC policy reads that as `movementBlocked`.
-`contactDamage` independently asks the combat system to enable body-overlap damage.
-
-The application maps keyboard and mouse state to the player's intentions. Movement and
-attack systems do not need separate player and NPC implementations.
-
-GLFW events preserve pressed and released edges until a fixed update consumes them.
-The application converts the mouse from window coordinates through the letterboxed
-display viewport and camera into a world-space aim direction. Clicks outside the game
-viewport are ignored. When ImGui captures input, gameplay input is cleared.
-
-The application can pause the simulation and, while paused, run one fixed step.
-Presentation continues while the simulation stands still, and the fixed step is reset
-across a pause, as across the inventory, so no burst of catch-up steps follows a
-resume. The pause and the step are the application's: the game only sees which steps
-it is asked to run. The keys are listed in
-[README.md](../README.md#playing-the-example-game).
-
-### Platformer movement
-
-`PlatformerMovement` contains configuration plus a small runtime state for grounded,
-coyote, and jump-buffer timing. Its update performs horizontal acceleration or
-deceleration, starts a buffered jump when allowed, applies normal or jump-release
-gravity, and clamps fall speed.
-
-Movement produces velocity. `Body` then moves by it and stops along whichever axis hit
-a tile, one step shared by platformer movement, flying movement, and pickups; movement
-observes the contacts that step returns. Gravity and its default rates live with `Body`
-too, and the platformer config only overrides them. This direction keeps platformer
-rules separate from tile collision and avoids a general ability framework.
-
-An optional [`SurfaceClimb`](../include/advanced_platformer/movement/surface_climb.hpp)
-lets an actor cling to a climbable tile's wall or underside, moving up and down walls
-and sideways along ceilings. `climbGrip` grabs (`Hold`), lets go (`Release`), or leaves
-the grip alone (`Keep`, the default), so code that ignores climbing never knocks a
-climber off. Letting go or losing contact returns to normal platformer movement.
-Navigation routes a climber with the same update; see [traversals](#traversals).
-
-Further movement abilities follow `SurfaceClimb`: an optional component with its own
-configuration and state, sitting between intentions and collision and falling back to
-ordinary platformer movement, rather than more flags on `PlatformerMovement`.
-
-### Flying movement
-
-Flying movement normalises a nonzero two-dimensional intention, multiplies it by the
-configured speed, and uses the same tile collision function. It has no gravity,
-jumping, or acceleration state.
+- Movement produces velocity; `moveBody` moves the body and stops it on the axis that
+  hit a tile. Platformer movement, flying movement, and pickups share it. Gravity's
+  default rates live with `Body`.
+- `avoidLedges` stops grounded walking before unsupported floor; a deliberate jump still
+  works.
+- `climbGrip` is `Hold`, `Release`, or `Keep`. `Keep` leaves the grip alone, so code
+  that ignores climbing never knocks a climber off. While a route is followed, the
+  follower sets it.
+- Movement records whether a wall or the ledge guard blocked the last update; NPC policy
+  reads it as `movementBlocked`. `contactDamage` separately asks combat for overlap
+  damage.
+- A further ability follows `SurfaceClimb`: an optional component with its own
+  configuration and state, between intentions and collision, falling back to platformer
+  movement.
 
 ## Tile map, collision, and validation
 
-`TileMap` stores a rectangular row-major vector of integer tile IDs. Tile zero is empty.
-Each nonzero tile definition supplies a sprite region, `blocksMovement`, and
-`blocksSight`. The same map layer supports rendering, collision, and sensing.
+- `TileMap` is a rectangular, row-major array of tile IDs; zero is empty. A definition
+  chooses `blocksMovement`, `blocksSight`, `climbable`, and what the tile `breaksInto`.
+- One layer serves rendering, collision, sensing, and climbing.
+- Actors, pickups, and exits are level data, not tile IDs. Tests build maps from text
+  with `tests/support/tile_map_builder.hpp`, which supplies its own definitions.
 
-| Tile  | Movement and projectiles | Sight   | Hides what stands in it |
-| ----- | ------------------------ | ------- | ----------------------- |
-| Empty | pass                     | passes  | no                      |
-| Stone | blocked                  | blocked | nothing can stand in it |
-| Glass | blocked                  | passes  | nothing can stand in it |
-| Grass | pass                     | blocked | yes                     |
+| Tile  | Movement and projectiles | Sight | Hides what stands in it |
+| ----- | ------------------------ | ----- | ----------------------- |
+| Empty | Pass                     | Pass  | No                      |
+| Stone | Block                    | Block | Nothing can stand in it |
+| Glass | Block                    | Pass  | Nothing can stand in it |
+| Grass | Pass                     | Block | Yes                     |
 
-Only a sight-blocking tile that can be walked into hides anything, since nothing can
-stand in a tile that blocks movement. Anyone inside grass can see out and across it.
-This applies both to NPCs looking for the player and to the player's screen.
-
-On the player's screen, NPCs and pickups fade by how much of their body is in grass:
-fully visible while at most half of it is, not drawn from three quarters, and fading
-between. Anything the player has a line of sight to is drawn fully. The screen eases
-towards that target over `CoverFadeSeconds`, so an NPC revealed when the player steps into
-its patch fades in rather than popping. `updateCoverFades` keeps this `screenVisibility`
-and `buildRenderScene` draws it. NPCs still see the player by line of sight alone.
-
-The player's own sprite shows whether the world can see them. Their `screenVisibility`
-eases towards their own cover fade, raised to fully exposed while any NPC saw them this
-update or for `ShotRevealSeconds` after they fire. "Saw them" is read straight from the
-`targetVisible` flag that `updateNpcSenses` records in each `NpcPerception`, so gameplay
-decides who sees the player once per tick. The renderer draws the player shaded by
-`PlayerConcealedShade` rather than faded, so a hidden player darkens instead of
-disappearing.
-
-A tile definition may name the tile it `breaksInto`, so breaking swaps a cell's tile ID
-instead of adding per-cell state, and a tile that names nothing is unbreakable. A
-projectile carries `breaksTiles` from the weapon that fired it and breaks a tile only
-when both agree. Glass breaks into empty, the player's weapon breaks tiles, and enemy
-weapons do not. `updateProjectiles` takes a mutable map; every other system takes
-`const TileMap&`.
-
-Tests construct maps from ASCII strings with a helper in `tests/support` that supplies
-its own definitions and symbols, so the engine carries no fixture of its own. The loader
-resolves tile names to runtime IDs, reserving zero for `empty`. Actors, pickups, spawns,
-and exits are separate level data, not special tile IDs.
-
-Collision moves an arbitrary-sized AABB along X, resolves it against nearby full-tile
-AABBs, then repeats along Y. The result reports left, right, ground, and ceiling
-contacts. Actors do not physically collide with or push one another. The left, right,
-and bottom map boundaries block movement; the top remains open.
-
-`segmentCast` returns the fraction along a line where it first touches or enters an AABB.
-`segmentCastMovementBlockingTiles` applies that operation to the relevant part of a tile map and
-can account for a moving box size. Projectiles use movement-blocking tiles;
-NPCs use `segmentCastSightBlockingTiles`. Both casts share the geometric calculation
-and use the tile property appropriate to their purpose.
-
-After level data is loaded and composed into runtime objects, `validateLevelActors`
-checks it against the map.
-Every actor spawn, the player's stored respawn, and every patrol endpoint need body
-clearance. A platformer's spawn and respawn also need ground support, and so do its
-patrol endpoints unless it can climb. A climber's endpoint may be on a wall or
-ceiling, since navigation takes it to the nearest place it can hold. Flying actors
-never need ground support.
-Invalid content fails during loading with the level ID, actor ID, and invalid
-location.
+- Collision sweeps an arbitrary-sized AABB along X against nearby tile boxes, then along
+  Y, and reports left, right, ground, and ceiling contacts. Actors do not collide with or
+  push one another. The left, right, and bottom map edges block; the top is open.
+- `segmentCast` finds where a line first touches an AABB. `segmentCastMovementBlockingTiles`
+  serves projectiles and `segmentCastSightBlockingTiles` serves sensing; they share the
+  geometry.
+- A projectile breaks a tile only when its weapon `breaksTiles` and the tile names what it
+  breaks into. The swap changes the cell's ID and the map logs the break.
+  `updateProjectiles` alone takes a mutable map.
+- `validateLevelActors` checks every spawn, the player's respawn, and every patrol
+  endpoint for body clearance. Platformers also need ground support, except a climber's
+  patrol endpoints, which may be on a wall or ceiling. Errors name the level, actor, and
+  location.
 
 ## NPC behaviour
 
-### Sensing and memory
+| Part                | What it holds or does                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------------------- |
+| `NpcSenses`         | Notice distance, standoff distance, memory duration, and search duration                                |
+| `NpcPerception`     | `targetVisible` and `heardLanding`, replaced each sensing update                                        |
+| `NpcBrain`          | The remembered target's ID, last known feet, and memory remaining                                       |
+| `NpcFacts`          | A snapshot gathered each update from perception, memory, movement, and attacks                          |
+| `NpcMachine`        | The machine from `machines.json`: active state, its elapsed time, and how long each transition has held |
+| `npc_fact_rows.cpp` | The names a machine's `when` may use, each answered from the facts                                      |
+| Lua activities      | What a state does; see [CONTENT.md](CONTENT.md#lua-activities)                                          |
 
-`NpcSenses` holds configuration. `NpcPerception` holds transient sensing results
-(`targetVisible` and `heardLanding`), replaced on every sensing update. `NpcBrain`
-holds persistent target memory, and `NpcMachine` the decision state. Behaviour assembles `NpcFacts`
-from perception, memory, and other actor components; facts are a policy snapshot,
-not another store of sensing state. Debug visibility reads the same perception.
-
-An NPC detects the living player when the player is within its notice distance and a
-tile segment cast finds clear line of sight. It stores the player's ID and last known
-feet. When sight is lost, a configurable timer lets it continue toward the remembered
-position before forgetting the target. Firing gives the player away without making
-them visible: every opponent NPC within notice distance hears the shot through any
-tiles, remembers the player's feet at that moment, and starts the same timer.
-Shots and landings emit `NoiseEvent` values containing the source, kind, and feet at
-emission. The next sensing update takes the batch once, offers it to every NPC, then
-discards it. Delivery is tied to simulation updates, not render frames or timestamp
-tolerances. Moving after an emission does not move the noise. Fresh sight takes priority
-over a heard position; otherwise the last eligible noise in the batch refreshes memory.
-Landing hearing additionally requires a grounded observer on the same supported run.
-
-Firing also records `RangedWeapon::lastFiredTimeSeconds` on the simulation clock.
-Cover fading compares its age with `ShotRevealSeconds`, a duration owned by the
-cover-fade module. Combat maintains no reveal countdown. Rendering does not advance
-the clock, and consuming noise does not affect the stamp. Hearing never polls this
-timestamp; no noise event needs to persist for the reveal or target-memory window.
-
-NPCs pass the last-known feet to navigation as a goal point. Navigation leads the
-pursuer as close to it as its own body and moves allow; see [goals](#goals). It never
-reads the hidden player's current position or moves either actor directly. Patrol
-endpoints are goals in the same way.
-
-Sensing only records observations. It does not decide whether to patrol, chase, bite,
-or shoot. This keeps perception and decisions separately testable.
+- Sight detects the living opponent player within notice distance with clear line of
+  sight, and stores the player's ID and feet.
+- Shots and landings emit `NoiseEvent` values with the source's feet at emission. The
+  next sensing update offers the batch to every NPC, then discards it. Shots are heard
+  through walls; a landing needs a grounded observer on the same ground run. Both use
+  notice distance.
+- Fresh sight wins over a heard position; otherwise the last eligible noise refreshes
+  memory. Without either, memory counts down and the target is forgotten.
+- Firing stamps `lastFiredTimeSeconds`. Cover fading reads its age against
+  `ShotRevealSeconds`; combat keeps no reveal countdown.
+- Sensing records observations only. Decisions belong to the machine and its activities.
+- NPCs hand navigation the last known feet as a goal. Navigation never reads the hidden
+  player's position.
 
 ### State machine
 
-Every NPC runs an `NpcMachine`, whose states each run a Lua activity. An update has
-three steps:
+Each NPC update has three steps:
 
-1. `gatherNpcFacts` in `npc_facts.cpp` collects sensing, target memory, movement,
-   attacks, and state time into `NpcFacts`.
-2. `advanceNpcMachine` chooses the state, answering each condition through the rows in
-   `npc_fact_rows.cpp` and tracking how long it has held. At most one transition fires
-   an update.
-3. A transition exits the old state's activity, resets the state's time, clears the
-   route and enters the new activity. The active activity then updates, and its command
-   requests a route, aim, or attack through `InputIntentions`. For example, a chase
-   routes to the last known target position, while a retreat moves away from it and
-   requests an attack. Movement and combat execute those requests later in the same
-   simulation step.
+1. `gatherNpcFacts` collects sensing, memory, movement, attacks, and state time into
+   `NpcFacts`.
+2. `advanceNpcMachine` chooses the state. A transition fires once every fact in its
+   `when` has held for `after` seconds; at most one fires per update.
+3. A transition exits the old activity, resets the state's time, clears the route, and
+   enters the new activity. The active activity updates, and its command requests a
+   route, aim, or attack through `InputIntentions`. Movement and combat execute them
+   later in the same step.
 
-Loading rejects a machine with no states, a repeated state name, a transition from or
-to a state it lacks, a condition on a fact no row answers, or a hold that is not a
-finite, non-negative time, and names the transition.
-
-The engine supplies facts, routes, movement and combat; machines and scripts hold every
-policy.
-
-Behaviour does not move the body directly. If a ground NPC reaches an awkward platform
-edge and loses its path, navigation can recover to a supported cell before repathing;
-regression tests cover this case.
+- Loading rejects a machine with no states, a repeated state name, a transition from or
+  to an unknown state, a condition no fact row answers, or a hold that is not finite and
+  non-negative, and names the transition.
+- The engine supplies facts, routes, movement, and combat. Machines and scripts hold
+  every policy.
 
 ### Lua activity boundary
 
-The scripting target provides the protected Lua runtime that runs NPC activities.
-The core-facing boundary contains no Lua types. `NpcActivitySnapshot` is a copied,
-read-only-in-effect view of what the NPC knows, and `NpcActivityCommand` carries only
-intentions and requests. Applying those requests, including pathfinding, remains engine
-work.
-
-`LuaNpcScripts` loads each script into its own environment, without dynamic loading or
-filesystem access. Snapshots become fresh Lua tables whose positions are `glm::vec2` bound as the
-Lua value type `vec2`, so scripts do vector arithmetic with the engine's own glm maths
-instead of copying helpers they cannot share. A `vec2` is copied in and out, and scripts
-reach its constructor through a read-only global, so no script can change the type for
-another. Returned command tables reject unknown fields, wrong types and non-finite
-vectors.
-
-Every visit has a `self` table keyed by stable `ActorId`, script, and activity. Calls are
-protected and have an instruction budget. A hook error or invalid command records its source,
-script, activity, hook, and actor, then produces no command instead of escaping into the
-simulation. A script's `print` is recorded the same way rather than written to standard
-output. A failed script replacement leaves the previous script in place. Before queued actor
-removals are applied, an NPC cleanup system discards their script-owned state. Level replacement
-and restart discard that state for every actor before replacing the world.
-
-The application loads the scripts machines reference at startup and rejects missing
-scripts or activities. Scripts cannot create noise events or apply damage directly.
+- The core sees no Lua types. `NpcActivitySnapshot` is a copied view of what the NPC
+  knows; `NpcActivityCommand` carries intentions and requests. Applying them, including
+  pathfinding, is engine work.
+- `LuaNpcScripts` loads each script into its own sandboxed environment: the base, math,
+  string, and table libraries, no `require`, no files. Positions are `glm::vec2` bound
+  as `vec2`, copied in and out; its constructor is a read-only global.
+- Returned commands reject unknown fields, wrong types, and non-finite vectors.
+- Each visit has a `self` table keyed by `ActorId`, script, and activity. Calls are
+  protected and have an instruction budget. An error or invalid command records its
+  source, script, activity, hook, and actor and yields no command. `print` is recorded
+  the same way.
+- A failed script replacement leaves the previous script in place. Removing an actor,
+  replacing a level, or reloading content discards script-owned state.
+- Scripts cannot emit noise or apply damage directly.
 
 ## Navigation
 
-Navigation keeps the search, which finds the cheapest route, apart from the code that
-says how places connect for each kind of movement. It never moves an actor itself: the
-path follower turns a path into intentions, and the ordinary movement systems do the
-moving.
+- `findActorPath` is the one entry: an actor, a goal point, the map, the step, and the
+  connection cache. It looks at the body and the moves it has, never at what the actor
+  is doing.
+- A flyer starts in the cell at its feet. A platformer starts where its bounds rest
+  within a pixel of a floor, wall, or ceiling, the nearest along the surface. Airborne,
+  it has no start and gets no result.
+- A route location is a cell and a surface. A cell's floor, walls, and ceiling are
+  separate places; only climbing searches use walls and ceilings.
+- `route_search` is A\* over locations. The caller supplies the connections leaving a
+  location as a `std::span` view, a goal cell, a heuristic that never exceeds the real
+  cost, a readiness check, and optionally a cost function. The platformer search uses
+  the last for its jump-start penalty.
+- The result is a `NavigationPath` of waypoints: the feet at the end of each step, its
+  traversal, and its recorded inputs. Cells and surfaces stay inside navigation.
+- A goal is a point that need not be somewhere the actor can be. The search heads for
+  the cell holding it and stops at the cheapest place in that cell.
 
-`findActorPath` is the one way into navigation. An NPC passes it the actor and a goal
-point. It looks only at the actor's body and the moves it has, never at what the actor
-is doing right now.
+| Status        | When                                                              | The path                                                                                            |
+| ------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `Found`       | The route reaches the goal's cell                                 | Ends at the cheapest location in that cell, with the distance from its end to the goal point        |
+| `Unreachable` | Everything reachable from the start was tried                     | Ends in the reached cell nearest the goal, with that distance; it has no waypoints if already there |
+| `Deferred`    | The cache lacks a cell the search needs; flying paths never defer | None. The caller asks again once the fill has built the cell                                        |
 
-Where the path starts depends on how the actor moves:
-
-- A flyer starts in the cell at its feet.
-- A platformer starts where its body rests: on a floor, a wall or a ceiling. This is
-  judged from the body's position alone. The body must be within a pixel of the surface,
-  and of the places that fit, the nearest along the surface is chosen.
-- A body that rests nowhere, such as in the air, gets no path.
-
-`actor_navigation` makes only `findActorPath` and `platformerTraversalProfileFor` public.
-The flying and platformer searches are private to it.
-
-The result is a `NavigationPath` of waypoints. Each waypoint says where the body's feet
-rest at the end of a step, how the step is travelled, and the inputs recorded for a
-fall, jump or climb. Cells and surfaces stay inside navigation.
-
-### Goals
-
-A goal is a point, and it need not be somewhere the actor can be. The search works in
-cells: it heads for the cell holding the point and stops at the cheapest place in that
-cell.
-
-The result's status says how it went:
-
-| Status        | When                                                                       | The path                                                                                                                                | Distance from its end to the goal |
-| ------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| `Found`       | The path reaches the goal's cell.                                          | Ends in the goal's cell.                                                                                                                | Yes                               |
-| `Unreachable` | The search tried everything reachable from the start, and never got there. | Ends in the reached cell nearest the goal, the first reached of any equally close. It has no waypoints when the actor is already there. | Yes                               |
-| `Deferred`    | The cache is missing a cell the search needs. Flying paths never defer.    | None. The caller tries again once the fill has built the cell.                                                                          | No                                |
-
-The distance lets a caller judge the outcome for itself, such as whether an
-unreachable goal is close enough.
-
-A cell with more than one place to rest, such as a floor at the foot of a climbable
-wall, ends the path at whichever the actor reaches first. A climber arriving from the
-wall stays on it.
-
-### The search
-
-`route_search` finds the cheapest route with A*. It searches over locations: a cell and
-a surface, so a cell's floor, walls and ceiling are separate places. Flying searches,
-and platformer searches without climbing, only use floors; climbing searches also use
-walls and ceilings.
-
-The caller supplies three things:
-
-- The connections leaving a location. Each is one step to a place nearby, with a
-  positive cost and any inputs that make the step. The caller hands them back as a
-  `std::span`, a view of connections it already holds rather than a copy, so expanding
-  a location copies nothing. The view need only last until the search asks again.
-- A goal cell, which may be off the grid.
-- A heuristic that guesses the cost from a cell to the goal cell. The guess must never
-  be more than the real cost.
-
-A caller may also give a cost function, for what each connection costs this search
-when that differs from the connection's own cost. The platformer search uses it for its
-jump-start penalty.
-
-The search ends in one of three ways:
-
-- It reaches the goal cell, and returns a route to the cheapest location there.
-- It runs out of places to try, and returns a route to a cell as close to the goal as
-  possible, the first reached of any equally close. The caller tells which of these
-  two happened from where the route ends.
-- The caller's readiness check refuses a location, before the search asks for its
-  connections. The search pauses and returns no route, only that location, so the
-  caller can build its connections first.
-
-### Flying paths
-
-Flying navigation joins every open cell to its four neighbors at a cost of 1, and
-guesses the cost to the goal by counting the cells between. The path follower steers
-straight at each step's cell while collision keeps the body out of platforms. It
-shortens the last move so it does not overshoot the cell's feet point.
-
-### Platformer connections
-
-`platformer_cells` defines where a body can rest. To stand, its cell and the space it
-occupies must be clear, with support below. A climber can also rest flush against a
-climbable wall beside the cell, or hang from a climbable tile above it. A cell and one
-of these surfaces form a location, so the floor, walls, and ceiling of one cell stay
-distinct in the search. These rules are all `platformer_cells` exposes. The search
-itself finds where a body rests from its bounds, including a supporting cell when its
-feet extend past a ledge, and turns its route of locations into the waypoints a
-caller receives.
-
-`platformer_connections` builds the connections leaving every location of a cell
-the body can rest at, and stores them in the [connection cache](#the-connection-cache)
-with any flat walks it simulated, so the next cell can reuse them. It tries each traversal the profile allows with the real
-physics at the caller's step, and each success becomes a connection. The NPC system
-passes its current tick's step, so a planned move and the real one run the same
-physics. A connection records the surface it leaves and the surface it reaches, and
-the search expands a location with the connections leaving its surface. Costs are
-the movement ticks the simulation took.
-
-The platformer heuristic guesses the ticks it takes to cross the whole columns between
-a cell and the goal cell at the profile's fastest speed. A body's feet in the one cell
-and in the other are at least that far apart, whatever surface it holds, so the guess
-is never too high. Platformers with and without climbing share it; a new capability only
-adds its speed. Platformer searches also add a fixed jump-start penalty, in ticks, so a small
-shortcut does not make a grounded NPC hop.
+| Movement   | Connections                                                                                                            | Cost                                                                                                                  |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Flying     | Four neighbouring open cells                                                                                           | One per cell; Manhattan heuristic                                                                                     |
+| Platformer | Walks, falls, jumps and, for a climber, climbs and release falls, found by running the real movement at the NPC's step | Simulation ticks, plus a fixed penalty per jump; the heuristic is the ticks to cross the columns between at top speed |
 
 ### Traversals
 
-A traversal that needs an optional capability is tried only for a profile with it.
-A new capability adds a row here, its connections in `platformer_connections`, and
-its config to the traversal profile. The search itself does not change.
+A traversal that needs an optional capability is tried only for a profile with it. A new
+capability adds a row here, its connections in `platformer_connections`, and its config
+to the traversal profile. The search itself does not change.
 
 | Traversal | Requires       | Tried from → to                                                                                    | Accepted when                                                   | Replayed by the follower                                                                                          |
 | --------- | -------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
@@ -641,183 +328,95 @@ its config to the traversal profile. The search itself does not change.
 | Jump      | —              | Floor → a short and a full-height jump each way                                                    | It lands on another standable cell and stops there              | Stopping at the takeoff, then the recorded inputs                                                                 |
 | Climb     | `SurfaceClimb` | Floor → wall beside it; wall or ceiling → next cell along it, round a corner, or down to the floor | The body settles at the destination's resting bounds            | Holding a surface, travelling it to the start; standing, stopping there; in the air, grabbing on; then the inputs |
 
-A climber whose feet end a climb off its waypoint drops the path, and the NPC plans
-again.
-
 ### The connection cache
 
-A cell's connections depend only on the map, the cell, and a
-`PlatformerTraversalProfile` (body size, movement configuration, simulation step,
-and optional climb capability), so actors with the same profile can share them
-while the map stands.
-`PlatformerConnectionCache` in `navigation/platformer_connection_cache` stores, per profile:
-
-- the connections leaving each cell, from every surface of it, with the footprint
-  their simulation swept, built by searches or background fill. They are sorted by the
-  surface they leave, so the search can hand back one surface's connections as a single
-  view of the cache;
-- walk results by length, including failed attempts; successful flat-ground walks
-  start and end at rest, so their costs can be reused from any cell of any floor.
-
-The `World` owns the cache for the map it is simulated with, since the world is
-replaced with its level, and the NPC system hands it to every platformer search.
-The platformer search requires the cache and charges each jump its penalty. It only
-reads the cache and never simulates or stores connections; the fill is the one thing
-that builds them. Optional frame profiling counts searches, expanded cells, and
-deferred searches.
-
-### Filling the cache
-
-Background filling uses a queue per profile in `navigation/navigation_fill`. When a
-level starts, `queueNavigationFill`
-gathers the world's distinct platformer NPC profiles and queues every map cell for
-each. Every simulation step begins with a fill phase, `advanceNavigationFill`, that builds and
-stores connections for queued cells. Its budget counts simulation ticks plus
-a fixed charge per cell, even for cells with no connections. The budget is shared among
-profiles with pending cells. A cell is filled as one unit, so its cost can take a
-profile past its share of the budget. Filling continues over subsequent steps without
-delaying level startup. When a search reaches a cell the cache does not hold yet, it
-stops before expanding that cell, queues it if it is not already queued, moves it to
-the front, and returns `Deferred`. The NPC asks again next step.
-Tests can fill the queue to completion when they need a full cache.
-
-### Breaks
-
-When a projectile breaks a tile, the cache drops only what the break can have
-changed. Each cell's connections are cached with a footprint, the rectangle of cells
-their simulation swept or read, grown a tile all round for the tiles collision and
-support look at beside the body; a broken tile inside a footprint drops that cell.
-Walks stay, since no tile decided them.
-The map logs the cells it breaks. Searches and fills apply recorded breaks to the cache
-before using it, so no separate break notification is needed. The cells a break drops
-join the fill queue, and searches that need them wait as they do at a level start. An
-NPC also plans again after any break, since its path may have run through the broken
-tile.
+- A cell's connections depend only on the map, the cell, and a
+  `PlatformerTraversalProfile` (body size, movement configuration, step, and optional
+  climb), so actors with equal profiles share them.
+- `PlatformerConnectionCache`, owned by `World`, stores per profile each cell's
+  connections from every surface, sorted by the surface they leave so a search gets one
+  surface as a single view, with the footprint their simulation swept; and walk results
+  by length, reusable from any floor.
+- The search only reads the cache. The fill alone builds connections:
+  `queueNavigationFill` queues every cell for each distinct NPC profile when a level
+  starts, and `advanceNavigationFill` builds queued cells each step within a budget of
+  simulated ticks plus a charge per cell, shared among profiles. A search that reaches a
+  missing cell queues it at the front and returns `Deferred`.
+- A tile break drops only the cells whose footprint contains it, grown a tile for what
+  collision reads beside the body. Walks stay. Searches and fills apply recorded breaks
+  before using the cache, dropped cells rejoin the fill queue, and an NPC plans again
+  after any break.
+- Optional frame profiling counts searches, expanded cells, and deferred searches.
 
 ### Following a path
 
-Path following never teleports an actor or writes its velocity. It emits intentions,
-and the ordinary actor movement system performs the motion. A flyer steers at each
-waypoint; a platformer follows each waypoint as its [traversal](#traversals) says.
-The follower holds a surface while a climb step needs it: it reads its own actor's
-climb state to decide how to reach the climb's start, then replays the climb. Between
-steps it leaves `climbGrip` at `Keep`, so a climber stays on what it holds. It judges arrival by the feet reaching the waypoint;
-a jump or fall is done once the body lands and stops on the waypoint's row, and the
-next step walks it the rest of the way. A step that ends away from its waypoint drops
-the path, and the NPC plans again. The follower works only in feet positions. It
-remembers the goal its path was planned for, and the NPC plans again once the goal
-moves more than 8 pixels; the path itself may end short of it. End-to-end tests replay generated
-input programs through the real simulation so navigation cannot quietly drift away
-from runtime movement.
+| Traversal           | What the follower asks for                                                |
+| ------------------- | ------------------------------------------------------------------------- |
+| Fly                 | Steer at each waypoint, shortening the last move so it does not overshoot |
+| Walk                | Walk and brake into the waypoint                                          |
+| Fall or Jump        | Stop at the takeoff, then replay the recorded inputs                      |
+| Fall from a surface | Travel the surface to the start, then replay the recorded release         |
+| Climb               | Reach the start on the surface, hold it, then replay the recorded inputs  |
 
-Goals are points measured against the body's bounds, so neither ground nor flying
-navigation depends on where the actor is anchored. NPCs still remember and patrol
-by feet, which a floor body's bounds cover at their bottom edge.
+- The follower emits intentions; movement moves the body. It never teleports it or
+  writes velocity. Between steps `climbGrip` stays `Keep`.
+- Arrival is the feet reaching the waypoint. A jump or fall is done once the body lands
+  and stops on the waypoint's row. A step that ends elsewhere drops the path, and the
+  NPC plans again.
+- The follower remembers the goal its path was planned for. The NPC plans again when the
+  goal moves more than 8 pixels.
+- End-to-end tests replay generated programs through the real simulation, so planning
+  and movement cannot drift apart.
 
 ## Combat, projectiles, and life cycle
 
-### Primary attacks
+| Subject        | Rule                                                                                                                                               |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bite           | Ready → Windup → Active → Recovery; a forward hitbox by facing damages each opponent once per bite, and a committed bite completes                 |
+| Ranged weapon  | Ready → Shoot → Recovery; entering Shoot queues one projectile along the aim, in any direction                                                     |
+| Contact damage | While requested by a living actor, body overlap damages each opponent once; releasing or dying clears the hit history                              |
+| Knockback      | Optional on contact damage: the victim is thrown away from the attacker at `speed` and up at `lift`, by body centres, facing breaking a tie        |
+| Projectile     | A swept cast picks the earliest blocking tile or eligible actor; any hit ends it and may break the tile; owner and team exclude shooter and allies |
+| Burst          | A short visual queued where a projectile ends, recording impact or expiry; no collision or damage                                                  |
+| Damage         | Queued by combat and projectiles, applied by `updateLifeState`, and stamped on the world clock; a knockback sets velocity and clears grounded      |
+| Death          | Health at zero enters Dying with a timer; dying actors take no intentions or damage but still move and collide                                     |
 
-`primaryAttackPressed` triggers the configured attack component. A bite and a ranged
-weapon remain separate gameplay concepts even though both select the actor's Attack
-animation.
-
-A bite moves through Ready, Windup, Active, and Recovery. Its active AABB is placed in
-front of the actor according to facing. It has no lunge or knockback, and each eligible
-actor can be damaged once per bite. A committed bite completes even if fresh sensing
-would no longer start it; the forward hitbox can still miss.
-
-A ranged weapon moves through Ready, Shoot, Recovery, and back to Ready. Entering Shoot
-queues exactly one projectile, while the Shoot duration keeps the firing pose visible.
-The aim vector supports the full 360-degree range.
-
-### Contact damage
-
-`ContactDamage` is independent of movement and can coexist with a bite or ranged weapon.
-While the `contactDamage` intention is held, combat queues body-overlap damage once per
-opponent. Releasing it or dying disables damage and clears the hit history, so a later
-activation can hit again. It neither moves the actor nor selects an attack animation. A
-`knockback` throws the opponent away from the attacker at its `speed` and up at its
-`lift`, applied by the life cycle together with the damage, so a fatal hit still throws.
-The boar's Lua charge activity combines this request with fast ordinary walking; recovery
-requests neither movement nor contact damage.
-
-### Projectiles and deferred damage
-
-A projectile contains bounds, velocity, damage, remaining lifetime, owner, team, and
-sprite data. Each tick it performs a swept segment cast from its previous to proposed
-position and chooses the earliest movement-blocking tile or eligible-actor hit. An actor
-hit queues damage; any hit ends the projectile. Without a hit, it continues until its
-lifetime expires. Owner and team prevent hitting the shooter or allies. When a projectile ends,
-it queues a separate `ProjectileBurst` at its final position. The burst records whether
-the cause was an impact or an expired lifetime. Both causes currently reuse the projectile
-sprite and briefly expand and fade, but preserving the cause allows their presentation to
-diverge later. A burst cannot collide or deal damage.
-
-Damage is queued rather than applied while attacks and projectiles are being traversed.
-`updateLifeState` consumes the requests, records the current simulation time when damage
-is applied, and changes an actor from Alive to Dying when health reaches zero.
-Render-scene construction turns recent damage into a short white flash. Dying actors
-cannot decide, accept gameplay input, attack, or take another hit, but gravity and
-collision continue. Their sprites fade during the final part of the explicit death
-duration. At the end of the timer an NPC is removed; the player is respawned at its
-stored feet position with restored health and movement runtime state. Lifecycle timing
-does not depend on the length of an animation clip.
+- The death timer removes an NPC or respawns the player at the stored spawn feet with
+  restored health and movement state. Inventory persists.
+- Death timing is independent of animation length; sprites fade in its last part.
 
 ## Inventory, pickups, and levels
 
-These features form one level loop but remain separate subjects:
-
-- `item.hpp` defines item data;
-- `inventory.hpp` owns slots and stacking rules;
-- `item_use.hpp` applies explicit item effects;
-- `pickup.hpp` detects automatic collection;
-- `level_exit.hpp` evaluates completion requirements.
-
-An inventory has a configurable slot count. Each slot is empty or contains an item
-stack. Adding an item fills compatible stacks, then empty slots, and reports anything
-that did not fit. Item effects use an explicit C++ switch rather than a hidden scripting
-system.
-
-A pickup has a body like an actor's. It falls at the default gravity and rests on tiles,
-so a key placed on glass drops when the glass is shot out from under it. The living
-player automatically collects pickups on strict body overlap. NPCs do not. A pickup that
-cannot fit completely remains with its uncollected quantity. The example contains coins,
-health potions, and a key. Pickup sprites use the shared World clock and a position-based
-phase offset to bob without moving their collection bounds. Inventory persists through
-player death.
-
-An exit can require an item and optionally consume it. Exit completion is latched so a
-requirement cannot be consumed twice. When the living player stands in an exit without
-its requirement, the exit records the time on the World clock, and the HUD draws the
-required item's icon above the door for a moment after. Entering the exit with the
-requirement consumes it and stamps when the door started opening. The game then pauses
-for `ExitOpenSeconds`. Only the World clock runs, and the screen fades the player into the
-flashing door. Then the level completes. The simulation reports completion;
-`GameLevel` groups a level's data so callers cannot accidentally combine parts of
-different levels. `Game` replaces that value at a transition, carries over the player's current health and inventory,
-and resets the camera.
-Velocities, projectiles, NPC state, and old actor IDs do not cross the level boundary.
-The final exit shows completion text, and a restart creates a fresh copy of the
-catalog's start level.
+- `item.hpp` holds item data; `inventory.hpp` owns slots and stacking; `item_use.hpp`
+  applies effects through an explicit switch; `pickup.hpp` detects collection;
+  `level_exit.hpp` evaluates completion.
+- Inventory fills compatible stacks, then empty slots, and reports what did not fit.
+- Pickups have bodies, fall at the default gravity, and rest on tiles, so a key on glass
+  drops when the glass breaks. The living player collects them on body overlap; excess
+  quantity remains. Their bob is computed at draw time.
+- An exit may require and consume an item, and opening is latched. Standing in a locked
+  exit stamps the touch for the HUD hint. Entering with the requirement consumes it and
+  stamps the opening; for `ExitOpenSeconds` only the clock runs and the screen fades the
+  player into the door, then the level completes.
+- `Game` replaces `GameLevel` at a transition, carrying only the player's health and
+  inventory, and resets the camera. Velocities, projectiles, NPC and Lua state, and old
+  IDs do not cross. The final exit completes the game; a restart loads the start level.
 
 ### Data-driven level boundary
 
-The example game loads its levels from `assets` rather than compiling them in. The
-boundary keeps JSON out of the core: `app/content` owns the loaders and validators,
-`app/game/level_composition.cpp` combines the results into a playable level, and the core
-receives plain C++ values. Levels, actors, items, pickups, exits, and animation sets can
-therefore change without touching engine code.
+| Step                 | Owner                                | Result                                                                             |
+| -------------------- | ------------------------------------ | ---------------------------------------------------------------------------------- |
+| Load shared catalogs | `app/content/game_catalogs.cpp`      | Definitions checked against the atlas size and kept for the session                |
+| Load scripts         | `app/content/npc_script_catalog.cpp` | Each script a machine names, with every named activity present                     |
+| Load a level         | `app/content/level_data.cpp`         | Plain `LevelData` of explicit placements, each actor and pickup with an id         |
+| Compose the level    | `app/game/level_composition.cpp`     | Names resolved into a map, world, and placed objects                               |
+| Start the level      | `composeStartedLevel`, then `Game`   | Player inserted, placements validated, camera made, and the navigation fill queued |
 
-Each file is read with [`content_glaze.hpp`](../app/content/content_glaze.hpp) into plain
-structs whose members are its keys: `readContent<T>` rejects an unknown key and a missing
-member that is not a `std::optional`, and reports where as `line L, column C`. The loader
-then converts the structs to engine types and validates them, reporting by field path
-through `fieldPath`, `indexPath` and `failJson`. `WithDefaults<T>` reads an object whose
-members each keep their C++ default when left out, and `ContentNames<E>` with
-`NamedEnumReader` reads an enum by name, listing the allowed names when one is unknown.
-
-Functions in `app/content` and `app/game` name what they do:
+- JSON stays in `app/content`; the core receives C++ values. Each file is read with
+  Glaze through `content_glaze` into structs that mirror it, so unknown keys, missing
+  required members, and wrong types fail with a line and column. `WithDefaults<T>` keeps
+  C++ defaults for fields left out, and `NamedEnumReader` reads an enum by name.
+  `content_diagnostics` builds field paths without a JSON dependency.
 
 | Verb          | Example                              | Meaning                                                                   |
 | ------------- | ------------------------------------ | ------------------------------------------------------------------------- |
@@ -829,172 +428,98 @@ Functions in `app/content` and `app/game` name what they do:
 
 ### Hot reload
 
-What a reload keeps and replaces is in [Hot reload](CONTENT.md#hot-reload). Builds other
-than Release define `ADVANCED_PLATFORMER_SOURCE_ASSETS`, and the application polls an
-`AssetWatcher` on that directory. `Game::reload` is all or nothing: it loads and composes
-everything first and merges into a copy of the live level with `reloadLevel`, so an error
-changes nothing. The merge keeps the live `World`, so actor ids, the clock and
-projectiles carry over.
+- Builds other than Release define `ADVANCED_PLATFORMER_SOURCE_ASSETS`. The application
+  reads content from there and polls an `AssetWatcher`, which reports a change once two
+  polls in a row see the same files.
+- `Game::reload` is all or nothing. It loads and composes everything, merges the result
+  into a copy of the live level with `reloadLevel`, then swaps in the level, catalogs,
+  and scripts; the atlas is uploaded after. An error changes nothing and is reported to
+  the console.
+- The merge keeps the live `World`. What it keeps and replaces is in
+  [CONTENT.md](CONTENT.md#hot-reload).
 
 ## Presentation
 
-### Scene construction and rendering
+- `Game::buildScene` returns ordered `SpriteDrawCommand` values; `SpriteRenderer`
+  submits them with one shader. Gameplay state flows one way into render-scene data and
+  then into OpenGL. There is no scene graph, material system, lighting, or render graph.
+- `updateWorldPresentation` advances animation and cover fades after simulation and
+  pauses while the exit opens.
+- Scene construction computes pickup bobbing, hit flashes, death fading, and bursts from
+  state and timers.
+- `CameraController` starts centred on the player, moves only to return the player to a
+  dead zone sized by the level catalog, clamps to the map, and rounds to internal pixels.
+- `DisplayViewport` is shared by rendering, aiming, HUD, and debug UI, so they agree
+  about letterboxing and high-DPI coordinates.
+- Core tests cover scene construction, camera transforms, visible tiles, placement,
+  flips, rotation, and draw order. The graphics driver is checked by running the game.
 
-Gameplay objects never issue graphics calls. `buildRenderScene` reads the world and
-camera and returns ordered `SpriteDrawCommand` values. The OpenGL `SpriteRenderer`
-submits those commands with one small shader. There is no scene graph, material system,
-lighting system, or general render graph.
-
-This produces a one-way dependency:
-
-```text
-gameplay state -> render scene data -> OpenGL submission
-```
-
-Core tests cover scene construction, camera transforms, visible tiles, sprite placement,
-facing flips, projectile rotation, and draw order. They do not test the graphics driver.
-
-### The different sizes
-
-The engine keeps visual and physical dimensions separate:
-
-- texture size is the full atlas size in source-image pixels;
-- `SpriteRegion` is one source rectangle inside that texture, and a sprite draws at its
-  size: one atlas pixel is one world pixel;
-- `Body::bounds.size` is the collision rectangle in world pixels.
-
-How big something looks is decided by its art, so the atlas shows what the game draws.
-A tile's region is always the tile size square. The engine does not assume a sprite and
-body are equal. Actor sprites are normally positioned from the body's feet, which lets a
-tall image use a smaller collider. The bat additionally uses a centred sprite anchor so
-its smaller collider matches the creature in the middle of its frame.
-
-A climber's art is drawn once, standing on a floor and facing right. `placeActorSprite`
-turns it so its feet rest on the surface it holds: a quarter turn onto a wall and a half
-turn onto a ceiling, with the sprite centred along the body's edge against that surface.
-The collider does not turn, so a climber whose body is square fits every surface the
-same way. The head leads the way the climber faces on a ceiling, and on a wall its
-`SurfaceClimb::wallHeading`: the way it last climbed, so it does not turn round when it
-stops. Like `facing`, the heading follows the intentions rather than the velocity.
+| Size           | Meaning                                                                                         |
+| -------------- | ----------------------------------------------------------------------------------------------- |
+| Texture        | The atlas, 256 × 256 source pixels                                                              |
+| `SpriteRegion` | A source rectangle, drawn at one world pixel per source pixel; a tile's region is the tile size |
+| Body bounds    | Collision size, independent of the sprite                                                       |
+| Sprite anchor  | Art placed at the body's feet (default) or centre; it does not change collision                 |
 
 ### Animation
 
-The animation catalog loads before actors and stays unchanged for the session, and
-composition creates a fresh animator for each actor. JSON defines clips, not selection
-rules.
+- Clips come from `animations.json`. C++ selects one from life, attack, grounded, and
+  velocity state, death first, then attack. There is no animation state machine.
+- Each actor owns an `Animator` and its `AnimationSet`. Frames in one set share a size,
+  and collision bodies are independent of frame size.
+- A climber holding a surface counts as grounded. `placeActorSprite` turns its art onto
+  the surface, a quarter turn on a wall and a half turn on a ceiling, the head leading by
+  `wallHeading` or facing. The collider does not turn.
 
-There is no animation state machine. A priority function selects a clip from life,
-attack, grounded, and velocity state; death has highest priority, then attack. A climber
-holding a surface counts as grounded, so it idles or moves there instead of falling.
+### Cover
 
-Each animated actor has an `Animator` with its current animation, elapsed time, and an
-`AnimationSet`. Each character therefore owns its clip definitions and can use different
-atlas positions and frame counts. `updateWorldAnimations` calls `updateActorAnimations`
-to select and advance clips after simulation and write the selected source region to
-the actor's `Sprite`. Pickup bobbing, hit flashes, death fading, and projectile bursts
-are calculated during scene construction from gameplay state and timers; they do not
-all require animation clips.
+- NPC sight is line of sight. Separately, NPCs and pickups fade on screen by how much of
+  their body is in a sight-blocking tile they can stand in: fully visible at half or less,
+  not drawn from three quarters, unless the player has line of sight to them. The fade
+  eases over `CoverFadeSeconds`.
+- The player's sprite darkens by `PlayerConcealedShade` in cover rather than fading, and
+  is fully exposed while any NPC's `targetVisible` saw them this update or for
+  `ShotRevealSeconds` after firing.
 
-The supplied atlas is 256 by 256 pixels. Artwork sources and atlas tooling live outside this repository; what is here is
-the finished runtime atlas.
+### HUD, debug tools, and logging
 
-Frames within a set must share one size, so an animating actor's sprite neither jumps
-nor resizes from frame to frame. A richer `AnimationFrame` carrying a pivot is
-[future work](FUTURE_WORK.md); whatever form it takes, collision bodies must remain
-independent of animation frame dimensions.
-
-### Camera and display viewport
-
-`CameraController` stores the previous view position. It begins centred on the player,
-then moves only enough to return the player's centre to a dead zone, sized by the level catalog. The
-camera is clamped to the map and rounded to internal pixels for stable pixel art.
-
-`DisplayViewport` describes where the integer-scaled internal image appears in the
-actual framebuffer. Rendering, mouse aiming, HUD layout, and debug UI reuse it so they
-agree about letterboxing and high-DPI coordinates.
-
-### HUD and debug overlay
-
-ImGui is used for the health HUD, inventory, completion message, and opt-in debug tools.
-`drawInterface` in `app/ui/interface_ui` is the short list of what the player sees over
-the scene and the order it is drawn in, as `world_simulation` is for the systems. It is
-built before the simulation and hands back what the player asked for as
-`InterfaceRequests`, which the loop applies, so a click on the bag pauses the same frame
-instead of firing a shot and building the interface never changes the game.
-The application owns `DebugToolVisibility`; all control mappings remain in
-[Debug overlay](../README.md#debug-overlay). `drawDebugTools` in
-`app/debug/debug_tools` orders the optional world, text and machine layers before the
-frame panel. `DebugTools` owns the persistent profiling, selection and graph-editor
-state, so the application needs one object and one draw call.
-
-`Game::debugOverlay` builds a presentation-ready `DebugOverlay` snapshot without ImGui.
-It limits world diagnostics to the camera and a small margin, and carries actor,
-projectile, pickup, navigation, camera and machine data. The UI only projects that data
-through `DisplayViewport`; it does not change simulation state. This separation keeps
-collection and selection logic testable without a window.
-
-`app/debug/machine_graph_ui` presents the selected NPC's `NpcMachine` from that snapshot
-without editing it.
-
-Everything the application logs goes through one `ConsoleLog`: each frame the loop takes
-the scripts' recorded errors and prints from `Game`, and GLFW reports its errors there too.
-The log echoes every line to standard error and keeps the latest 500, which the debug
-tools' console window shows, errors in red, following new lines while it is scrolled to
-the bottom.
-
-Frame profiling is optional. The application owns each frame record and passes it to
-the simulation; work measures its own duration with nested scopes and adds named
-statistics at the point where it knows them. Parent phases exclude child time, so
-the phase totals do not double-count. `FrameHistory` retains completed records for
-the debug UI. See `timing/frame_profile` for the API and
-[Debug overlay](../README.md#debug-overlay) for its presentation.
-
-The inventory UI is an example presentation, not an engine rule. It derives its rows
-from the configured slot count, uses at most three columns, pauses simulation while
-open, and emits item use requests instead of changing the world directly.
+- `drawInterface` is the ordered list of what the player sees over the scene. Built
+  before the simulation, it returns `InterfaceRequests` the loop applies, so building the
+  interface never changes the game and a click on the bag pauses the same frame.
+- The inventory UI derives its rows from the slot count, uses at most three columns,
+  pauses the simulation while open, and emits item-use requests.
+- `Game::debugOverlay` builds a `DebugOverlay` snapshot without ImGui, limited to the
+  camera and a margin. `drawDebugTools` projects it through `DisplayViewport` and owns
+  the profiling, selection, and graph-editor state; `machine_graph_ui` shows the
+  selected NPC's machine. The keys are in [README.md](../README.md#debug-overlay).
+- One `ConsoleLog` takes script errors and prints, GLFW errors, and reload reports,
+  echoes each line to standard error, and keeps the latest 500 for the console window.
+- Frame profiling is optional. The application passes a `FrameProfile` into the
+  simulation, phases time themselves with nested scopes and add named statistics, and
+  `FrameHistory` keeps completed records for the plot.
 
 ## Error handling and validation
 
-Validation has three boundaries:
+| Boundary                           | What it checks                                                                 |
+| ---------------------------------- | ------------------------------------------------------------------------------ |
+| Glaze loaders                      | Types, required and unknown fields, and rules a struct cannot state, by path   |
+| Content validators and composition | Authoring rules and cross-file references, including unused catalog entries    |
+| Core validators                    | Runtime values and component combinations, regardless of how they were created |
+| Level validation                   | Body clearance and support against the composed map                            |
 
-1. **JSON shape:** reading a file checks its types and required fields, and rejects unknown
-   fields to catch misspellings. Every content file is read with Glaze, through
-   `content_glaze`, into structs that mirror it: the structs are the shape, and Glaze
-   rejects unknown keys, missing required members, and wrong types, reporting the line and
-   column. Rules a struct cannot state, such as a placement giving exactly one of a cell or
-   feet, or ids unique within a level, are checked by the reader after reading and
-   reported by field path.
-   `content_diagnostics` builds the field paths and raises the errors, and carries no JSON
-   dependency so the C++ validators can use it too.
-2. **Application content:** plain C++ validators check authoring rules.
-   [`content_validation.cpp`](../app/content/content_validation.cpp) covers the tile legend, map
-   rows, quantities, and exit settings. Actor, item, pickup, and exit catalog
-   validators check their definitions, including unused entries. Composition resolves
-   cross-file names and adds the originating field to reference errors.
-3. **Core invariants:** validators such as
-   [`validateActor`](../src/actor/actor_validation.cpp) and
-   [`validatePickup`](../src/world/pickup.cpp) check runtime values regardless of how they
-   were created. [`validateLevelActors`](../src/world/level_validation.cpp) then checks
-   actor clearance and support against the actual map.
-
-These are separate responsibilities: reading valid JSON does not establish that an
-actor fits on a platform. Domain checks are callable without parsing JSON; loaders
-add source context to their errors.
-
-Invalid programmer or content input throws descriptive exceptions at a boundary where
-it can be explained clearly. Examples include invalid dimensions, non-finite values,
-unknown item IDs, invalid actor composition, and unsupported spawn positions.
-
-Required assets do not silently fall back to placeholders. Startup catches exceptions
-once, prints the message, and exits. Runtime systems assume successfully constructed
-objects already satisfy their documented invariants.
+- Domain checks run without parsing JSON; loaders add the source name and field path to
+  their errors.
+- Missing optional fields keep defaults; present invalid values fail.
+- Invalid content or programmer input throws at the boundary that can explain it.
+  Required assets fail startup with a message rather than falling back to placeholders.
+- A failed hot reload reports to the console and keeps the running content.
 
 ## Testing and quality checks
 
-Tests mirror the source subjects and focus on behaviour rather than private
-implementation. Tests build their own small maps, actors and content rather than
-depending on the example campaign's levels, enemy counts or item values; checks on the
-shipped content test only that it is valid.
-
-OpenGL and ImGui integration remain a manual run; automated graphics-context tests are
-avoided. [README.md](../README.md#continuous-integration) lists what CI checks.
+- Tests mirror the source subjects and check behaviour, not private implementation.
+  Within a file, cases are grouped by sub-subject with the most important first.
+- Tests build their own maps, actors, and content, with helpers in `tests/support` and
+  files in `tests/fixtures`. Checks on the shipped content test only that it is valid.
+- Generated input programs are replayed through the real simulation.
+- OpenGL and ImGui are checked by running the game. [README.md](../README.md) lists the
+  formatting, static analysis, coverage, and CI checks.

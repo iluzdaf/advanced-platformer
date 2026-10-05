@@ -13,7 +13,6 @@ loop, and ImGui debugging tools.
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Design, ownership rules, runtime flow, and the reasons behind the main decisions. |
 | [CONTENT.md](docs/CONTENT.md)           | How to author levels, definitions, machines, and NPC scripts under `assets`.      |
 | [GLOSSARY.md](docs/GLOSSARY.md)         | The words the code and documents use, each with one meaning.                      |
-| [FUTURE_WORK.md](docs/FUTURE_WORK.md)   | Proposed features that are not implemented yet.                                   |
 
 ## Requirements
 
@@ -300,7 +299,7 @@ tests/         Catch2 tests for core systems and testable application code
   fixtures/    example content mirroring assets/levels, catalogs, and scripts
   support/     test-only builders and simulation helpers
 tools/         repository quality and maintenance scripts
-docs/          reading route, architecture, content format, and future work
+docs/          architecture, content format, and glossary
 external/      third-party libraries, as pinned git submodules
 .github/       continuous-integration workflow
 .githooks/     opt-in git hooks
