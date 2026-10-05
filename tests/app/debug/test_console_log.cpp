@@ -6,7 +6,7 @@
 
 #include "debug/console_log.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
-#include "lua_npc_scripts.hpp"
+#include "lua_script_diagnostic.hpp"
 
 using advanced_platformer::ConsoleLevel;
 using advanced_platformer::ConsoleLog;

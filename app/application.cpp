@@ -33,6 +33,7 @@
 #include "advanced_platformer/input/input_state.hpp"
 #include "advanced_platformer/render/render_scene.hpp"
 #include "lua_npc_scripts.hpp"
+#include "lua_script_diagnostic.hpp"
 #include "advanced_platformer/timing/fixed_step.hpp"
 #include "advanced_platformer/timing/frame_profile.hpp"
 #include "advanced_platformer/timing/stopwatch.hpp"
@@ -291,6 +292,7 @@ namespace advanced_platformer
             std::move(content.levelCatalog),
             std::move(content.gameCatalogs),
             std::move(content.npcScripts),
+            std::move(content.presentation),
             static_cast<float>(fixedStep.stepSeconds()));
         DebugTools debugTools;
         Stopwatch frameClock;

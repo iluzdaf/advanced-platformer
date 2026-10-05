@@ -17,18 +17,22 @@
 
 namespace advanced_platformer
 {
-    enum class NoiseKind
+    enum class WorldEventKind
     {
         Landing,
-        Shot
+        Shot,
+        Knockback
     };
 
-    struct NoiseEvent
+    struct WorldEvent
     {
-        ActorId source;
+        ActorId actor;
         glm::vec2 feet = {0.0F, 0.0F};
-        NoiseKind kind = NoiseKind::Landing;
+        WorldEventKind kind = WorldEventKind::Landing;
+        glm::vec2 velocity = {0.0F, 0.0F};
     };
+
+    bool audible(WorldEventKind kind);
 
     class World
     {
@@ -50,8 +54,9 @@ namespace advanced_platformer
         double simulationTimeSeconds() const;
         std::optional<float> secondsSince(const std::optional<double>& timeSeconds) const;
         void advanceSimulationTime(float deltaTime);
-        void emitNoise(NoiseEvent event);
-        std::vector<NoiseEvent> takeNoises();
+        void recordEvent(WorldEvent event);
+        std::vector<WorldEvent> takeNoises();
+        std::vector<WorldEvent> takeEvents();
 
         ActorId addActor(Actor actor);
         bool removeActor(ActorId id);
@@ -91,7 +96,8 @@ namespace advanced_platformer
         bool completed = false;
         double elapsedSimulationTimeSeconds = 0.0;
         std::vector<Actor> actorStorage;
-        std::vector<NoiseEvent> pendingNoises;
+        std::vector<WorldEvent> pendingNoises;
+        std::vector<WorldEvent> pendingEvents;
         std::vector<Projectile> projectileStorage;
         std::vector<ProjectileBurst> projectileBurstStorage;
         std::uint32_t nextActorId = 1;

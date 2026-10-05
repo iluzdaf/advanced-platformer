@@ -8,7 +8,7 @@
 #include <string>
 #include <utility>
 
-#include "lua_npc_scripts.hpp"
+#include "lua_script_diagnostic.hpp"
 
 namespace advanced_platformer
 {

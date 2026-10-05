@@ -21,6 +21,7 @@
 #include "advanced_platformer/npc/npc_activity_scripts.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "lua_npc_scripts.hpp"
+#include "lua_presentation_script.hpp"
 #include "advanced_platformer/world/level_exit.hpp"
 #include "advanced_platformer/world/level_validation.hpp"
 #include "support/add_player.hpp"
@@ -104,6 +105,14 @@ TEST_CASE("Every shipped Lua activity resolves", "[app][content][lua]")
 
     REQUIRE_NOTHROW(
         advanced_platformer::loadNpcActivityScripts(scripts, catalogs.machines, "assets/scripts"));
+}
+
+TEST_CASE("The shipped presentation script loads", "[app][content][lua]")
+{
+    advanced_platformer::LuaPresentationScript presentation;
+
+    REQUIRE_NOTHROW(presentation.loadScript("assets/scripts/presentation.lua"));
+    REQUIRE(presentation.loaded());
 }
 
 TEST_CASE("Every shipped Lua activity runs without errors", "[app][content][lua]")

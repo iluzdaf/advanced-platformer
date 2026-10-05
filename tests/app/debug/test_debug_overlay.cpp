@@ -12,6 +12,7 @@
 #include "debug/debug_overlay.hpp"
 #include "debug/navigation_debug.hpp"
 #include "game/game.hpp"
+#include "lua_presentation_script.hpp"
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/combat/combat.hpp"
@@ -77,6 +78,7 @@ TEST_CASE("Game debug data retains actor definition names", "[app][debug]")
         levels,
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
         advanced_platformer::LuaNpcScripts{},
+        advanced_platformer::LuaPresentationScript{},
         tests::FixedStepSeconds);
 
     const advanced_platformer::DebugOverlay debug = game.debugOverlay(128.0F, std::nullopt, 0);
@@ -106,6 +108,7 @@ TEST_CASE("Debug overlay data names a climbing NPC's navigation profile", "[app]
         levels,
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
         advanced_platformer::LuaNpcScripts{},
+        advanced_platformer::LuaPresentationScript{},
         tests::FixedStepSeconds);
 
     const advanced_platformer::DebugOverlay debug = game.debugOverlay(128.0F, std::nullopt, 0);

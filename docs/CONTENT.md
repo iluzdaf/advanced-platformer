@@ -43,6 +43,7 @@ from its file, keeping the player's health and items.
 | [`catalogs/animations.json`](../assets/catalogs/animations.json) | Animation sets                                        | [`animation_catalog.cpp`](../app/content/animation_catalog.cpp)                                                              |
 | [`catalogs/machines.json`](../assets/catalogs/machines.json)     | NPC state machines                                    | [`machine_catalog.cpp`](../app/content/machine_catalog.cpp)                                                                  |
 | [`scripts/*.lua`](../assets/scripts)                             | Lua activities                                        | [`npc_script_catalog.cpp`](../app/content/npc_script_catalog.cpp), [`lua_npc_scripts.cpp`](../scripting/lua_npc_scripts.cpp) |
+| [`scripts/presentation.lua`](../assets/scripts/presentation.lua) | Effects that answer world events                      | [`lua_presentation_script.cpp`](../scripting/lua_presentation_script.cpp)                                                    |
 | [`catalogs/items.json`](../assets/catalogs/items.json)           | Inventory items                                       | [`item_catalog.cpp`](../app/content/item_catalog.cpp)                                                                        |
 | [`catalogs/pickups.json`](../assets/catalogs/pickups.json)       | World pickups                                         | [`pickup_catalog.cpp`](../app/content/pickup_catalog.cpp)                                                                    |
 | [`catalogs/exits.json`](../assets/catalogs/exits.json)           | Exit bodies and sprites                               | [`exit_catalog.cpp`](../app/content/exit_catalog.cpp)                                                                        |
@@ -278,6 +279,38 @@ Positions are `vec2` values, made with `vec2(x, y)`. They have `x` and `y`, `+`,
 `*` and `/` by a number, `==`, `tostring`, and the methods `length()`, `distance(v)`,
 `distanceSquared(v)` and `dot(v)`. A command's vectors also accept `{x, y}` tables. Scripts
 have the base, math, string and table libraries.
+
+## Presentation script
+
+`presentation.lua` returns a table of hooks, one per kind of world event. After each
+simulation step the game calls the hook for each event that happened and applies the
+effects it returns; `nil` asks for nothing. The script decides the feel; the engine owns
+what each effect is.
+
+```lua
+return {
+    onKnockback = function(event)
+        if event.actor ~= "player" then return nil end
+        return { shake = { duration = 0.15, magnitude = 2 } }
+    end,
+}
+```
+
+| Hook          | When                      |
+| ------------- | ------------------------- |
+| `onLanding`   | A platformer actor lands. |
+| `onShot`      | A ranged weapon fires.    |
+| `onKnockback` | A hit throws its target.  |
+
+An `event` has `kind` (`landing`, `shot` or `knockback`), `actor` (`player` or `npc`),
+`feet`, a `vec2`, and `velocity`, the knockback's throw and otherwise zero.
+
+| Effect  | Fields                                                                                                                                                                |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `shake` | `duration` and `magnitude` in seconds and pixels, both positive; a new shake replaces the current one. Only the drawn view moves; aim and the camera's follow do not. |
+
+An unknown hook or effect, a wrong type or a non-positive number is rejected and reported
+like an activity error, and the event has no effect.
 
 ## Animation sets
 
