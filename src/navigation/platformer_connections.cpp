@@ -482,6 +482,52 @@ namespace advanced_platformer
             return result;
         }
 
+        BuiltPlatformerConnections buildReleaseFallConnection(
+            const TileMap& map,
+            RouteLocation from,
+            const PlatformerTraversalProfile& profile,
+            const SurfaceClimbConfig& climbConfig)
+        {
+            const int tileSize = map.tileSize();
+            Body body{boundsAtSurface(tileSize, from, profile.size), {0.0F, 0.0F}};
+            BuiltPlatformerConnections result{{}, cellsCovered(tileSize, body.bounds), {}, 0};
+            includeCellsAroundBounds(result.footprint, tileSize, body.bounds);
+            PlatformerMovement movement{
+                profile.movement, touchingSurfaces(map, body.bounds).ground, 0.0F, 0.0F};
+            if (movement.grounded)
+            {
+                return result;
+            }
+
+            SurfaceClimb climb{climbConfig, from.surface};
+            InputIntentions release;
+            release.climbGrip = ClimbGrip::Release;
+            InputProgram inputs;
+            for (int tick = 0; tick < MaximumConnectionSimulationTicks; ++tick)
+            {
+                recordSimulationInput(inputs, release, profile.stepSeconds);
+                updateSurfaceClimbMovement(
+                    map, body, movement, climb, release, profile.stepSeconds);
+                includeCellsAroundBounds(result.footprint, tileSize, body.bounds);
+                ++result.simulatedTicks;
+                if (!movement.grounded)
+                {
+                    continue;
+                }
+                const std::optional<Cell> landing =
+                    tryFindLandingCell(map, from.cell, body.bounds, profile.size);
+                if (landing.has_value())
+                {
+                    result.connections.push_back(
+                        {{{*landing}, Traversal::Fall, std::move(inputs)},
+                         result.simulatedTicks,
+                         from.surface});
+                }
+                return result;
+            }
+            return result;
+        }
+
         BuiltPlatformerConnections buildClimbConnections(
             const TileMap& map,
             Cell cell,
@@ -505,10 +551,18 @@ namespace advanced_platformer
                 {
                     continue;
                 }
+                std::vector<BuiltPlatformerConnections> attempts;
                 for (const RouteLocation destination : climbDestinationsFrom(from))
                 {
-                    BuiltPlatformerConnections attempt =
-                        buildClimbConnection(map, from, destination, profile, climbConfig);
+                    attempts.push_back(
+                        buildClimbConnection(map, from, destination, profile, climbConfig));
+                }
+                if (surface != ClimbSurface::None)
+                {
+                    attempts.push_back(buildReleaseFallConnection(map, from, profile, climbConfig));
+                }
+                for (BuiltPlatformerConnections& attempt : attempts)
+                {
                     combined.footprint = unionOf(combined.footprint, attempt.footprint);
                     combined.simulatedTicks += attempt.simulatedTicks;
                     for (RouteConnection& connection : attempt.connections)

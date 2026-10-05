@@ -126,6 +126,7 @@ namespace advanced_platformer
         StepProgress followAirborneStep(
             const Body& body,
             const PlatformerMovement& movement,
+            const SurfaceClimb* climb,
             PathFollower& follower,
             const Waypoint& waypoint,
             glm::vec2 takeoff,
@@ -135,9 +136,26 @@ namespace advanced_platformer
             {
                 throw std::invalid_argument("Jump and fall path steps require an input program");
             }
-            if (follower.programElapsed == 0.0F && !stoppedAt(body, movement, takeoff))
+            const bool letsGo = waypoint.inputs.front().intentions.climbGrip == ClimbGrip::Release;
+            if (letsGo && climb == nullptr)
             {
-                return {false, approachAndBrake(body, movement, takeoff)};
+                throw std::invalid_argument(
+                    "A fall that lets go of a surface requires a climbing actor");
+            }
+            if (follower.programElapsed == 0.0F)
+            {
+                if (letsGo && climb->surface != ClimbSurface::None)
+                {
+                    if (const std::optional<InputIntentions> approach =
+                            climbTowards(body, *climb, takeoff, deltaTime))
+                    {
+                        return {false, *approach};
+                    }
+                }
+                else if (!letsGo && !stoppedAt(body, movement, takeoff))
+                {
+                    return {false, approachAndBrake(body, movement, takeoff)};
+                }
             }
 
             const float programDuration = durationOf(waypoint.inputs);
@@ -325,7 +343,8 @@ namespace advanced_platformer
                 break;
             case Traversal::Fall:
             case Traversal::Jump:
-                progress = followAirborneStep(body, movement, follower, waypoint, start, deltaTime);
+                progress =
+                    followAirborneStep(body, movement, climb, follower, waypoint, start, deltaTime);
                 break;
             }
             if (!progress.complete)
