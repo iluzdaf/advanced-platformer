@@ -146,14 +146,14 @@ Players and NPCs are configurations of one
 [`Actor`](../include/advanced_platformer/actor/actor.hpp): a body, intentions, facing,
 team, and life state, plus optional components.
 
-| Capability           | Components                                                                                               | Rule                                                    |
-| -------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| Movement             | `PlatformerMovement` or `FlyingMovement`                                                                 | Exactly one                                             |
-| Climbing             | `SurfaceClimb`                                                                                           | Requires platformer movement                            |
-| NPC control          | `NpcBrain`, `NpcPerception`, `NpcSenses`, `PathFollower`, `NpcMachine`                                   | Required together; `Patrol` is optional                 |
-| Attacks              | `primaryAttack` and `secondaryAttack`, each a `BiteAttack`, `RangedWeapon`, `ContactDamage`, or `Pounce` | Optional; at most one pounce, since it moves the body   |
-| Presentation         | `Sprite` and `Animator`                                                                                  | An animator needs a sprite and a complete animation set |
-| Health and inventory | `Health`, `Inventory`                                                                                    | Optional                                                |
+| Capability           | Components                                                                                               | Rule                                                  |
+| -------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Movement             | `PlatformerMovement` or `FlyingMovement`                                                                 | Exactly one                                           |
+| Climbing             | `SurfaceClimb`                                                                                           | Requires platformer movement                          |
+| NPC control          | `NpcBrain`, `NpcPerception`, `NpcSenses`, `PathFollower`, `NpcMachine`                                   | Required together; `Patrol` is optional               |
+| Attacks              | `primaryAttack` and `secondaryAttack`, each a `BiteAttack`, `RangedWeapon`, `ContactDamage`, or `Pounce` | Optional; at most one pounce, since it moves the body |
+| Presentation         | `Sprite` and `Animator`                                                                                  | An animator needs a sprite and a set with `idle`      |
+| Health and inventory | `Health`, `Inventory`                                                                                    | Optional                                              |
 
 - Attack components need a non-neutral team for opponent filtering.
 - `World::addActor` checks component combinations. Level validation checks placement
@@ -469,8 +469,10 @@ to the traversal profile. The search itself does not change.
 
 ### Animation
 
-- Clips come from `animations.json`. C++ selects one from life, attack, grounded, and
-  velocity state, death first, then attack. There is no animation state machine.
+- Clips come from `animations.json`. `selectAnimation` walks `AnimationPriority`,
+  death, pounce, bite, shoot, jump, fall, move, idle, and takes the first state that holds
+  and has a clip in the set; a missing clip falls through to the next state, and `idle`
+  always ends the walk. There is no animation state machine.
 - Each actor owns an `Animator` and its `AnimationSet`. Frames in one set share a size,
   and collision bodies are independent of frame size.
 - A climber holding a surface counts as grounded. `placeActorSprite` turns its art onto

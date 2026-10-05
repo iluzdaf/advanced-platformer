@@ -1,6 +1,7 @@
 #include "advanced_platformer/render/animation.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <stdexcept>
 
@@ -11,25 +12,18 @@
 
 namespace advanced_platformer
 {
-    namespace
-    {
-        AnimationName selectMovementAnimation(bool grounded, glm::vec2 velocity)
-        {
-            if (!grounded)
-            {
-                return velocity.y < 0.0F ? AnimationName::Jump : AnimationName::Fall;
-            }
-
-            return velocity == glm::vec2{0.0F, 0.0F} ? AnimationName::Idle : AnimationName::Move;
-        }
-    }
-
-    const AnimationClip& clipFor(const AnimationSet& animationSet, AnimationName name)
+    const AnimationClip* findClip(const AnimationSet& animationSet, AnimationName name)
     {
         const auto clip = std::ranges::find_if(
             animationSet.clips,
             [name](const AnimationClip& candidate) { return candidate.name == name; });
-        if (clip == animationSet.clips.end())
+        return clip == animationSet.clips.end() ? nullptr : &*clip;
+    }
+
+    const AnimationClip& clipFor(const AnimationSet& animationSet, AnimationName name)
+    {
+        const AnimationClip* clip = findClip(animationSet, name);
+        if (clip == nullptr)
         {
             throw std::invalid_argument(
                 "The animation set does not contain the selected animation");
@@ -81,20 +75,52 @@ namespace advanced_platformer
         sprite.region = frameAt(clipFor(animator.animationSet, selected), animator.elapsed);
     }
 
-    AnimationName selectActorAnimation(
-        bool dying,
-        bool attacking,
-        bool grounded,
-        glm::vec2 velocity)
+    namespace
     {
-        if (dying)
+        constexpr std::array<AnimationName, 8> AnimationPriority{
+            AnimationName::Death,
+            AnimationName::Pounce,
+            AnimationName::Bite,
+            AnimationName::Shoot,
+            AnimationName::Jump,
+            AnimationName::Fall,
+            AnimationName::Move,
+            AnimationName::Idle};
+
+        bool animationActive(AnimationName name, const AnimationState& state)
         {
-            return AnimationName::Death;
+            switch (name)
+            {
+            case AnimationName::Death:
+                return state.dying;
+            case AnimationName::Pounce:
+                return state.pouncing;
+            case AnimationName::Bite:
+                return state.biting;
+            case AnimationName::Shoot:
+                return state.shooting;
+            case AnimationName::Jump:
+                return !state.grounded && state.velocity.y < 0.0F;
+            case AnimationName::Fall:
+                return !state.grounded;
+            case AnimationName::Move:
+                return state.grounded && state.velocity != glm::vec2{0.0F, 0.0F};
+            case AnimationName::Idle:
+                return true;
+            }
+            return false;
         }
-        if (attacking)
+    }
+
+    AnimationName selectAnimation(const AnimationSet& animationSet, const AnimationState& state)
+    {
+        for (const AnimationName name : AnimationPriority)
         {
-            return AnimationName::Attack;
+            if (animationActive(name, state) && findClip(animationSet, name) != nullptr)
+            {
+                return name;
+            }
         }
-        return selectMovementAnimation(grounded, velocity);
+        return AnimationName::Idle;
     }
 }

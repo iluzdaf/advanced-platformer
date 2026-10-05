@@ -4,6 +4,7 @@
 
 #include "advanced_platformer/render/animation.hpp"
 #include "advanced_platformer/render/sprite.hpp"
+#include "support/animator.hpp"
 #include "support/require_near.hpp"
 
 namespace
@@ -93,38 +94,51 @@ TEST_CASE("Animation sets find clips by name", "[render][animation]")
         advanced_platformer::clipFor(animations, AnimationName::Death), std::invalid_argument);
 }
 
-TEST_CASE(
-    "Movement animation selection observes grounded state and velocity",
-    "[render][animation]")
+TEST_CASE("Animation selection walks the priority list", "[render][animation]")
 {
-    REQUIRE(
-        advanced_platformer::selectActorAnimation(false, false, true, {0.0F, 0.0F}) ==
-        AnimationName::Idle);
-    REQUIRE(
-        advanced_platformer::selectActorAnimation(false, false, true, {1.0F, 0.0F}) ==
-        AnimationName::Move);
-    REQUIRE(
-        advanced_platformer::selectActorAnimation(false, false, true, {0.0F, 1.0F}) ==
-        AnimationName::Move);
-    REQUIRE(
-        advanced_platformer::selectActorAnimation(false, false, false, {0.0F, -1.0F}) ==
-        AnimationName::Jump);
-    REQUIRE(
-        advanced_platformer::selectActorAnimation(false, false, false, {0.0F, 1.0F}) ==
-        AnimationName::Fall);
+    const AnimationSet full = tests::fullAnimator().animationSet;
+    advanced_platformer::AnimationState state;
+    REQUIRE(advanced_platformer::selectAnimation(full, state) == AnimationName::Idle);
+    state.velocity = {1.0F, 0.0F};
+    REQUIRE(advanced_platformer::selectAnimation(full, state) == AnimationName::Move);
+    state.grounded = false;
+    state.velocity = {0.0F, -1.0F};
+    REQUIRE(advanced_platformer::selectAnimation(full, state) == AnimationName::Jump);
+    state.velocity = {0.0F, 1.0F};
+    REQUIRE(advanced_platformer::selectAnimation(full, state) == AnimationName::Fall);
+    state.shooting = true;
+    REQUIRE(advanced_platformer::selectAnimation(full, state) == AnimationName::Shoot);
+    state.biting = true;
+    REQUIRE(advanced_platformer::selectAnimation(full, state) == AnimationName::Bite);
+    state.pouncing = true;
+    REQUIRE(advanced_platformer::selectAnimation(full, state) == AnimationName::Pounce);
+    state.dying = true;
+    REQUIRE(advanced_platformer::selectAnimation(full, state) == AnimationName::Death);
 }
 
-TEST_CASE("Actor animation selection gives death and attack priority", "[render][animation]")
+TEST_CASE("A state without a clip falls through to the next active one", "[render][animation]")
 {
-    REQUIRE(
-        advanced_platformer::selectActorAnimation(true, true, true, {1.0F, 0.0F}) ==
-        AnimationName::Death);
-    REQUIRE(
-        advanced_platformer::selectActorAnimation(false, true, true, {1.0F, 0.0F}) ==
-        AnimationName::Attack);
-    REQUIRE(
-        advanced_platformer::selectActorAnimation(false, false, true, {1.0F, 0.0F}) ==
-        AnimationName::Move);
+    advanced_platformer::AnimationState state;
+    state.dying = true;
+    state.biting = true;
+    state.grounded = false;
+    state.velocity = {1.0F, -1.0F};
+
+    const AnimationSet idleOnly{{tests::clip(AnimationName::Idle, 0.0F)}};
+    REQUIRE(advanced_platformer::selectAnimation(idleOnly, state) == AnimationName::Idle);
+
+    const AnimationSet withFall{
+        {tests::clip(AnimationName::Idle, 0.0F), tests::clip(AnimationName::Fall, 3.0F)}};
+    REQUIRE(advanced_platformer::selectAnimation(withFall, state) == AnimationName::Fall);
+
+    const AnimationSet withBite{
+        {tests::clip(AnimationName::Idle, 0.0F), tests::clip(AnimationName::Bite, 5.0F)}};
+    REQUIRE(advanced_platformer::selectAnimation(withBite, state) == AnimationName::Bite);
+
+    state.grounded = true;
+    const AnimationSet withMove{
+        {tests::clip(AnimationName::Idle, 0.0F), tests::clip(AnimationName::Move, 1.0F)}};
+    REQUIRE(advanced_platformer::selectAnimation(withMove, state) == AnimationName::Move);
 }
 
 TEST_CASE("Animation clips reject missing frames and invalid timing", "[render][animation]")

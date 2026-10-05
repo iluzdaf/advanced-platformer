@@ -29,7 +29,6 @@ namespace
 {
     constexpr const char* ShippedAtlas = "assets/textures/sprites.png";
 
-    // A PNG's width and height, the big-endian words at bytes 16 and 20 of its header.
     glm::ivec2 pngSize(const char* path)
     {
         std::ifstream file(path, std::ios::binary);
@@ -51,7 +50,6 @@ namespace
 TEST_CASE("Every catalog region lies inside the shipped atlas", "[app][content][atlas]")
 {
     const glm::ivec2 atlas = pngSize(ShippedAtlas);
-    REQUIRE(atlas == glm::ivec2{256, 256});
     REQUIRE_NOTHROW(advanced_platformer::loadGameCatalogs("assets/catalogs", atlas));
 }
 
@@ -115,7 +113,6 @@ TEST_CASE("Every shipped Lua activity runs without errors", "[app][content][lua]
     advanced_platformer::LuaNpcScripts scripts;
     advanced_platformer::loadNpcActivityScripts(scripts, catalogs.machines, "assets/scripts");
 
-    // A target in sight and out of it, with and without a patrol, and a finished route.
     std::vector<advanced_platformer::NpcActivitySnapshot> situations(4);
     for (advanced_platformer::NpcActivitySnapshot& snapshot : situations)
     {

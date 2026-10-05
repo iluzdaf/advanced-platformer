@@ -4,7 +4,6 @@
 
 namespace tests
 {
-    // A one-frame looping clip. Its atlas column is what tells one clip from another.
     inline advanced_platformer::AnimationClip clip(
         advanced_platformer::AnimationName name,
         float left)
@@ -12,8 +11,6 @@ namespace tests
         return {name, {{{left, 0.0F}, {1.0F, 1.0F}}}, 0.1F, true};
     }
 
-    // An animator with a clip for every AnimationName, so whichever the system selects is
-    // there to be read back.
     inline advanced_platformer::Animator fullAnimator()
     {
         using advanced_platformer::AnimationName;
@@ -24,8 +21,10 @@ namespace tests
             clip(AnimationName::Move, 1.0F),
             clip(AnimationName::Jump, 2.0F),
             clip(AnimationName::Fall, 3.0F),
-            clip(AnimationName::Attack, 4.0F),
-            clip(AnimationName::Death, 5.0F),
+            clip(AnimationName::Shoot, 4.0F),
+            clip(AnimationName::Bite, 5.0F),
+            clip(AnimationName::Pounce, 6.0F),
+            clip(AnimationName::Death, 7.0F),
         }};
         return animator;
     }

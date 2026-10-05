@@ -14,8 +14,20 @@ namespace advanced_platformer
         Move,
         Jump,
         Fall,
-        Attack,
+        Shoot,
+        Bite,
+        Pounce,
         Death
+    };
+
+    struct AnimationState
+    {
+        bool dying = false;
+        bool shooting = false;
+        bool biting = false;
+        bool pouncing = false;
+        bool grounded = true;
+        glm::vec2 velocity = {0.0F, 0.0F};
     };
 
     struct AnimationClip
@@ -38,6 +50,7 @@ namespace advanced_platformer
         AnimationSet animationSet;
     };
 
+    const AnimationClip* findClip(const AnimationSet& animationSet, AnimationName name);
     const AnimationClip& clipFor(const AnimationSet& animationSet, AnimationName name);
     const SpriteRegion& frameAt(const AnimationClip& clip, float elapsedSeconds);
     void updateAnimation(
@@ -45,9 +58,5 @@ namespace advanced_platformer
         Sprite& sprite,
         AnimationName selected,
         float deltaTime);
-    AnimationName selectActorAnimation(
-        bool dying,
-        bool attacking,
-        bool grounded,
-        glm::vec2 velocity);
+    AnimationName selectAnimation(const AnimationSet& animationSet, const AnimationState& state);
 }

@@ -1,6 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include <string>
+#include <string_view>
+#include <set>
 #include <limits>
 #include <stdexcept>
 #include "content/animation_catalog.hpp"
@@ -35,6 +37,18 @@ TEST_CASE("Animation JSON preserves frame order timing and looping", "[app][anim
         advanced_platformer::clipFor(set, advanced_platformer::AnimationName::Death).looping);
 }
 
+TEST_CASE("Every animation name has a distinct catalog spelling", "[app][animations]")
+{
+    std::set<std::string_view> names;
+    for (int value = 0; value <= static_cast<int>(advanced_platformer::AnimationName::Death);
+         ++value)
+    {
+        const auto name = static_cast<advanced_platformer::AnimationName>(value);
+        REQUIRE_NOTHROW(advanced_platformer::clipName(name));
+        REQUIRE(names.insert(advanced_platformer::clipName(name)).second);
+    }
+}
+
 TEST_CASE("Animation catalogs reject invalid content with source context", "[app][animations]")
 {
     auto animationJson = tests::parseJson(
@@ -42,17 +56,16 @@ TEST_CASE("Animation catalogs reject invalid content with source context", "[app
     auto& set = animationJson["animations"]["test_actor"];
     std::string start = "clips.json: animations.test_actor";
     std::string end;
-    SECTION("Missing clip")
+    SECTION("Missing idle")
     {
-        tests::eraseKey(set, "death");
-        start = "clips.json: line 1, column ";
-        end = "missing 'death'";
+        tests::eraseKey(set, "idle");
+        end = "idle: required clip is missing";
     }
     SECTION("Unknown clip")
     {
         set["run"] = set["move"];
         start = "clips.json: line 1, column ";
-        end = "unknown field 'run'";
+        end = "unknown value 'run'";
     }
     SECTION("Empty frames")
     {
@@ -101,6 +114,41 @@ TEST_CASE("Animation catalogs reject invalid content with source context", "[app
     REQUIRE_THROWS_WITH(
         advanced_platformer::parseAnimationCatalog(tests::dumpJson(animationJson), "clips.json"),
         Catch::Matchers::StartsWith(start) && Catch::Matchers::EndsWith(end));
+}
+
+TEST_CASE("A set holds any of the clips, each validated the same way", "[app][animations]")
+{
+    auto json = tests::parseJson(
+        advanced_platformer::loadContentText("tests/fixtures/catalogs/animations.json"));
+    auto& set = json["animations"]["test_actor"];
+    const auto shoot = set["shoot"];
+    SECTION("Attack clips by kind")
+    {
+        set["bite"] = shoot;
+        set["pounce"] = shoot;
+        const auto catalog =
+            advanced_platformer::parseAnimationCatalog(tests::dumpJson(json), "clips.json");
+        const auto& parsed = advanced_platformer::animationSet(catalog, "test_actor");
+        REQUIRE(parsed.clips.size() == 8);
+        REQUIRE(
+            advanced_platformer::clipFor(parsed, advanced_platformer::AnimationName::Pounce)
+                .frames.size() == 1);
+    }
+    SECTION("Idle alone is enough")
+    {
+        json["animations"]["test_actor"] = tests::object({{"idle", set["idle"]}});
+        const auto catalog =
+            advanced_platformer::parseAnimationCatalog(tests::dumpJson(json), "clips.json");
+        REQUIRE(advanced_platformer::animationSet(catalog, "test_actor").clips.size() == 1);
+    }
+    SECTION("An attack clip with no frames")
+    {
+        set["bite"] = shoot;
+        set["bite"]["frames"] = tests::emptyArray();
+        REQUIRE_THROWS_WITH(
+            advanced_platformer::parseAnimationCatalog(tests::dumpJson(json), "clips.json"),
+            Catch::Matchers::ContainsSubstring("bite.frames"));
+    }
 }
 
 TEST_CASE("Animation validation also accepts C++ definitions", "[app][animations]")
