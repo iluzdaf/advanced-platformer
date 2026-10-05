@@ -21,7 +21,6 @@ namespace
     using advanced_platformer::ConnectionFunction;
     using advanced_platformer::CostFunction;
     using advanced_platformer::endOf;
-    using advanced_platformer::ExpansionReady;
     using advanced_platformer::findLowestCostRoute;
     using advanced_platformer::GridSize;
     using advanced_platformer::HeuristicFunction;
@@ -34,7 +33,6 @@ namespace
 
     constexpr GridSize TestGrid{8, 8};
 
-    // The floor of the cell, the only location a search without climbing uses.
     RouteLocation floorOf(int x, int y)
     {
         return {{x, y}};
@@ -49,8 +47,6 @@ namespace
         return {{destination, traversal, std::move(inputs)}, cost};
     }
 
-    // The same connections leave every location of a cell listed; any other cell has none.
-    // The function owns the table, so the connections it hands back outlive each call.
     ConnectionFunction connectionsFrom(
         std::vector<std::pair<Cell, std::vector<RouteConnection>>> table)
     {
@@ -67,8 +63,6 @@ namespace
         };
     }
 
-    // A row of cells, each leading to the next for a cost of 1, up to the last column.
-    // Each call refills the function's own storage, which lasts until the next call.
     ConnectionFunction lineUpTo(int lastColumn)
     {
         return [lastColumn, next = std::vector<RouteConnection>{}](RouteLocation location) mutable
@@ -93,8 +87,6 @@ namespace
         return 0;
     }
 
-    // The number of cells between two cells along the grid. It never guesses more than
-    // the real cost when every step moves one cell for a cost of 1.
     int gridSteps(Cell cell, Cell goal)
     {
         return std::abs(cell.x - goal.x) + std::abs(cell.y - goal.y);
@@ -127,10 +119,6 @@ TEST_CASE(
     "A search treats a cell's floor, walls and ceiling as separate places",
     "[navigation][search]")
 {
-    // In the first cell, only the ceiling leads on to the goal cell. Going from the floor
-    // to the ceiling by way of the wall is cheaper than climbing straight up, so the
-    // route should go floor, wall, ceiling. It can only do that if the search keeps the
-    // three apart.
     const RouteLocation wall{{0, 0}, ClimbSurface::LeftWall};
     const RouteLocation ceiling{{0, 0}, ClimbSurface::Ceiling};
     const std::vector<RouteConnection> fromFloor{
@@ -168,8 +156,6 @@ TEST_CASE(
     "A search picks the cheapest route, however many cells each connection crosses",
     "[navigation][search]")
 {
-    // A jump straight to the goal costs more than two walks by way of the middle cell,
-    // so the route takes the walks.
     const ConnectionFunction connections = connectionsFrom(
         {{{0, 0},
           {connectionTo(floorOf(2, 0), Traversal::Jump, 8),
@@ -182,8 +168,6 @@ TEST_CASE(
     REQUIRE(walkRoute.steps.size() == 2);
     REQUIRE(walkRoute.steps.front().traversal == Traversal::Walk);
 
-    // One connection can cross several cells and still cost less than the number of
-    // cells it crosses.
     const ConnectionFunction leaping =
         connectionsFrom({{{0, 0}, {connectionTo(floorOf(4, 0), Traversal::Jump, 2)}}});
     const RouteSearchResult leap =
@@ -198,17 +182,14 @@ TEST_CASE(
     "A search that cannot reach the goal cell returns a route as close to it as possible",
     "[navigation][search]")
 {
-    // A line of three cells. Nothing leads beyond the last.
     const ConnectionFunction line = lineUpTo(2);
 
-    // The goal is past the end of the line, so the route stops at the last cell.
     const RouteSearchResult outOfReach =
         findLowestCostRoute(floorOf(0, 0), {5, 0}, TestGrid, line, gridSteps);
     REQUIRE(outOfReach.route.has_value());
     REQUIRE(endOf(routeOf(outOfReach)) == floorOf(2, 0));
     REQUIRE(routeOf(outOfReach).steps.size() == 2);
 
-    // The same last cell as the goal is reached, and ends the route the same way.
     const RouteSearchResult inReach =
         findLowestCostRoute(floorOf(0, 0), {2, 0}, TestGrid, line, gridSteps);
     REQUIRE(inReach.route.has_value());
@@ -219,8 +200,6 @@ TEST_CASE(
     "A search chooses by the connections' costs, not by how many steps a route takes",
     "[navigation][search]")
 {
-    // Two ways from the start to the goal: a jump straight there, and two walks by way of
-    // a middle cell. Changing the jump's cost changes which route is chosen.
     const auto withJumpCosting = [](int jumpCost)
     {
         return connectionsFrom(
@@ -230,7 +209,6 @@ TEST_CASE(
              {{1, 0}, {connectionTo(floorOf(2, 0), Traversal::Walk, 1)}}});
     };
 
-    // With the jump costing 6, the two walks at 1 each are cheaper.
     const RouteSearchResult aroundJump =
         findLowestCostRoute(floorOf(0, 0), {2, 0}, TestGrid, withJumpCosting(6), zeroHeuristic);
     REQUIRE(aroundJump.route.has_value());
@@ -238,7 +216,6 @@ TEST_CASE(
     REQUIRE(walkRoute.steps.size() == 2);
     REQUIRE(walkRoute.steps.front().traversal == Traversal::Walk);
 
-    // With the jump costing 1, it is cheaper, and the route keeps its inputs.
     const RouteSearchResult overJump =
         findLowestCostRoute(floorOf(0, 0), {2, 0}, TestGrid, withJumpCosting(1), zeroHeuristic);
     REQUIRE(overJump.route.has_value());
@@ -250,9 +227,6 @@ TEST_CASE(
 
 TEST_CASE("A search can charge connections differently from their own cost", "[navigation][search]")
 {
-    // The jump's own cost of 1 makes it the cheaper way. Charging jumps 5 more as the
-    // search adds up costs sends the route around it, while the connection itself keeps
-    // its own cost.
     const ConnectionFunction connections = connectionsFrom(
         {{{0, 0},
           {connectionTo(floorOf(2, 0), Traversal::Jump, 1),
@@ -262,18 +236,17 @@ TEST_CASE("A search can charge connections differently from their own cost", "[n
     { return connection.cost + (connection.step.traversal == Traversal::Jump ? 5 : 0); };
 
     const RouteSearchResult result = findLowestCostRoute(
-        floorOf(0, 0), {2, 0}, TestGrid, connections, zeroHeuristic, {}, penalisedJumps);
+        floorOf(0, 0), {2, 0}, TestGrid, connections, zeroHeuristic, penalisedJumps);
     REQUIRE(result.route.has_value());
     REQUIRE(routeOf(result).steps.size() == 2);
     REQUIRE(routeOf(result).steps.front().traversal == Traversal::Walk);
-    REQUIRE(connections({{0, 0}}).front().cost == 1);
+    REQUIRE(connections({{0, 0}}).value_or(std::span<const RouteConnection>{}).front().cost == 1);
 }
 
 TEST_CASE(
     "A search rejects places off its grid, missing functions and costs below one",
     "[navigation][search][validation]")
 {
-    // A connection leading off the grid, a start off the grid, and a grid with no cells.
     const ConnectionFunction leadsOut =
         connectionsFrom({{{0, 0}, {connectionTo(floorOf(8, 0), Traversal::Fly, 1)}}});
     REQUIRE_THROWS_AS(
@@ -286,8 +259,6 @@ TEST_CASE(
         findLowestCostRoute(floorOf(0, 0), {1, 0}, {0, 8}, noConnections, zeroHeuristic),
         std::invalid_argument);
 
-    // A missing connection function, a missing heuristic, and a heuristic that guesses
-    // below zero.
     const ConnectionFunction missingConnections;
     const HeuristicFunction missingHeuristic;
     const HeuristicFunction negativeHeuristic = [](Cell, Cell) { return -1; };
@@ -301,7 +272,6 @@ TEST_CASE(
         findLowestCostRoute(floorOf(0, 0), {1, 0}, TestGrid, noConnections, negativeHeuristic),
         std::invalid_argument);
 
-    // A connection that costs nothing, and a cost function that charges nothing.
     const ConnectionFunction costsNothing =
         connectionsFrom({{{0, 0}, {connectionTo(floorOf(1, 0), Traversal::Walk, 0)}}});
     REQUIRE_THROWS_AS(
@@ -310,38 +280,36 @@ TEST_CASE(
     const CostFunction chargesNothing = [](const RouteConnection&) { return 0; };
     REQUIRE_THROWS_AS(
         findLowestCostRoute(
-            floorOf(0, 0), {1, 0}, TestGrid, lineUpTo(2), zeroHeuristic, {}, chargesNothing),
+            floorOf(0, 0), {1, 0}, TestGrid, lineUpTo(2), zeroHeuristic, chargesNothing),
         std::invalid_argument);
 }
 
 TEST_CASE(
-    "A search pauses at a location it may not expand yet, before asking for its connections",
+    "A search pauses at a location whose connections are not ready yet",
     "[navigation][search]")
 {
-    // The start leads to (1, 0), which the readiness check refuses. The search expands
-    // the start, reaches (1, 0) and pauses there: no route, only the location, and it
-    // never asks for (1, 0)'s connections.
     const ConnectionFunction line = lineUpTo(2);
     int connectionQueries = 0;
-    const ConnectionFunction countedLine = [&](RouteLocation location)
+    const ConnectionFunction notReadyAtOne =
+        [&](RouteLocation location) -> std::optional<std::span<const RouteConnection>>
     {
         ++connectionQueries;
+        if (location.cell == Cell{1, 0})
+        {
+            return std::nullopt;
+        }
         return line(location);
     };
-    const advanced_platformer::ExpansionReady canExpand = [](RouteLocation location)
-    { return location.cell != Cell{1, 0}; };
 
     const RouteSearchResult paused =
-        findLowestCostRoute(floorOf(0, 0), {2, 0}, TestGrid, countedLine, gridSteps, canExpand);
+        findLowestCostRoute(floorOf(0, 0), {2, 0}, TestGrid, notReadyAtOne, gridSteps);
     REQUIRE_FALSE(paused.route.has_value());
     REQUIRE(paused.unexpandedLocation == floorOf(1, 0));
-    REQUIRE(connectionQueries == 1);
+    REQUIRE(connectionQueries == 2);
 }
 
 TEST_CASE("A search stops at the cheapest location in the goal cell", "[navigation][search]")
 {
-    // The goal cell can be reached on its floor or on its wall. The wall costs less, so
-    // the route ends there.
     const RouteLocation goalWall{{1, 0}, ClimbSurface::LeftWall};
     const ConnectionFunction connections = connectionsFrom(
         {{{0, 0},
@@ -358,8 +326,6 @@ TEST_CASE(
     "A goal off the grid is never reached, so the route gets as close as it can",
     "[navigation][search]")
 {
-    // A line along the top row to the grid's last column. The goal is past the grid's
-    // edge, so the route stops at the end of the line.
     const RouteSearchResult offGrid =
         findLowestCostRoute(floorOf(0, 0), {20, 0}, TestGrid, lineUpTo(7), gridSteps);
     REQUIRE(offGrid.route.has_value());

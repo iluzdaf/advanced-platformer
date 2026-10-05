@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <limits>
 #include <optional>
+#include <span>
 #include <queue>
 #include <stdexcept>
 #include <utility>
@@ -16,15 +17,12 @@ namespace advanced_platformer
 {
     namespace
     {
-        // How a node was reached in the cheapest way, for walking the route back to the start.
         struct IncomingStep
         {
             std::size_t parentIndex;
             RouteStep step;
         };
 
-        // A location the search has reached. Closed once expanded, and opened again if a
-        // cheaper way to it turns up.
         struct SearchNode
         {
             RouteLocation location;
@@ -33,7 +31,6 @@ namespace advanced_platformer
             bool closed = false;
         };
 
-        // Every location of a cell has its own node slot.
         constexpr int SurfacesPerCell = 4;
 
         int estimateRemainingCost(
@@ -49,22 +46,16 @@ namespace advanced_platformer
             return estimate;
         }
 
-        // A node waiting to be expanded. It holds the node's index rather than a copy, so
-        // the frontier stays cheap to reorder, and the index survives nodes growing.
         struct FrontierEntry
         {
             int estimatedTotalCost;
             std::size_t nodeIndex;
         };
 
-        // The frontier's ordering. A std::priority_queue hands out its highest-priority
-        // entry first, whatever order entries went in. This comparison makes the cheapest
-        // estimate the highest priority. An entry that costs more comes out later.
         struct MoreExpensive
         {
             bool operator()(const FrontierEntry& left, const FrontierEntry& right) const
             {
-                // Keep discovery order for equal estimates, including after a node reopens.
                 return left.estimatedTotalCost == right.estimatedTotalCost
                            ? left.nodeIndex > right.nodeIndex
                            : left.estimatedTotalCost > right.estimatedTotalCost;
@@ -113,7 +104,6 @@ namespace advanced_platformer
         GridSize grid,
         const ConnectionFunction& connections,
         const HeuristicFunction& heuristic,
-        const ExpansionReady& canExpand,
         const CostFunction& costOf)
     {
         if (!connections)
@@ -133,11 +123,8 @@ namespace advanced_platformer
             throw std::invalid_argument("Route search start must lie within the grid");
         }
 
-        // Every location reached so far, in the order first reached; the start is node 0.
         std::vector<SearchNode> nodes{{start, 0, std::nullopt, false}};
 
-        // Every location on the grid gets a slot in nodeAt, holding the index of its node
-        // once the search reaches it, or NoNode until then.
         constexpr int NoNode = -1;
         std::vector<int> nodeAt(
             static_cast<std::size_t>(grid.width) * static_cast<std::size_t>(grid.height) *
@@ -145,13 +132,9 @@ namespace advanced_platformer
             NoNode);
         nodeAt[slotOf(grid, start)] = 0;
 
-        // The open nodes to expand, cheapest estimated total first.
         std::priority_queue<FrontierEntry, std::vector<FrontierEntry>, MoreExpensive> frontier;
         frontier.push({estimateRemainingCost(heuristic, start, goal), 0});
 
-        // Checks whether going through the parent is the cheapest way found so far to the
-        // place the connection leads. If it is, that place remembers the parent as its way
-        // in and goes on the frontier to be expanded; if not, nothing changes.
         const auto relax =
             [&](const RouteConnection& connection, std::size_t parentIndex, int parentCost)
         {
@@ -173,8 +156,6 @@ namespace advanced_platformer
             const int nextCost = parentCost + cost;
             int& existing = nodeAt[slotOf(grid, destination)];
 
-            // 1. The place already has a way in that costs no more than going through the
-            //    parent so nothing changes.
             if (existing != NoNode &&
                 nextCost >= nodes[static_cast<std::size_t>(existing)].costFromStart)
             {
@@ -189,8 +170,6 @@ namespace advanced_platformer
 
             const int total = nextCost + estimate;
 
-            // 2. The place is reached for the first time. Add its node, with the parent as
-            //    its way in, and put it on the frontier.
             if (existing == NoNode)
             {
                 existing = static_cast<int>(nodes.size());
@@ -200,9 +179,6 @@ namespace advanced_platformer
                 return;
             }
 
-            // 3. Going through the parent is cheaper than the place's way in so far: make the
-            //    parent its way in, and put it back on the frontier. If it was already
-            //    expanded this reopens it, so the saving reaches the places beyond it.
             SearchNode& known = nodes[static_cast<std::size_t>(existing)];
             known.costFromStart = nextCost;
             known.incoming = IncomingStep{parentIndex, connection.step};
@@ -212,9 +188,6 @@ namespace advanced_platformer
 
         while (!frontier.empty())
         {
-            // 1. Take the cheapest entry. Skip it if its node has already been expanded. That
-            //    happens when a cheaper way to a node was found: relax pushes a new entry but
-            //    doesn't remove the old one and the new one comes out first.
             const FrontierEntry next = frontier.top();
             frontier.pop();
             SearchNode& node = nodes[next.nodeIndex];
@@ -223,32 +196,26 @@ namespace advanced_platformer
                 continue;
             }
 
-            // 2. The first location in the goal cell taken off the frontier is the
-            //    cheapest one because the heuristic never overestimates.
             if (node.location.cell == goal)
             {
                 return {reconstructRoute(nodes, next.nodeIndex), std::nullopt};
             }
 
-            // 3. A location the caller is not ready to expand pauses the search there.
             const RouteLocation location = node.location;
-            if (canExpand && !canExpand(location))
+            const std::optional<std::span<const RouteConnection>> leaving = connections(location);
+            if (!leaving.has_value())
             {
                 return {std::nullopt, location};
             }
 
-            // 4. Expand it: close it, then for each place one step away, check whether going
-            //    through this node is the cheapest way there found so far.
             const int parentCost = node.costFromStart;
             node.closed = true;
-            for (const RouteConnection& connection : connections(location))
+            for (const RouteConnection& connection : *leaving)
             {
                 relax(connection, next.nodeIndex, parentCost);
             }
         }
 
-        // The frontier ran out before the goal cell was reached. Return a route leading to
-        // a cell as close to the goal as possible.
         RouteSearchResult result;
         std::size_t closest = 0;
         long long closestDistance = std::numeric_limits<long long>::max();

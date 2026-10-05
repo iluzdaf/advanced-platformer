@@ -300,9 +300,10 @@ Each NPC update has three steps:
 - A route location is a cell and a surface. A cell's floor, walls, and ceiling are
   separate places; only climbing searches use walls and ceilings.
 - `route_search` is A\* over locations. The caller supplies the connections leaving a
-  location as a `std::span` view, a goal cell, a heuristic that never exceeds the real
-  cost, a readiness check, and optionally a cost function. The platformer search uses
-  the last for its jump-start penalty.
+  location as a `std::span` view, or nothing when they are not ready yet, which pauses
+  the search there; a goal cell; a heuristic that never exceeds the real cost; and
+  optionally a cost function, which the platformer search uses for its jump-start
+  penalty.
 - The result is a `NavigationPath` of waypoints: the feet at the end of each step, its
   traversal, and its recorded inputs. Cells and surfaces stay inside navigation.
 - A goal is a point that need not be somewhere the actor can be. The search heads for
