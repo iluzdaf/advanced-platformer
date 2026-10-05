@@ -2,6 +2,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers.hpp>
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -20,6 +21,7 @@
 #include "advanced_platformer/navigation/path_follower.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_activity.hpp"
+#include "advanced_platformer/navigation/navigation_path.hpp"
 #include "advanced_platformer/npc/npc_activity_scripts.hpp"
 #include "advanced_platformer/npc/npc_activity_runner.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
@@ -202,7 +204,6 @@ TEST_CASE("Removing an actor forgets its activity state", "[npc][lua][lifecycle]
 
 TEST_CASE("The engine fills an activity's snapshot from the world", "[npc][lua]")
 {
-    // The walker stands at a ledge: there is floor to its left and none to its right.
     advanced_platformer::TileMap map = tests::TileMapBuilder({"........", "........", "##......"});
     advanced_platformer::World world;
     const advanced_platformer::ActorId player = tests::addPlayer(
@@ -230,8 +231,44 @@ TEST_CASE("The engine fills an activity's snapshot from the world", "[npc][lua]"
     REQUIRE(snapshot.footing.has_value());
     REQUIRE(snapshot.footing.value_or(advanced_platformer::NpcFooting{}).left);
     REQUIRE_FALSE(snapshot.footing.value_or(advanced_platformer::NpcFooting{}).right);
-    REQUIRE_FALSE(snapshot.hasRoute);
+    REQUIRE_FALSE(snapshot.routeStatus.has_value());
     REQUIRE(snapshot.lastKnownTargetFeet == glm::vec2{56.0F, 32.0F});
+}
+
+TEST_CASE("The snapshot says how the route search ended", "[npc][lua][navigation]")
+{
+    advanced_platformer::TileMap map = tests::TileMapBuilder(
+        {"........", "........", "........", "........", "........", "########"});
+    advanced_platformer::World world;
+    const advanced_platformer::ActorId npc = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .inCell({1, 4})
+            .platforming()
+            .onTeam(advanced_platformer::Team::Enemy)
+            .thinking({64.0F, 1.0F})
+            .running(
+                tests::NpcMachineBuilder::named("test").state(
+                    "acting", advanced_platformer::NpcActivity{"fixture", "act"})));
+    tests::component<advanced_platformer::PlatformerMovement>(world, npc).grounded = true;
+    tests::RecordingNpcScripts scripts;
+    scripts.command.routeTo = advanced_platformer::feetInCell(tests::TileSize, {6, 0});
+
+    std::optional<advanced_platformer::NavigationPathStatus> status;
+    for (int tick = 0;
+         tick < 300 && status != advanced_platformer::NavigationPathStatus::Unreachable;
+         ++tick)
+    {
+        advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
+        status = scripts.calls.back().snapshot.routeStatus;
+    }
+    REQUIRE(status == advanced_platformer::NavigationPathStatus::Unreachable);
+    REQUIRE(tests::component<advanced_platformer::PathFollower>(world, npc).path.has_value());
+
+    scripts.command.routeTo.reset();
+    scripts.command.clearRoute = true;
+    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
+    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
+    REQUIRE_FALSE(scripts.calls.back().snapshot.routeStatus.has_value());
 }
 
 TEST_CASE("A flyer has no footing, and the last known target feet outlast the target", "[npc][lua]")

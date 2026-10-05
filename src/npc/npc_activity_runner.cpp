@@ -28,7 +28,6 @@ namespace advanced_platformer
             actor.intentions.aimDirection = targetFeet - feetOf(actor.body.bounds);
         }
 
-        // Whether a walker could stand one body width to each side of where it stands.
         NpcFooting footingOf(const TileMap& map, const Actor& actor)
         {
             const glm::vec2 feet = feetOf(actor.body.bounds);
@@ -59,7 +58,7 @@ namespace advanced_platformer
                 snapshot.footing = footingOf(update.map, actor);
             }
             snapshot.facts = facts;
-            snapshot.hasRoute = follower.path.has_value();
+            snapshot.routeStatus = follower.routeStatus;
             snapshot.routeComplete = pathComplete(follower);
             if (facts.targetKnown)
             {

@@ -375,8 +375,11 @@ to the traversal profile. The search itself does not change.
 - Arrival is the feet reaching the waypoint. A jump or fall is done once the body lands
   and stops on the waypoint's row. A step that ends elsewhere drops the path, and the
   NPC plans again.
-- The follower remembers the goal its path was planned for. The NPC plans again when the
-  goal moves more than 8 pixels.
+- The follower remembers the goal its path was planned for and how the search ended:
+  found, unreachable, with a path to the nearest reachable cell, or deferred, with no
+  path until the fill catches up. The snapshot passes that status to scripts; following
+  a partial path is their choice. The NPC plans again when the goal moves more than 8
+  pixels.
 - End-to-end tests replay generated programs through the real simulation, so planning
   and movement cannot drift apart.
 

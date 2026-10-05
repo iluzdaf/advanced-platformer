@@ -109,15 +109,13 @@ namespace advanced_platformer
             int tileSize,
             const Route& route,
             glm::vec2 bodySize,
-            Cell goal,
-            glm::vec2 goalFeet)
+            Cell goal)
         {
             NavigationPath path = waypointsOf(tileSize, route, bodySize);
-            const float remaining = glm::distance(endOf(path), goalFeet);
             const NavigationPathStatus status = endOf(route).cell == goal
                                                     ? NavigationPathStatus::Found
                                                     : NavigationPathStatus::Unreachable;
-            return {status, std::move(path), remaining};
+            return {status, std::move(path)};
         }
 
         int manhattanHeuristic(Cell cell, Cell goal)
@@ -185,7 +183,7 @@ namespace advanced_platformer
             {
                 throw std::logic_error("A completed route search returned no route");
             }
-            return pathResultOf(tileSize, *result.route, body.size, goal, goalFeet);
+            return pathResultOf(tileSize, *result.route, body.size, goal);
         }
 
         int platformerTickHeuristic(
@@ -313,7 +311,7 @@ namespace advanced_platformer
             {
                 throw std::logic_error("A completed route search returned no route");
             }
-            return pathResultOf(tileSize, *result.route, profile.size, goal, goalFeet);
+            return pathResultOf(tileSize, *result.route, profile.size, goal);
         }
     }
 

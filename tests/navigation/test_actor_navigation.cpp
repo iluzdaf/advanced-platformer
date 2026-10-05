@@ -357,7 +357,6 @@ TEST_CASE(
     REQUIRE(result.status == NavigationPathStatus::Unreachable);
     REQUIRE(result.path.has_value());
     REQUIRE(endOf(result) == feetAt({{5, 2}}));
-    REQUIRE(result.remainingDistance > 0.0F);
 }
 
 TEST_CASE(

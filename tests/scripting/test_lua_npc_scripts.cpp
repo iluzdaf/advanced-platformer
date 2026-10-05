@@ -7,6 +7,7 @@
 #include "advanced_platformer/input/input_state.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_activity.hpp"
+#include "advanced_platformer/navigation/navigation_path.hpp"
 #include "advanced_platformer/npc/npc_activity_scripts.hpp"
 #include "lua_npc_scripts.hpp"
 
@@ -109,7 +110,7 @@ TEST_CASE(
                                 direction = snapshot.center,
                                 aimAt = snapshot.targetCenter,
                                 routeTo = snapshot.lastKnownTargetFeet,
-                                clearRoute = snapshot.hasRoute,
+                                clearRoute = snapshot.routeStatus == "found",
                                 turnPatrol = snapshot.footing.left and not snapshot.footing.right
                                     and snapshot.patrol.headingToSecond
                             }
@@ -125,7 +126,7 @@ TEST_CASE(
     walker.targetCenter = {{56.0F, 72.0F}};
     walker.lastKnownTargetFeet = {50.0F, 78.0F};
     walker.footing = advanced_platformer::NpcFooting{true, false};
-    walker.hasRoute = true;
+    walker.routeStatus = advanced_platformer::NavigationPathStatus::Found;
     scripts.enter(FirstActor, Activity, walker);
     const advanced_platformer::NpcActivityCommand command =
         scripts.update(FirstActor, Activity, walker, 0.5F);
