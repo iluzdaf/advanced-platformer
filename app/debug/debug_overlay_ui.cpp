@@ -114,6 +114,64 @@ namespace advanced_platformer
             return UnknownPathColour;
         }
 
+        void drawPathConnection(
+            ImDrawList& drawList,
+            const PathConnectionDebugInfo& connection,
+            std::size_t pointNumber,
+            const ActorDebugInfo& actor,
+            const DebugOverlay& scene,
+            const WindowViewport& viewport)
+        {
+            const ImVec2 from = screenPosition(connection.fromFeet, scene.cameraBounds, viewport);
+            const ImVec2 to = screenPosition(connection.toFeet, scene.cameraBounds, viewport);
+            const ImU32 colour = pathColour(connection);
+            const float thickness = connection.next ? 3.0F : 2.0F;
+            if (connection.sampledFeet.size() >= 2)
+            {
+                for (std::size_t sampleIndex = 1; sampleIndex < connection.sampledFeet.size();
+                     ++sampleIndex)
+                {
+                    drawList.AddLine(
+                        screenPosition(
+                            connection.sampledFeet[sampleIndex - 1], scene.cameraBounds, viewport),
+                        screenPosition(
+                            connection.sampledFeet[sampleIndex], scene.cameraBounds, viewport),
+                        colour,
+                        thickness);
+                }
+            }
+            else
+            {
+                drawList.AddLine(from, to, colour, thickness);
+            }
+            drawList.AddCircleFilled(to, connection.next ? 4.0F : 3.0F, colour);
+            char pointLabel[16]{};
+            std::snprintf(pointLabel, sizeof(pointLabel), "%zu", pointNumber);
+            const ImVec2 pointLabelSize = ImGui::CalcTextSize(pointLabel);
+            drawShadowedText(
+                drawList,
+                {to.x - pointLabelSize.x * 0.5F,
+                 to.y - pointLabelSize.y - (connection.next ? 6.0F : 5.0F)},
+                colour,
+                pointLabel);
+
+            if (connection.next)
+            {
+                const glm::vec2 labelWorldPosition =
+                    connection.sampledFeet.empty()
+                        ? (connection.fromFeet + connection.toFeet) * 0.5F
+                        : connection.sampledFeet[connection.sampledFeet.size() / 2];
+                const ImVec2 labelPosition =
+                    screenPosition(labelWorldPosition, scene.cameraBounds, viewport);
+                const char* traversalName = nameOf(connection.traversal);
+                drawShadowedText(drawList, labelPosition, colour, traversalName);
+                drawList.AddLine(
+                    screenPosition(feetOf(actor.collider), scene.cameraBounds, viewport),
+                    to,
+                    NextPathGuideColour);
+            }
+        }
+
         void drawActorPath(
             ImDrawList& drawList,
             const ActorDebugInfo& actor,
@@ -129,57 +187,7 @@ namespace advanced_platformer
             for (std::size_t index = 0; index < follower.connections.size(); ++index)
             {
                 const PathConnectionDebugInfo& connection = follower.connections[index];
-                const ImVec2 from =
-                    screenPosition(connection.fromFeet, scene.cameraBounds, viewport);
-                const ImVec2 to = screenPosition(connection.toFeet, scene.cameraBounds, viewport);
-                const ImU32 colour = pathColour(connection);
-                const float thickness = connection.next ? 3.0F : 2.0F;
-                if (connection.sampledFeet.size() >= 2)
-                {
-                    for (std::size_t sampleIndex = 1; sampleIndex < connection.sampledFeet.size();
-                         ++sampleIndex)
-                    {
-                        drawList.AddLine(
-                            screenPosition(
-                                connection.sampledFeet[sampleIndex - 1],
-                                scene.cameraBounds,
-                                viewport),
-                            screenPosition(
-                                connection.sampledFeet[sampleIndex], scene.cameraBounds, viewport),
-                            colour,
-                            thickness);
-                    }
-                }
-                else
-                {
-                    drawList.AddLine(from, to, colour, thickness);
-                }
-                drawList.AddCircleFilled(to, connection.next ? 4.0F : 3.0F, colour);
-                char pointLabel[16]{};
-                std::snprintf(pointLabel, sizeof(pointLabel), "%zu", index + 1);
-                const ImVec2 pointLabelSize = ImGui::CalcTextSize(pointLabel);
-                drawShadowedText(
-                    drawList,
-                    {to.x - pointLabelSize.x * 0.5F,
-                     to.y - pointLabelSize.y - (connection.next ? 6.0F : 5.0F)},
-                    colour,
-                    pointLabel);
-
-                if (connection.next)
-                {
-                    const glm::vec2 labelWorldPosition =
-                        connection.sampledFeet.empty()
-                            ? (connection.fromFeet + connection.toFeet) * 0.5F
-                            : connection.sampledFeet[connection.sampledFeet.size() / 2];
-                    const ImVec2 labelPosition =
-                        screenPosition(labelWorldPosition, scene.cameraBounds, viewport);
-                    const char* traversalName = nameOf(connection.traversal);
-                    drawShadowedText(drawList, labelPosition, colour, traversalName);
-                    drawList.AddLine(
-                        screenPosition(feetOf(actor.collider), scene.cameraBounds, viewport),
-                        to,
-                        NextPathGuideColour);
-                }
+                drawPathConnection(drawList, connection, index + 1, actor, scene, viewport);
             }
 
             if (follower.goalFeet.has_value())
@@ -354,7 +362,6 @@ namespace advanced_platformer
             drawShadowedText(drawList, labelPosition, ProjectileColour, label);
         }
 
-        // Outlines the breakable cell under the cursor and names the key that breaks it.
         void drawBreakableCellHint(
             ImDrawList& drawList,
             const Aabb& cell,
@@ -370,7 +377,6 @@ namespace advanced_platformer
                 "B to break");
         }
 
-        // A second box round the NPC whose machine the machine window shows.
         void drawFollowedOutline(
             ImDrawList& drawList,
             const ActorDebugInfo& actor,
@@ -415,9 +421,6 @@ namespace advanced_platformer
             position.y += ActorTextGap;
         }
 
-        // Actor and navigation text share a transparent, full-height panel at the right.
-        // Its custom-drawn lines reserve matching ImGui content height, so the mouse wheel
-        // can scroll a long list without showing a scrollbar.
         void drawDebugTextPanel(
             const DebugOverlay& scene,
             bool showActorText,

@@ -21,15 +21,43 @@ namespace advanced_platformer
 {
     namespace
     {
-        // Inventory grid layout, in internal pixels before the viewport scales them.
         constexpr float SlotSize = 20.0F;
         constexpr float IconPadding = 2.0F;
         constexpr float GridPadding = 2.0F;
 
-        // Inventory grid palette.
         constexpr ImU32 SlotColour = IM_COL32(40, 44, 52, 220);
         constexpr ImU32 HoveredSlotColour = IM_COL32(72, 76, 84, 240);
         constexpr ImU32 SlotBorderColour = IM_COL32(150, 156, 168, 220);
+
+        bool drawInventorySlot(
+            const Game& game,
+            const Texture& atlas,
+            const std::optional<ItemStack>& slot,
+            float slotSize,
+            float iconPadding)
+        {
+            const bool clicked = ImGui::InvisibleButton("slot", {slotSize, slotSize});
+            const ImVec2 slotMinimum = ImGui::GetItemRectMin();
+            const ImVec2 slotMaximum = ImGui::GetItemRectMax();
+            ImDrawList* drawList = ImGui::GetWindowDrawList();
+            const ImU32 background = ImGui::IsItemHovered() ? HoveredSlotColour : SlotColour;
+            drawList->AddRectFilled(slotMinimum, slotMaximum, background);
+            drawList->AddRect(slotMinimum, slotMaximum, SlotBorderColour, 0.0F, 0, 1.0F);
+
+            if (!slot.has_value())
+            {
+                return false;
+            }
+            const ItemDefinition& item = game.itemDefinition(slot->item);
+            const ImVec2 iconMinimum = {slotMinimum.x + iconPadding, slotMinimum.y + iconPadding};
+            const ImVec2 iconMaximum = {slotMaximum.x - iconPadding, slotMaximum.y - iconPadding};
+            drawAtlasRegion(*drawList, atlas, item.icon.region, iconMinimum, iconMaximum);
+
+            char count[16];
+            std::snprintf(count, sizeof(count), "%d", slot->quantity);
+            drawShadowedText(*drawList, iconMinimum, HudTextColour, count);
+            return clicked && item.effect != ItemEffect::None;
+        }
     }
 
     bool drawInventoryButton(
@@ -56,7 +84,6 @@ namespace advanced_platformer
         {
             ImGui::InvisibleButton("Open inventory", size);
             const bool hovered = ImGui::IsItemHovered();
-            // Act on press, before gameplay consumes the same mouse-button edge.
             clicked = hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left);
             drawAtlasRegion(
                 *ImGui::GetWindowDrawList(),
@@ -105,31 +132,9 @@ namespace advanced_platformer
             for (std::size_t index = 0; index < slots.size(); ++index)
             {
                 ImGui::PushID(static_cast<int>(index));
-                const bool clicked = ImGui::InvisibleButton("slot", {slotSize, slotSize});
-                const ImVec2 slotMinimum = ImGui::GetItemRectMin();
-                const ImVec2 slotMaximum = ImGui::GetItemRectMax();
-                ImDrawList* drawList = ImGui::GetWindowDrawList();
-                const ImU32 background = ImGui::IsItemHovered() ? HoveredSlotColour : SlotColour;
-                drawList->AddRectFilled(slotMinimum, slotMaximum, background);
-                drawList->AddRect(slotMinimum, slotMaximum, SlotBorderColour, 0.0F, 0, 1.0F);
-
-                const auto& slot = slots[index];
-                if (slot.has_value())
+                if (drawInventorySlot(game, atlas, slots[index], slotSize, iconPadding))
                 {
-                    const ItemDefinition& item = game.itemDefinition(slot->item);
-                    const ImVec2 iconMinimum = {
-                        slotMinimum.x + iconPadding, slotMinimum.y + iconPadding};
-                    const ImVec2 iconMaximum = {
-                        slotMaximum.x - iconPadding, slotMaximum.y - iconPadding};
-                    drawAtlasRegion(*drawList, atlas, item.icon.region, iconMinimum, iconMaximum);
-
-                    char count[16];
-                    std::snprintf(count, sizeof(count), "%d", slot->quantity);
-                    drawShadowedText(*drawList, iconMinimum, HudTextColour, count);
-                    if (clicked && item.effect != ItemEffect::None)
-                    {
-                        slotToUse = index;
-                    }
+                    slotToUse = index;
                 }
                 if ((index + 1) % layout.columns != 0 && index + 1 < slots.size())
                 {
