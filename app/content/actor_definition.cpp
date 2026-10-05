@@ -14,6 +14,7 @@
 #include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/pounce.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/navigation/path_follower.hpp"
 #include "advanced_platformer/npc/npc.hpp"
@@ -46,6 +47,10 @@ namespace advanced_platformer
         if (definition.surfaceClimb)
         {
             actor.surfaceClimb = SurfaceClimb{*definition.surfaceClimb};
+        }
+        if (definition.pounce)
+        {
+            actor.pounce = Pounce{*definition.pounce};
         }
         if (definition.health)
         {

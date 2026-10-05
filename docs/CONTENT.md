@@ -156,23 +156,24 @@ jump heights are tuned for 16-pixel tiles.
 `player` names the player's definition, which needs `health` and `inventorySlots` and
 no `senses`.
 
-| Field            | Meaning                                                                    |
-| ---------------- | -------------------------------------------------------------------------- |
-| `bodySize`       | Required. The collider.                                                    |
-| `team`           | `player`, `enemy` or `neutral` (default). Attacks need a non-neutral team. |
-| `facing`         | `left` or `right` (default).                                               |
-| `animations`     | A set in `animations.json`.                                                |
-| `spriteAnchor`   | `feet` (default) or `center`.                                              |
-| `health`         | Positive.                                                                  |
-| `inventorySlots` | Positive.                                                                  |
-| `platformer`     | Walking and jumping. Exactly one of `platformer` and `flying`.             |
-| `flying`         | Flying.                                                                    |
-| `surfaceClimb`   | Climbing walls and ceilings. Needs `platformer`.                           |
-| `senses`         | Makes the actor an NPC. Needs `machine`.                                   |
-| `machine`        | A machine in `machines.json`. Needs `senses`.                              |
-| `bite`           | A melee attack. At most one of `bite` and `ranged`.                        |
-| `ranged`         | A projectile attack.                                                       |
-| `contactDamage`  | Damage on touch, when a script asks for it. Works with either attack.      |
+| Field            | Meaning                                                                       |
+| ---------------- | ----------------------------------------------------------------------------- |
+| `bodySize`       | Required. The collider.                                                       |
+| `team`           | `player`, `enemy` or `neutral` (default). Attacks need a non-neutral team.    |
+| `facing`         | `left` or `right` (default).                                                  |
+| `animations`     | A set in `animations.json`.                                                   |
+| `spriteAnchor`   | `feet` (default) or `center`.                                                 |
+| `health`         | Positive.                                                                     |
+| `inventorySlots` | Positive.                                                                     |
+| `platformer`     | Walking and jumping. Exactly one of `platformer` and `flying`.                |
+| `flying`         | Flying.                                                                       |
+| `surfaceClimb`   | Climbing walls and ceilings. Needs `platformer`.                              |
+| `pounce`         | A leap along the aim from the floor, a wall or a ceiling. Needs `platformer`. |
+| `senses`         | Makes the actor an NPC. Needs `machine`.                                      |
+| `machine`        | A machine in `machines.json`. Needs `senses`.                                 |
+| `bite`           | A melee attack. At most one of `bite` and `ranged`.                           |
+| `ranged`         | A projectile attack.                                                          |
+| `contactDamage`  | Damage on touch, when a script asks for it. Works with either attack.         |
 
 A component object may leave out any field to keep its default, so `{}` is all defaults.
 
@@ -181,6 +182,7 @@ A component object may leave out any field to keep its default, so `{}` is all d
 | `platformer`    | `maximumSpeed` (100), `groundAcceleration` (800), `airAcceleration` (400), `groundDeceleration` (1000), `jumpSpeed` (240), `gravity`, `jumpReleaseGravity`, `maximumFallSpeed`, `coyoteDuration` (0.1), `jumpBufferDuration` (0.1) |
 | `flying`        | `speed` (60)                                                                                                                                                                                                                       |
 | `surfaceClimb`  | `speed` (60)                                                                                                                                                                                                                       |
+| `pounce`        | `speed` (200), `lift` (120), `range` (64), `recoveryDuration` (0.5)                                                                                                                                                                |
 | `senses`        | `noticeDistance` (96), `targetMemoryDuration` (1.5), `searchDuration` (2), `standoffDistance` (48)                                                                                                                                 |
 | `bite`          | `damage` (1), `hitboxSize` ([10, 8]), `reach` (4), `windupDuration` (0.12), `activeDuration` (0.08), `recoveryDuration` (0.3)                                                                                                      |
 | `ranged`        | `damage` (1), `projectileSize` ([4, 2]), `projectileSpeed` (180), `projectileLifetime` (2), `shootDuration` (0.15), `recoveryDuration` (0.2), `breaksTiles` (false), `sprite`                                                      |
@@ -227,6 +229,9 @@ fires.
 | `targetVisible`                | The NPC sees the target.                                           | Within `noticeDistance` with clear line of sight.                     |
 | `targetInBiteRange`            | The visible target overlaps the NPC's bite hitbox.                 | Needs `bite`.                                                         |
 | `biteReady`                    | The NPC's bite is ready.                                           | Needs no target.                                                      |
+| `targetInPounceRange`          | The visible target's centre is within `range` of the NPC's.        | Needs `pounce`.                                                       |
+| `pounceReady`                  | The NPC's pounce is ready.                                         | False in the air and while recovering.                                |
+| `pouncing`                     | The NPC is in the air from a pounce.                               |                                                                       |
 | `targetInSights`               | The target is visible and the NPC has `ranged`.                    | Ignores aim and reload.                                               |
 | `targetWithinStandoffDistance` | The remembered target is nearer than `standoffDistance`.           | Measured to its last known feet.                                      |
 | `heardLanding`                 | The NPC heard the player land on its ground run.                   | For one update.                                                       |
@@ -258,18 +263,19 @@ or `nil`. [`common.lua`](../assets/scripts/common.lua) has `idle`, `patrol`, `ch
 | `hasRoute`            | Whether the engine holds a route.                                           |
 | `routeComplete`       | Whether the last route asked for has been followed to its end.              |
 
-| Command                     | Meaning                                                |
-| --------------------------- | ------------------------------------------------------ |
-| `direction`, `aimDirection` | Movement and aim, as vectors.                          |
-| `jumpPressed`, `jumpHeld`   | Jump input.                                            |
-| `primaryAttackPressed`      | Bite or shoot.                                         |
-| `climbGrip`                 | `"hold"`, `"release"` or `"keep"` (default).           |
-| `avoidLedges`               | Stop a walker at a ledge.                              |
-| `contactDamage`             | Deal contact damage while touching.                    |
-| `routeTo`                   | Follow a route to a point; the engine plans and moves. |
-| `aimAt`                     | Aim at a point.                                        |
-| `clearRoute`                | Drop the current route.                                |
-| `turnPatrol`                | Head for the patrol's other end.                       |
+| Command                     | Meaning                                                  |
+| --------------------------- | -------------------------------------------------------- |
+| `direction`, `aimDirection` | Movement and aim, as vectors.                            |
+| `jumpPressed`, `jumpHeld`   | Jump input.                                              |
+| `pounce`                    | Leap along the aim, when ready and resting on a surface. |
+| `primaryAttackPressed`      | Bite or shoot.                                           |
+| `climbGrip`                 | `"hold"`, `"release"` or `"keep"` (default).             |
+| `avoidLedges`               | Stop a walker at a ledge.                                |
+| `contactDamage`             | Deal contact damage while touching.                      |
+| `routeTo`                   | Follow a route to a point; the engine plans and moves.   |
+| `aimAt`                     | Aim at a point.                                          |
+| `clearRoute`                | Drop the current route.                                  |
+| `turnPatrol`                | Head for the patrol's other end.                         |
 
 Positions are `vec2` values, made with `vec2(x, y)`. They have `x` and `y`, `+`, `-`,
 `*` and `/` by a number, `==`, `tostring`, and the methods `length()`, `distance(v)`,

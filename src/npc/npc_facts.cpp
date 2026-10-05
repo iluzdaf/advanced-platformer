@@ -6,6 +6,7 @@
 #include "advanced_platformer/combat/attack_system.hpp"
 #include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/movement/pounce.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_senses.hpp"
@@ -75,6 +76,12 @@ namespace advanced_platformer
         facts.targetInBiteRange =
             target != nullptr && perception.targetVisible && targetIsInBiteRange(actor, *target);
         facts.biteReady = actor.bite.has_value() && actor.bite->phase == BitePhase::Ready;
+        facts.targetInPounceRange =
+            target != nullptr && perception.targetVisible && actor.pounce.has_value() &&
+            glm::distance(centerOf(actor.body.bounds), centerOf(target->body.bounds)) <=
+                actor.pounce->config.range;
+        facts.pounceReady = actor.pounce.has_value() && actor.pounce->phase == PouncePhase::Ready;
+        facts.pouncing = actor.pounce.has_value() && actor.pounce->phase == PouncePhase::Airborne;
         facts.targetInSights =
             target != nullptr && perception.targetVisible && actor.rangedWeapon.has_value();
         facts.targetWithinStandoffDistance =

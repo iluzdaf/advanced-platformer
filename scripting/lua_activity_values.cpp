@@ -166,6 +166,9 @@ namespace advanced_platformer
         facts["targetVisible"] = snapshot.facts.targetVisible;
         facts["targetInBiteRange"] = snapshot.facts.targetInBiteRange;
         facts["biteReady"] = snapshot.facts.biteReady;
+        facts["targetInPounceRange"] = snapshot.facts.targetInPounceRange;
+        facts["pounceReady"] = snapshot.facts.pounceReady;
+        facts["pouncing"] = snapshot.facts.pouncing;
         facts["targetInSights"] = snapshot.facts.targetInSights;
         facts["targetWithinStandoffDistance"] = snapshot.facts.targetWithinStandoffDistance;
         facts["heardLanding"] = snapshot.facts.heardLanding;
@@ -199,6 +202,7 @@ namespace advanced_platformer
              "jumpPressed",
              "jumpHeld",
              "primaryAttackPressed",
+             "pounce",
              "climbGrip",
              "avoidLedges",
              "contactDamage",
@@ -247,6 +251,7 @@ namespace advanced_platformer
         readBoolean("jumpPressed", command.intentions.jumpPressed);
         readBoolean("jumpHeld", command.intentions.jumpHeld);
         readBoolean("primaryAttackPressed", command.intentions.primaryAttackPressed);
+        readBoolean("pounce", command.intentions.pouncePressed);
         readClimbGrip("climbGrip", command.intentions.climbGrip);
         readBoolean("avoidLedges", command.intentions.avoidLedges);
         readBoolean("contactDamage", command.intentions.contactDamage);

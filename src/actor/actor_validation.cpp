@@ -8,6 +8,7 @@
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/movement/pounce.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
 
 namespace advanced_platformer
@@ -51,6 +52,15 @@ namespace advanced_platformer
                     throw std::invalid_argument("Surface climbing requires platformer movement");
                 }
                 validateSurfaceClimbConfig(actor.surfaceClimb->config);
+            }
+            if (actor.pounce.has_value())
+            {
+                if (!actor.platformerMovement.has_value())
+                {
+                    throw std::invalid_argument("Pouncing requires platformer movement");
+                }
+                validatePounceConfig(actor.pounce->config);
+                requireSeconds(actor.pounce->phaseTimeRemaining, "Pounce phase time remaining");
             }
         }
 

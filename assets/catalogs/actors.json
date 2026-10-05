@@ -67,14 +67,10 @@
       "health": 1,
       "platformer": { "maximumSpeed": 60 },
       "surfaceClimb": { "speed": 60 },
+      "pounce": { "speed": 220, "range": 72, "recoveryDuration": 0.6 },
       "senses": { "noticeDistance": 80, "targetMemoryDuration": 1.5 },
       "machine": "spider",
-      "bite": {
-        "damage": 1,
-        "windupDuration": 0.12,
-        "activeDuration": 0.12,
-        "recoveryDuration": 0.24
-      }
+      "contactDamage": { "damage": 1, "knockback": { "speed": 180, "lift": 140 } }
     },
     "boar": {
       "bodySize": [16, 12],

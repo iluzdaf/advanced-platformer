@@ -76,6 +76,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/math/test_validation.cpp
         ${PROJECT_SOURCE_DIR}/tests/movement/test_flying_movement.cpp
         ${PROJECT_SOURCE_DIR}/tests/movement/test_platformer_movement.cpp
+        ${PROJECT_SOURCE_DIR}/tests/movement/test_pounce.cpp
         ${PROJECT_SOURCE_DIR}/tests/movement/test_surface_climb.cpp
         ${PROJECT_SOURCE_DIR}/tests/navigation/test_actor_navigation.cpp
         ${PROJECT_SOURCE_DIR}/tests/navigation/test_navigation_fill.cpp
