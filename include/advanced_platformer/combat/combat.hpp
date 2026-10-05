@@ -65,9 +65,16 @@ namespace advanced_platformer
         std::vector<ActorId> actorsHit;
     };
 
+    struct Knockback
+    {
+        float speed = 150.0F;
+        float lift = 120.0F;
+    };
+
     struct ContactDamage
     {
         int damage = 1;
+        std::optional<Knockback> knockback;
         bool active = false;
         std::vector<ActorId> actorsHit;
     };

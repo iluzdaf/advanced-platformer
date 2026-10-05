@@ -1,7 +1,10 @@
 #pragma once
 
 #include <cstddef>
+#include <optional>
 #include <vector>
+
+#include <glm/vec2.hpp>
 
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/combat/combat.hpp"
@@ -13,7 +16,7 @@ namespace advanced_platformer
     class WorldRequests
     {
     public:
-        void damage(ActorId target, int amount);
+        void damage(ActorId target, int amount, std::optional<glm::vec2> knockback = std::nullopt);
         void remove(ActorId target);
         void spawnProjectile(Projectile projectile);
         void removeProjectile(std::size_t index);
@@ -22,7 +25,6 @@ namespace advanced_platformer
         void collectPickup(std::size_t index);
         void useItem(ActorId actor, std::size_t slot);
         bool empty() const;
-        // Cleanup systems inspect this before the requests remove the actors from World.
         const std::vector<ActorId>& actorsToRemove() const;
 
     private:
@@ -30,6 +32,7 @@ namespace advanced_platformer
         {
             ActorId target;
             int amount = 0;
+            std::optional<glm::vec2> knockback;
         };
 
         struct UseItemRequest
@@ -51,6 +54,5 @@ namespace advanced_platformer
         std::vector<UseItemRequest> itemUses;
     };
 
-    // Applies item use, collection and structural changes after systems finish traversing World.
     void applyWorldRequests(World& world, WorldRequests& requests);
 }

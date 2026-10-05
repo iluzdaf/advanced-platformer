@@ -85,7 +85,7 @@
       "health": 3,
       "platformer": { "maximumSpeed": 125 },
       "senses": { "noticeDistance": 200, "targetMemoryDuration": 1.5 },
-      "contactDamage": { "damage": 1 },
+      "contactDamage": { "damage": 1, "knockback": { "speed": 180, "lift": 140 } },
       "machine": "boar"
     },
     "zombie_soldier": {
