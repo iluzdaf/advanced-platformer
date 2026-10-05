@@ -61,7 +61,7 @@ TEST_CASE(
     advanced_platformer::setPath(
         follower, tests::floorPath({0, 0}, {{{{1, 0}}, advanced_platformer::Traversal::Fly, {}}}));
     advanced_platformer::Aabb bounds{{19.75F, 4.0F}, {8.0F, 12.0F}};
-    const advanced_platformer::FlyingMovement movement{60.0F};
+    const advanced_platformer::FlyingMovement movement{{60.0F}};
 
     const advanced_platformer::InputIntentions intentions =
         advanced_platformer::followFlyingPath(bounds, movement, follower, tests::FixedStepSeconds);

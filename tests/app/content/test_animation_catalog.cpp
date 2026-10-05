@@ -40,7 +40,6 @@ TEST_CASE("Animation catalogs reject invalid content with source context", "[app
     auto animationJson = tests::parseJson(
         advanced_platformer::loadContentText("tests/fixtures/catalogs/animations.json"));
     auto& set = animationJson["animations"]["test_actor"];
-    // Shape errors name a line and column; rule errors name the set.
     std::string start = "clips.json: animations.test_actor";
     std::string end;
     SECTION("Missing clip")
@@ -168,7 +167,7 @@ TEST_CASE("Actors have independent playback of shared animation definitions", "[
     const auto animations =
         advanced_platformer::loadAnimationCatalog("tests/fixtures/catalogs/animations.json");
     const auto actors = advanced_platformer::parseActorCatalog(
-        R"({"player":"hero","actors":{"hero":{"bodySize":[12,20],"platformer":{},"health":3,"inventorySlots":2,"animations":"test_actor"}}})",
+        R"({"player":"hero","actors":{"hero":{"bodySize":[12,20],"movement":{"platformer":{}},"health":3,"inventorySlots":2,"animations":"test_actor"}}})",
         "actors.json",
         animations);
     const auto& definition = advanced_platformer::actorDefinition(actors, "hero");

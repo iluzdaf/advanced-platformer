@@ -45,7 +45,7 @@ namespace advanced_platformer
                 throw std::invalid_argument("Actors require exactly one movement component");
             }
             if (actor.flyingMovement.has_value() &&
-                (!isFiniteNonNegative(actor.flyingMovement->speed)))
+                (!isFiniteNonNegative(actor.flyingMovement->config.speed)))
             {
                 throw std::invalid_argument(
                     "Flying movement speed must be finite and non-negative");

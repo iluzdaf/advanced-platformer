@@ -1,12 +1,10 @@
 #pragma once
 
 #include <array>
-#include <cstddef>
 #include <filesystem>
 #include <optional>
 #include <string>
 #include <string_view>
-#include <utility>
 #include <vector>
 
 #include <glaze/glaze.hpp>
@@ -16,49 +14,6 @@
 
 namespace advanced_platformer
 {
-    template <class Enum> struct ContentNames;
-
-    template <std::size_t Count> std::string listOfNames(const auto& names)
-    {
-        std::string list;
-        for (std::size_t index = 0; index < Count; ++index)
-        {
-            if (index > 0)
-            {
-                list += index + 1 == Count ? " or " : ", ";
-            }
-            list += names[index].first;
-        }
-        return list;
-    }
-
-    template <class Enum> struct NamedEnumReader
-    {
-        template <auto Options> static void op(Enum& value, auto&& context, auto&& it, auto&& end)
-        {
-            const auto start = it;
-            std::string name;
-            glz::parse<glz::JSON>::op<Options>(name, context, it, end);
-            if (bool(context.error))
-            {
-                return;
-            }
-            constexpr auto& Names = ContentNames<Enum>::Names;
-            for (const auto& [candidate, enumerator] : Names)
-            {
-                if (candidate == name)
-                {
-                    value = enumerator;
-                    return;
-                }
-            }
-            static const std::string expected = "expected " + listOfNames<Names.size()>(Names);
-            it = start;
-            context.error = glz::error_code::unexpected_enum;
-            context.custom_error_message = expected;
-        }
-    };
-
     template <class T> class WithDefaults
     {
     public:
@@ -76,18 +31,16 @@ namespace advanced_platformer
         T value{};
     };
 
-    template <> struct ContentNames<SpriteAnchor>
-    {
-        static constexpr std::array Names{
-            std::pair{std::string_view{"feet"}, SpriteAnchor::BodyFeet},
-            std::pair{std::string_view{"center"}, SpriteAnchor::BodyCenter}};
-    };
 }
 
-template <>
-struct glz::from<glz::JSON, advanced_platformer::SpriteAnchor>
-    : advanced_platformer::NamedEnumReader<advanced_platformer::SpriteAnchor>
+template <> struct glz::meta<advanced_platformer::SpriteAnchor>
 {
+    // NOLINTNEXTLINE(readability-identifier-naming)
+    static constexpr std::array keys{"feet", "center"};
+    // NOLINTNEXTLINE(readability-identifier-naming)
+    static constexpr std::array value{
+        advanced_platformer::SpriteAnchor::BodyFeet,
+        advanced_platformer::SpriteAnchor::BodyCenter};
 };
 
 template <class T> struct glz::from<glz::JSON, advanced_platformer::WithDefaults<T>>

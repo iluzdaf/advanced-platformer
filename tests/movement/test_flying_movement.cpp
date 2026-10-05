@@ -18,7 +18,7 @@ TEST_CASE("Flying movement normalizes two-dimensional intentions", "[movement][f
     const advanced_platformer::TileMap map =
         tests::TileMapBuilder({".....", ".....", ".....", ".....", "#####"});
     advanced_platformer::Body body{{{16.0F, 16.0F}, {8.0F, 8.0F}}, {0.0F, 0.0F}};
-    const advanced_platformer::FlyingMovement movement{10.0F};
+    const advanced_platformer::FlyingMovement movement{{10.0F}};
     advanced_platformer::InputIntentions intentions;
     intentions.direction = {1.0F, 1.0F};
 
@@ -33,7 +33,7 @@ TEST_CASE("Flying movement uses tile collision", "[movement][flying]")
     const advanced_platformer::TileMap map =
         tests::TileMapBuilder({".....", "..#..", ".....", ".....", "#####"});
     advanced_platformer::Body body{{{16.0F, 16.0F}, {8.0F, 8.0F}}, {0.0F, 0.0F}};
-    const advanced_platformer::FlyingMovement movement{100.0F};
+    const advanced_platformer::FlyingMovement movement{{100.0F}};
     advanced_platformer::InputIntentions intentions;
     intentions.direction.x = 1.0F;
 

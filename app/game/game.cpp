@@ -12,6 +12,7 @@
 
 #include <cstddef>
 #include <optional>
+#include <variant>
 #include <vector>
 #include <stdexcept>
 #include <utility>
@@ -182,12 +183,13 @@ namespace advanced_platformer
         navigation.profileIndex = navigationProfileIndex;
         for (const auto& [name, definition] : gameCatalogs.actors.definitions)
         {
-            if (definition.platformer.has_value() && definition.senses.has_value())
+            const auto* platformer = std::get_if<PlatformerMovementConfig>(&definition.movement);
+            if (platformer != nullptr && definition.senses.has_value())
             {
                 navigation.namedProfiles.push_back(
                     {name,
                      {.size = definition.bodySize,
-                      .movement = definition.platformer.value_or(PlatformerMovementConfig{}),
+                      .movement = *platformer,
                       .stepSeconds = simulationStepSeconds,
                       .climb = definition.surfaceClimb}});
             }

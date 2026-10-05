@@ -1,14 +1,36 @@
 {
-  "tileLegend": { ".": "empty", "#": "stone" },
+  "tileLegend": {
+    ".": "empty",
+    "#": "stone"
+  },
   "map": [".....", ".....", "#####"],
-  "playerSpawnCell": [0, 1],
+  "playerSpawn": {
+    "cell": [0, 1]
+  },
   "pickups": [
-    { "id": "medicine", "definition": "medicine_box", "spawnCell": [1, 1] },
-    { "id": "key", "definition": "door_key", "spawnCell": [2, 1] }
+    {
+      "id": "medicine",
+      "definition": "medicine_box",
+      "spawn": {
+        "cell": [1, 1]
+      }
+    },
+    {
+      "id": "key",
+      "definition": "door_key",
+      "spawn": {
+        "cell": [2, 1]
+      }
+    }
   ],
   "exit": {
     "definition": "test_door",
-    "spawnCell": [4, 1],
-    "requirement": { "item": "key", "quantity": 1 }
+    "spawn": {
+      "cell": [4, 1]
+    },
+    "requirement": {
+      "item": "key",
+      "quantity": 1
+    }
   }
 }

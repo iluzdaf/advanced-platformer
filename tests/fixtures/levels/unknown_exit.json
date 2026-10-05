@@ -1,6 +1,16 @@
 {
-  "tileLegend": { ".": "empty", "#": "stone" },
+  "tileLegend": {
+    ".": "empty",
+    "#": "stone"
+  },
   "map": ["....", "....", "####"],
-  "playerSpawnCell": [0, 1],
-  "exit": { "definition": "missing", "spawnCell": [3, 1] }
+  "playerSpawn": {
+    "cell": [0, 1]
+  },
+  "exit": {
+    "definition": "missing",
+    "spawn": {
+      "cell": [3, 1]
+    }
+  }
 }

@@ -12,6 +12,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <variant>
 #include <vector>
 
 #include <glaze/glaze.hpp>
@@ -44,12 +45,22 @@ template <> struct glz::from<glz::JSON, advanced_platformer::Cell>
 
 namespace advanced_platformer
 {
+    struct CellPositionJson
+    {
+        Cell cell;
+    };
+
+    struct FeetPositionJson
+    {
+        glm::vec2 feet;
+    };
+
+    using PositionJson = std::variant<CellPositionJson, FeetPositionJson>;
+
     struct PatrolJson
     {
-        std::optional<Cell> firstCell;
-        std::optional<glm::vec2> firstFeet;
-        std::optional<Cell> secondCell;
-        std::optional<glm::vec2> secondFeet;
+        PositionJson first;
+        PositionJson second;
     };
 
     struct RequirementJson
@@ -62,8 +73,7 @@ namespace advanced_platformer
     {
         std::string id;
         std::string definition;
-        std::optional<Cell> spawnCell;
-        std::optional<glm::vec2> spawnFeet;
+        PositionJson spawn;
         std::optional<PatrolJson> patrol;
     };
 
@@ -71,15 +81,13 @@ namespace advanced_platformer
     {
         std::string id;
         std::string definition;
-        std::optional<Cell> spawnCell;
-        std::optional<glm::vec2> spawnFeet;
+        PositionJson spawn;
     };
 
     struct ExitPlacementJson
     {
         std::string definition;
-        std::optional<Cell> spawnCell;
-        std::optional<glm::vec2> spawnFeet;
+        PositionJson spawn;
         std::optional<RequirementJson> requirement;
         std::optional<bool> consumeItem;
         std::optional<int> nextLevel;
@@ -89,35 +97,21 @@ namespace advanced_platformer
     {
         std::map<std::string, std::string> tileLegend;
         std::vector<std::string> map;
-        std::optional<Cell> playerSpawnCell;
-        std::optional<glm::vec2> playerSpawnFeet;
+        PositionJson playerSpawn;
         std::optional<std::vector<ActorPlacementJson>> actors;
         std::optional<std::vector<PickupPlacementJson>> pickups;
-        std::optional<ExitPlacementJson> exit;
+        ExitPlacementJson exit;
     };
 
     namespace
     {
-        LevelPosition positionFrom(
-            const std::optional<Cell>& cell,
-            const std::optional<glm::vec2>& feet,
-            std::string_view cellKey,
-            std::string_view feetKey,
-            std::string_view sourceName,
-            std::string_view path)
+        LevelPosition positionFrom(const PositionJson& json)
         {
-            if (cell.has_value() == feet.has_value())
+            if (const auto* cell = std::get_if<CellPositionJson>(&json))
             {
-                failJson(
-                    sourceName,
-                    path,
-                    std::format("supply exactly one of '{}' or '{}'", cellKey, feetKey));
+                return cell->cell;
             }
-            if (cell.has_value())
-            {
-                return *cell;
-            }
-            return *feet;
+            return std::get<FeetPositionJson>(json).feet;
         }
 
         std::string nameFrom(
@@ -145,27 +139,11 @@ namespace advanced_platformer
                 "actor definition name",
                 sourceName,
                 fieldPath(path, "definition"));
-            result.spawn = positionFrom(
-                json.spawnCell, json.spawnFeet, "spawnCell", "spawnFeet", sourceName, path);
+            result.spawn = positionFrom(json.spawn);
             if (json.patrol.has_value())
             {
-                const PatrolJson& patrol = *json.patrol;
-                const std::string patrolPath = fieldPath(path, "patrol");
                 result.patrol = PatrolPlacement{
-                    positionFrom(
-                        patrol.firstCell,
-                        patrol.firstFeet,
-                        "firstCell",
-                        "firstFeet",
-                        sourceName,
-                        patrolPath),
-                    positionFrom(
-                        patrol.secondCell,
-                        patrol.secondFeet,
-                        "secondCell",
-                        "secondFeet",
-                        sourceName,
-                        patrolPath)};
+                    positionFrom(json.patrol->first), positionFrom(json.patrol->second)};
             }
             return result;
         }
@@ -182,8 +160,7 @@ namespace advanced_platformer
                 "pickup definition name",
                 sourceName,
                 fieldPath(path, "definition"));
-            result.spawn = positionFrom(
-                json.spawnCell, json.spawnFeet, "spawnCell", "spawnFeet", sourceName, path);
+            result.spawn = positionFrom(json.spawn);
             return result;
         }
 
@@ -194,8 +171,7 @@ namespace advanced_platformer
         {
             ExitPlacement result;
             result.definitionName = json.definition;
-            result.spawn = positionFrom(
-                json.spawnCell, json.spawnFeet, "spawnCell", "spawnFeet", sourceName, path);
+            result.spawn = positionFrom(json.spawn);
             if (json.requirement.has_value())
             {
                 const std::string requirementPath = fieldPath(path, "requirement");
@@ -257,17 +233,7 @@ namespace advanced_platformer
         result.mapRows = file.map;
         validateMapRows(result.mapRows, result.tileLegend, sourceName);
 
-        if (!file.exit.has_value())
-        {
-            failJson(sourceName, "exit", "expected exactly one placement");
-        }
-        result.playerSpawn = positionFrom(
-            file.playerSpawnCell,
-            file.playerSpawnFeet,
-            "playerSpawnCell",
-            "playerSpawnFeet",
-            sourceName,
-            "root");
+        result.playerSpawn = positionFrom(file.playerSpawn);
 
         std::map<std::string, std::string> ids;
         const std::vector<ActorPlacementJson> actors =
@@ -294,7 +260,7 @@ namespace advanced_platformer
                 fieldPath(origin, "definition"), result.pickups.back().definitionName);
         }
 
-        result.exit = exitFrom(*file.exit, sourceName, "exit");
+        result.exit = exitFrom(file.exit, sourceName, "exit");
         result.exitReferences.emplace("exit.definition", result.exit.definitionName);
         if (result.exit.requirement.has_value())
         {

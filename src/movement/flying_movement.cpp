@@ -22,7 +22,7 @@ namespace advanced_platformer
         float deltaTime)
     {
         requireSeconds(deltaTime, "Flying movement time step");
-        if (!isFiniteNonNegative(movement.speed) || !isFinite(intentions.direction))
+        if (!isFiniteNonNegative(movement.config.speed) || !isFinite(intentions.direction))
         {
             throw std::invalid_argument(
                 "Flying movement requires a finite, non-negative speed and finite intentions");
@@ -35,7 +35,7 @@ namespace advanced_platformer
             direction /= length;
         }
 
-        body.velocity = direction * movement.speed;
+        body.velocity = direction * movement.config.speed;
         return moveBody(map, body, deltaTime);
     }
 }

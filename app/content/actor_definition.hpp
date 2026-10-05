@@ -2,6 +2,7 @@
 
 #include <optional>
 #include <string>
+#include <variant>
 
 #include <glm/vec2.hpp>
 
@@ -19,6 +20,8 @@
 
 namespace advanced_platformer
 {
+    using MovementConfig = std::variant<PlatformerMovementConfig, FlyingMovementConfig>;
+
     struct ActorDefinition
     {
         glm::vec2 bodySize = {0.0F, 0.0F};
@@ -28,8 +31,7 @@ namespace advanced_platformer
         std::string animations;
         std::optional<int> health;
         std::optional<int> inventorySlots;
-        std::optional<PlatformerMovementConfig> platformer;
-        std::optional<FlyingMovement> flying;
+        MovementConfig movement;
         std::optional<SurfaceClimbConfig> surfaceClimb;
         std::optional<NpcSenses> senses;
         std::string machine;

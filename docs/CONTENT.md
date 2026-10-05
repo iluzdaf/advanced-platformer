@@ -73,35 +73,35 @@ inside the atlas.
 {
   "tileLegend": { ".": "empty", "#": "stone" },
   "map": ["........", "########"],
-  "playerSpawnCell": [1, 0],
-  "actors": [{ "id": "zombie_1", "definition": "zombie", "spawnCell": [2, 0] }],
-  "pickups": [{ "id": "medicine_1", "definition": "medicine_box", "spawnCell": [4, 0] }],
-  "exit": { "definition": "bunker_door", "spawnCell": [6, 0], "nextLevel": 2 }
+  "playerSpawn": { "cell": [1, 0] },
+  "actors": [{ "id": "zombie_1", "definition": "zombie", "spawn": { "cell": [2, 0] } }],
+  "pickups": [{ "id": "medicine_1", "definition": "medicine_box", "spawn": { "cell": [4, 0] } }],
+  "exit": { "definition": "bunker_door", "spawn": { "cell": [6, 0] }, "nextLevel": 2 }
 }
 ```
 
-| Field                                  | Required | Meaning                                                         |
-| -------------------------------------- | -------- | --------------------------------------------------------------- |
-| `tileLegend`                           | Yes      | One-character map symbols to tile names in `tiles.json`.        |
-| `map`                                  | Yes      | Rows of equal, nonzero length. Every symbol is in `tileLegend`. |
-| `playerSpawnCell` or `playerSpawnFeet` | Yes      | Where the player starts.                                        |
-| `actors`                               | No       | Actor placements.                                               |
-| `pickups`                              | No       | Pickup placements.                                              |
-| `exit`                                 | Yes      | The exit placement. Without `nextLevel`, it completes the game. |
+| Field         | Required | Meaning                                                         |
+| ------------- | -------- | --------------------------------------------------------------- |
+| `tileLegend`  | Yes      | One-character map symbols to tile names in `tiles.json`.        |
+| `map`         | Yes      | Rows of equal, nonzero length. Every symbol is in `tileLegend`. |
+| `playerSpawn` | Yes      | Where the player starts.                                        |
+| `actors`      | No       | Actor placements.                                               |
+| `pickups`     | No       | Pickup placements.                                              |
+| `exit`        | Yes      | The exit placement. Without `nextLevel`, it completes the game. |
 
 ### Positions
 
 Coordinates start at the top-left, with Y pointing down. A cell is `[column, row]`.
-Each position is given one way: `…Cell` puts an object's feet at the bottom centre of
-that cell, and `…Feet` gives that point in world pixels.
+A position is an object with one key: `cell`, which puts an object's feet at the bottom
+centre of that cell, or `feet`, that point in world pixels.
 
 ### Placements
 
-| Placement | Fields                                                                                                                                                               |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Actor     | `id`; `definition` from `actors.json`; `spawnCell` or `spawnFeet`; optional `patrol` with `firstCell`/`firstFeet` and `secondCell`/`secondFeet`, absolute positions. |
-| Pickup    | `id`; `definition` from `pickups.json`; `spawnCell` or `spawnFeet`.                                                                                                  |
-| Exit      | `definition` from `exits.json`; `spawnCell` or `spawnFeet`; optional `requirement` (`item`, positive `quantity`), `consumeItem` (default `false`), `nextLevel`.      |
+| Placement | Fields                                                                                                                                       |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Actor     | `id`; `definition` from `actors.json`; `spawn`; optional `patrol` with `first` and `second`, absolute positions.                             |
+| Pickup    | `id`; `definition` from `pickups.json`; `spawn`.                                                                                             |
+| Exit      | `definition` from `exits.json`; `spawn`; optional `requirement` (`item`, positive `quantity`), `consumeItem` (default `false`), `nextLevel`. |
 
 An `id` names one actor or pickup placement. It is nonempty and unique among the
 level's actors and pickups.
@@ -136,7 +136,7 @@ jump heights are tuned for 16-pixel tiles.
       "health": 3,
       "inventorySlots": 6,
       "animations": "player",
-      "platformer": {}
+      "movement": { "platformer": {} }
     },
     "bat": {
       "bodySize": [12, 8],
@@ -144,10 +144,10 @@ jump heights are tuned for 16-pixel tiles.
       "health": 1,
       "animations": "bat",
       "spriteAnchor": "center",
-      "flying": { "speed": 40 },
+      "movement": { "flying": { "speed": 40 } },
       "senses": { "noticeDistance": 60 },
       "machine": "pursuer",
-      "bite": {}
+      "primaryAttack": { "bite": {} }
     }
   }
 }
@@ -156,35 +156,36 @@ jump heights are tuned for 16-pixel tiles.
 `player` names the player's definition, which needs `health` and `inventorySlots` and
 no `senses`.
 
-| Field             | Meaning                                                                                                           |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `bodySize`        | Required. The collider.                                                                                           |
-| `team`            | `player`, `enemy` or `neutral` (default). Attacks need a non-neutral team.                                        |
-| `facing`          | `left` or `right` (default).                                                                                      |
-| `animations`      | A set in `animations.json`.                                                                                       |
-| `spriteAnchor`    | `feet` (default) or `center`.                                                                                     |
-| `health`          | Positive.                                                                                                         |
-| `inventorySlots`  | Positive.                                                                                                         |
-| `platformer`      | Walking and jumping. Exactly one of `platformer` and `flying`.                                                    |
-| `flying`          | Flying.                                                                                                           |
-| `surfaceClimb`    | Climbing walls and ceilings. Needs `platformer`.                                                                  |
-| `senses`          | Makes the actor an NPC. Needs `machine`.                                                                          |
-| `machine`         | A machine in `machines.json`. Needs `senses`.                                                                     |
-| `primaryAttack`   | An attack, by `kind`: `bite`, `ranged`, `contact` or `pounce`. Pressed by the left mouse button or a script.      |
-| `secondaryAttack` | A second attack, the same way. Pressed by the right mouse button or a script. At most one of the two is a pounce. |
+| Field             | Meaning                                                                                                                   |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `bodySize`        | Required. The collider.                                                                                                   |
+| `team`            | `player`, `enemy` or `neutral` (default). Attacks need a non-neutral team.                                                |
+| `facing`          | `left` or `right` (default).                                                                                              |
+| `animations`      | A set in `animations.json`.                                                                                               |
+| `spriteAnchor`    | `feet` (default) or `center`.                                                                                             |
+| `health`          | Positive.                                                                                                                 |
+| `inventorySlots`  | Positive.                                                                                                                 |
+| `movement`        | Required. An object with one key: `platformer`, walking and jumping, or `flying`.                                         |
+| `surfaceClimb`    | Climbing walls and ceilings. Needs platformer movement.                                                                   |
+| `senses`          | Makes the actor an NPC. Needs `machine`.                                                                                  |
+| `machine`         | A machine in `machines.json`. Needs `senses`.                                                                             |
+| `primaryAttack`   | An attack: an object with one key, `bite`, `ranged`, `contact` or `pounce`. Pressed by the left mouse button or a script. |
+| `secondaryAttack` | A second attack, the same way. Pressed by the right mouse button or a script. At most one of the two is a pounce.         |
 
 A component object may leave out any field to keep its default, so `{}` is all defaults.
+Where a field takes one of several forms, as `movement`, the attacks and positions do, the
+key names the form and its value is that form's object.
 
-| Component        | Fields (default)                                                                                                                                                                                                                   |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `platformer`     | `maximumSpeed` (100), `groundAcceleration` (800), `airAcceleration` (400), `groundDeceleration` (1000), `jumpSpeed` (240), `gravity`, `jumpReleaseGravity`, `maximumFallSpeed`, `coyoteDuration` (0.1), `jumpBufferDuration` (0.1) |
-| `flying`         | `speed` (60)                                                                                                                                                                                                                       |
-| `surfaceClimb`   | `speed` (60)                                                                                                                                                                                                                       |
-| `senses`         | `noticeDistance` (96), `targetMemoryDuration` (1.5), `searchDuration` (2), `standoffDistance` (48)                                                                                                                                 |
-| attack `bite`    | `damage` (1), `hitboxSize` ([10, 8]), `reach` (4), `windupDuration` (0.12), `activeDuration` (0.08), `recoveryDuration` (0.3)                                                                                                      |
-| attack `ranged`  | `damage` (1), `projectileSize` ([4, 2]), `projectileSpeed` (180), `projectileLifetime` (2), `shootDuration` (0.15), `recoveryDuration` (0.2), `breaksTiles` (false), `sprite`                                                      |
-| attack `contact` | `damage` (1), `knockback` (none): `speed` (150), `lift` (120), the push away from the attacker and the lift, in pixels per second. Damages while held.                                                                             |
-| attack `pounce`  | `damage` (1), `knockback` (none), `speed` (200), `lift` (120), `range` (64), `recoveryDuration` (0.5). Needs `platformer`; damages while in the air.                                                                               |
+| Component        | Fields (default)                                                                                                                                                                                                                                      |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `platformer`     | `maximumSpeed` (100), `groundAcceleration` (800), `airAcceleration` (400), `groundDeceleration` (1000), `jumpSpeed` (240), `gravity` (800), `jumpReleaseGravity` (1600), `maximumFallSpeed` (600), `coyoteDuration` (0.1), `jumpBufferDuration` (0.1) |
+| `flying`         | `speed` (60)                                                                                                                                                                                                                                          |
+| `surfaceClimb`   | `speed` (60)                                                                                                                                                                                                                                          |
+| `senses`         | `noticeDistance` (96), `targetMemoryDuration` (1.5), `searchDuration` (2), `standoffDistance` (48)                                                                                                                                                    |
+| attack `bite`    | `damage` (1), `hitboxSize` ([10, 8]), `reach` (4), `windupDuration` (0.12), `activeDuration` (0.08), `recoveryDuration` (0.3)                                                                                                                         |
+| attack `ranged`  | `damage` (1), `projectileSize` ([4, 2]), `projectileSpeed` (180), `projectileLifetime` (2), `shootDuration` (0.15), `recoveryDuration` (0.2), `breaksTiles` (false), `sprite`                                                                         |
+| attack `contact` | `damage` (1), `knockback` (none): `speed` (150), `lift` (120), the push away from the attacker and the lift, in pixels per second. Damages while held.                                                                                                |
+| attack `pounce`  | `damage` (1), `knockback` (none), `speed` (200), `lift` (120), `range` (64), `recoveryDuration` (0.5). Needs `platformer`; damages while in the air.                                                                                                  |
 
 A `sprite`, here and for items, pickups and exits, has `position` and `size`, the atlas
 region, and `anchor`, `feet` (default) or `center`. A sprite draws at its region's size:

@@ -22,23 +22,18 @@
 
 #include "advanced_platformer/inventory/item.hpp"
 
-template <>
-struct glz::from<glz::JSON, advanced_platformer::ItemEffect>
-    : advanced_platformer::NamedEnumReader<advanced_platformer::ItemEffect>
+template <> struct glz::meta<advanced_platformer::ItemEffect>
 {
+    // NOLINTNEXTLINE(readability-identifier-naming)
+    static constexpr std::array keys{"none", "heal"};
+    // NOLINTNEXTLINE(readability-identifier-naming)
+    static constexpr std::array value{
+        advanced_platformer::ItemEffect::None,
+        advanced_platformer::ItemEffect::Heal};
 };
 
 namespace advanced_platformer
 {
-    template <> struct ContentNames<ItemEffect>
-    {
-        static constexpr std::array Names{
-            std::pair{std::string_view{"none"}, ItemEffect::None},
-            std::pair{std::string_view{"heal"}, ItemEffect::Heal}};
-    };
-
-    // items.json as written: its member names are the file's keys. Glaze reflects only types
-    // with linkage, so these cannot go in an anonymous namespace.
     struct ItemJson
     {
         std::string name;
@@ -89,7 +84,6 @@ namespace advanced_platformer
         for (const auto& [key, json] : file.items)
         {
             ItemDefinition item;
-            // Assign deterministic session-local IDs in key order; new names can shift them.
             item.id = static_cast<ItemId>(catalog.definitions.size() + 1);
             item.name = json.name;
             item.icon = spriteFrom(json.icon);

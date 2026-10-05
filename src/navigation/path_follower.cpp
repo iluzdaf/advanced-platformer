@@ -271,7 +271,7 @@ namespace advanced_platformer
         float deltaTime)
     {
         requireSeconds(deltaTime, "Flying path following time step");
-        if (!isFiniteNonNegative(movement.speed))
+        if (!isFiniteNonNegative(movement.config.speed))
         {
             throw std::invalid_argument(
                 "Flying path following requires a finite, non-negative speed");
@@ -280,7 +280,7 @@ namespace advanced_platformer
         {
             return {};
         }
-        const float maximumMovement = movement.speed * deltaTime;
+        const float maximumMovement = movement.config.speed * deltaTime;
         if (!std::isfinite(maximumMovement))
         {
             throw std::invalid_argument("Flying path movement must be finite");

@@ -143,7 +143,7 @@ namespace tests
 
         ActorBuilder flying(float speed) &&
         {
-            built.flyingMovement = advanced_platformer::FlyingMovement{speed};
+            built.flyingMovement = advanced_platformer::FlyingMovement{{speed}};
             return ActorBuilder(std::move(built));
         }
 

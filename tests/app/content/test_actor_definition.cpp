@@ -23,9 +23,9 @@ TEST_CASE("Ranged definitions create fresh weapons with runtime texture IDs", "[
     const auto catalog = advanced_platformer::parseActorCatalog(
         R"({
       "player":"hero", "actors":{"hero":{"bodySize":[12,20],"health":4,"inventorySlots":2,
-      "platformer":{}, "team":"player", "primaryAttack":{"kind":"ranged","damage":2,"projectileSize":[3,2],
+      "movement":{"platformer":{}}, "team":"player", "primaryAttack":{"ranged":{"damage":2,"projectileSize":[3,2],
       "projectileSpeed":120,"projectileLifetime":0.6,"shootDuration":0.2,"recoveryDuration":0.8,
-      "sprite": {"position": [4,8], "size": [8,4]}}}}})",
+      "sprite": {"position": [4,8], "size": [8,4]}}}}}})",
         "weapons",
         {});
     auto definition = advanced_platformer::actorDefinition(catalog, "hero");
@@ -58,8 +58,8 @@ TEST_CASE("Contact damage definitions compose fresh independent state", "[app][a
 {
     const auto catalog = advanced_platformer::parseActorCatalog(
         R"({"player":"runner","actors":{"runner":{"bodySize":[12,12],"team":"player",
-             "health":3,"inventorySlots":1,"platformer":{},
-             "primaryAttack":{"kind":"contact","damage":2}}}})",
+             "health":3,"inventorySlots":1,"movement":{"platformer":{}},
+             "primaryAttack":{"contact":{"damage":2}}}}})",
         "contact damage",
         {});
     auto definition = advanced_platformer::actorDefinition(catalog, "runner");
@@ -86,16 +86,16 @@ TEST_CASE("Contact damage knockback is read with defaults and validated", "[app]
     {
         const auto catalog = advanced_platformer::parseActorCatalog(
             std::string(R"({"player":"hero","actors":{"hero":{"bodySize":[12,20],"team":"player",
-                 "health":3,"inventorySlots":1,"platformer":{},
-                 "primaryAttack":{"kind":"contact")") +
-                fields + "}}}}",
+                 "health":3,"inventorySlots":1,"movement":{"platformer":{}},
+                 "primaryAttack":{"contact":{)") +
+                fields + "}}}}}",
             "knockback",
             {});
         return advanced_platformer::composeActor(
             advanced_platformer::actorDefinition(catalog, "hero"), {}, 0);
     };
 
-    advanced_platformer::Actor partlyConfigured = heroWith(R"(,"knockback":{"speed":180})");
+    advanced_platformer::Actor partlyConfigured = heroWith(R"("knockback":{"speed":180})");
     const advanced_platformer::Knockback knockback =
         tests::component<advanced_platformer::ContactDamage>(partlyConfigured)
             .knockback.value_or(advanced_platformer::Knockback{0.0F, 0.0F});
@@ -106,7 +106,7 @@ TEST_CASE("Contact damage knockback is read with defaults and validated", "[app]
     REQUIRE_FALSE(
         tests::component<advanced_platformer::ContactDamage>(plain).knockback.has_value());
 
-    REQUIRE_THROWS_AS(heroWith(R"(,"knockback":{"speed":-1})"), std::invalid_argument);
+    REQUIRE_THROWS_AS(heroWith(R"("knockback":{"speed":-1})"), std::invalid_argument);
 }
 
 TEST_CASE(
@@ -119,12 +119,12 @@ TEST_CASE(
     definition.secondaryAttack = advanced_platformer::ContactDamage{};
     SECTION("Walking with a bite")
     {
-        definition.platformer = advanced_platformer::PlatformerMovementConfig{};
+        definition.movement = advanced_platformer::PlatformerMovementConfig{};
         definition.primaryAttack = advanced_platformer::BiteAttack{};
     }
     SECTION("Flying with a ranged weapon")
     {
-        definition.flying = advanced_platformer::FlyingMovement{};
+        definition.movement = advanced_platformer::FlyingMovementConfig{};
         definition.primaryAttack = advanced_platformer::RangedWeapon{};
     }
     REQUIRE_NOTHROW(advanced_platformer::validateActorDefinition(definition, {}));
@@ -134,8 +134,8 @@ TEST_CASE("Actor composition creates fresh independent runtime state", "[app][ac
 {
     advanced_platformer::ActorDefinition definition;
     definition.bodySize = {12.0F, 20.0F};
-    definition.platformer = advanced_platformer::PlatformerMovementConfig{};
-    definition.platformer.value().maximumSpeed = 42;
+    definition.movement = advanced_platformer::PlatformerMovementConfig{};
+    std::get<advanced_platformer::PlatformerMovementConfig>(definition.movement).maximumSpeed = 42;
     definition.team = advanced_platformer::Team::Enemy;
     definition.senses = advanced_platformer::NpcSenses{70, 2};
     definition.health = 4;
@@ -182,11 +182,7 @@ TEST_CASE("Actor definitions reuse engine component validation", "[app][actors]"
 {
     advanced_platformer::ActorDefinition definition;
     definition.bodySize = {12.0F, 20.0F};
-    definition.platformer = advanced_platformer::PlatformerMovementConfig{};
-    SECTION("Two movements")
-    {
-        definition.flying = advanced_platformer::FlyingMovement{};
-    }
+    definition.movement = advanced_platformer::PlatformerMovementConfig{};
     SECTION("Invalid body")
     {
         definition.bodySize.x = 0;
@@ -202,7 +198,8 @@ TEST_CASE("Actor definitions reuse engine component validation", "[app][actors]"
     }
     SECTION("Negative movement")
     {
-        definition.platformer.value().maximumSpeed = -1;
+        std::get<advanced_platformer::PlatformerMovementConfig>(definition.movement).maximumSpeed =
+            -1;
     }
     SECTION("Invalid inventory")
     {

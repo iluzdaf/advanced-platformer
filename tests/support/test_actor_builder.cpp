@@ -66,7 +66,7 @@ TEST_CASE("The actor builder gives exactly one movement component", "[support][a
 
     REQUIRE(platformer.platformerMovement.has_value());
     REQUIRE_FALSE(platformer.flyingMovement.has_value());
-    REQUIRE(tests::component<advanced_platformer::FlyingMovement>(flyer).speed == 40.0F);
+    REQUIRE(tests::component<advanced_platformer::FlyingMovement>(flyer).config.speed == 40.0F);
     REQUIRE_FALSE(flyer.platformerMovement.has_value());
 }
 
