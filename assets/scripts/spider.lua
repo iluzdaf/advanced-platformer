@@ -37,18 +37,17 @@ return {
                 return { routeTo = target, aimAt = target }
             end,
         },
-        pounce = {
+        attack = {
             update = function(self, snapshot)
-                if snapshot.facts.pounceReady then
+                if snapshot.facts.primaryReady then
                     return {
                         clearRoute = true,
                         aimAt = snapshot.targetCenter or snapshot.lastKnownTargetFeet,
-                        pounce = true,
-                        contactDamage = true,
+                        primaryAttackPressed = true,
                     }
                 end
 
-                return { contactDamage = snapshot.facts.pouncing, climbGrip = "hold" }
+                return { climbGrip = "hold" }
             end,
         },
     },

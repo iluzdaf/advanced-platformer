@@ -7,6 +7,7 @@
 #include <glm/vec2.hpp>
 
 #include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_attacks.hpp"
 #include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
@@ -21,13 +22,9 @@ namespace advanced_platformer
 {
     namespace
     {
-        // The shares of a body's area in cover between which it fades: shown fully up to the
-        // first, hidden from the second. With the game's 16-pixel tiles, a 12 by 20 actor
-        // standing in one row of grass is 0.8 in cover, so it must be hidden by then.
         constexpr float ShownUpToCover = 0.5F;
         constexpr float HiddenFromCover = 0.75F;
 
-        // The share of the body's area over tiles that block sight, from 0 to 1.
         float fractionInCover(const TileMap& map, const Aabb& bounds)
         {
             const float area = bounds.size.x * bounds.size.y;
@@ -59,9 +56,6 @@ namespace advanced_platformer
             return std::min(coveredArea / area, 1.0F);
         }
 
-        // How visible the target is to the viewer, from 1 for fully visible to 0 for hidden.
-        // The viewer sees fully whatever it has a line of sight to; otherwise cover decides.
-        // Walls alone never hide a target in the open. Without a viewer, cover alone decides.
         float visibility(const TileMap& map, std::optional<glm::vec2> viewer, const Aabb& target)
         {
             const float covered = fractionInCover(map, target);
@@ -79,16 +73,15 @@ namespace advanced_platformer
 
         bool firedWithinRevealWindow(const World& world, const Actor& player)
         {
-            if (!player.rangedWeapon.has_value())
+            const RangedWeapon* weapon = findAttack<RangedWeapon>(player);
+            if (weapon == nullptr)
             {
                 return false;
             }
-            const std::optional<float> sinceShot =
-                world.secondsSince(player.rangedWeapon->lastFiredTimeSeconds);
+            const std::optional<float> sinceShot = world.secondsSince(weapon->lastFiredTimeSeconds);
             return sinceShot.has_value() && *sinceShot < ShotRevealSeconds;
         }
 
-        // What the latest senses update decided: whether any NPC sees the player now.
         bool playerSeenByAnyNpc(const World& world)
         {
             for (const Actor& actor : world.actors())

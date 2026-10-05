@@ -175,12 +175,12 @@ TEST_CASE("Actors have independent playback of shared animation definitions", "[
     auto first = advanced_platformer::composeActor(definition, animations, 7);
     auto second = advanced_platformer::composeActor(definition, animations, 7);
     advanced_platformer::updateAnimation(
-        tests::animator(first),
-        tests::sprite(first),
+        tests::component<advanced_platformer::Animator>(first),
+        tests::component<advanced_platformer::Sprite>(first),
         advanced_platformer::AnimationName::Idle,
         0.1F);
-    REQUIRE(tests::animator(first).elapsed == 0.1F);
-    REQUIRE(tests::animator(second).elapsed == 0);
-    REQUIRE(tests::sprite(first).textureId == 7);
-    REQUIRE(tests::sprite(first).region.size == glm::vec2{8, 12});
+    REQUIRE(tests::component<advanced_platformer::Animator>(first).elapsed == 0.1F);
+    REQUIRE(tests::component<advanced_platformer::Animator>(second).elapsed == 0);
+    REQUIRE(tests::component<advanced_platformer::Sprite>(first).textureId == 7);
+    REQUIRE(tests::component<advanced_platformer::Sprite>(first).region.size == glm::vec2{8, 12});
 }

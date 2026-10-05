@@ -32,6 +32,8 @@ TEST_CASE(
 
     advanced_platformer::updateWorldPresentation(map, world, 0.0F);
 
-    REQUIRE(tests::animator(world, npc).current == advanced_platformer::AnimationName::Idle);
+    REQUIRE(
+        tests::component<advanced_platformer::Animator>(world, npc).current ==
+        advanced_platformer::AnimationName::Idle);
     REQUIRE(tests::actor(world, npc).screenVisibility == 0.0F);
 }

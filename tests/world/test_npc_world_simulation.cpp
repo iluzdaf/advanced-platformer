@@ -50,7 +50,7 @@ TEST_CASE("World simulation senses decides and moves an NPC in one update", "[wo
                                          .flying(60.0F)
                                          .withHealth(3, 3)
                                          .onTeam(advanced_platformer::Team::Enemy)
-                                         .biting()
+                                         .withPrimary(advanced_platformer::BiteAttack{})
                                          .thinking({96.0F, 1.0F})
                                          .running(tests::pursuerMachine());
     const advanced_platformer::ActorId npcId = world.addActor(npc);
@@ -58,9 +58,13 @@ TEST_CASE("World simulation senses decides and moves an NPC in one update", "[wo
     advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
 
     advanced_platformer::Actor& storedNpc = tests::actor(world, npcId);
-    const advanced_platformer::NpcBrain& brain = tests::brain(storedNpc);
+    const advanced_platformer::NpcBrain& brain =
+        tests::component<advanced_platformer::NpcBrain>(storedNpc);
     REQUIRE(brain.target == playerId);
-    REQUIRE(advanced_platformer::activeNpcMachineState(tests::machine(storedNpc)).name == "chase");
+    REQUIRE(
+        advanced_platformer::activeNpcMachineState(
+            tests::component<advanced_platformer::NpcMachine>(storedNpc))
+            .name == "chase");
     REQUIRE(storedNpc.body.bounds.topLeft.x > 16.0F);
 }
 
@@ -83,7 +87,7 @@ TEST_CASE("World simulation lets a ranged NPC shoot a visible player", "[world][
                                          .flying(60.0F)
                                          .withHealth(3, 3)
                                          .onTeam(advanced_platformer::Team::Enemy)
-                                         .shooting()
+                                         .withPrimary(advanced_platformer::RangedWeapon{})
                                          .thinking({96.0F, 1.0F})
                                          .running(tests::pursuerMachine());
     const advanced_platformer::ActorId npcId = world.addActor(npc);
@@ -111,7 +115,7 @@ TEST_CASE("World simulation lets an NPC hear a shot on the next update", "[world
                                             .platforming()
                                             .withHealth(3, 3)
                                             .onTeam(advanced_platformer::Team::Player)
-                                            .shooting();
+                                            .withPrimary(advanced_platformer::RangedWeapon{});
     player.intentions.aimDirection = {1.0F, 0.0F};
     player.intentions.primaryAttackPressed = true;
     const advanced_platformer::ActorId playerId = tests::addPlayer(world, player);
@@ -129,16 +133,18 @@ TEST_CASE("World simulation lets an NPC hear a shot on the next update", "[world
     advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
     REQUIRE(world.projectiles().size() == 1);
     advanced_platformer::Actor& storedNpc = tests::actor(world, npcId);
-    REQUIRE_FALSE(tests::brain(storedNpc).target.has_value());
+    REQUIRE_FALSE(tests::component<advanced_platformer::NpcBrain>(storedNpc).target.has_value());
 
     advanced_platformer::Actor& storedPlayer = tests::actor(world, playerId);
     storedPlayer.intentions.primaryAttackPressed = false;
     advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
 
-    REQUIRE(tests::brain(world, npcId).target == playerId);
-    REQUIRE_FALSE(tests::perception(world, npcId).targetVisible);
+    REQUIRE(tests::component<advanced_platformer::NpcBrain>(world, npcId).target == playerId);
+    REQUIRE_FALSE(tests::component<advanced_platformer::NpcPerception>(world, npcId).targetVisible);
     REQUIRE(
-        advanced_platformer::activeNpcMachineState(tests::machine(world, npcId)).name == "chase");
+        advanced_platformer::activeNpcMachineState(
+            tests::component<advanced_platformer::NpcMachine>(world, npcId))
+            .name == "chase");
 }
 
 TEST_CASE("World simulation continuously patrols a ground NPC", "[world][simulation]")
@@ -159,7 +165,7 @@ TEST_CASE("World simulation continuously patrols a ground NPC", "[world][simulat
                                          .patrolling(lowerFeet, upperFeet)
                                          .thinking({})
                                          .running(tests::pursuerMachine());
-    tests::platformerMovement(npc).grounded = true;
+    tests::component<advanced_platformer::PlatformerMovement>(npc).grounded = true;
     const advanced_platformer::ActorId npcId = world.addActor(npc);
 
     bool enteredPatrol = false;
@@ -174,14 +180,16 @@ TEST_CASE("World simulation continuously patrols a ground NPC", "[world][simulat
         advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
         advanced_platformer::Actor& storedNpc = tests::actor(world, npcId);
         const advanced_platformer::PlatformerMovement& movement =
-            tests::platformerMovement(storedNpc);
-        const advanced_platformer::Patrol& patrol = tests::patrol(storedNpc);
+            tests::component<advanced_platformer::PlatformerMovement>(storedNpc);
+        const advanced_platformer::Patrol& patrol =
+            tests::component<advanced_platformer::Patrol>(storedNpc);
         const advanced_platformer::Cell cell = advanced_platformer::cellAtFeet(
             tests::TileSize, advanced_platformer::feetOf(storedNpc.body.bounds));
 
         enteredPatrol =
-            enteredPatrol ||
-            advanced_platformer::activeNpcMachineState(tests::machine(storedNpc)).name == "patrol";
+            enteredPatrol || advanced_platformer::activeNpcMachineState(
+                                 tests::component<advanced_platformer::NpcMachine>(storedNpc))
+                                     .name == "patrol";
         wasAirborne = wasAirborne || !movement.grounded;
         reachedUpperEndpoint = reachedUpperEndpoint || (movement.grounded && cell == UpperEndpoint);
         switchedTowardLowerEndpoint =
@@ -226,9 +234,9 @@ TEST_CASE(
                                          .patrolling(firstFeet, secondFeet)
                                          .thinking({})
                                          .running(tests::pursuerMachine());
-    tests::platformerMovement(npc).config.maximumSpeed = 60.0F;
-    tests::platformerMovement(npc).grounded = true;
-    tests::patrol(npc).headingToSecond = false;
+    tests::component<advanced_platformer::PlatformerMovement>(npc).config.maximumSpeed = 60.0F;
+    tests::component<advanced_platformer::PlatformerMovement>(npc).grounded = true;
+    tests::component<advanced_platformer::Patrol>(npc).headingToSecond = false;
     const advanced_platformer::ActorId npcId = world.addActor(npc);
 
     bool becameAirborne = false;
@@ -237,8 +245,11 @@ TEST_CASE(
     {
         advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
         advanced_platformer::Actor& storedNpc = tests::actor(world, npcId);
-        becameAirborne = becameAirborne || !tests::platformerMovement(storedNpc).grounded;
-        completedPatrolLeg = tests::patrol(storedNpc).headingToSecond;
+        becameAirborne =
+            becameAirborne ||
+            !tests::component<advanced_platformer::PlatformerMovement>(storedNpc).grounded;
+        completedPatrolLeg =
+            tests::component<advanced_platformer::Patrol>(storedNpc).headingToSecond;
     }
 
     REQUIRE(completedPatrolLeg);
@@ -282,13 +293,14 @@ TEST_CASE(
                                             .running(tests::pursuerMachine());
     // Preserve the movement that carried it toward the last-known player position.
     zombie.body.velocity.x = 100.0F;
-    tests::platformerMovement(zombie).grounded = true;
-    tests::machine(zombie).active =
-        advanced_platformer::npcMachineStateNamed(tests::machine(zombie).definition, "chase");
-    tests::brain(zombie).target = playerId;
-    tests::brain(zombie).lastKnownTargetFeet = {88.0F, 32.0F};
-    tests::brain(zombie).targetMemoryRemaining = 0.01F;
-    tests::patrol(zombie).headingToSecond = false;
+    tests::component<advanced_platformer::PlatformerMovement>(zombie).grounded = true;
+    tests::component<advanced_platformer::NpcMachine>(zombie).active =
+        advanced_platformer::npcMachineStateNamed(
+            tests::component<advanced_platformer::NpcMachine>(zombie).definition, "chase");
+    tests::component<advanced_platformer::NpcBrain>(zombie).target = playerId;
+    tests::component<advanced_platformer::NpcBrain>(zombie).lastKnownTargetFeet = {88.0F, 32.0F};
+    tests::component<advanced_platformer::NpcBrain>(zombie).targetMemoryRemaining = 0.01F;
+    tests::component<advanced_platformer::Patrol>(zombie).headingToSecond = false;
     const advanced_platformer::ActorId zombieId = world.addActor(zombie);
 
     // Phase 1: Expiring the memory at the edge switches the zombie back to patrol.
@@ -296,8 +308,10 @@ TEST_CASE(
 
     advanced_platformer::Actor& storedZombie = tests::actor(world, zombieId);
     REQUIRE(
-        advanced_platformer::activeNpcMachineState(tests::machine(storedZombie)).name == "patrol");
-    REQUIRE_FALSE(tests::brain(storedZombie).target.has_value());
+        advanced_platformer::activeNpcMachineState(
+            tests::component<advanced_platformer::NpcMachine>(storedZombie))
+            .name == "patrol");
+    REQUIRE_FALSE(tests::component<advanced_platformer::NpcBrain>(storedZombie).target.has_value());
 
     // Phase 2: The resumed patrol carries it back toward the left endpoint.
     for (int tick = 0; tick < 180; ++tick)
@@ -329,7 +343,7 @@ TEST_CASE(
                                             .inCell({2, 3})
                                             .platforming()
                                             .onTeam(advanced_platformer::Team::Player);
-    tests::platformerMovement(player).grounded = true;
+    tests::component<advanced_platformer::PlatformerMovement>(player).grounded = true;
     const advanced_platformer::ActorId playerId = tests::addPlayer(world, player);
 
     advanced_platformer::Actor zombie = tests::ActorBuilder::sized({12.0F, 20.0F})
@@ -338,7 +352,7 @@ TEST_CASE(
                                             .onTeam(advanced_platformer::Team::Enemy)
                                             .thinking({})
                                             .running(tests::pursuerMachine());
-    tests::platformerMovement(zombie).grounded = true;
+    tests::component<advanced_platformer::PlatformerMovement>(zombie).grounded = true;
     const advanced_platformer::ActorId zombieId = world.addActor(zombie);
 
     const auto jumpAndLand = [&]()
@@ -354,26 +368,32 @@ TEST_CASE(
             advanced_platformer::Actor& storedZombie = tests::actor(world, zombieId);
             seenDuringJump =
                 seenDuringJump ||
-                (tests::perception(storedZombie).targetVisible &&
-                 advanced_platformer::activeNpcMachineState(tests::machine(storedZombie)).name ==
-                     "chase");
+                (tests::component<advanced_platformer::NpcPerception>(storedZombie).targetVisible &&
+                 advanced_platformer::activeNpcMachineState(
+                     tests::component<advanced_platformer::NpcMachine>(storedZombie))
+                         .name == "chase");
         }
         return seenDuringJump;
     };
     const auto requireUnseenChase = [&]() -> advanced_platformer::Actor&
     {
         advanced_platformer::Actor& zombie = tests::actor(world, zombieId);
-        REQUIRE_FALSE(tests::perception(zombie).targetVisible);
-        REQUIRE(tests::brain(zombie).target == playerId);
-        REQUIRE(tests::brain(zombie).targetMemoryRemaining > 0.0F);
-        REQUIRE(advanced_platformer::activeNpcMachineState(tests::machine(zombie)).name == "chase");
+        REQUIRE_FALSE(tests::component<advanced_platformer::NpcPerception>(zombie).targetVisible);
+        REQUIRE(tests::component<advanced_platformer::NpcBrain>(zombie).target == playerId);
+        REQUIRE(
+            tests::component<advanced_platformer::NpcBrain>(zombie).targetMemoryRemaining > 0.0F);
+        REQUIRE(
+            advanced_platformer::activeNpcMachineState(
+                tests::component<advanced_platformer::NpcMachine>(zombie))
+                .name == "chase");
         return zombie;
     };
 
     // First the player jumps into view and lands behind the platform's solid edge.
     REQUIRE(jumpAndLand());
     advanced_platformer::Actor& rememberedZombie = requireUnseenChase();
-    const glm::vec2 lastKnownFeet = tests::brain(rememberedZombie).lastKnownTargetFeet;
+    const glm::vec2 lastKnownFeet =
+        tests::component<advanced_platformer::NpcBrain>(rememberedZombie).lastKnownTargetFeet;
     REQUIRE_FALSE(
         advanced_platformer::canStandAt(
             map,
@@ -389,12 +409,15 @@ TEST_CASE(
     {
         CAPTURE(tick);
         advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
-        if (tests::perception(tests::actor(world, zombieId)).targetVisible)
+        if (tests::component<advanced_platformer::NpcPerception>(tests::actor(world, zombieId))
+                .targetVisible)
         {
             break;
         }
         advanced_platformer::Actor& storedZombie = requireUnseenChase();
-        REQUIRE(tests::brain(storedZombie).lastKnownTargetFeet == lastKnownFeet);
+        REQUIRE(
+            tests::component<advanced_platformer::NpcBrain>(storedZombie).lastKnownTargetFeet ==
+            lastKnownFeet);
         distanceToRememberedPosition =
             glm::distance(advanced_platformer::feetOf(storedZombie.body.bounds), lastKnownFeet);
     }
@@ -426,25 +449,25 @@ TEST_CASE(
                                             .atFeet(playerFeet)
                                             .platforming()
                                             .onTeam(advanced_platformer::Team::Player);
-    tests::platformerMovement(player).grounded = true;
+    tests::component<advanced_platformer::PlatformerMovement>(player).grounded = true;
     const advanced_platformer::ActorId playerId = tests::addPlayer(world, player);
 
     advanced_platformer::Actor zombie = tests::ActorBuilder::sized({12.0F, 20.0F})
                                             .inCell({6, 1})
                                             .platforming()
                                             .onTeam(advanced_platformer::Team::Enemy)
-                                            .biting()
+                                            .withPrimary(advanced_platformer::BiteAttack{})
                                             .thinking({})
                                             .running(tests::pursuerMachine());
-    tests::platformerMovement(zombie).grounded = true;
+    tests::component<advanced_platformer::PlatformerMovement>(zombie).grounded = true;
     const advanced_platformer::ActorId zombieId = world.addActor(zombie);
 
     const auto requireVisiblePlayerDistance = [&]()
     {
         advanced_platformer::Actor& storedZombie = tests::actor(world, zombieId);
         advanced_platformer::Actor& storedPlayer = tests::actor(world, playerId);
-        REQUIRE(tests::perception(storedZombie).targetVisible);
-        REQUIRE(tests::platformerMovement(storedPlayer).grounded);
+        REQUIRE(tests::component<advanced_platformer::NpcPerception>(storedZombie).targetVisible);
+        REQUIRE(tests::component<advanced_platformer::PlatformerMovement>(storedPlayer).grounded);
         REQUIRE(advanced_platformer::feetOf(storedPlayer.body.bounds) == playerFeet);
         return glm::distance(advanced_platformer::feetOf(storedZombie.body.bounds), playerFeet);
     };
@@ -452,8 +475,9 @@ TEST_CASE(
     // Establish the visible chase before measuring progress toward the edge.
     advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
     REQUIRE(
-        advanced_platformer::activeNpcMachineState(tests::machine(world, zombieId)).name ==
-        "chase");
+        advanced_platformer::activeNpcMachineState(
+            tests::component<advanced_platformer::NpcMachine>(world, zombieId))
+            .name == "chase");
     const float startingDistance = requireVisiblePlayerDistance();
     constexpr float CloseDistance = 2.0F * tests::TileSize;
     REQUIRE(startingDistance > CloseDistance);
@@ -498,19 +522,25 @@ TEST_CASE(
     {
         advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
         advanced_platformer::Actor& storedBat = tests::actor(world, batId);
-        if (tests::patrol(storedBat).headingToSecond != headingToSecond)
+        if (tests::component<advanced_platformer::Patrol>(storedBat).headingToSecond !=
+            headingToSecond)
         {
             const glm::vec2 expectedFeet = headingToSecond ? upperFeet : lowerFeet;
             const glm::vec2 actualFeet = advanced_platformer::feetOf(storedBat.body.bounds);
             CAPTURE(tick, completedPatrolLegs, actualFeet.x, actualFeet.y);
             REQUIRE(glm::distance(actualFeet, expectedFeet) <= 2.0F);
             ++completedPatrolLegs;
-            headingToSecond = tests::patrol(storedBat).headingToSecond;
+            headingToSecond =
+                tests::component<advanced_platformer::Patrol>(storedBat).headingToSecond;
         }
     }
 
     advanced_platformer::Actor& storedBat = tests::actor(world, batId);
     const glm::vec2 finalFeet = advanced_platformer::feetOf(storedBat.body.bounds);
-    CAPTURE(finalFeet.x, finalFeet.y, tests::pathFollower(storedBat).nextStep, completedPatrolLegs);
+    CAPTURE(
+        finalFeet.x,
+        finalFeet.y,
+        tests::component<advanced_platformer::PathFollower>(storedBat).nextStep,
+        completedPatrolLegs);
     REQUIRE(completedPatrolLegs == 4);
 }

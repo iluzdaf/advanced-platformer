@@ -3,10 +3,12 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <variant>
 
 #include "content/actor_catalog.hpp"
 #include "content/actor_definition.hpp"
 #include "content/machine_catalog.hpp"
+#include "advanced_platformer/inventory/inventory.hpp"
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/combat/combat.hpp"
@@ -21,93 +23,109 @@ TEST_CASE("Ranged definitions create fresh weapons with runtime texture IDs", "[
     const auto catalog = advanced_platformer::parseActorCatalog(
         R"({
       "player":"hero", "actors":{"hero":{"bodySize":[12,20],"health":4,"inventorySlots":2,
-      "platformer":{}, "team":"player", "ranged":{"damage":2,"projectileSize":[3,2],
+      "platformer":{}, "team":"player", "primaryAttack":{"kind":"ranged","damage":2,"projectileSize":[3,2],
       "projectileSpeed":120,"projectileLifetime":0.6,"shootDuration":0.2,"recoveryDuration":0.8,
       "sprite": {"position": [4,8], "size": [8,4]}}}}})",
         "weapons",
         {});
     auto definition = advanced_platformer::actorDefinition(catalog, "hero");
-    if (!definition.ranged)
+    auto* weapon = definition.primaryAttack.has_value()
+                       ? std::get_if<advanced_platformer::RangedWeapon>(&*definition.primaryAttack)
+                       : nullptr;
+    if (weapon == nullptr)
     {
         throw std::logic_error("Weapon was not parsed");
     }
-    definition.ranged->phase = advanced_platformer::RangedPhase::Recovery;
-    definition.ranged->lastFiredTimeSeconds = 3.0;
+    weapon->phase = advanced_platformer::RangedPhase::Recovery;
+    weapon->lastFiredTimeSeconds = 3.0;
     auto actor = advanced_platformer::composeActor(definition, {}, 9);
-    REQUIRE(tests::rangedWeapon(actor).damage == 2);
-    REQUIRE(tests::rangedWeapon(actor).projectileSpeed == 120);
-    REQUIRE(tests::rangedWeapon(actor).projectileSprite.textureId == 9);
-    REQUIRE(tests::rangedWeapon(actor).projectileSprite.region.position.x == 4);
-    REQUIRE(tests::rangedWeapon(actor).phase == advanced_platformer::RangedPhase::Ready);
-    REQUIRE_FALSE(tests::rangedWeapon(actor).lastFiredTimeSeconds.has_value());
+    REQUIRE(tests::component<advanced_platformer::RangedWeapon>(actor).damage == 2);
+    REQUIRE(tests::component<advanced_platformer::RangedWeapon>(actor).projectileSpeed == 120);
+    REQUIRE(
+        tests::component<advanced_platformer::RangedWeapon>(actor).projectileSprite.textureId == 9);
+    REQUIRE(
+        tests::component<advanced_platformer::RangedWeapon>(actor)
+            .projectileSprite.region.position.x == 4);
+    REQUIRE(
+        tests::component<advanced_platformer::RangedWeapon>(actor).phase ==
+        advanced_platformer::RangedPhase::Ready);
+    REQUIRE_FALSE(
+        tests::component<advanced_platformer::RangedWeapon>(actor)
+            .lastFiredTimeSeconds.has_value());
 }
 
 TEST_CASE("Contact damage definitions compose fresh independent state", "[app][actors][contact]")
 {
     const auto catalog = advanced_platformer::parseActorCatalog(
         R"({"player":"runner","actors":{"runner":{"bodySize":[12,12],"team":"player",
-             "health":3,"inventorySlots":1,"platformer":{},"contactDamage":{"damage":2}}}})",
+             "health":3,"inventorySlots":1,"platformer":{},
+             "primaryAttack":{"kind":"contact","damage":2}}}})",
         "contact damage",
         {});
     auto definition = advanced_platformer::actorDefinition(catalog, "runner");
-    if (!definition.contactDamage.has_value())
+    auto* contactDamage =
+        definition.primaryAttack.has_value()
+            ? std::get_if<advanced_platformer::ContactDamage>(&*definition.primaryAttack)
+            : nullptr;
+    if (contactDamage == nullptr)
     {
         throw std::logic_error("Contact damage was not parsed");
     }
-    auto& contactDamage = *definition.contactDamage;
-    contactDamage.active = true;
-    contactDamage.actorsHit.push_back(advanced_platformer::ActorId{7});
+    contactDamage->active = true;
+    contactDamage->actorsHit.push_back(advanced_platformer::ActorId{7});
 
     auto composed = advanced_platformer::composeActor(definition, {}, 0);
-    REQUIRE(tests::contactDamage(composed).damage == 2);
-    REQUIRE_FALSE(tests::contactDamage(composed).active);
-    REQUIRE(tests::contactDamage(composed).actorsHit.empty());
+    REQUIRE(tests::component<advanced_platformer::ContactDamage>(composed).damage == 2);
+    REQUIRE_FALSE(tests::component<advanced_platformer::ContactDamage>(composed).active);
+    REQUIRE(tests::component<advanced_platformer::ContactDamage>(composed).actorsHit.empty());
 }
 
 TEST_CASE("Contact damage knockback is read with defaults and validated", "[app][actors][contact]")
 {
-    const auto heroWith = [](const char* contactDamage)
+    const auto heroWith = [](const char* fields)
     {
         const auto catalog = advanced_platformer::parseActorCatalog(
             std::string(R"({"player":"hero","actors":{"hero":{"bodySize":[12,20],"team":"player",
-                 "health":3,"inventorySlots":1,"platformer":{},"contactDamage":)") +
-                contactDamage + "}}}",
+                 "health":3,"inventorySlots":1,"platformer":{},
+                 "primaryAttack":{"kind":"contact")") +
+                fields + "}}}}",
             "knockback",
             {});
         return advanced_platformer::composeActor(
             advanced_platformer::actorDefinition(catalog, "hero"), {}, 0);
     };
 
-    advanced_platformer::Actor partlyConfigured = heroWith(R"({"knockback":{"speed":180}})");
+    advanced_platformer::Actor partlyConfigured = heroWith(R"(,"knockback":{"speed":180})");
     const advanced_platformer::Knockback knockback =
-        tests::contactDamage(partlyConfigured)
+        tests::component<advanced_platformer::ContactDamage>(partlyConfigured)
             .knockback.value_or(advanced_platformer::Knockback{0.0F, 0.0F});
     REQUIRE(knockback.speed == 180.0F);
     REQUIRE(knockback.lift == 120.0F);
 
-    advanced_platformer::Actor plain = heroWith("{}");
-    REQUIRE_FALSE(tests::contactDamage(plain).knockback.has_value());
+    advanced_platformer::Actor plain = heroWith("");
+    REQUIRE_FALSE(
+        tests::component<advanced_platformer::ContactDamage>(plain).knockback.has_value());
 
-    REQUIRE_THROWS_AS(heroWith(R"({"knockback":{"speed":-1}})"), std::invalid_argument);
+    REQUIRE_THROWS_AS(heroWith(R"(,"knockback":{"speed":-1})"), std::invalid_argument);
 }
 
 TEST_CASE(
-    "Contact damage coexists with primary attacks and either movement",
+    "Contact damage shares an actor with another attack and either movement",
     "[app][actors][contact]")
 {
     advanced_platformer::ActorDefinition definition;
     definition.bodySize = {12.0F, 12.0F};
     definition.team = advanced_platformer::Team::Enemy;
-    definition.contactDamage = advanced_platformer::ContactDamage{};
+    definition.secondaryAttack = advanced_platformer::ContactDamage{};
     SECTION("Walking with a bite")
     {
         definition.platformer = advanced_platformer::PlatformerMovementConfig{};
-        definition.bite = advanced_platformer::BiteAttack{};
+        definition.primaryAttack = advanced_platformer::BiteAttack{};
     }
     SECTION("Flying with a ranged weapon")
     {
         definition.flying = advanced_platformer::FlyingMovement{};
-        definition.ranged = advanced_platformer::RangedWeapon{};
+        definition.primaryAttack = advanced_platformer::RangedWeapon{};
     }
     REQUIRE_NOTHROW(advanced_platformer::validateActorDefinition(definition, {}));
 }
@@ -122,9 +140,10 @@ TEST_CASE("Actor composition creates fresh independent runtime state", "[app][ac
     definition.senses = advanced_platformer::NpcSenses{70, 2};
     definition.health = 4;
     definition.inventorySlots = 2;
-    definition.bite = advanced_platformer::BiteAttack{};
-    definition.bite.value().phase = advanced_platformer::BitePhase::Recovery;
-    definition.bite.value().phaseTimeRemaining = 10;
+    advanced_platformer::BiteAttack usedBite;
+    usedBite.phase = advanced_platformer::BitePhase::Recovery;
+    usedBite.phaseTimeRemaining = 10;
+    definition.primaryAttack = usedBite;
     definition.machine = "test_machine";
     const auto machines =
         advanced_platformer::loadMachineCatalog("tests/fixtures/catalogs/machines.json");
@@ -137,23 +156,26 @@ TEST_CASE("Actor composition creates fresh independent runtime state", "[app][ac
         machines);
     auto second =
         advanced_platformer::composeActor(definition, {}, 0, {40, 32}, std::nullopt, machines);
-    REQUIRE(tests::platformerMovement(first).config.maximumSpeed == 42);
+    REQUIRE(
+        tests::component<advanced_platformer::PlatformerMovement>(first).config.maximumSpeed == 42);
     REQUIRE(advanced_platformer::feetOf(first.body.bounds).x == 24);
     REQUIRE(first.brain.has_value());
-    REQUIRE_FALSE(tests::perception(first).targetVisible);
-    REQUIRE_FALSE(tests::perception(first).heardLanding);
-    tests::perception(first).targetVisible = true;
-    tests::perception(first).heardLanding = true;
-    REQUIRE_FALSE(tests::perception(second).targetVisible);
-    REQUIRE_FALSE(tests::perception(second).heardLanding);
+    REQUIRE_FALSE(tests::component<advanced_platformer::NpcPerception>(first).targetVisible);
+    REQUIRE_FALSE(tests::component<advanced_platformer::NpcPerception>(first).heardLanding);
+    tests::component<advanced_platformer::NpcPerception>(first).targetVisible = true;
+    tests::component<advanced_platformer::NpcPerception>(first).heardLanding = true;
+    REQUIRE_FALSE(tests::component<advanced_platformer::NpcPerception>(second).targetVisible);
+    REQUIRE_FALSE(tests::component<advanced_platformer::NpcPerception>(second).heardLanding);
     REQUIRE(first.pathFollower.has_value());
     REQUIRE(first.patrol.has_value());
     REQUIRE_FALSE(second.patrol.has_value());
-    REQUIRE(tests::bite(first).phase == advanced_platformer::BitePhase::Ready);
-    REQUIRE(tests::bite(first).phaseTimeRemaining == 0);
-    tests::health(second).current = 1;
-    REQUIRE(tests::health(first).current == 4);
-    REQUIRE(tests::inventory(first).slots().size() == 2);
+    REQUIRE(
+        tests::component<advanced_platformer::BiteAttack>(first).phase ==
+        advanced_platformer::BitePhase::Ready);
+    REQUIRE(tests::component<advanced_platformer::BiteAttack>(first).phaseTimeRemaining == 0);
+    tests::component<advanced_platformer::Health>(second).current = 1;
+    REQUIRE(tests::component<advanced_platformer::Health>(first).current == 4);
+    REQUIRE(tests::component<advanced_platformer::Inventory>(first).slots().size() == 2);
 }
 
 TEST_CASE("Actor definitions reuse engine component validation", "[app][actors]")
@@ -188,17 +210,16 @@ TEST_CASE("Actor definitions reuse engine component validation", "[app][actors]"
     }
     SECTION("Neutral attacker")
     {
-        definition.bite = advanced_platformer::BiteAttack{};
+        definition.primaryAttack = advanced_platformer::BiteAttack{};
     }
     SECTION("Invalid contact damage")
     {
         definition.team = advanced_platformer::Team::Enemy;
-        definition.contactDamage = advanced_platformer::ContactDamage{};
-        definition.contactDamage->damage = 0;
+        definition.primaryAttack = advanced_platformer::ContactDamage{.damage = 0};
     }
     SECTION("Neutral contact damage")
     {
-        definition.contactDamage = advanced_platformer::ContactDamage{};
+        definition.primaryAttack = advanced_platformer::ContactDamage{};
     }
     SECTION("Senses without a machine")
     {

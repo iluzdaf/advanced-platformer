@@ -89,7 +89,8 @@ ctest --preset mac-debug -R "Pickup" --output-on-failure
 | Move                                                | A and D, or the left and right arrow keys |
 | Jump                                                | W, Up, or Space                           |
 | Aim                                                 | Mouse                                     |
-| Fire                                                | Left mouse button                         |
+| Primary attack                                      | Left mouse button                         |
+| Secondary attack                                    | Right mouse button                        |
 | Collect an item                                     | Walk over it                              |
 | Open or close the inventory (pauses the game)       | Q, or click the bag at the bottom-left    |
 | Drink a health potion                               | Click it in the open inventory            |

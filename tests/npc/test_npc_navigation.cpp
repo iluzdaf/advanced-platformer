@@ -72,7 +72,7 @@ TEST_CASE("A climbing NPC patrols over a wall and ceiling", "[npc][navigation][c
                                          .patrolling(first, second)
                                          .thinking({})
                                          .running(tests::pursuerMachine());
-    tests::platformerMovement(npc).grounded = true;
+    tests::component<advanced_platformer::PlatformerMovement>(npc).grounded = true;
     const advanced_platformer::ActorId npcId = world.addActor(npc);
 
     bool climbedCeiling = false;
@@ -81,8 +81,10 @@ TEST_CASE("A climbing NPC patrols over a wall and ceiling", "[npc][navigation][c
     for (int tick = 0; tick < 4000 && !returnedToFirstFloor; ++tick)
     {
         advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
-        climbedCeiling = climbedCeiling || tests::surfaceClimb(world, npcId).surface ==
-                                               advanced_platformer::ClimbSurface::Ceiling;
+        climbedCeiling =
+            climbedCeiling ||
+            tests::component<advanced_platformer::SurfaceClimb>(world, npcId).surface ==
+                advanced_platformer::ClimbSurface::Ceiling;
         const advanced_platformer::Cell cell = advanced_platformer::cellAtFeet(
             tests::TileSize, advanced_platformer::feetOf(tests::actor(world, npcId).body.bounds));
         reachedSecondFloor = reachedSecondFloor || cell == advanced_platformer::Cell{11, 5};
@@ -112,30 +114,29 @@ TEST_CASE("A climbing NPC holds the ceiling at the end of its patrol", "[npc][na
                                          .patrolling(onFloor, underCeiling)
                                          .thinking({})
                                          .running(tests::pursuerMachine());
-    tests::platformerMovement(npc).grounded = true;
+    tests::component<advanced_platformer::PlatformerMovement>(npc).grounded = true;
     const advanced_platformer::ActorId npcId = world.addActor(npc);
 
     bool reachedCeilingEnd = false;
     for (int tick = 0; tick < 2000 && !reachedCeilingEnd; ++tick)
     {
         advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
-        reachedCeilingEnd = !tests::patrol(world, npcId).headingToSecond;
+        reachedCeilingEnd =
+            !tests::component<advanced_platformer::Patrol>(world, npcId).headingToSecond;
     }
     REQUIRE(reachedCeilingEnd);
     REQUIRE(
-        tests::surfaceClimb(world, npcId).surface == advanced_platformer::ClimbSurface::Ceiling);
+        tests::component<advanced_platformer::SurfaceClimb>(world, npcId).surface ==
+        advanced_platformer::ClimbSurface::Ceiling);
 
     for (int tick = 0; tick < 10; ++tick)
     {
         advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
         REQUIRE(
-            tests::surfaceClimb(world, npcId).surface ==
+            tests::component<advanced_platformer::SurfaceClimb>(world, npcId).surface ==
             advanced_platformer::ClimbSurface::Ceiling);
     }
 }
-
-using tests::brain;
-using tests::pathFollower;
 
 namespace
 {
@@ -170,17 +171,19 @@ TEST_CASE("A walking NPC's search reads the fill's cache and never simulates", "
             .platforming()
             .thinking({64.0F, 1.0F})
             .running(tests::pursuerMachine()));
-    tests::platformerMovement(world, npcId).grounded = true;
-    brain(world, npcId).target = playerId;
-    brain(world, npcId).lastKnownTargetFeet = {8.0F, 32.0F};
-    tests::perception(world, npcId).targetVisible = false;
+    tests::component<advanced_platformer::PlatformerMovement>(world, npcId).grounded = true;
+    tests::component<advanced_platformer::NpcBrain>(world, npcId).target = playerId;
+    tests::component<advanced_platformer::NpcBrain>(world, npcId).lastKnownTargetFeet = {
+        8.0F, 32.0F};
+    tests::component<advanced_platformer::NpcPerception>(world, npcId).targetVisible = false;
     const advanced_platformer::PlatformerConnectionCache& cache = world.platformerConnections();
 
     const advanced_platformer::FrameProfile waiting = profiledNpcUpdate(map, world, scripts);
     REQUIRE(advanced_platformer::frameStatisticCount(waiting, "Path searches") == 1);
     REQUIRE(advanced_platformer::frameStatisticCount(waiting, "Paths deferred") == 1);
     REQUIRE(cache.size() == 0);
-    REQUIRE_FALSE(pathFollower(world, npcId).path.has_value());
+    REQUIRE_FALSE(
+        tests::component<advanced_platformer::PathFollower>(world, npcId).path.has_value());
 
     tests::prepareNavigationCache(map, world);
     const std::size_t cachedAfterFill = cache.size();
@@ -188,7 +191,7 @@ TEST_CASE("A walking NPC's search reads the fill's cache and never simulates", "
     REQUIRE(advanced_platformer::frameStatisticCount(searched, "Path searches") == 1);
     REQUIRE(advanced_platformer::frameStatisticCount(searched, "Paths deferred") == 0);
     REQUIRE(advanced_platformer::frameStatisticCount(searched, "Cells expanded") > 0);
-    REQUIRE(pathFollower(world, npcId).path.has_value());
+    REQUIRE(tests::component<advanced_platformer::PathFollower>(world, npcId).path.has_value());
     REQUIRE(cache.size() == cachedAfterFill);
 }
 
@@ -213,10 +216,11 @@ TEST_CASE("An NPC's search after a break waits for the fill and asks again", "[n
     REQUIRE(world.platformerConnections().cachedConnections({2, 1}, profile) != nullptr);
 
     REQUIRE(map.breakTile({2, 2}));
-    tests::platformerMovement(world, npcId).grounded = true;
-    brain(world, npcId).target = playerId;
-    brain(world, npcId).lastKnownTargetFeet = {72.0F, 32.0F};
-    tests::perception(world, npcId).targetVisible = false;
+    tests::component<advanced_platformer::PlatformerMovement>(world, npcId).grounded = true;
+    tests::component<advanced_platformer::NpcBrain>(world, npcId).target = playerId;
+    tests::component<advanced_platformer::NpcBrain>(world, npcId).lastKnownTargetFeet = {
+        72.0F, 32.0F};
+    tests::component<advanced_platformer::NpcPerception>(world, npcId).targetVisible = false;
     const advanced_platformer::FrameProfile waiting = profiledNpcUpdate(map, world, scripts);
 
     REQUIRE(advanced_platformer::frameStatisticCount(waiting, "Tile breaks applied") == 1);
@@ -226,7 +230,8 @@ TEST_CASE("An NPC's search after a break waits for the fill and asks again", "[n
     REQUIRE(advanced_platformer::frameStatisticCount(waiting, "Path searches") == 1);
     REQUIRE(advanced_platformer::frameStatisticCount(waiting, "Paths deferred") == 1);
     REQUIRE(world.platformerConnections().cellsPending(profile) > 0);
-    REQUIRE_FALSE(pathFollower(world, npcId).path.has_value());
+    REQUIRE_FALSE(
+        tests::component<advanced_platformer::PathFollower>(world, npcId).path.has_value());
 
     int filledTicks = 0;
     const std::size_t pending = world.platformerConnections().cellsPending(profile);
@@ -252,7 +257,7 @@ TEST_CASE("An NPC's search after a break waits for the fill and asks again", "[n
     const advanced_platformer::FrameProfile searched = profiledNpcUpdate(map, world, scripts);
     REQUIRE(advanced_platformer::frameStatisticCount(searched, "Path searches") == 1);
     REQUIRE(advanced_platformer::frameStatisticCount(searched, "Paths deferred") == 0);
-    REQUIRE(pathFollower(world, npcId).path.has_value());
+    REQUIRE(tests::component<advanced_platformer::PathFollower>(world, npcId).path.has_value());
 }
 
 TEST_CASE("An NPC plans its path again after a break", "[npc][navigation]")
@@ -271,13 +276,14 @@ TEST_CASE("An NPC plans its path again after a break", "[npc][navigation]")
             .thinking({64.0F, 1.0F})
             .running(tests::pursuerMachine()));
     tests::prepareNavigationCache(map, world);
-    tests::platformerMovement(world, npcId).grounded = true;
-    brain(world, npcId).target = playerId;
-    brain(world, npcId).lastKnownTargetFeet = {40.0F, 32.0F};
-    tests::perception(world, npcId).targetVisible = false;
+    tests::component<advanced_platformer::PlatformerMovement>(world, npcId).grounded = true;
+    tests::component<advanced_platformer::NpcBrain>(world, npcId).target = playerId;
+    tests::component<advanced_platformer::NpcBrain>(world, npcId).lastKnownTargetFeet = {
+        40.0F, 32.0F};
+    tests::component<advanced_platformer::NpcPerception>(world, npcId).targetVisible = false;
     const advanced_platformer::FrameProfile planned = profiledNpcUpdate(map, world, scripts);
     REQUIRE(advanced_platformer::frameStatisticCount(planned, "Path searches") == 1);
-    REQUIRE(pathFollower(world, npcId).path.has_value());
+    REQUIRE(tests::component<advanced_platformer::PathFollower>(world, npcId).path.has_value());
 
     const advanced_platformer::FrameProfile settled = profiledNpcUpdate(map, world, scripts);
     REQUIRE(advanced_platformer::frameStatisticCount(settled, "Path searches") == 0);
@@ -285,7 +291,8 @@ TEST_CASE("An NPC plans its path again after a break", "[npc][navigation]")
     REQUIRE(map.breakTile({7, 2}));
     const advanced_platformer::FrameProfile broken = profiledNpcUpdate(map, world, scripts);
     REQUIRE(advanced_platformer::frameStatisticCount(broken, "Path searches") == 1);
-    REQUIRE(pathFollower(world, npcId).breaksWhenPlanned == 1);
+    REQUIRE(
+        tests::component<advanced_platformer::PathFollower>(world, npcId).breaksWhenPlanned == 1);
 }
 
 TEST_CASE("An unreachable patrol heads as close as it can without retrying", "[npc][navigation]")
@@ -300,7 +307,8 @@ TEST_CASE("An unreachable patrol heads as close as it can without retrying", "[n
         world.addActor(makeNpc({24.0F, 32.0F}).patrolling({24.0F, 32.0F}, {120.0F, 32.0F}));
 
     advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
-    const advanced_platformer::PathFollower& follower = tests::pathFollower(world, npcId);
+    const advanced_platformer::PathFollower& follower =
+        tests::component<advanced_platformer::PathFollower>(world, npcId);
     REQUIRE(follower.path.has_value());
     const glm::vec2 closest = advanced_platformer::feetInCell(tests::TileSize, {3, 1});
     REQUIRE(
@@ -329,14 +337,15 @@ TEST_CASE("A patrol goal that moves is planned for at once", "[npc][navigation]"
         world.addActor(makeNpc({24.0F, 32.0F}).patrolling({24.0F, 32.0F}, {120.0F, 32.0F}));
 
     advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
-    const advanced_platformer::PathFollower& follower = tests::pathFollower(world, npcId);
+    const advanced_platformer::PathFollower& follower =
+        tests::component<advanced_platformer::PathFollower>(world, npcId);
     REQUIRE(follower.goal == advanced_platformer::feetInCell(tests::TileSize, {7, 1}));
 
-    tests::patrol(world, npcId).secondFeet = {124.0F, 32.0F};
+    tests::component<advanced_platformer::Patrol>(world, npcId).secondFeet = {124.0F, 32.0F};
     advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
     REQUIRE(follower.goal == advanced_platformer::feetInCell(tests::TileSize, {7, 1}));
 
-    tests::patrol(world, npcId).secondFeet = {88.0F, 32.0F};
+    tests::component<advanced_platformer::Patrol>(world, npcId).secondFeet = {88.0F, 32.0F};
     advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
     REQUIRE(follower.goal == advanced_platformer::feetInCell(tests::TileSize, {5, 1}));
 }

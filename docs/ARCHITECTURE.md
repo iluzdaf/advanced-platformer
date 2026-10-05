@@ -87,6 +87,9 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 
 - Systems update existing objects while iterating. Spawns, removals, damage, item use,
   and collection go into `WorldRequests` and are applied after iteration.
+- Combat visits both attack slots of every actor each step, pressing each with its own
+  intention; facts are gathered per slot the same way, so scripts and machines never name a
+  kind.
 - `updateLifeState` alone applies damage. It stamps the hit on the world clock, sets a
   knockback's velocity, and owns death timers and respawning.
 - For inventory clicks, `drawInterface` returns a slot request; the application passes
@@ -143,16 +146,14 @@ Players and NPCs are configurations of one
 [`Actor`](../include/advanced_platformer/actor/actor.hpp): a body, intentions, facing,
 team, and life state, plus optional components.
 
-| Capability           | Components                                                             | Rule                                                    |
-| -------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------- |
-| Movement             | `PlatformerMovement` or `FlyingMovement`                               | Exactly one                                             |
-| Climbing             | `SurfaceClimb`                                                         | Requires platformer movement                            |
-| Pounce               | `Pounce`                                                               | Requires platformer movement                            |
-| NPC control          | `NpcBrain`, `NpcPerception`, `NpcSenses`, `PathFollower`, `NpcMachine` | Required together; `Patrol` is optional                 |
-| Primary attack       | `BiteAttack` or `RangedWeapon`                                         | At most one                                             |
-| Contact damage       | `ContactDamage`, with an optional `Knockback`                          | Independent of the primary attack                       |
-| Presentation         | `Sprite` and `Animator`                                                | An animator needs a sprite and a complete animation set |
-| Health and inventory | `Health`, `Inventory`                                                  | Optional                                                |
+| Capability           | Components                                                                                               | Rule                                                    |
+| -------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Movement             | `PlatformerMovement` or `FlyingMovement`                                                                 | Exactly one                                             |
+| Climbing             | `SurfaceClimb`                                                                                           | Requires platformer movement                            |
+| NPC control          | `NpcBrain`, `NpcPerception`, `NpcSenses`, `PathFollower`, `NpcMachine`                                   | Required together; `Patrol` is optional                 |
+| Attacks              | `primaryAttack` and `secondaryAttack`, each a `BiteAttack`, `RangedWeapon`, `ContactDamage`, or `Pounce` | Optional; at most one pounce, since it moves the body   |
+| Presentation         | `Sprite` and `Animator`                                                                                  | An animator needs a sprite and a complete animation set |
+| Health and inventory | `Health`, `Inventory`                                                                                    | Optional                                                |
 
 - Attack components need a non-neutral team for opponent filtering.
 - `World::addActor` checks component combinations. Level validation checks placement
@@ -163,7 +164,9 @@ team, and life state, plus optional components.
 
 ## Input and movement
 
-- Player input and Lua activities produce the same `InputIntentions`.
+- Player input and Lua activities produce the same `InputIntentions`. The left and right
+  mouse buttons, and the `primaryAttackPressed` and `secondaryAttackPressed` commands,
+  press the attack in that slot; what happens depends on the kind it holds.
 - `InputState` keeps button edges until a fixed update consumes them.
 - `InputProgram` is a timed sequence of intentions that navigation records and replays.
   The sequence and its replay belong to input, not to pathfinding.
@@ -372,16 +375,17 @@ to the traversal profile. The search itself does not change.
 
 ## Combat, projectiles, and life cycle
 
-| Subject        | Rule                                                                                                                                               |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Bite           | Ready → Windup → Active → Recovery; a forward hitbox by facing damages each opponent once per bite, and a committed bite completes                 |
-| Ranged weapon  | Ready → Shoot → Recovery; entering Shoot queues one projectile along the aim, in any direction                                                     |
-| Contact damage | While requested by a living actor, body overlap damages each opponent once; releasing or dying clears the hit history                              |
-| Knockback      | Optional on contact damage: the victim is thrown away from the attacker at `speed` and up at `lift`, by body centres, facing breaking a tie        |
-| Projectile     | A swept cast picks the earliest blocking tile or eligible actor; any hit ends it and may break the tile; owner and team exclude shooter and allies |
-| Burst          | A short visual queued where a projectile ends, recording impact or expiry; no collision or damage                                                  |
-| Damage         | Queued by combat and projectiles, applied by `updateLifeState`, and stamped on the world clock; a knockback sets velocity and clears grounded      |
-| Death          | Health at zero enters Dying with a timer; dying actors take no intentions or damage but still move and collide                                     |
+| Subject        | Rule                                                                                                                                                    |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bite           | Ready → Windup → Active → Recovery; a forward hitbox by facing damages each opponent once per bite, and a committed bite completes                      |
+| Ranged weapon  | Ready → Shoot → Recovery; entering Shoot queues one projectile along the aim, in any direction                                                          |
+| Contact damage | While its slot is held by a living actor, body overlap damages each opponent once; releasing or dying clears the hit history                            |
+| Pounce         | While airborne from a pounce, body overlap damages each opponent once per leap, with the pounce's knockback                                             |
+| Knockback      | Optional on contact damage and pounces: the victim is thrown away from the attacker at `speed` and up at `lift`, by body centres, facing breaking a tie |
+| Projectile     | A swept cast picks the earliest blocking tile or eligible actor; any hit ends it and may break the tile; owner and team exclude shooter and allies      |
+| Burst          | A short visual queued where a projectile ends, recording impact or expiry; no collision or damage                                                       |
+| Damage         | Queued by combat and projectiles, applied by `updateLifeState`, and stamped on the world clock; a knockback sets velocity and clears grounded           |
+| Death          | Health at zero enters Dying with a timer; dying actors take no intentions or damage but still move and collide                                          |
 
 - The death timer removes an NPC or respawns the player at the stored spawn feet with
   restored health and movement state. Inventory persists.

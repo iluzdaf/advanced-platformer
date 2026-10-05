@@ -33,7 +33,7 @@ namespace
         snapshot.facts.targetWithinNoticeDistance = true;
         snapshot.facts.targetWithinStandoffDistance = true;
         snapshot.facts.movementBlocked = true;
-        snapshot.facts.pounceReady = true;
+        snapshot.facts.secondaryReady = true;
         snapshot.facts.stateElapsed = 0.25F;
         snapshot.routeComplete = true;
         return snapshot;
@@ -59,9 +59,8 @@ TEST_CASE("A Lua activity reads a copied snapshot and returns a command", "[lua]
                                 climbGrip = snapshot.facts.targetKnown and "hold" or "release",
                                 jumpHeld = snapshot.facts.heardLanding and snapshot.facts.targetOnSameSurface,
                                 jumpPressed = snapshot.facts.movementBlocked,
-                                pounce = snapshot.facts.pounceReady,
+                                secondaryAttackPressed = snapshot.facts.secondaryReady,
                                 avoidLedges = snapshot.facts.targetWithinStandoffDistance,
-                                contactDamage = snapshot.facts.targetWithinNoticeDistance,
                                 clearRoute = snapshot.routeComplete
                             }
                         end
@@ -79,12 +78,11 @@ TEST_CASE("A Lua activity reads a copied snapshot and returns a command", "[lua]
     REQUIRE(command.intentions.direction.x == 1.5F);
     REQUIRE(command.intentions.direction.y == 0.0F);
     REQUIRE(command.intentions.primaryAttackPressed);
-    REQUIRE(command.intentions.pouncePressed);
+    REQUIRE(command.intentions.secondaryAttackPressed);
     REQUIRE(command.intentions.climbGrip == advanced_platformer::ClimbGrip::Hold);
     REQUIRE(command.intentions.jumpHeld);
     REQUIRE(command.intentions.jumpPressed);
     REQUIRE(command.intentions.avoidLedges);
-    REQUIRE(command.intentions.contactDamage);
     REQUIRE(command.aimAt == snapshot.targetFeet);
     REQUIRE(command.routeTo == glm::vec2{80.0F, 34.0F});
     REQUIRE(command.clearRoute);
@@ -149,7 +147,7 @@ TEST_CASE("Lua receives independent surface and range facts", "[lua][npc]")
     scripts.loadScriptText("example", R"(
         return {activities={decide={update=function(self, snapshot)
             return {jumpHeld=snapshot.facts.targetOnSameSurface,
-                    contactDamage=snapshot.facts.targetWithinNoticeDistance}
+                    primaryAttackPressed=snapshot.facts.targetWithinNoticeDistance}
         end}}}
     )");
     NpcActivitySnapshot snapshot;
@@ -162,7 +160,7 @@ TEST_CASE("Lua receives independent surface and range facts", "[lua][npc]")
             snapshot.facts.targetWithinNoticeDistance = withinRange;
             const auto command = scripts.update(FirstActor, Activity, snapshot, 0.1F);
             REQUIRE(command.intentions.jumpHeld == sameSurface);
-            REQUIRE(command.intentions.contactDamage == withinRange);
+            REQUIRE(command.intentions.primaryAttackPressed == withinRange);
         }
     }
     REQUIRE(scripts.diagnostics().empty());

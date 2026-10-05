@@ -1,10 +1,13 @@
 #include "advanced_platformer/npc/npc_facts.hpp"
 
+#include <variant>
+
 #include <glm/geometric.hpp>
 
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/combat/attack_system.hpp"
 #include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/combat/attack.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/movement/pounce.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
@@ -16,14 +19,48 @@ namespace advanced_platformer
 {
     namespace
     {
-        bool targetIsInBiteRange(const Actor& actor, const Actor& target)
+        struct AttackFacts
         {
-            if (!actor.bite.has_value())
+            bool inRange = false;
+            bool ready = false;
+            bool active = false;
+        };
+
+        AttackFacts attackFacts(const Actor& actor, const Attack& attack, const Actor* target)
+        {
+            AttackFacts facts;
+            if (const auto* bite = std::get_if<BiteAttack>(&attack))
             {
-                return false;
+                facts.ready = bite->phase == BitePhase::Ready;
+                facts.active = bite->phase == BitePhase::Active;
+                facts.inRange =
+                    target != nullptr &&
+                    overlaps(
+                        biteHitbox(actor.body.bounds, *bite, actor.facing), target->body.bounds);
             }
-            return overlaps(
-                biteHitbox(actor.body.bounds, *actor.bite, actor.facing), target.body.bounds);
+            else if (const auto* weapon = std::get_if<RangedWeapon>(&attack))
+            {
+                facts.ready = weapon->phase == RangedPhase::Ready;
+                facts.active = weapon->phase == RangedPhase::Shoot;
+                facts.inRange = target != nullptr;
+            }
+            else if (const auto* contact = std::get_if<ContactDamage>(&attack))
+            {
+                facts.ready = true;
+                facts.active = contact->active;
+                facts.inRange =
+                    target != nullptr && overlaps(actor.body.bounds, target->body.bounds);
+            }
+            else if (const auto* pounce = std::get_if<Pounce>(&attack))
+            {
+                facts.ready = pounce->phase == PouncePhase::Ready;
+                facts.active = pounce->phase == PouncePhase::Airborne;
+                facts.inRange =
+                    target != nullptr &&
+                    glm::distance(centerOf(actor.body.bounds), centerOf(target->body.bounds)) <=
+                        pounce->config.range;
+            }
+            return facts;
         }
 
         bool targetIsWithinStandoffDistance(const Actor& actor, const NpcBrain& brain)
@@ -73,17 +110,21 @@ namespace advanced_platformer
         NpcFacts facts;
         facts.targetKnown = target != nullptr;
         facts.targetVisible = perception.targetVisible;
-        facts.targetInBiteRange =
-            target != nullptr && perception.targetVisible && targetIsInBiteRange(actor, *target);
-        facts.biteReady = actor.bite.has_value() && actor.bite->phase == BitePhase::Ready;
-        facts.targetInPounceRange =
-            target != nullptr && perception.targetVisible && actor.pounce.has_value() &&
-            glm::distance(centerOf(actor.body.bounds), centerOf(target->body.bounds)) <=
-                actor.pounce->config.range;
-        facts.pounceReady = actor.pounce.has_value() && actor.pounce->phase == PouncePhase::Ready;
-        facts.pouncing = actor.pounce.has_value() && actor.pounce->phase == PouncePhase::Airborne;
-        facts.targetInSights =
-            target != nullptr && perception.targetVisible && actor.rangedWeapon.has_value();
+        const Actor* visibleTarget = perception.targetVisible ? target : nullptr;
+        if (actor.primaryAttack.has_value())
+        {
+            const AttackFacts primary = attackFacts(actor, *actor.primaryAttack, visibleTarget);
+            facts.targetInPrimaryRange = primary.inRange;
+            facts.primaryReady = primary.ready;
+            facts.primaryActive = primary.active;
+        }
+        if (actor.secondaryAttack.has_value())
+        {
+            const AttackFacts secondary = attackFacts(actor, *actor.secondaryAttack, visibleTarget);
+            facts.targetInSecondaryRange = secondary.inRange;
+            facts.secondaryReady = secondary.ready;
+            facts.secondaryActive = secondary.active;
+        }
         facts.targetWithinStandoffDistance =
             target != nullptr && targetIsWithinStandoffDistance(actor, brain);
         facts.heardLanding = perception.heardLanding;

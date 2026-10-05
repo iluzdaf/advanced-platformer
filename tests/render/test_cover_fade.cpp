@@ -209,7 +209,7 @@ TEST_CASE("Firing exposes a hidden player for the reveal window", "[render][cove
             .inCell({3, 1})
             .platforming()
             .onTeam(advanced_platformer::Team::Player)
-            .shooting());
+            .withPrimary(advanced_platformer::RangedWeapon{}));
     advanced_platformer::updateCoverFades(map, world, QuarterFade);
     REQUIRE_NEAR(shown(world, player), 0.0F);
 
@@ -223,7 +223,11 @@ TEST_CASE("Firing exposes a hidden player for the reveal window", "[render][cove
     REQUIRE_NEAR(shown(world, player), 0.25F);
     // Rendering (including paused frames) never ages a simulation-clock stamp.
     REQUIRE_NEAR(
-        world.secondsSince(tests::rangedWeapon(world, player).lastFiredTimeSeconds).value_or(-1.0F),
+        world
+            .secondsSince(
+                tests::component<advanced_platformer::RangedWeapon>(world, player)
+                    .lastFiredTimeSeconds)
+            .value_or(-1.0F),
         0.0F);
 
     world.advanceSimulationTime(advanced_platformer::ShotRevealSeconds * 0.5F);
@@ -232,7 +236,11 @@ TEST_CASE("Firing exposes a hidden player for the reveal window", "[render][cove
 
     world.advanceSimulationTime(advanced_platformer::ShotRevealSeconds * 0.5F);
     REQUIRE_NEAR(
-        world.secondsSince(tests::rangedWeapon(world, player).lastFiredTimeSeconds).value_or(-1.0F),
+        world
+            .secondsSince(
+                tests::component<advanced_platformer::RangedWeapon>(world, player)
+                    .lastFiredTimeSeconds)
+            .value_or(-1.0F),
         advanced_platformer::ShotRevealSeconds);
     advanced_platformer::updateCoverFades(map, world, QuarterFade);
     REQUIRE_NEAR(shown(world, player), 0.25F);

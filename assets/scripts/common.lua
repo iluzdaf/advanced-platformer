@@ -1,11 +1,5 @@
--- The activities every NPC machine can use: idle, patrol, chase, bite, shoot, search,
--- retreat and watch. Machines decide when each runs; the engine plans routes and moves.
-
--- Looking about turns the aim every LookTurnSeconds.
 local LookTurnSeconds = 0.5
 
--- An aim to one side that turns every LookTurnSeconds, first towards where the target was
--- last known to be.
 local function lookAbout(snapshot)
     local toward = snapshot.lastKnownTargetFeet.x - snapshot.feet.x
     local side = toward < 0 and -1 or 1
@@ -21,15 +15,12 @@ end
 
 return {
     activities = {
-        -- Stands still.
         idle = {
             update = function()
                 return nil
             end,
         },
 
-        -- Walks the patrol from end to end. Arriving at one end turns it round, and it sets
-        -- off for the other at once.
         patrol = {
             update = function(self, snapshot)
                 local patrol = snapshot.patrol
@@ -47,7 +38,6 @@ return {
             end,
         },
 
-        -- Goes to where the target was last known to be, facing it.
         chase = {
             update = function(self, snapshot)
                 local goal = snapshot.lastKnownTargetFeet
@@ -55,32 +45,17 @@ return {
             end,
         },
 
-        -- Bites once, on entering, and faces the target while the bite plays out.
-        bite = {
+        attack = {
             update = function(self, snapshot)
-                local command = { aimAt = snapshot.lastKnownTargetFeet }
-                if not self.bitten then
+                local target = snapshot.targetCenter
+                local command = { aimAt = target or snapshot.lastKnownTargetFeet }
+                if snapshot.facts.targetInPrimaryRange then
                     command.primaryAttackPressed = true
-                    self.bitten = true
                 end
                 return command
             end,
         },
 
-        -- Shoots at the target's body, from its own. A machine leaves this activity when the
-        -- target is out of sight or lost.
-        shoot = {
-            update = function(self, snapshot)
-                local target = snapshot.targetCenter
-                if target == nil then
-                    return nil
-                end
-                return { aimDirection = target - snapshot.center, primaryAttackPressed = true }
-            end,
-        },
-
-        -- Finishes the walk to where the target was last known to be, and looks about once
-        -- there, or once it finds no route there.
         search = {
             update = function(self, snapshot)
                 local goal = snapshot.lastKnownTargetFeet
@@ -93,8 +68,6 @@ return {
             end,
         },
 
-        -- Backs away from where the target was last known to be while shooting at it. A
-        -- walker moves straight left or right, and stops at a ledge rather than step off.
         retreat = {
             update = function(self, snapshot)
                 local threat = snapshot.lastKnownTargetFeet
@@ -109,7 +82,6 @@ return {
             end,
         },
 
-        -- Stands and looks about.
         watch = {
             update = function(self, snapshot)
                 return { aimDirection = lookAbout(snapshot) }

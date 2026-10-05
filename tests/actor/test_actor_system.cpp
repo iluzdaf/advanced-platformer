@@ -4,6 +4,7 @@
 
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/actor/actor_system.hpp"
 #include "advanced_platformer/input/input_state.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
@@ -27,7 +28,7 @@ TEST_CASE("Actor movement consumes its intentions", "[actor][movement]")
 {
     const advanced_platformer::TileMap map = tests::TileMapBuilder({"..........", "##########"});
     advanced_platformer::Actor actor = makeActor({22.0F, 16.0F});
-    tests::platformerMovement(actor).grounded = true;
+    tests::component<advanced_platformer::PlatformerMovement>(actor).grounded = true;
     actor.intentions.direction.x = 1.0F;
     advanced_platformer::World world;
     const advanced_platformer::ActorId id = world.addActor(actor);
@@ -56,7 +57,7 @@ TEST_CASE("An actor's optional climb component uses its climb request", "[actor]
 
     const auto& moved = tests::actor(world, id);
     REQUIRE(
-        tests::surfaceClimb(tests::actor(world, id)).surface ==
+        tests::component<advanced_platformer::SurfaceClimb>(tests::actor(world, id)).surface ==
         advanced_platformer::ClimbSurface::LeftWall);
     REQUIRE(moved.body.bounds.topLeft.y < 36.0F);
 }
@@ -66,18 +67,21 @@ TEST_CASE("An actor's optional pounce leaps through actor movement", "[actor][mo
     const advanced_platformer::TileMap floor = tests::TileMapBuilder({"..........", "##########"});
     advanced_platformer::World world;
     const auto id = world.addActor(
-        tests::ActorBuilder::sized({12.0F, 12.0F}).atFeet({40.0F, 16.0F}).platforming());
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({40.0F, 16.0F})
+            .platforming()
+            .onTeam(advanced_platformer::Team::Enemy)
+            .withPrimary(advanced_platformer::Pounce{}));
     advanced_platformer::Actor& pouncer = tests::actor(world, id);
-    pouncer.pounce = advanced_platformer::Pounce{};
-    tests::platformerMovement(pouncer).grounded = true;
-    pouncer.intentions.pouncePressed = true;
+    tests::component<advanced_platformer::PlatformerMovement>(pouncer).grounded = true;
+    pouncer.intentions.primaryAttackPressed = true;
     pouncer.intentions.aimDirection = {1.0F, 0.0F};
 
     advanced_platformer::updateActorMovement(floor, world, 0.1F);
 
     REQUIRE(tests::actor(world, id).body.velocity.x == 200.0F);
     REQUIRE(
-        tests::actor(world, id).pounce.value_or(advanced_platformer::Pounce{}).phase ==
+        tests::component<advanced_platformer::Pounce>(world, id).phase ==
         advanced_platformer::PouncePhase::Airborne);
 }
 
@@ -106,7 +110,7 @@ TEST_CASE("Aim direction controls horizontal facing independently of movement", 
 {
     const advanced_platformer::TileMap map = tests::TileMapBuilder({"..........", "##########"});
     advanced_platformer::Actor actor = makeActor({22.0F, 16.0F});
-    tests::platformerMovement(actor).grounded = true;
+    tests::component<advanced_platformer::PlatformerMovement>(actor).grounded = true;
     actor.intentions.direction.x = 1.0F;
     actor.intentions.aimDirection = {-1.0F, -1.0F};
     advanced_platformer::World world;
@@ -124,8 +128,8 @@ TEST_CASE("Fast walking accelerates and stops before a ledge", "[actor][movement
     const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"........", "........", "###..###"});
     advanced_platformer::Actor walker = makeActor({24.0F, 32.0F});
-    tests::platformerMovement(walker).config.maximumSpeed = 125.0F;
-    tests::platformerMovement(walker).grounded = true;
+    tests::component<advanced_platformer::PlatformerMovement>(walker).config.maximumSpeed = 125.0F;
+    tests::component<advanced_platformer::PlatformerMovement>(walker).grounded = true;
     walker.intentions.direction.x = 1.0F;
     walker.intentions.avoidLedges = true;
     advanced_platformer::World world;
@@ -134,20 +138,27 @@ TEST_CASE("Fast walking accelerates and stops before a ledge", "[actor][movement
     advanced_platformer::updateActorMovement(map, world, 0.05F);
     REQUIRE(tests::actor(world, id).body.velocity.x == 40.0F);
     REQUIRE(tests::actor(world, id).facing == advanced_platformer::Facing::Right);
-    REQUIRE_FALSE(tests::platformerMovement(tests::actor(world, id)).blocked);
-    for (int tick = 0; tick < 20 && !tests::platformerMovement(tests::actor(world, id)).blocked;
+    REQUIRE_FALSE(
+        tests::component<advanced_platformer::PlatformerMovement>(tests::actor(world, id)).blocked);
+    for (int tick = 0; tick < 20 && !tests::component<advanced_platformer::PlatformerMovement>(
+                                         tests::actor(world, id))
+                                         .blocked;
          ++tick)
     {
         advanced_platformer::updateActorMovement(map, world, 0.05F);
     }
-    REQUIRE(tests::platformerMovement(tests::actor(world, id)).blocked);
-    REQUIRE(tests::platformerMovement(tests::actor(world, id)).grounded);
+    REQUIRE(
+        tests::component<advanced_platformer::PlatformerMovement>(tests::actor(world, id)).blocked);
+    REQUIRE(
+        tests::component<advanced_platformer::PlatformerMovement>(tests::actor(world, id))
+            .grounded);
     REQUIRE(tests::actor(world, id).body.velocity.x == 0.0F);
     REQUIRE(tests::actor(world, id).body.bounds.topLeft.x + 12.0F <= 48.0F);
 
     tests::actor(world, id).intentions.direction.x = -1.0F;
     advanced_platformer::updateActorMovement(map, world, 0.05F);
-    REQUIRE_FALSE(tests::platformerMovement(tests::actor(world, id)).blocked);
+    REQUIRE_FALSE(
+        tests::component<advanced_platformer::PlatformerMovement>(tests::actor(world, id)).blocked);
     REQUIRE(tests::actor(world, id).body.velocity.x == -40.0F);
 }
 
@@ -156,7 +167,7 @@ TEST_CASE("Walking reports a wall independently of combat", "[actor][movement]")
     const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"........", "....#...", "########"});
     advanced_platformer::Actor walker = makeActor({24.0F, 32.0F});
-    tests::platformerMovement(walker).grounded = true;
+    tests::component<advanced_platformer::PlatformerMovement>(walker).grounded = true;
     walker.intentions.direction.x = 1.0F;
     advanced_platformer::World world;
     const auto id = world.addActor(walker);
@@ -164,11 +175,13 @@ TEST_CASE("Walking reports a wall independently of combat", "[actor][movement]")
     {
         advanced_platformer::updateActorMovement(map, world, 0.1F);
     }
-    REQUIRE(tests::platformerMovement(tests::actor(world, id)).blocked);
+    REQUIRE(
+        tests::component<advanced_platformer::PlatformerMovement>(tests::actor(world, id)).blocked);
     REQUIRE(tests::actor(world, id).body.velocity.x == 0.0F);
     REQUIRE(tests::actor(world, id).body.bounds.topLeft.x <= 52.0F);
 
     tests::actor(world, id).intentions = {};
     advanced_platformer::updateActorMovement(map, world, 0.1F);
-    REQUIRE_FALSE(tests::platformerMovement(tests::actor(world, id)).blocked);
+    REQUIRE_FALSE(
+        tests::component<advanced_platformer::PlatformerMovement>(tests::actor(world, id)).blocked);
 }

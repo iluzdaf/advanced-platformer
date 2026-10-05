@@ -7,6 +7,7 @@
 #include "game/level_composition.hpp"
 #include "content/game_catalogs.hpp"
 #include "content/level_catalog.hpp"
+#include "advanced_platformer/movement/platformer_movement.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "advanced_platformer/world/level_exit.hpp"
@@ -69,7 +70,8 @@ TEST_CASE("A level composes an actor from its catalog definition", "[app][actors
     auto gameLevel = advanced_platformer::composeGameLevel(levelCatalog, 1, 0, gameCatalogs);
     REQUIRE(gameLevel.world.actors().size() == 1);
     auto& actor = gameLevel.world.actors().front();
-    REQUIRE(tests::platformerMovement(actor).config.maximumSpeed == 23);
+    REQUIRE(
+        tests::component<advanced_platformer::PlatformerMovement>(actor).config.maximumSpeed == 23);
     REQUIRE(advanced_platformer::feetOf(actor.body.bounds).x == 56);
 }
 

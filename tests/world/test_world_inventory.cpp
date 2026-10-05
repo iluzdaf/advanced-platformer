@@ -43,27 +43,30 @@ TEST_CASE(
     "[world][inventory][use]")
 {
     auto world = makeWorld();
-    tests::inventory(tests::player(world)).add(world.itemDefinition(2), 3);
+    tests::component<advanced_platformer::Inventory>(tests::player(world))
+        .add(world.itemDefinition(2), 3);
     advanced_platformer::WorldRequests requests;
     requests.useItem(world.playerId(), 0);
-    REQUIRE(tests::health(tests::player(world)).current == 1);
+    REQUIRE(tests::component<advanced_platformer::Health>(tests::player(world)).current == 1);
     advanced_platformer::applyWorldRequests(world, requests);
-    REQUIRE(tests::health(tests::player(world)).current == 3);
-    REQUIRE(tests::inventory(tests::player(world)).count(2) == 2);
+    REQUIRE(tests::component<advanced_platformer::Health>(tests::player(world)).current == 3);
+    REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(2) == 2);
     REQUIRE(requests.empty());
     REQUIRE_FALSE(advanced_platformer::useItem(world, world.playerId(), 0));
-    REQUIRE(tests::inventory(tests::player(world)).count(2) == 2);
-    tests::health(tests::player(world)).current = 2;
+    REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(2) == 2);
+    tests::component<advanced_platformer::Health>(tests::player(world)).current = 2;
     REQUIRE(advanced_platformer::useItem(world, world.playerId(), 0));
-    REQUIRE(tests::health(tests::player(world)).current == 3);
-    REQUIRE(tests::inventory(tests::player(world)).count(2) == 1);
+    REQUIRE(tests::component<advanced_platformer::Health>(tests::player(world)).current == 3);
+    REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(2) == 1);
 }
 
 TEST_CASE("Unusable or stale item requests are harmless", "[world][inventory][use]")
 {
     auto world = makeWorld();
-    tests::inventory(tests::player(world)).add(world.itemDefinition(1), 1);
-    tests::inventory(tests::player(world)).add(world.itemDefinition(2), 1);
+    tests::component<advanced_platformer::Inventory>(tests::player(world))
+        .add(world.itemDefinition(1), 1);
+    tests::component<advanced_platformer::Inventory>(tests::player(world))
+        .add(world.itemDefinition(2), 1);
     REQUIRE_FALSE(advanced_platformer::useItem(world, world.playerId(), 0));
     REQUIRE_FALSE(advanced_platformer::useItem(world, world.playerId(), 99));
     REQUIRE_FALSE(advanced_platformer::useItem(world, advanced_platformer::ActorId{999}, 0));
@@ -72,16 +75,17 @@ TEST_CASE("Unusable or stale item requests are harmless", "[world][inventory][us
     tests::player(world).life = advanced_platformer::LifeState::Alive;
     tests::player(world).health.reset();
     REQUIRE_FALSE(advanced_platformer::useItem(world, world.playerId(), 1));
-    REQUIRE(tests::inventory(tests::player(world)).count(2) == 1);
+    REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(2) == 1);
 }
 
 TEST_CASE("Respawning preserves the collected inventory", "[world][inventory][lifecycle]")
 {
     auto world = makeWorld();
-    tests::inventory(tests::player(world)).add(world.itemDefinition(3), 1);
+    tests::component<advanced_platformer::Inventory>(tests::player(world))
+        .add(world.itemDefinition(3), 1);
     tests::player(world).life = advanced_platformer::LifeState::Dying;
     world.respawnPlayer();
-    REQUIRE(tests::inventory(tests::player(world)).count(3) == 1);
+    REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(3) == 1);
     REQUIRE(tests::player(world).life == advanced_platformer::LifeState::Alive);
 }
 

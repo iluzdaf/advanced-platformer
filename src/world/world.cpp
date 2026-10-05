@@ -14,6 +14,7 @@
 #include <glm/vec2.hpp>
 
 #include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_attacks.hpp"
 #include "advanced_platformer/actor/actor_validation.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/combat/combat.hpp"
@@ -155,10 +156,9 @@ namespace advanced_platformer
     {
         validateActor(actor);
         requireWithinSimulationTime(actor.lastDamageTimeSeconds, "Actor damage time");
-        if (actor.rangedWeapon.has_value())
+        if (const RangedWeapon* weapon = findAttack<RangedWeapon>(actor))
         {
-            requireWithinSimulationTime(
-                actor.rangedWeapon->lastFiredTimeSeconds, "Actor shot time");
+            requireWithinSimulationTime(weapon->lastFiredTimeSeconds, "Actor shot time");
         }
         if (nextActorId == std::numeric_limits<std::uint32_t>::max())
         {

@@ -39,8 +39,6 @@
 #include "support/tile_size.hpp"
 
 using tests::actor;
-using tests::brain;
-using tests::machine;
 
 namespace
 {
@@ -79,7 +77,7 @@ TEST_CASE("A scripted route follows a climbing path", "[npc][lua][climb]")
             .running(
                 tests::NpcMachineBuilder::named("climber").state(
                     "route", advanced_platformer::NpcActivity{"climber", "route"}));
-    tests::platformerMovement(npc).grounded = true;
+    tests::component<advanced_platformer::PlatformerMovement>(npc).grounded = true;
     const advanced_platformer::ActorId npcId = world.addActor(npc);
     tests::RecordingNpcScripts scripts;
     scripts.command.routeTo = advanced_platformer::feetInCell(tests::TileSize, {11, 5});
@@ -92,7 +90,8 @@ TEST_CASE("A scripted route follows a climbing path", "[npc][lua][climb]")
         requestedClimb = requestedClimb || actor(world, npcId).intentions.climbGrip ==
                                                advanced_platformer::ClimbGrip::Hold;
         reachedCeiling =
-            tests::surfaceClimb(world, npcId).surface == advanced_platformer::ClimbSurface::Ceiling;
+            tests::component<advanced_platformer::SurfaceClimb>(world, npcId).surface ==
+            advanced_platformer::ClimbSurface::Ceiling;
     }
     REQUIRE(requestedClimb);
     REQUIRE(reachedCeiling);
@@ -135,7 +134,7 @@ TEST_CASE("An NPC activity receives snapshots and returns engine commands", "[np
     REQUIRE(actor(world, npcId).intentions.direction.x > 0.0F);
     REQUIRE(actor(world, npcId).intentions.aimDirection == glm::vec2{56.0F, -16.0F});
     REQUIRE(actor(world, npcId).intentions.primaryAttackPressed);
-    REQUIRE(machine(world, npcId).stateElapsed == 0.1F);
+    REQUIRE(tests::component<advanced_platformer::NpcMachine>(world, npcId).stateElapsed == 0.1F);
 
     advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
     REQUIRE(scripts.calls.size() == 3);
@@ -160,9 +159,10 @@ TEST_CASE("A scripted machine exits and enters around a transition", "[npc][lua]
     tests::RecordingNpcScripts scripts;
 
     advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
-    brain(world, npcId).target = playerId;
-    brain(world, npcId).lastKnownTargetFeet = {56.0F, 32.0F};
-    tests::perception(world, npcId).targetVisible = true;
+    tests::component<advanced_platformer::NpcBrain>(world, npcId).target = playerId;
+    tests::component<advanced_platformer::NpcBrain>(world, npcId).lastKnownTargetFeet = {
+        56.0F, 32.0F};
+    tests::component<advanced_platformer::NpcPerception>(world, npcId).targetVisible = true;
     advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
 
     REQUIRE(scripts.calls.size() == 5);
@@ -178,7 +178,10 @@ TEST_CASE("A scripted machine exits and enters around a transition", "[npc][lua]
     REQUIRE(scripts.calls[3].snapshot.targetFeet == glm::vec2{56.0F, 32.0F});
     REQUIRE(scripts.calls[4].hook == "update");
     REQUIRE(scripts.calls[4].snapshot.facts.stateElapsed == 0.0F);
-    REQUIRE(advanced_platformer::activeNpcMachineState(machine(world, npcId)).name == "moving");
+    REQUIRE(
+        advanced_platformer::activeNpcMachineState(
+            tests::component<advanced_platformer::NpcMachine>(world, npcId))
+            .name == "moving");
 }
 
 TEST_CASE("Removing an actor forgets its activity state", "[npc][lua][lifecycle]")
@@ -240,7 +243,8 @@ TEST_CASE("A flyer has no footing, and the last known target feet outlast the ta
                            .running(
                                tests::NpcMachineBuilder::named("test").state(
                                    "acting", advanced_platformer::NpcActivity{"fixture", "act"})));
-    brain(world, npc).lastKnownTargetFeet = {72.0F, 32.0F};
+    tests::component<advanced_platformer::NpcBrain>(world, npc).lastKnownTargetFeet = {
+        72.0F, 32.0F};
     tests::RecordingNpcScripts scripts;
 
     advanced_platformer::updateNpcBehaviour(map, world, tests::FixedStepSeconds, scripts);
@@ -272,11 +276,11 @@ TEST_CASE("A script can turn its NPC's patrol round", "[npc][lua]")
     REQUIRE(scripts.calls.back()
                 .snapshot.patrol.value_or(advanced_platformer::Patrol{})
                 .headingToSecond);
-    REQUIRE_FALSE(tests::patrol(world, npc).headingToSecond);
+    REQUIRE_FALSE(tests::component<advanced_platformer::Patrol>(world, npc).headingToSecond);
 
     advanced_platformer::updateNpcBehaviour(map, world, tests::FixedStepSeconds, scripts);
     REQUIRE_FALSE(scripts.calls.back()
                       .snapshot.patrol.value_or(advanced_platformer::Patrol{})
                       .headingToSecond);
-    REQUIRE(tests::patrol(world, npc).headingToSecond);
+    REQUIRE(tests::component<advanced_platformer::Patrol>(world, npc).headingToSecond);
 }

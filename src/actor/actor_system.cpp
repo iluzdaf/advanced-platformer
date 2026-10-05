@@ -3,7 +3,9 @@
 #include <stdexcept>
 
 #include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_attacks.hpp"
 #include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/combat/attack.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/movement/flying_movement.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
@@ -24,12 +26,14 @@ namespace advanced_platformer
             {
                 PlatformerMovement& movement = *actor.platformerMovement;
                 const bool wasGrounded = movement.grounded;
-                if (actor.pounce.has_value())
+                if (Pounce* pounce = findAttack<Pounce>(actor))
                 {
                     SurfaceClimb* climb =
                         actor.surfaceClimb.has_value() ? &*actor.surfaceClimb : nullptr;
+                    const bool pressed = attackPressed(
+                        intentions, slotHolding<Pounce>(actor).value_or(AttackSlot::Primary));
                     updatePounceMovement(
-                        map, actor.body, movement, climb, *actor.pounce, intentions, deltaTime);
+                        map, actor.body, movement, climb, *pounce, intentions, pressed, deltaTime);
                 }
                 else if (actor.surfaceClimb.has_value())
                 {

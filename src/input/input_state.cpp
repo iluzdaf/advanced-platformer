@@ -70,6 +70,7 @@ namespace advanced_platformer
         intentions.jumpPressed = wasPressed(InputButton::Jump);
         intentions.jumpHeld = isHeld(InputButton::Jump);
         intentions.primaryAttackPressed = wasPressed(InputButton::PrimaryAttack);
+        intentions.secondaryAttackPressed = wasPressed(InputButton::SecondaryAttack);
 
         std::ranges::fill(pressed, false);
         std::ranges::fill(released, false);

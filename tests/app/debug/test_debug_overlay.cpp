@@ -147,7 +147,7 @@ TEST_CASE("Debug overlay data describes NPC patrol points", "[app][debug]")
                                          .platforming()
                                          .thinking({})
                                          .patrolling({24.0F, 32.0F}, {72.0F, 32.0F});
-    tests::patrol(npc).headingToSecond = false;
+    tests::component<advanced_platformer::Patrol>(npc).headingToSecond = false;
 
     advanced_platformer::World world;
     world.addActor(npc);
@@ -235,16 +235,17 @@ TEST_CASE("Debug overlay data describes visible and remembered targets", "[app][
                                                 .platforming()
                                                 .onTeam(advanced_platformer::Team::Enemy)
                                                 .thinking({80.0F, 1.5F});
-    tests::brain(visibleNpc).target = playerId;
-    tests::perception(visibleNpc).targetVisible = true;
-    tests::brain(visibleNpc).targetMemoryRemaining = 1.5F;
+    tests::component<advanced_platformer::NpcBrain>(visibleNpc).target = playerId;
+    tests::component<advanced_platformer::NpcPerception>(visibleNpc).targetVisible = true;
+    tests::component<advanced_platformer::NpcBrain>(visibleNpc).targetMemoryRemaining = 1.5F;
     world.addActor(visibleNpc);
 
     advanced_platformer::Actor rememberedNpc = visibleNpc;
     rememberedNpc.body.bounds.topLeft = {80.0F, 20.0F};
-    tests::perception(rememberedNpc).targetVisible = false;
-    tests::brain(rememberedNpc).lastKnownTargetFeet = {40.0F, 32.0F};
-    tests::brain(rememberedNpc).targetMemoryRemaining = 0.6F;
+    tests::component<advanced_platformer::NpcPerception>(rememberedNpc).targetVisible = false;
+    tests::component<advanced_platformer::NpcBrain>(rememberedNpc).lastKnownTargetFeet = {
+        40.0F, 32.0F};
+    tests::component<advanced_platformer::NpcBrain>(rememberedNpc).targetMemoryRemaining = 0.6F;
     world.addActor(rememberedNpc);
 
     const advanced_platformer::TileMap map = tests::TileMapBuilder({".......", "#######"});
@@ -324,14 +325,16 @@ TEST_CASE("Debug overlay data shows only an active bite hitbox", "[app][debug]")
                                                  .at({16.0F, 20.0F})
                                                  .platforming()
                                                  .onTeam(advanced_platformer::Team::Enemy)
-                                                 .biting();
+                                                 .withPrimary(advanced_platformer::BiteAttack{});
     activeBiter.facing = advanced_platformer::Facing::Right;
-    tests::bite(activeBiter).phase = advanced_platformer::BitePhase::Active;
-    tests::bite(activeBiter).phaseTimeRemaining = 0.05F;
+    tests::component<advanced_platformer::BiteAttack>(activeBiter).phase =
+        advanced_platformer::BitePhase::Active;
+    tests::component<advanced_platformer::BiteAttack>(activeBiter).phaseTimeRemaining = 0.05F;
 
     advanced_platformer::Actor recoveringBiter = activeBiter;
     recoveringBiter.body.bounds.topLeft = {48.0F, 20.0F};
-    tests::bite(recoveringBiter).phase = advanced_platformer::BitePhase::Recovery;
+    tests::component<advanced_platformer::BiteAttack>(recoveringBiter).phase =
+        advanced_platformer::BitePhase::Recovery;
 
     advanced_platformer::World world;
     world.addActor(activeBiter);

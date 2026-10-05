@@ -1,5 +1,3 @@
--- The machine owns wake, blocked-walk and recovery transitions. Charging is ordinary
--- walking in a committed direction; contact damage is a separate request.
 return {
     activities = {
         sleep = {
@@ -17,7 +15,7 @@ return {
                     clearRoute = true,
                     direction = { x = self.direction, y = 0 },
                     avoidLedges = true,
-                    contactDamage = true,
+                    primaryAttackPressed = true,
                 }
             end,
         },

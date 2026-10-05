@@ -49,14 +49,13 @@ TEST_CASE(
     "[lua][npc][integration]")
 {
     advanced_platformer::LuaNpcScripts scripts;
-    // A fixed engine-boundary fixture, not the shipped enemy's tunable policy.
     scripts.loadScriptText("walker", R"(
         return {activities = {
             walk = {
                 enter = function(self) self.direction = 1 end,
                 update = function(self)
                     return {direction = {x = self.direction, y = 0},
-                            avoidLedges = true, contactDamage = true}
+                            avoidLedges = true, primaryAttackPressed = true}
                 end
             },
             rest = {update = function() return {} end}
@@ -71,7 +70,7 @@ TEST_CASE(
             .atFeet({24.0F, 32.0F})
             .platforming(movement)
             .onTeam(advanced_platformer::Team::Enemy)
-            .withContactDamage()
+            .withPrimary(advanced_platformer::ContactDamage{})
             .thinking({})
             .running(
                 tests::NpcMachineBuilder::named("walker")
@@ -79,29 +78,38 @@ TEST_CASE(
                     .state("resting", advanced_platformer::NpcActivity{"walker", "rest"})
                     .transition("moving", "resting")
                     .when("movementBlocked", true)));
-    tests::platformerMovement(tests::actor(world, npc)).grounded = true;
+    tests::component<advanced_platformer::PlatformerMovement>(tests::actor(world, npc)).grounded =
+        true;
     constexpr float StepSeconds = 0.05F;
 
     advanced_platformer::updateWorldSimulation(map, world, StepSeconds, scripts);
     REQUIRE(
-        advanced_platformer::activeNpcMachineState(tests::machine(world, npc)).name == "moving");
+        advanced_platformer::activeNpcMachineState(
+            tests::component<advanced_platformer::NpcMachine>(world, npc))
+            .name == "moving");
     REQUIRE_NEAR(tests::actor(world, npc).body.velocity.x, 40.0F);
-    REQUIRE(tests::contactDamage(world, npc).active);
+    REQUIRE(tests::component<advanced_platformer::ContactDamage>(world, npc).active);
 
     constexpr int MaxStepsToRest = 20;
     int stepsToRest = 0;
     while (stepsToRest < MaxStepsToRest &&
-           advanced_platformer::activeNpcMachineState(tests::machine(world, npc)).name == "moving")
+           advanced_platformer::activeNpcMachineState(
+               tests::component<advanced_platformer::NpcMachine>(world, npc))
+                   .name == "moving")
     {
         advanced_platformer::updateWorldSimulation(map, world, StepSeconds, scripts);
         ++stepsToRest;
     }
     CAPTURE(stepsToRest);
     REQUIRE(
-        advanced_platformer::activeNpcMachineState(tests::machine(world, npc)).name == "resting");
-    REQUIRE_FALSE(tests::contactDamage(world, npc).active);
+        advanced_platformer::activeNpcMachineState(
+            tests::component<advanced_platformer::NpcMachine>(world, npc))
+            .name == "resting");
+    REQUIRE_FALSE(tests::component<advanced_platformer::ContactDamage>(world, npc).active);
     REQUIRE(tests::actor(world, npc).intentions.direction.x == 0.0F);
     REQUIRE(tests::actor(world, npc).body.velocity.x == 0.0F);
-    REQUIRE(tests::platformerMovement(tests::actor(world, npc)).grounded);
+    REQUIRE(
+        tests::component<advanced_platformer::PlatformerMovement>(tests::actor(world, npc))
+            .grounded);
     REQUIRE(scripts.diagnostics().empty());
 }

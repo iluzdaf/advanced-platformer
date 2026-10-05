@@ -15,6 +15,7 @@ namespace advanced_platformer
         Down,
         Jump,
         PrimaryAttack,
+        SecondaryAttack,
         Count
     };
 
@@ -31,11 +32,12 @@ namespace advanced_platformer
         glm::vec2 aimDirection = {0.0F, 0.0F};
         bool jumpPressed = false;
         bool jumpHeld = false;
-        bool pouncePressed = false;
         bool primaryAttackPressed = false;
+        bool secondaryAttackPressed = false;
         ClimbGrip climbGrip = ClimbGrip::Keep;
         bool avoidLedges = false;
-        bool contactDamage = false;
+
+        bool operator==(const InputIntentions&) const = default;
     };
 
     class InputState

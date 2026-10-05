@@ -6,8 +6,10 @@
 
 #include <glm/vec2.hpp>
 
+#include "advanced_platformer/movement/platformer_movement.hpp"
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/movement/pounce.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
@@ -24,7 +26,6 @@
 #include "support/tile_size.hpp"
 
 using tests::actor;
-using tests::brain;
 
 namespace
 {
@@ -40,7 +41,8 @@ namespace
                 .atFeet({24.0F, 32.0F})
                 .platforming()
                 .thinking({32.0F, 1.0F}));
-        tests::platformerMovement(actor(world, npcId)).grounded = true;
+        tests::component<advanced_platformer::PlatformerMovement>(actor(world, npcId)).grounded =
+            true;
         return npcId;
     }
 
@@ -49,12 +51,13 @@ namespace
         advanced_platformer::World& world,
         advanced_platformer::ActorId npcId)
     {
-        const advanced_platformer::NpcBrain& npcBrain = brain(world, npcId);
+        const advanced_platformer::NpcBrain& npcBrain =
+            tests::component<advanced_platformer::NpcBrain>(world, npcId);
         return advanced_platformer::gatherNpcFacts(
             map,
             actor(world, npcId),
             npcBrain,
-            tests::perception(world, npcId),
+            tests::component<advanced_platformer::NpcPerception>(world, npcId),
             advanced_platformer::livingTarget(world, npcBrain),
             0.0F);
     }
@@ -85,7 +88,8 @@ TEST_CASE("Same-surface and notice-distance facts are independent", "[npc][facts
             tests::TileMapBuilder({"............", "............", scenario.floor});
         advanced_platformer::World world;
         const auto targetId = world.addActor(makePlayer(scenario.targetFeet));
-        tests::platformerMovement(actor(world, targetId)).grounded = scenario.targetGrounded;
+        tests::component<advanced_platformer::PlatformerMovement>(actor(world, targetId)).grounded =
+            scenario.targetGrounded;
         if (!scenario.targetAlive)
         {
             actor(world, targetId).life = advanced_platformer::LifeState::Dying;
@@ -93,9 +97,10 @@ TEST_CASE("Same-surface and notice-distance facts are independent", "[npc][facts
         const auto npcId = addWalkingNpc(world);
         if (scenario.rememberTarget)
         {
-            brain(world, npcId).target = targetId;
+            tests::component<advanced_platformer::NpcBrain>(world, npcId).target = targetId;
         }
-        brain(world, npcId).lastKnownTargetFeet = {24.0F, 32.0F};
+        tests::component<advanced_platformer::NpcBrain>(world, npcId).lastKnownTargetFeet = {
+            24.0F, 32.0F};
         return factsOf(map, world, npcId);
     };
 
@@ -179,7 +184,8 @@ TEST_CASE("A climber's surface reaches its target along walls and ceilings", "[n
 
     advanced_platformer::World world;
     const auto targetId = world.addActor(makePlayer({88.0F, 64.0F}));
-    tests::platformerMovement(actor(world, targetId)).grounded = targetGrounded;
+    tests::component<advanced_platformer::PlatformerMovement>(actor(world, targetId)).grounded =
+        targetGrounded;
     const glm::vec2 climberSize{8.0F, 8.0F};
     const advanced_platformer::Aabb bounds =
         advanced_platformer::boundsAtSurface(tests::TileSize, climberAt, climberSize);
@@ -189,10 +195,11 @@ TEST_CASE("A climber's surface reaches its target along walls and ceilings", "[n
             .platforming()
             .climbing()
             .thinking({32.0F, 1.0F}));
-    tests::surfaceClimb(actor(world, npcId)).surface = climberAt.surface;
-    tests::platformerMovement(actor(world, npcId)).grounded =
+    tests::component<advanced_platformer::SurfaceClimb>(actor(world, npcId)).surface =
+        climberAt.surface;
+    tests::component<advanced_platformer::PlatformerMovement>(actor(world, npcId)).grounded =
         climberGrounded && climberAt.surface == advanced_platformer::ClimbSurface::None;
-    brain(world, npcId).target = targetId;
+    tests::component<advanced_platformer::NpcBrain>(world, npcId).target = targetId;
 
     REQUIRE(factsOf(map, world, npcId).targetOnSameSurface == expected);
 }
@@ -224,16 +231,22 @@ TEST_CASE("Pounce facts follow the phase and the visible target's distance", "[n
         phase = advanced_platformer::PouncePhase::Airborne;
     }
     const auto targetId = world.addActor(makePlayer(targetFeet));
-    const auto npcId = addWalkingNpc(world);
-    actor(world, npcId).pounce = advanced_platformer::Pounce{{.range = 40.0F}, phase};
-    brain(world, npcId).target = targetId;
-    tests::perception(world, npcId).targetVisible = visible;
+    const auto npcId = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({24.0F, 32.0F})
+            .platforming()
+            .onTeam(advanced_platformer::Team::Enemy)
+            .thinking({32.0F, 1.0F})
+            .withPrimary(advanced_platformer::Pounce{.config = {.range = 40.0F}, .phase = phase}));
+    tests::component<advanced_platformer::PlatformerMovement>(actor(world, npcId)).grounded = true;
+    tests::component<advanced_platformer::NpcBrain>(world, npcId).target = targetId;
+    tests::component<advanced_platformer::NpcPerception>(world, npcId).targetVisible = visible;
 
     const advanced_platformer::NpcFacts facts = factsOf(map, world, npcId);
 
-    REQUIRE(facts.targetInPounceRange == inRange);
-    REQUIRE(facts.pounceReady == (phase == advanced_platformer::PouncePhase::Ready));
-    REQUIRE(facts.pouncing == (phase == advanced_platformer::PouncePhase::Airborne));
+    REQUIRE(facts.targetInPrimaryRange == inRange);
+    REQUIRE(facts.primaryReady == (phase == advanced_platformer::PouncePhase::Ready));
+    REQUIRE(facts.primaryActive == (phase == advanced_platformer::PouncePhase::Airborne));
 }
 
 TEST_CASE("Heard landings and blocked walking are facts", "[npc][facts]")
@@ -245,8 +258,8 @@ TEST_CASE("Heard landings and blocked walking are facts", "[npc][facts]")
     REQUIRE_FALSE(factsOf(map, world, npcId).heardLanding);
     REQUIRE_FALSE(factsOf(map, world, npcId).movementBlocked);
 
-    tests::perception(world, npcId).heardLanding = true;
-    tests::platformerMovement(actor(world, npcId)).blocked = true;
+    tests::component<advanced_platformer::NpcPerception>(world, npcId).heardLanding = true;
+    tests::component<advanced_platformer::PlatformerMovement>(actor(world, npcId)).blocked = true;
     REQUIRE(factsOf(map, world, npcId).heardLanding);
     REQUIRE(factsOf(map, world, npcId).movementBlocked);
 }

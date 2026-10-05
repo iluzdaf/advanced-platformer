@@ -4,16 +4,20 @@
 #include <optional>
 #include <cmath>
 #include <vector>
+#include <variant>
 
 #include <glm/geometric.hpp>
 #include <glm/vec2.hpp>
 
 #include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_attacks.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/combat/attack.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/validation.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/pounce.hpp"
 #include "advanced_platformer/world/world.hpp"
 #include "advanced_platformer/world/world_requests.hpp"
 
@@ -21,9 +25,9 @@ namespace advanced_platformer
 {
     namespace
     {
-        bool hasHit(const BiteAttack& bite, ActorId id)
+        bool hasHit(const std::vector<ActorId>& hits, ActorId id)
         {
-            return std::ranges::find(bite.actorsHit, id) != bite.actorsHit.end();
+            return std::ranges::find(hits, id) != hits.end();
         }
 
         Projectile makeProjectile(const Actor& actor, const RangedWeapon& weapon)
@@ -153,10 +157,10 @@ namespace advanced_platformer
 
         std::optional<glm::vec2> knockbackFrom(
             const Actor& actor,
-            const ContactDamage& contact,
+            const std::optional<Knockback>& knockback,
             const Actor& target)
         {
-            if (!contact.knockback.has_value())
+            if (!knockback.has_value())
             {
                 return std::nullopt;
             }
@@ -166,18 +170,17 @@ namespace advanced_platformer
             {
                 direction = offset < 0.0F ? -1.0F : 1.0F;
             }
-            return glm::vec2{direction * contact.knockback->speed, -contact.knockback->lift};
+            return glm::vec2{direction * knockback->speed, -knockback->lift};
         }
 
-        void updateContactDamage(Actor& actor, const World& world, WorldRequests& requests)
+        void updateContactDamage(
+            Actor& actor,
+            ContactDamage& contact,
+            bool held,
+            const World& world,
+            WorldRequests& requests)
         {
-            if (!actor.contactDamage.has_value())
-            {
-                return;
-            }
-
-            ContactDamage& contact = *actor.contactDamage;
-            const bool requested = actor.life == LifeState::Alive && actor.intentions.contactDamage;
+            const bool requested = actor.life == LifeState::Alive && held;
             if (!requested || !contact.active)
             {
                 contact.actorsHit.clear();
@@ -196,7 +199,7 @@ namespace advanced_platformer
                         continue;
                     }
                     requests.damage(
-                        target.id, contact.damage, knockbackFrom(actor, contact, target));
+                        target.id, contact.damage, knockbackFrom(actor, contact.knockback, target));
                     contact.actorsHit.push_back(target.id);
                 }
             }
@@ -204,24 +207,18 @@ namespace advanced_platformer
 
         void updateRangedAttack(
             Actor& actor,
+            RangedWeapon& weapon,
+            bool pressed,
             World& world,
             WorldRequests& requests,
             float deltaTime)
         {
-            if (!actor.rangedWeapon.has_value())
-            {
-                return;
-            }
-
-            RangedWeapon& weapon = *actor.rangedWeapon;
             if (actor.life != LifeState::Alive)
             {
                 weapon.phase = RangedPhase::Ready;
                 weapon.phaseTimeRemaining = 0.0F;
             }
-            else if (
-                weapon.phase == RangedPhase::Ready && actor.intentions.primaryAttackPressed &&
-                hasAimDirection(actor))
+            else if (weapon.phase == RangedPhase::Ready && pressed && hasAimDirection(actor))
             {
                 beginShot(actor, weapon, requests, world);
             }
@@ -233,16 +230,12 @@ namespace advanced_platformer
 
         void updateBiteAttack(
             Actor& actor,
+            BiteAttack& bite,
+            bool pressed,
             const World& world,
             WorldRequests& requests,
             float deltaTime)
         {
-            if (!actor.bite.has_value())
-            {
-                return;
-            }
-
-            BiteAttack& bite = *actor.bite;
             if (actor.life != LifeState::Alive)
             {
                 bite.phase = BitePhase::Ready;
@@ -252,7 +245,7 @@ namespace advanced_platformer
             }
 
             bool activeDuringUpdate = false;
-            if (bite.phase == BitePhase::Ready && actor.intentions.primaryAttackPressed)
+            if (bite.phase == BitePhase::Ready && pressed)
             {
                 beginBite(bite);
             }
@@ -271,7 +264,7 @@ namespace advanced_platformer
             {
                 if (target.id == actor.id || target.life != LifeState::Alive ||
                     !target.health.has_value() || !areOpponents(actor.team, target.team) ||
-                    hasHit(bite, target.id) || !overlaps(hitbox, target.body.bounds))
+                    hasHit(bite.actorsHit, target.id) || !overlaps(hitbox, target.body.bounds))
                 {
                     continue;
                 }
@@ -290,15 +283,72 @@ namespace advanced_platformer
         return {{left, centerOf(actorBounds).y - bite.hitboxSize.y * 0.5F}, bite.hitboxSize};
     }
 
+    namespace
+    {
+        void updatePounceDamage(
+            const Actor& actor,
+            Pounce& pounce,
+            const World& world,
+            WorldRequests& requests)
+        {
+            if (actor.life != LifeState::Alive)
+            {
+                pounce.actorsHit.clear();
+                return;
+            }
+            if (pounce.phase != PouncePhase::Airborne)
+            {
+                return;
+            }
+            for (const Actor& target : world.actors())
+            {
+                if (target.id == actor.id || target.life != LifeState::Alive ||
+                    !target.health.has_value() || !areOpponents(actor.team, target.team) ||
+                    hasHit(pounce.actorsHit, target.id) ||
+                    !overlaps(actor.body.bounds, target.body.bounds))
+                {
+                    continue;
+                }
+                requests.damage(
+                    target.id,
+                    pounce.config.damage,
+                    knockbackFrom(actor, pounce.config.knockback, target));
+                pounce.actorsHit.push_back(target.id);
+            }
+        }
+    }
+
     void updateAttacks(World& world, WorldRequests& requests, float deltaTime)
     {
         requireSeconds(deltaTime, "Attacks time step");
 
         for (Actor& actor : world.actors())
         {
-            updateContactDamage(actor, world, requests);
-            updateRangedAttack(actor, world, requests, deltaTime);
-            updateBiteAttack(actor, world, requests, deltaTime);
+            for (const AttackSlot slot : AttackSlots)
+            {
+                std::optional<Attack>& attack = attackIn(actor, slot);
+                if (!attack.has_value())
+                {
+                    continue;
+                }
+                const bool pressed = attackPressed(actor.intentions, slot);
+                if (auto* bite = std::get_if<BiteAttack>(&*attack))
+                {
+                    updateBiteAttack(actor, *bite, pressed, world, requests, deltaTime);
+                }
+                else if (auto* weapon = std::get_if<RangedWeapon>(&*attack))
+                {
+                    updateRangedAttack(actor, *weapon, pressed, world, requests, deltaTime);
+                }
+                else if (auto* contact = std::get_if<ContactDamage>(&*attack))
+                {
+                    updateContactDamage(actor, *contact, pressed, world, requests);
+                }
+                else if (auto* pounce = std::get_if<Pounce>(&*attack))
+                {
+                    updatePounceDamage(actor, *pounce, world, requests);
+                }
+            }
         }
     }
 }

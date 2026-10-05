@@ -24,7 +24,7 @@ namespace
                                                .platforming()
                                                .withSprite({0, {{0.0F, 0.0F}, {1.0F, 1.0F}}})
                                                .withAnimator(animator);
-        tests::platformerMovement(actor).grounded = true;
+        tests::component<advanced_platformer::PlatformerMovement>(actor).grounded = true;
         return actor;
     }
 }
@@ -34,21 +34,27 @@ TEST_CASE("A ranged actor uses Attack only during its Shoot phase", "[render][an
     advanced_platformer::World world;
     advanced_platformer::Actor rangedActor = makeAnimatedActor();
     rangedActor.team = advanced_platformer::Team::Player;
-    rangedActor.rangedWeapon = advanced_platformer::RangedWeapon{};
-    tests::rangedWeapon(rangedActor).phase = advanced_platformer::RangedPhase::Shoot;
-    tests::rangedWeapon(rangedActor).phaseTimeRemaining =
-        tests::rangedWeapon(rangedActor).shootDuration;
+    rangedActor.primaryAttack = advanced_platformer::RangedWeapon{};
+    tests::component<advanced_platformer::RangedWeapon>(rangedActor).phase =
+        advanced_platformer::RangedPhase::Shoot;
+    tests::component<advanced_platformer::RangedWeapon>(rangedActor).phaseTimeRemaining =
+        tests::component<advanced_platformer::RangedWeapon>(rangedActor).shootDuration;
     const advanced_platformer::ActorId id = world.addActor(rangedActor);
 
     advanced_platformer::updateWorldAnimations(world, 0.0F);
-    REQUIRE(tests::animator(world, id).current == advanced_platformer::AnimationName::Attack);
+    REQUIRE(
+        tests::component<advanced_platformer::Animator>(world, id).current ==
+        advanced_platformer::AnimationName::Attack);
 
-    tests::rangedWeapon(world, id).phase = advanced_platformer::RangedPhase::Recovery;
-    tests::rangedWeapon(world, id).phaseTimeRemaining =
-        tests::rangedWeapon(world, id).recoveryDuration;
+    tests::component<advanced_platformer::RangedWeapon>(world, id).phase =
+        advanced_platformer::RangedPhase::Recovery;
+    tests::component<advanced_platformer::RangedWeapon>(world, id).phaseTimeRemaining =
+        tests::component<advanced_platformer::RangedWeapon>(world, id).recoveryDuration;
     tests::actor(world, id).body.velocity.x = 10.0F;
     advanced_platformer::updateWorldAnimations(world, 0.0F);
-    REQUIRE(tests::animator(world, id).current == advanced_platformer::AnimationName::Move);
+    REQUIRE(
+        tests::component<advanced_platformer::Animator>(world, id).current ==
+        advanced_platformer::AnimationName::Move);
 }
 
 TEST_CASE("Every committed bite phase uses Attack", "[render][animation][system]")
@@ -56,7 +62,7 @@ TEST_CASE("Every committed bite phase uses Attack", "[render][animation][system]
     advanced_platformer::World world;
     advanced_platformer::Actor bitingActor = makeAnimatedActor();
     bitingActor.team = advanced_platformer::Team::Enemy;
-    bitingActor.bite = advanced_platformer::BiteAttack{};
+    bitingActor.primaryAttack = advanced_platformer::BiteAttack{};
     const advanced_platformer::ActorId id = world.addActor(bitingActor);
 
     for (const advanced_platformer::BitePhase phase : {
@@ -65,9 +71,11 @@ TEST_CASE("Every committed bite phase uses Attack", "[render][animation][system]
              advanced_platformer::BitePhase::Recovery,
          })
     {
-        tests::bite(world, id).phase = phase;
+        tests::component<advanced_platformer::BiteAttack>(world, id).phase = phase;
         advanced_platformer::updateWorldAnimations(world, 0.0F);
-        REQUIRE(tests::animator(world, id).current == advanced_platformer::AnimationName::Attack);
+        REQUIRE(
+            tests::component<advanced_platformer::Animator>(world, id).current ==
+            advanced_platformer::AnimationName::Attack);
     }
 }
 
@@ -77,15 +85,18 @@ TEST_CASE("Death animation has priority over a shot", "[render][animation][syste
     advanced_platformer::Actor dyingActor = makeAnimatedActor();
     dyingActor.team = advanced_platformer::Team::Player;
     dyingActor.life = advanced_platformer::LifeState::Dying;
-    dyingActor.rangedWeapon = advanced_platformer::RangedWeapon{};
-    tests::rangedWeapon(dyingActor).phase = advanced_platformer::RangedPhase::Shoot;
-    tests::rangedWeapon(dyingActor).phaseTimeRemaining =
-        tests::rangedWeapon(dyingActor).shootDuration;
+    dyingActor.primaryAttack = advanced_platformer::RangedWeapon{};
+    tests::component<advanced_platformer::RangedWeapon>(dyingActor).phase =
+        advanced_platformer::RangedPhase::Shoot;
+    tests::component<advanced_platformer::RangedWeapon>(dyingActor).phaseTimeRemaining =
+        tests::component<advanced_platformer::RangedWeapon>(dyingActor).shootDuration;
     const advanced_platformer::ActorId id = world.addActor(dyingActor);
 
     advanced_platformer::updateWorldAnimations(world, 0.0F);
 
-    REQUIRE(tests::animator(world, id).current == advanced_platformer::AnimationName::Death);
+    REQUIRE(
+        tests::component<advanced_platformer::Animator>(world, id).current ==
+        advanced_platformer::AnimationName::Death);
 }
 
 TEST_CASE(
@@ -96,25 +107,28 @@ TEST_CASE(
     advanced_platformer::Actor climbingActor = makeAnimatedActor();
     climbingActor.surfaceClimb = advanced_platformer::SurfaceClimb{};
     const advanced_platformer::ActorId id = world.addActor(climbingActor);
-    tests::platformerMovement(world, id).grounded = false;
+    tests::component<advanced_platformer::PlatformerMovement>(world, id).grounded = false;
     advanced_platformer::Actor& actor = tests::actor(world, id);
     const auto animate = [&world, &id]()
     {
         advanced_platformer::updateWorldAnimations(world, 0.0F);
-        return tests::animator(world, id).current;
+        return tests::component<advanced_platformer::Animator>(world, id).current;
     };
 
-    tests::surfaceClimb(actor).surface = advanced_platformer::ClimbSurface::LeftWall;
+    tests::component<advanced_platformer::SurfaceClimb>(actor).surface =
+        advanced_platformer::ClimbSurface::LeftWall;
     actor.body.velocity = {0.0F, 60.0F};
     REQUIRE(animate() == advanced_platformer::AnimationName::Move);
     actor.body.velocity = {0.0F, 0.0F};
     REQUIRE(animate() == advanced_platformer::AnimationName::Idle);
 
-    tests::surfaceClimb(actor).surface = advanced_platformer::ClimbSurface::Ceiling;
+    tests::component<advanced_platformer::SurfaceClimb>(actor).surface =
+        advanced_platformer::ClimbSurface::Ceiling;
     actor.body.velocity = {60.0F, 0.0F};
     REQUIRE(animate() == advanced_platformer::AnimationName::Move);
 
-    tests::surfaceClimb(actor).surface = advanced_platformer::ClimbSurface::None;
+    tests::component<advanced_platformer::SurfaceClimb>(actor).surface =
+        advanced_platformer::ClimbSurface::None;
     actor.body.velocity = {0.0F, 60.0F};
     REQUIRE(animate() == advanced_platformer::AnimationName::Fall);
 }

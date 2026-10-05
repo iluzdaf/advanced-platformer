@@ -6,8 +6,6 @@
 
 namespace tests
 {
-    // A fixed fixture for world tests, not the shipped enemies' tunable policy: an NPC that
-    // patrols, chases what it knows of and shoots what it sees.
     inline void loadPursuerScript(advanced_platformer::LuaNpcScripts& scripts)
     {
         scripts.loadScriptText("pursuer", R"(
@@ -36,7 +34,6 @@ namespace tests
             )");
     }
 
-    // The machine that runs the activities loadPursuerScript loads.
     inline advanced_platformer::NpcStateMachine pursuerMachine()
     {
         return NpcMachineBuilder::named("pursuer")
@@ -45,9 +42,9 @@ namespace tests
             .state("chase", {"pursuer", "chase"})
             .state("shoot", {"pursuer", "shoot"})
             .transition("idle", "shoot")
-            .when("targetInSights", true)
+            .when("targetInPrimaryRange", true)
             .transition("patrol", "shoot")
-            .when("targetInSights", true)
+            .when("targetInPrimaryRange", true)
             .transition("idle", "chase")
             .when("targetKnown", true)
             .transition("patrol", "chase")
@@ -55,9 +52,9 @@ namespace tests
             .transition("idle", "patrol")
             .when("hasPatrol", true)
             .transition("chase", "shoot")
-            .when("targetInSights", true)
+            .when("targetInPrimaryRange", true)
             .transition("shoot", "chase")
-            .when("targetInSights", false)
+            .when("targetInPrimaryRange", false)
             .transition("chase", "patrol")
             .when("targetKnown", false)
             .when("hasPatrol", true)

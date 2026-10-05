@@ -7,6 +7,7 @@
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/movement/pounce.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/movement/flying_movement.hpp"
 #include "advanced_platformer/navigation/path_follower.hpp"
@@ -133,19 +134,20 @@ TEST_CASE("World rejects invalid actor composition", "[world][actor]")
     {
         actor.sprite = advanced_platformer::Sprite{};
         actor.animator = advanced_platformer::Animator{};
-        tests::animator(actor).animationSet.clips.push_back(
+        tests::component<advanced_platformer::Animator>(actor).animationSet.clips.push_back(
             {advanced_platformer::AnimationName::Idle, {{{0.0F, 0.0F}, {1.0F, 1.0F}}}});
-        tests::animator(actor).elapsed = std::numeric_limits<float>::infinity();
+        tests::component<advanced_platformer::Animator>(actor).elapsed =
+            std::numeric_limits<float>::infinity();
     }
-    SECTION("Two attacks")
+    SECTION("Two pounces")
     {
         actor.team = advanced_platformer::Team::Player;
-        actor.rangedWeapon = advanced_platformer::RangedWeapon{};
-        actor.bite = advanced_platformer::BiteAttack{};
+        actor.primaryAttack = advanced_platformer::Pounce{};
+        actor.secondaryAttack = advanced_platformer::Pounce{};
     }
     SECTION("A neutral attacker")
     {
-        actor.rangedWeapon = advanced_platformer::RangedWeapon{};
+        actor.primaryAttack = advanced_platformer::RangedWeapon{};
     }
     SECTION("A brain without senses or a path follower")
     {
@@ -168,14 +170,15 @@ TEST_CASE("World rejects invalid actor composition", "[world][actor]")
     SECTION("Shot time in the future")
     {
         actor.team = advanced_platformer::Team::Player;
-        actor.rangedWeapon = advanced_platformer::RangedWeapon{};
-        actor.rangedWeapon->lastFiredTimeSeconds = 1.0;
+        actor.primaryAttack = advanced_platformer::RangedWeapon{};
+        tests::component<advanced_platformer::RangedWeapon>(actor).lastFiredTimeSeconds = 1.0;
     }
     SECTION("Non-finite shot time")
     {
         actor.team = advanced_platformer::Team::Player;
-        actor.rangedWeapon = advanced_platformer::RangedWeapon{};
-        actor.rangedWeapon->lastFiredTimeSeconds = std::numeric_limits<double>::infinity();
+        actor.primaryAttack = advanced_platformer::RangedWeapon{};
+        tests::component<advanced_platformer::RangedWeapon>(actor).lastFiredTimeSeconds =
+            std::numeric_limits<double>::infinity();
     }
 
     REQUIRE_THROWS_AS(world.addActor(actor), std::invalid_argument);

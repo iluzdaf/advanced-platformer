@@ -156,37 +156,35 @@ jump heights are tuned for 16-pixel tiles.
 `player` names the player's definition, which needs `health` and `inventorySlots` and
 no `senses`.
 
-| Field            | Meaning                                                                       |
-| ---------------- | ----------------------------------------------------------------------------- |
-| `bodySize`       | Required. The collider.                                                       |
-| `team`           | `player`, `enemy` or `neutral` (default). Attacks need a non-neutral team.    |
-| `facing`         | `left` or `right` (default).                                                  |
-| `animations`     | A set in `animations.json`.                                                   |
-| `spriteAnchor`   | `feet` (default) or `center`.                                                 |
-| `health`         | Positive.                                                                     |
-| `inventorySlots` | Positive.                                                                     |
-| `platformer`     | Walking and jumping. Exactly one of `platformer` and `flying`.                |
-| `flying`         | Flying.                                                                       |
-| `surfaceClimb`   | Climbing walls and ceilings. Needs `platformer`.                              |
-| `pounce`         | A leap along the aim from the floor, a wall or a ceiling. Needs `platformer`. |
-| `senses`         | Makes the actor an NPC. Needs `machine`.                                      |
-| `machine`        | A machine in `machines.json`. Needs `senses`.                                 |
-| `bite`           | A melee attack. At most one of `bite` and `ranged`.                           |
-| `ranged`         | A projectile attack.                                                          |
-| `contactDamage`  | Damage on touch, when a script asks for it. Works with either attack.         |
+| Field             | Meaning                                                                                                           |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `bodySize`        | Required. The collider.                                                                                           |
+| `team`            | `player`, `enemy` or `neutral` (default). Attacks need a non-neutral team.                                        |
+| `facing`          | `left` or `right` (default).                                                                                      |
+| `animations`      | A set in `animations.json`.                                                                                       |
+| `spriteAnchor`    | `feet` (default) or `center`.                                                                                     |
+| `health`          | Positive.                                                                                                         |
+| `inventorySlots`  | Positive.                                                                                                         |
+| `platformer`      | Walking and jumping. Exactly one of `platformer` and `flying`.                                                    |
+| `flying`          | Flying.                                                                                                           |
+| `surfaceClimb`    | Climbing walls and ceilings. Needs `platformer`.                                                                  |
+| `senses`          | Makes the actor an NPC. Needs `machine`.                                                                          |
+| `machine`         | A machine in `machines.json`. Needs `senses`.                                                                     |
+| `primaryAttack`   | An attack, by `kind`: `bite`, `ranged`, `contact` or `pounce`. Pressed by the left mouse button or a script.      |
+| `secondaryAttack` | A second attack, the same way. Pressed by the right mouse button or a script. At most one of the two is a pounce. |
 
 A component object may leave out any field to keep its default, so `{}` is all defaults.
 
-| Component       | Fields (default)                                                                                                                                                                                                                   |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `platformer`    | `maximumSpeed` (100), `groundAcceleration` (800), `airAcceleration` (400), `groundDeceleration` (1000), `jumpSpeed` (240), `gravity`, `jumpReleaseGravity`, `maximumFallSpeed`, `coyoteDuration` (0.1), `jumpBufferDuration` (0.1) |
-| `flying`        | `speed` (60)                                                                                                                                                                                                                       |
-| `surfaceClimb`  | `speed` (60)                                                                                                                                                                                                                       |
-| `pounce`        | `speed` (200), `lift` (120), `range` (64), `recoveryDuration` (0.5)                                                                                                                                                                |
-| `senses`        | `noticeDistance` (96), `targetMemoryDuration` (1.5), `searchDuration` (2), `standoffDistance` (48)                                                                                                                                 |
-| `bite`          | `damage` (1), `hitboxSize` ([10, 8]), `reach` (4), `windupDuration` (0.12), `activeDuration` (0.08), `recoveryDuration` (0.3)                                                                                                      |
-| `ranged`        | `damage` (1), `projectileSize` ([4, 2]), `projectileSpeed` (180), `projectileLifetime` (2), `shootDuration` (0.15), `recoveryDuration` (0.2), `breaksTiles` (false), `sprite`                                                      |
-| `contactDamage` | `damage` (1), `knockback` (none): `speed` (150), `lift` (120), the push away from the attacker and the lift, in pixels per second                                                                                                  |
+| Component        | Fields (default)                                                                                                                                                                                                                   |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `platformer`     | `maximumSpeed` (100), `groundAcceleration` (800), `airAcceleration` (400), `groundDeceleration` (1000), `jumpSpeed` (240), `gravity`, `jumpReleaseGravity`, `maximumFallSpeed`, `coyoteDuration` (0.1), `jumpBufferDuration` (0.1) |
+| `flying`         | `speed` (60)                                                                                                                                                                                                                       |
+| `surfaceClimb`   | `speed` (60)                                                                                                                                                                                                                       |
+| `senses`         | `noticeDistance` (96), `targetMemoryDuration` (1.5), `searchDuration` (2), `standoffDistance` (48)                                                                                                                                 |
+| attack `bite`    | `damage` (1), `hitboxSize` ([10, 8]), `reach` (4), `windupDuration` (0.12), `activeDuration` (0.08), `recoveryDuration` (0.3)                                                                                                      |
+| attack `ranged`  | `damage` (1), `projectileSize` ([4, 2]), `projectileSpeed` (180), `projectileLifetime` (2), `shootDuration` (0.15), `recoveryDuration` (0.2), `breaksTiles` (false), `sprite`                                                      |
+| attack `contact` | `damage` (1), `knockback` (none): `speed` (150), `lift` (120), the push away from the attacker and the lift, in pixels per second. Damages while held.                                                                             |
+| attack `pounce`  | `damage` (1), `knockback` (none), `speed` (200), `lift` (120), `range` (64), `recoveryDuration` (0.5). Needs `platformer`; damages while in the air.                                                                               |
 
 A `sprite`, here and for items, pickups and exits, has `position` and `size`, the atlas
 region, and `anchor`, `feet` (default) or `center`. A sprite draws at its region's size:
@@ -223,24 +221,24 @@ fires.
 
 ### Facts
 
-| Fact                           | True when                                                          | Notes                                                                 |
-| ------------------------------ | ------------------------------------------------------------------ | --------------------------------------------------------------------- |
-| `targetKnown`                  | The NPC remembers a living target.                                 | Sight or a heard noise refreshes it; it lasts `targetMemoryDuration`. |
-| `targetVisible`                | The NPC sees the target.                                           | Within `noticeDistance` with clear line of sight.                     |
-| `targetInBiteRange`            | The visible target overlaps the NPC's bite hitbox.                 | Needs `bite`.                                                         |
-| `biteReady`                    | The NPC's bite is ready.                                           | Needs no target.                                                      |
-| `targetInPounceRange`          | The visible target's centre is within `range` of the NPC's.        | Needs `pounce`.                                                       |
-| `pounceReady`                  | The NPC's pounce is ready.                                         | False in the air and while recovering.                                |
-| `pouncing`                     | The NPC is in the air from a pounce.                               |                                                                       |
-| `targetInSights`               | The target is visible and the NPC has `ranged`.                    | Ignores aim and reload.                                               |
-| `targetWithinStandoffDistance` | The remembered target is nearer than `standoffDistance`.           | Measured to its last known feet.                                      |
-| `heardLanding`                 | The NPC heard the player land on its ground run.                   | For one update.                                                       |
-| `targetOnSameSurface`          | The NPC can reach its grounded target without leaving its surface. | A climber may use walls and ceilings. Ignores distance and sight.     |
-| `targetWithinNoticeDistance`   | The remembered target is within `noticeDistance`.                  | Ignores ground and sight.                                             |
-| `movementBlocked`              | The NPC hit a wall, or its ledge guard stopped it.                 | From the last movement update.                                        |
-| `hasPatrol`                    | The NPC has a patrol.                                              |                                                                       |
-| `searches`                     | `searchDuration` is positive.                                      |                                                                       |
-| `searchTimeUp`                 | The time in this state has reached `searchDuration`.               |                                                                       |
+| Fact                           | True when                                                          | Notes                                                                               |
+| ------------------------------ | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `targetKnown`                  | The NPC remembers a living target.                                 | Sight or a heard noise refreshes it; it lasts `targetMemoryDuration`.               |
+| `targetVisible`                | The NPC sees the target.                                           | Within `noticeDistance` with clear line of sight.                                   |
+| `targetInPrimaryRange`         | The visible target is where the primary attack can hit it.         | Bite: in its hitbox. Ranged: visible. Contact: overlapping. Pounce: within `range`. |
+| `primaryReady`                 | The primary attack can start now.                                  | Contact is always ready.                                                            |
+| `primaryActive`                | The primary attack is doing its damage.                            | Bite active, shooting, contact held, or pouncing in the air.                        |
+| `targetInSecondaryRange`       | As `targetInPrimaryRange`, for the secondary attack.               |                                                                                     |
+| `secondaryReady`               | As `primaryReady`, for the secondary attack.                       |                                                                                     |
+| `secondaryActive`              | As `primaryActive`, for the secondary attack.                      |                                                                                     |
+| `targetWithinStandoffDistance` | The remembered target is nearer than `standoffDistance`.           | Measured to its last known feet.                                                    |
+| `heardLanding`                 | The NPC heard the player land on its ground run.                   | For one update.                                                                     |
+| `targetOnSameSurface`          | The NPC can reach its grounded target without leaving its surface. | A climber may use walls and ceilings. Ignores distance and sight.                   |
+| `targetWithinNoticeDistance`   | The remembered target is within `noticeDistance`.                  | Ignores ground and sight.                                                           |
+| `movementBlocked`              | The NPC hit a wall, or its ledge guard stopped it.                 | From the last movement update.                                                      |
+| `hasPatrol`                    | The NPC has a patrol.                                              |                                                                                     |
+| `searches`                     | `searchDuration` is positive.                                      |                                                                                     |
+| `searchTimeUp`                 | The time in this state has reached `searchDuration`.               |                                                                                     |
 
 ### Lua activities
 
@@ -248,7 +246,7 @@ A script returns `{ activities = { name = { enter, update, exit } } }`. `update`
 required, and `enter` and `exit` are optional. Each hook gets `self`, a table kept for
 the visit, and a snapshot. `update` also gets the step in seconds, and returns a command
 or `nil`. [`common.lua`](../assets/scripts/common.lua) has `idle`, `patrol`, `chase`,
-`bite`, `shoot`, `search`, `retreat` and `watch`.
+`attack`, `search`, `retreat` and `watch`.
 
 | Snapshot              | Meaning                                                                     |
 | --------------------- | --------------------------------------------------------------------------- |
@@ -263,19 +261,17 @@ or `nil`. [`common.lua`](../assets/scripts/common.lua) has `idle`, `patrol`, `ch
 | `hasRoute`            | Whether the engine holds a route.                                           |
 | `routeComplete`       | Whether the last route asked for has been followed to its end.              |
 
-| Command                     | Meaning                                                  |
-| --------------------------- | -------------------------------------------------------- |
-| `direction`, `aimDirection` | Movement and aim, as vectors.                            |
-| `jumpPressed`, `jumpHeld`   | Jump input.                                              |
-| `pounce`                    | Leap along the aim, when ready and resting on a surface. |
-| `primaryAttackPressed`      | Bite or shoot.                                           |
-| `climbGrip`                 | `"hold"`, `"release"` or `"keep"` (default).             |
-| `avoidLedges`               | Stop a walker at a ledge.                                |
-| `contactDamage`             | Deal contact damage while touching.                      |
-| `routeTo`                   | Follow a route to a point; the engine plans and moves.   |
-| `aimAt`                     | Aim at a point.                                          |
-| `clearRoute`                | Drop the current route.                                  |
-| `turnPatrol`                | Head for the patrol's other end.                         |
+| Command                                          | Meaning                                                                          |
+| ------------------------------------------------ | -------------------------------------------------------------------------------- |
+| `direction`, `aimDirection`                      | Movement and aim, as vectors.                                                    |
+| `jumpPressed`, `jumpHeld`                        | Jump input.                                                                      |
+| `primaryAttackPressed`, `secondaryAttackPressed` | Use that attack: bite, shoot or pounce on the press, or hold for contact damage. |
+| `climbGrip`                                      | `"hold"`, `"release"` or `"keep"` (default).                                     |
+| `avoidLedges`                                    | Stop a walker at a ledge.                                                        |
+| `routeTo`                                        | Follow a route to a point; the engine plans and moves.                           |
+| `aimAt`                                          | Aim at a point.                                                                  |
+| `clearRoute`                                     | Drop the current route.                                                          |
+| `turnPatrol`                                     | Head for the patrol's other end.                                                 |
 
 Positions are `vec2` values, made with `vec2(x, y)`. They have `x` and `y`, `+`, `-`,
 `*` and `/` by a number, `==`, `tostring`, and the methods `length()`, `distance(v)`,

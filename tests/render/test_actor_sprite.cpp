@@ -29,7 +29,7 @@ namespace
                                                .platforming()
                                                .climbing()
                                                .withSprite({0, {{0.0F, 0.0F}, SpriteSize}});
-        tests::surfaceClimb(actor).surface = surface;
+        tests::component<advanced_platformer::SurfaceClimb>(actor).surface = surface;
         actor.facing = facing;
         return actor;
     }
@@ -92,8 +92,8 @@ TEST_CASE("A sprite off every surface stands on the body's feet unturned", "[ren
 
     REQUIRE(placement.rotationRadians == 0.0F);
     REQUIRE(placement.flipHorizontal);
-    const advanced_platformer::Aabb expected =
-        advanced_platformer::spriteBounds(actor.body.bounds, tests::sprite(actor));
+    const advanced_platformer::Aabb expected = advanced_platformer::spriteBounds(
+        actor.body.bounds, tests::component<advanced_platformer::Sprite>(actor));
     REQUIRE(placement.drawn.topLeft == expected.topLeft);
     REQUIRE(placement.drawn.size == expected.size);
     REQUIRE(placement.visible.topLeft == expected.topLeft);
@@ -160,7 +160,8 @@ TEST_CASE("A climber's head leads the way it goes", "[render][sprite][climb]")
         REQUIRE(pointsAlong(
             headDirection(advanced_platformer::placeActorSprite(actor)), {0.0F, -1.0F}));
 
-        tests::surfaceClimb(actor).wallHeading = advanced_platformer::WallHeading::Down;
+        tests::component<advanced_platformer::SurfaceClimb>(actor).wallHeading =
+            advanced_platformer::WallHeading::Down;
         REQUIRE(
             pointsAlong(headDirection(advanced_platformer::placeActorSprite(actor)), {0.0F, 1.0F}));
     }
@@ -169,7 +170,8 @@ TEST_CASE("A climber's head leads the way it goes", "[render][sprite][climb]")
 TEST_CASE("A centre-anchored climber's sprite turns about its body's centre", "[render][sprite]")
 {
     advanced_platformer::Actor actor = climber(ClimbSurface::LeftWall, Facing::Right);
-    tests::sprite(actor).anchor = advanced_platformer::SpriteAnchor::BodyCenter;
+    tests::component<advanced_platformer::Sprite>(actor).anchor =
+        advanced_platformer::SpriteAnchor::BodyCenter;
     const ActorSpritePlacement placement = advanced_platformer::placeActorSprite(actor);
 
     const glm::vec2 bodyCentre = advanced_platformer::centerOf(actor.body.bounds);

@@ -23,7 +23,8 @@ namespace
             .at(topLeft)
             .platforming()
             .withHealth(3, 3)
-            .onTeam(team);
+            .onTeam(team)
+            .withPrimary(advanced_platformer::RangedWeapon{});
     }
 }
 
@@ -32,8 +33,8 @@ TEST_CASE("A ranged weapon queues a projectile in its aim direction", "[combat][
     advanced_platformer::World world;
     advanced_platformer::Actor actor = makeActor({20.0F, 20.0F}, advanced_platformer::Team::Player);
     actor.facing = advanced_platformer::Facing::Right;
-    actor.rangedWeapon = advanced_platformer::RangedWeapon{};
-    tests::rangedWeapon(actor).projectileSprite.region.size = {8.0F, 6.0F};
+    tests::component<advanced_platformer::RangedWeapon>(actor).projectileSprite.region.size = {
+        8.0F, 6.0F};
     actor.intentions.aimDirection = {-1.0F, 0.0F};
     actor.intentions.primaryAttackPressed = true;
     const advanced_platformer::ActorId shooter = world.addActor(actor);
@@ -43,7 +44,10 @@ TEST_CASE("A ranged weapon queues a projectile in its aim direction", "[combat][
     advanced_platformer::updateAttacks(world, requests, 0.1F);
 
     REQUIRE(world.projectiles().empty());
-    REQUIRE_NEAR(tests::rangedWeapon(world, shooter).lastFiredTimeSeconds.value_or(-1.0), 0.25);
+    REQUIRE_NEAR(
+        tests::component<advanced_platformer::RangedWeapon>(world, shooter)
+            .lastFiredTimeSeconds.value_or(-1.0),
+        0.25);
     const auto noises = world.takeNoises();
     REQUIRE(noises.size() == 1);
     REQUIRE(noises.front().source == shooter);
@@ -51,7 +55,9 @@ TEST_CASE("A ranged weapon queues a projectile in its aim direction", "[combat][
     REQUIRE(
         noises.front().feet ==
         advanced_platformer::feetOf(tests::actor(world, shooter).body.bounds));
-    REQUIRE(tests::rangedWeapon(world, shooter).phase == advanced_platformer::RangedPhase::Shoot);
+    REQUIRE(
+        tests::component<advanced_platformer::RangedWeapon>(world, shooter).phase ==
+        advanced_platformer::RangedPhase::Shoot);
     advanced_platformer::applyWorldRequests(world, requests);
     REQUIRE(world.projectiles().size() == 1);
     const advanced_platformer::Projectile& projectile = world.projectiles().front();
@@ -67,7 +73,6 @@ TEST_CASE("A ranged weapon normalises a diagonal aim direction", "[combat][weapo
 {
     advanced_platformer::World world;
     advanced_platformer::Actor actor = makeActor({20.0F, 20.0F}, advanced_platformer::Team::Player);
-    actor.rangedWeapon = advanced_platformer::RangedWeapon{};
     actor.intentions.aimDirection = {3.0F, 4.0F};
     actor.intentions.primaryAttackPressed = true;
     world.addActor(actor);
@@ -85,7 +90,6 @@ TEST_CASE("A ranged weapon does not fire without an aim direction", "[combat][we
 {
     advanced_platformer::World world;
     advanced_platformer::Actor actor = makeActor({20.0F, 20.0F}, advanced_platformer::Team::Player);
-    actor.rangedWeapon = advanced_platformer::RangedWeapon{};
     actor.intentions.primaryAttackPressed = true;
     const advanced_platformer::ActorId shooter = world.addActor(actor);
     advanced_platformer::WorldRequests requests;
@@ -95,15 +99,18 @@ TEST_CASE("A ranged weapon does not fire without an aim direction", "[combat][we
 
     REQUIRE(world.projectiles().empty());
     REQUIRE(world.takeNoises().empty());
-    REQUIRE_FALSE(tests::rangedWeapon(world, shooter).lastFiredTimeSeconds.has_value());
-    REQUIRE(tests::rangedWeapon(world, shooter).phase == advanced_platformer::RangedPhase::Ready);
+    REQUIRE_FALSE(
+        tests::component<advanced_platformer::RangedWeapon>(world, shooter)
+            .lastFiredTimeSeconds.has_value());
+    REQUIRE(
+        tests::component<advanced_platformer::RangedWeapon>(world, shooter).phase ==
+        advanced_platformer::RangedPhase::Ready);
 }
 
 TEST_CASE("A ranged weapon uses shoot and recovery phases", "[combat][weapon]")
 {
     advanced_platformer::World world;
     advanced_platformer::Actor actor = makeActor({20.0F, 20.0F}, advanced_platformer::Team::Player);
-    actor.rangedWeapon = advanced_platformer::RangedWeapon{};
     actor.intentions.aimDirection = {1.0F, 0.0F};
     actor.intentions.primaryAttackPressed = true;
     const advanced_platformer::ActorId shooter = world.addActor(actor);
@@ -111,30 +118,46 @@ TEST_CASE("A ranged weapon uses shoot and recovery phases", "[combat][weapon]")
 
     advanced_platformer::updateAttacks(world, requests, 0.0F);
     advanced_platformer::applyWorldRequests(world, requests);
-    REQUIRE(tests::rangedWeapon(world, shooter).phase == advanced_platformer::RangedPhase::Shoot);
+    REQUIRE(
+        tests::component<advanced_platformer::RangedWeapon>(world, shooter).phase ==
+        advanced_platformer::RangedPhase::Shoot);
 
     world.advanceSimulationTime(0.15F);
     advanced_platformer::updateAttacks(world, requests, 0.15F);
-    REQUIRE_NEAR(tests::rangedWeapon(world, shooter).lastFiredTimeSeconds.value_or(-1.0), 0.0);
+    REQUIRE_NEAR(
+        tests::component<advanced_platformer::RangedWeapon>(world, shooter)
+            .lastFiredTimeSeconds.value_or(-1.0),
+        0.0);
     REQUIRE(world.takeNoises().size() == 1);
     REQUIRE(
-        tests::rangedWeapon(world, shooter).phase == advanced_platformer::RangedPhase::Recovery);
+        tests::component<advanced_platformer::RangedWeapon>(world, shooter).phase ==
+        advanced_platformer::RangedPhase::Recovery);
     advanced_platformer::applyWorldRequests(world, requests);
     REQUIRE(world.projectiles().size() == 1);
     REQUIRE(world.projectiles().front().velocity.x > 0.0F);
 
     world.advanceSimulationTime(0.20F);
     advanced_platformer::updateAttacks(world, requests, 0.20F);
-    REQUIRE_NEAR(tests::rangedWeapon(world, shooter).lastFiredTimeSeconds.value_or(-1.0), 0.0);
+    REQUIRE_NEAR(
+        tests::component<advanced_platformer::RangedWeapon>(world, shooter)
+            .lastFiredTimeSeconds.value_or(-1.0),
+        0.0);
     REQUIRE(world.takeNoises().empty());
-    REQUIRE(tests::rangedWeapon(world, shooter).phase == advanced_platformer::RangedPhase::Ready);
+    REQUIRE(
+        tests::component<advanced_platformer::RangedWeapon>(world, shooter).phase ==
+        advanced_platformer::RangedPhase::Ready);
 
     advanced_platformer::Actor& stored = tests::actor(world, shooter);
     stored.intentions.primaryAttackPressed = true;
     advanced_platformer::updateAttacks(world, requests, 0.0F);
-    REQUIRE_NEAR(tests::rangedWeapon(world, shooter).lastFiredTimeSeconds.value_or(-1.0), 0.35);
+    REQUIRE_NEAR(
+        tests::component<advanced_platformer::RangedWeapon>(world, shooter)
+            .lastFiredTimeSeconds.value_or(-1.0),
+        0.35);
     REQUIRE(world.takeNoises().size() == 1);
-    REQUIRE(tests::rangedWeapon(world, shooter).phase == advanced_platformer::RangedPhase::Shoot);
+    REQUIRE(
+        tests::component<advanced_platformer::RangedWeapon>(world, shooter).phase ==
+        advanced_platformer::RangedPhase::Shoot);
     advanced_platformer::applyWorldRequests(world, requests);
     REQUIRE(world.projectiles().size() == 2);
 }
@@ -143,16 +166,19 @@ TEST_CASE("Dying actors cannot begin ranged attacks", "[combat][weapon][lifecycl
 {
     advanced_platformer::World world;
     advanced_platformer::Actor actor = makeActor({20.0F, 20.0F}, advanced_platformer::Team::Player);
-    actor.rangedWeapon = advanced_platformer::RangedWeapon{};
-    tests::rangedWeapon(actor).phase = advanced_platformer::RangedPhase::Shoot;
-    tests::rangedWeapon(actor).phaseTimeRemaining = tests::rangedWeapon(actor).shootDuration;
+    tests::component<advanced_platformer::RangedWeapon>(actor).phase =
+        advanced_platformer::RangedPhase::Shoot;
+    tests::component<advanced_platformer::RangedWeapon>(actor).phaseTimeRemaining =
+        tests::component<advanced_platformer::RangedWeapon>(actor).shootDuration;
     actor.intentions.primaryAttackPressed = true;
     actor.life = advanced_platformer::LifeState::Dying;
     const advanced_platformer::ActorId actorId = world.addActor(actor);
     advanced_platformer::WorldRequests requests;
 
     advanced_platformer::updateAttacks(world, requests, 0.1F);
-    REQUIRE(tests::rangedWeapon(world, actorId).phase == advanced_platformer::RangedPhase::Ready);
+    REQUIRE(
+        tests::component<advanced_platformer::RangedWeapon>(world, actorId).phase ==
+        advanced_platformer::RangedPhase::Ready);
     advanced_platformer::applyWorldRequests(world, requests);
 
     REQUIRE(world.projectiles().empty());

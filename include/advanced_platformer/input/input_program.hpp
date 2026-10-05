@@ -12,6 +12,8 @@ namespace advanced_platformer
     {
         float duration = 0.0F;
         InputIntentions intentions;
+
+        bool operator==(const InputStep&) const = default;
     };
 
     using InputProgram = std::vector<InputStep>;

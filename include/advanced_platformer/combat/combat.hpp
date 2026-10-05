@@ -69,6 +69,8 @@ namespace advanced_platformer
     {
         float speed = 150.0F;
         float lift = 120.0F;
+
+        bool operator==(const Knockback&) const = default;
     };
 
     struct ContactDamage
