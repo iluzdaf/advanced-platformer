@@ -6,18 +6,18 @@
       "team": "player",
       "health": 3,
       "inventorySlots": 6,
-      "platformer": {},
+      "movement": { "platformer": {} },
       "animations": "test_actor"
     },
     "test_guard": {
       "bodySize": [8, 12],
-      "platformer": { "maximumSpeed": 23 },
+      "movement": { "platformer": { "maximumSpeed": 23 } },
       "senses": {},
       "machine": "test_machine"
     },
     "test_climber": {
       "bodySize": [8, 8],
-      "platformer": { "maximumSpeed": 30 },
+      "movement": { "platformer": { "maximumSpeed": 30 } },
       "surfaceClimb": { "speed": 40 },
       "senses": {},
       "machine": "test_machine"

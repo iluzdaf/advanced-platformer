@@ -11,8 +11,8 @@ namespace
         return tests::parseJson(R"({
             "tileLegend": {".": "empty", "#": "stone"},
             "map": ["...", "###"],
-            "playerSpawnCell": [0, 0],
-            "exit": {"definition": "test_door", "spawnCell": [2, 0]}
+            "playerSpawn": {"cell": [0, 0]},
+            "exit": {"definition": "test_door", "spawn": {"cell": [2, 0]}}
         })");
     }
 }
@@ -42,7 +42,9 @@ TEST_CASE("Placement diagnostics retain their paths", "[app][content][json]")
     SECTION("Empty actor definition")
     {
         level["actors"] = tests::list({tests::object(
-            {{"id", "guard"}, {"definition", ""}, {"spawnCell", tests::numbers({0, 0})}})});
+            {{"id", "guard"},
+             {"definition", ""},
+             {"spawn", tests::object({{"cell", tests::numbers({0, 0})}})}})});
         REQUIRE_THROWS_WITH(
             advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"),
             "level.json: actors[0].definition: actor definition name cannot be empty");

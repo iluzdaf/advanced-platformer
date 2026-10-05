@@ -1,18 +1,27 @@
 {
-  "tileLegend": { ".": "empty", "#": "stone" },
+  "tileLegend": {
+    ".": "empty",
+    "#": "stone"
+  },
   "map": ["............", "............", "............", "############"],
-  "playerSpawnCell": [1, 2],
+  "playerSpawn": {
+    "cell": [1, 2]
+  },
   "actors": [],
   "pickups": [
     {
       "id": "key",
       "definition": "door_key",
-      "spawnCell": [8, 2]
+      "spawn": {
+        "cell": [8, 2]
+      }
     }
   ],
   "exit": {
     "definition": "test_door",
-    "spawnCell": [3, 2],
+    "spawn": {
+      "cell": [3, 2]
+    },
     "requirement": {
       "item": "key",
       "quantity": 1

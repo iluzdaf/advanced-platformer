@@ -7,14 +7,12 @@
       "animations": "player",
       "health": 3,
       "inventorySlots": 6,
-      "platformer": {},
+      "movement": { "platformer": {} },
       "primaryAttack": {
-        "kind": "ranged",
-        "projectileLifetime": 0.9,
-        "breaksTiles": true,
-        "sprite": {
-          "position": [32, 192],
-          "size": [8, 4]
+        "ranged": {
+          "projectileLifetime": 0.9,
+          "breaksTiles": true,
+          "sprite": { "position": [32, 192], "size": [8, 4] }
         }
       }
     },
@@ -24,18 +22,15 @@
       "facing": "left",
       "animations": "zombie",
       "health": 3,
-      "platformer": {
-        "maximumSpeed": 60
-      },
-      "senses": {
-        "noticeDistance": 80
-      },
+      "movement": { "platformer": { "maximumSpeed": 60 } },
+      "senses": { "noticeDistance": 80 },
       "machine": "pursuer",
       "primaryAttack": {
-        "kind": "bite",
-        "windupDuration": 0.3,
-        "activeDuration": 0.1,
-        "recoveryDuration": 0.6
+        "bite": {
+          "windupDuration": 0.3,
+          "activeDuration": 0.1,
+          "recoveryDuration": 0.6
+        }
       }
     },
     "bat": {
@@ -45,15 +40,10 @@
       "animations": "bat",
       "spriteAnchor": "center",
       "health": 1,
-      "flying": {},
-      "senses": {
-        "noticeDistance": 56,
-        "targetMemoryDuration": 0.5
-      },
+      "movement": { "flying": {} },
+      "senses": { "noticeDistance": 56, "targetMemoryDuration": 0.5 },
       "machine": "pursuer",
-      "primaryAttack": {
-        "kind": "bite"
-      }
+      "primaryAttack": { "bite": {} }
     },
     "rat": {
       "bodySize": [8, 8],
@@ -62,9 +52,7 @@
       "animations": "rat",
       "spriteAnchor": "feet",
       "health": 1,
-      "platformer": {
-        "maximumSpeed": 60
-      },
+      "movement": { "platformer": { "maximumSpeed": 60 } },
       "senses": {
         "noticeDistance": 80,
         "targetMemoryDuration": 1.5,
@@ -72,11 +60,12 @@
       },
       "machine": "rat",
       "primaryAttack": {
-        "kind": "bite",
-        "damage": 1,
-        "windupDuration": 0.12,
-        "activeDuration": 0.08,
-        "recoveryDuration": 0.3
+        "bite": {
+          "damage": 1,
+          "windupDuration": 0.12,
+          "activeDuration": 0.08,
+          "recoveryDuration": 0.3
+        }
       }
     },
     "spider": {
@@ -86,23 +75,17 @@
       "animations": "spider",
       "spriteAnchor": "feet",
       "health": 1,
-      "platformer": {
-        "maximumSpeed": 60
-      },
-      "surfaceClimb": {
-        "speed": 60
-      },
-      "senses": {
-        "noticeDistance": 80,
-        "targetMemoryDuration": 1.5
-      },
+      "movement": { "platformer": { "maximumSpeed": 60 } },
+      "surfaceClimb": { "speed": 60 },
+      "senses": { "noticeDistance": 80, "targetMemoryDuration": 1.5 },
       "machine": "spider",
       "primaryAttack": {
-        "kind": "pounce",
-        "speed": 220,
-        "range": 72,
-        "recoveryDuration": 0.6,
-        "damage": 1
+        "pounce": {
+          "speed": 220,
+          "range": 72,
+          "recoveryDuration": 0.6,
+          "damage": 1
+        }
       }
     },
     "boar": {
@@ -112,21 +95,11 @@
       "animations": "boar",
       "spriteAnchor": "feet",
       "health": 3,
-      "platformer": {
-        "maximumSpeed": 125
-      },
-      "senses": {
-        "noticeDistance": 200,
-        "targetMemoryDuration": 1.5
-      },
+      "movement": { "platformer": { "maximumSpeed": 125 } },
+      "senses": { "noticeDistance": 200, "targetMemoryDuration": 1.5 },
       "machine": "boar",
       "primaryAttack": {
-        "kind": "contact",
-        "damage": 1,
-        "knockback": {
-          "speed": 180,
-          "lift": 140
-        }
+        "contact": { "damage": 1, "knockback": { "speed": 180, "lift": 140 } }
       }
     },
     "zombie_soldier": {
@@ -135,20 +108,16 @@
       "facing": "left",
       "animations": "zombie_soldier",
       "health": 2,
-      "platformer": {},
-      "senses": {
-        "standoffDistance": 48
-      },
+      "movement": { "platformer": {} },
+      "senses": { "standoffDistance": 48 },
       "machine": "keep_distance",
       "primaryAttack": {
-        "kind": "ranged",
-        "projectileSpeed": 140,
-        "projectileLifetime": 0.75,
-        "shootDuration": 0.3,
-        "recoveryDuration": 0.8,
-        "sprite": {
-          "position": [64, 192],
-          "size": [8, 4]
+        "ranged": {
+          "projectileSpeed": 140,
+          "projectileLifetime": 0.75,
+          "shootDuration": 0.3,
+          "recoveryDuration": 0.8,
+          "sprite": { "position": [64, 192], "size": [8, 4] }
         }
       }
     }

@@ -13,15 +13,17 @@ namespace
         return tests::parseJson(R"({
             "tileLegend": {".": "empty", "#": "stone"},
             "map": ["....", "####"],
-            "playerSpawnCell": [0, 0],
-            "exit": {"definition": "test_door", "spawnCell": [3, 0]}
+            "playerSpawn": {"cell": [0, 0]},
+            "exit": {"definition": "test_door", "spawn": {"cell": [3, 0]}}
         })");
     }
 
     tests::Json placement(const char* id, const char* definition, double column)
     {
         return tests::object(
-            {{"id", id}, {"definition", definition}, {"spawnCell", tests::numbers({column, 0})}});
+            {{"id", id},
+             {"definition", definition},
+             {"spawn", tests::object({{"cell", tests::numbers({column, 0})}})}});
     }
 }
 
@@ -31,21 +33,23 @@ TEST_CASE("Levels place one player and one exit", "[app][content][json]")
     const char* expected = "";
     SECTION("No player")
     {
-        tests::eraseKey(level, "playerSpawnCell");
-        expected = "level.json: root: supply exactly one of 'playerSpawnCell' or 'playerSpawnFeet'";
+        tests::eraseKey(level, "playerSpawn");
+        expected = "missing 'playerSpawn'";
     }
     SECTION("A player by cell and by feet")
     {
-        level["playerSpawnFeet"] = tests::numbers({4, 8});
-        expected = "level.json: root: supply exactly one of 'playerSpawnCell' or 'playerSpawnFeet'";
+        level["playerSpawn"]["feet"] = tests::numbers({4, 8});
+        expected = "unknown field 'feet'";
     }
     SECTION("No exit")
     {
         tests::eraseKey(level, "exit");
-        expected = "level.json: exit: expected exactly one placement";
+        expected = "missing 'exit'";
     }
     REQUIRE_THROWS_WITH(
-        advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"), expected);
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"),
+        Catch::Matchers::StartsWith("level.json: line 1, column ") &&
+            Catch::Matchers::EndsWith(expected));
 }
 
 TEST_CASE("Distinct placement ids are accepted", "[app][content][json]")

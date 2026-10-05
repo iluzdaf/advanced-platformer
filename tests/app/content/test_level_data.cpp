@@ -11,10 +11,10 @@ TEST_CASE("Level JSON accepts a custom tile legend", "[app][content][json]")
         R"({
             "tileLegend": {".": "empty", "G": "grass", "X": "glass"},
             "map": [".GX"],
-            "playerSpawnCell": [0, 0],
+            "playerSpawn": {"cell": [0, 0]},
             "actors": [],
             "pickups": [],
-            "exit": {"definition": "test_door", "spawnCell": [2, 0]}
+            "exit": {"definition": "test_door", "spawn": {"cell": [2, 0]}}
         })",
         "custom level");
 
@@ -30,14 +30,14 @@ TEST_CASE(
         R"({
             "tileLegend": {".": "empty", "#": "stone"},
             "map": ["....", "####"],
-            "playerSpawnCell": [1, 0],
+            "playerSpawn": {"cell": [1, 0]},
             "actors": [
-                {"id": "walker", "definition": "zombie", "spawnCell": [2, 0],
-                 "patrol": {"firstCell": [2, 0], "secondCell": [3, 0]}},
-                {"id": "flyer", "definition": "bat", "spawnFeet": [17, 9],
-                 "patrol": {"firstFeet": [17, 9], "secondFeet": [25, 13]}}
+                {"id": "walker", "definition": "zombie", "spawn": {"cell": [2, 0]},
+                 "patrol": {"first": {"cell": [2, 0]}, "second": {"cell": [3, 0]}}},
+                {"id": "flyer", "definition": "bat", "spawn": {"feet": [17, 9]},
+                 "patrol": {"first": {"feet": [17, 9]}, "second": {"feet": [25, 13]}}}
             ],
-            "exit": {"definition": "test_door", "spawnCell": [3, 0]}
+            "exit": {"definition": "test_door", "spawn": {"cell": [3, 0]}}
         })",
         "test level");
 
@@ -65,9 +65,9 @@ TEST_CASE("Explicit pickups and exits retain item requirements", "[app][content]
         R"({
             "tileLegend": {".": "empty", "#": "stone"},
             "map": ["....", "####"],
-            "playerSpawnCell": [1, 0],
-            "pickups": [{"id": "key", "definition": "key", "spawnCell": [1, 0]}],
-            "exit": {"definition": "test_door", "spawnCell": [2, 0],
+            "playerSpawn": {"cell": [1, 0]},
+            "pickups": [{"id": "key", "definition": "key", "spawn": {"cell": [1, 0]}}],
+            "exit": {"definition": "test_door", "spawn": {"cell": [2, 0]},
                      "requirement": {"item": "key", "quantity": 1}}
         })",
         "test level");
@@ -89,10 +89,10 @@ TEST_CASE("Pickup placements can reference a definition", "[app][content][json]"
         R"({
             "tileLegend": {".": "empty", "#": "stone"},
             "map": ["....", "####"],
-            "playerSpawnCell": [0, 0],
+            "playerSpawn": {"cell": [0, 0]},
             "actors": [],
-            "pickups": [{"id": "chest", "definition": "treasure", "spawnCell": [1, 0]}],
-            "exit": {"definition": "test_door", "spawnCell": [3, 0]}
+            "pickups": [{"id": "chest", "definition": "treasure", "spawn": {"cell": [1, 0]}}],
+            "exit": {"definition": "test_door", "spawn": {"cell": [3, 0]}}
         })",
         "placement.json");
 

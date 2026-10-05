@@ -27,93 +27,143 @@
     "........####.............##............##.........##########........",
     "####################################################################"
   ],
-  "playerSpawnCell": [2, 20],
+  "playerSpawn": {
+    "cell": [2, 20]
+  },
   "actors": [
     {
       "id": "spider_1",
       "definition": "spider",
-      "spawnCell": [18, 20],
+      "spawn": {
+        "cell": [18, 20]
+      },
       "patrol": {
-        "firstCell": [15, 18],
-        "secondCell": [23, 20]
+        "first": {
+          "cell": [15, 18]
+        },
+        "second": {
+          "cell": [23, 20]
+        }
       }
     },
     {
       "id": "rat_1",
       "definition": "rat",
-      "spawnCell": [45, 20],
+      "spawn": {
+        "cell": [45, 20]
+      },
       "patrol": {
-        "firstCell": [42, 20],
-        "secondCell": [48, 20]
+        "first": {
+          "cell": [42, 20]
+        },
+        "second": {
+          "cell": [48, 20]
+        }
       }
     },
     {
       "id": "bat_1",
       "definition": "bat",
-      "spawnCell": [19, 12],
+      "spawn": {
+        "cell": [19, 12]
+      },
       "patrol": {
-        "firstCell": [17, 12],
-        "secondCell": [22, 12]
+        "first": {
+          "cell": [17, 12]
+        },
+        "second": {
+          "cell": [22, 12]
+        }
       }
     },
     {
       "id": "bat_2",
       "definition": "bat",
-      "spawnCell": [28, 11],
+      "spawn": {
+        "cell": [28, 11]
+      },
       "patrol": {
-        "firstCell": [26, 11],
-        "secondCell": [31, 11]
+        "first": {
+          "cell": [26, 11]
+        },
+        "second": {
+          "cell": [31, 11]
+        }
       }
     },
     {
       "id": "bat_3",
       "definition": "bat",
-      "spawnCell": [37, 12],
+      "spawn": {
+        "cell": [37, 12]
+      },
       "patrol": {
-        "firstCell": [35, 12],
-        "secondCell": [40, 12]
+        "first": {
+          "cell": [35, 12]
+        },
+        "second": {
+          "cell": [40, 12]
+        }
       }
     },
     {
       "id": "bat_4",
       "definition": "bat",
-      "spawnCell": [46, 12],
+      "spawn": {
+        "cell": [46, 12]
+      },
       "patrol": {
-        "firstCell": [43, 12],
-        "secondCell": [49, 12]
+        "first": {
+          "cell": [43, 12]
+        },
+        "second": {
+          "cell": [49, 12]
+        }
       }
     },
     {
       "id": "boar_1",
       "definition": "boar",
-      "spawnCell": [34, 20]
+      "spawn": {
+        "cell": [34, 20]
+      }
     }
   ],
   "pickups": [
     {
       "id": "coin_pile_1",
       "definition": "coin_pile",
-      "spawnCell": [19, 14]
+      "spawn": {
+        "cell": [19, 14]
+      }
     },
     {
       "id": "coin_pile_2",
       "definition": "coin_pile",
-      "spawnCell": [37, 14]
+      "spawn": {
+        "cell": [37, 14]
+      }
     },
     {
       "id": "key_1",
       "definition": "key",
-      "spawnCell": [57, 16]
+      "spawn": {
+        "cell": [57, 16]
+      }
     },
     {
       "id": "health_potion_1",
       "definition": "health_potion",
-      "spawnCell": [30, 20]
+      "spawn": {
+        "cell": [30, 20]
+      }
     }
   ],
   "exit": {
     "definition": "bunker_door",
-    "spawnCell": [65, 20],
+    "spawn": {
+      "cell": [65, 20]
+    },
     "requirement": {
       "item": "key",
       "quantity": 1

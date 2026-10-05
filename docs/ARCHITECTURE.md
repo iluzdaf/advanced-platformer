@@ -421,7 +421,7 @@ to the traversal profile. The search itself does not change.
 - JSON stays in `app/content`; the core receives C++ values. Each file is read with
   Glaze through `content_glaze` into structs that mirror it, so unknown keys, missing
   required members, and wrong types fail with a line and column. `WithDefaults<T>` keeps
-  C++ defaults for fields left out, and `NamedEnumReader` reads an enum by name.
+  C++ defaults for fields left out; enums and one-of fields are Glaze metadata.
   `content_diagnostics` builds field paths without a JSON dependency.
 
 | Verb          | Example                              | Meaning                                                                   |

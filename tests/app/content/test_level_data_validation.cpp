@@ -14,10 +14,10 @@ namespace
         return tests::parseJson(R"({
             "tileLegend": {".": "empty", "#": "stone"},
             "map": ["....", "####"],
-            "playerSpawnCell": [0, 0],
+            "playerSpawn": {"cell": [0, 0]},
             "actors": [],
             "pickups": [],
-            "exit": {"definition": "door", "spawnCell": [3, 0]}
+            "exit": {"definition": "door", "spawn": {"cell": [3, 0]}}
         })");
     }
 }
@@ -29,11 +29,11 @@ TEST_CASE(
     auto level = minimalLevel();
     SECTION("Oversized cell")
     {
-        level["playerSpawnCell"][0] = 4294967296LL;
+        level["playerSpawn"]["cell"][0] = 4294967296LL;
     }
     SECTION("Undersized cell")
     {
-        level["playerSpawnCell"][1] = -4294967296LL;
+        level["playerSpawn"]["cell"][1] = -4294967296LL;
     }
     SECTION("Exit destination")
     {
@@ -56,7 +56,7 @@ TEST_CASE("Explicit level placements reject unknown fields", "[app][content][jso
         level["actors"] = tests::list({tests::object(
             {{"id", "guard"},
              {"definition", "guard"},
-             {"spawnCell", tests::numbers({1, 0})},
+             {"spawn", tests::object({{"cell", tests::numbers({1, 0})}})},
              {"patroll", tests::emptyObject()}})});
     }
     SECTION("Patrol")
@@ -64,11 +64,11 @@ TEST_CASE("Explicit level placements reject unknown fields", "[app][content][jso
         level["actors"] = tests::list({tests::object(
             {{"id", "guard"},
              {"definition", "guard"},
-             {"spawnCell", tests::numbers({1, 0})},
+             {"spawn", tests::object({{"cell", tests::numbers({1, 0})}})},
              {"patrol",
               tests::object(
-                  {{"firstCell", tests::numbers({0, 0})},
-                   {"secondCell", tests::numbers({1, 0})},
+                  {{"first", tests::object({{"cell", tests::numbers({0, 0})}})},
+                   {"second", tests::object({{"cell", tests::numbers({1, 0})}})},
                    {"speeed", 1}})}})});
     }
     SECTION("Pickup")
@@ -76,7 +76,7 @@ TEST_CASE("Explicit level placements reject unknown fields", "[app][content][jso
         level["pickups"] = tests::list({tests::object(
             {{"id", "key"},
              {"definition", "key"},
-             {"spawnCell", tests::numbers({2, 0})},
+             {"spawn", tests::object({{"cell", tests::numbers({2, 0})}})},
              {"quantitty", 3}})});
     }
     SECTION("Exit")
@@ -122,8 +122,8 @@ TEST_CASE("Levels may omit placement arrays", "[app][content][json]")
         R"({
             "tileLegend": {".": "empty"},
             "map": ["..."],
-            "playerSpawnCell": [0, 0],
-            "exit": {"definition": "test_door", "spawnCell": [2, 0]}
+            "playerSpawn": {"cell": [0, 0]},
+            "exit": {"definition": "test_door", "spawn": {"cell": [2, 0]}}
         })",
         "empty level");
 
@@ -165,7 +165,9 @@ TEST_CASE("Actor placements need a non-empty definition", "[app][content][json]"
 {
     auto level = minimalLevel();
     level["actors"] = tests::list({tests::object(
-        {{"id", "guard"}, {"definition", ""}, {"spawnCell", tests::numbers({1, 0})}})});
+        {{"id", "guard"},
+         {"definition", ""},
+         {"spawn", tests::object({{"cell", tests::numbers({1, 0})}})}})});
 
     REQUIRE_THROWS_WITH(
         advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"),
@@ -178,19 +180,23 @@ TEST_CASE("Actor placements choose a cell or feet, not both", "[app][content][js
     level["actors"] = tests::list({tests::object(
         {{"id", "guard"},
          {"definition", "guard"},
-         {"spawnCell", tests::numbers({1, 0})},
-         {"spawnFeet", tests::numbers({24, 16})}})});
+         {"spawn",
+          tests::object(
+              {{"cell", tests::numbers({1, 0})}, {"feet", tests::numbers({24, 16})}})}})});
 
     REQUIRE_THROWS_WITH(
         advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"),
-        "level.json: actors[0]: supply exactly one of 'spawnCell' or 'spawnFeet'");
+        Catch::Matchers::StartsWith("level.json: line 1, column ") &&
+            Catch::Matchers::EndsWith("unknown field 'feet'"));
 }
 
 TEST_CASE("Pickup placements take their stack from a definition", "[app][content][json]")
 {
     auto level = minimalLevel();
     level["pickups"] = tests::list({tests::object(
-        {{"id", "chest"}, {"definition", "treasure"}, {"spawnCell", tests::numbers({1, 0})}})});
+        {{"id", "chest"},
+         {"definition", "treasure"},
+         {"spawn", tests::object({{"cell", tests::numbers({1, 0})}})}})});
     const char* expected = "";
     SECTION("No definition")
     {
@@ -221,7 +227,9 @@ TEST_CASE("Pickup definition names cannot be empty", "[app][content][json]")
 {
     auto level = minimalLevel();
     level["pickups"] = tests::list({tests::object(
-        {{"id", "chest"}, {"definition", ""}, {"spawnCell", tests::numbers({1, 0})}})});
+        {{"id", "chest"},
+         {"definition", ""},
+         {"spawn", tests::object({{"cell", tests::numbers({1, 0})}})}})});
 
     REQUIRE_THROWS_WITH(
         advanced_platformer::parseLevelData(tests::dumpJson(level), "level.json"),

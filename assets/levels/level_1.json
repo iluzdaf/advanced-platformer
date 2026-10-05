@@ -1,5 +1,10 @@
 {
-  "tileLegend": { ".": "empty", "#": "stone", "G": "grass", "X": "glass" },
+  "tileLegend": {
+    ".": "empty",
+    "#": "stone",
+    "G": "grass",
+    "X": "glass"
+  },
   "map": [
     "...................................................",
     "...................................................",
@@ -18,53 +23,75 @@
     ".....###.....###.....###.GGGGG.#########...........",
     "###################################################"
   ],
-  "playerSpawnCell": [1, 14],
+  "playerSpawn": {
+    "cell": [1, 14]
+  },
   "actors": [
     {
       "id": "zombie_1",
       "definition": "zombie",
-      "spawnCell": [27, 14],
+      "spawn": {
+        "cell": [27, 14]
+      },
       "patrol": {
-        "firstCell": [25, 14],
-        "secondCell": [29, 14]
+        "first": {
+          "cell": [25, 14]
+        },
+        "second": {
+          "cell": [29, 14]
+        }
       }
     },
     {
       "id": "zombie_2",
       "definition": "zombie",
-      "spawnCell": [44, 9]
+      "spawn": {
+        "cell": [44, 9]
+      }
     },
     {
       "id": "zombie_3",
       "definition": "zombie",
-      "spawnCell": [10, 14]
+      "spawn": {
+        "cell": [10, 14]
+      }
     },
     {
       "id": "zombie_4",
       "definition": "zombie",
-      "spawnCell": [18, 14]
+      "spawn": {
+        "cell": [18, 14]
+      }
     }
   ],
   "pickups": [
     {
       "id": "key_1",
       "definition": "key",
-      "spawnCell": [44, 9]
+      "spawn": {
+        "cell": [44, 9]
+      }
     },
     {
       "id": "coin_pile_1",
       "definition": "coin_pile",
-      "spawnCell": [6, 13]
+      "spawn": {
+        "cell": [6, 13]
+      }
     },
     {
       "id": "health_potion_1",
       "definition": "health_potion",
-      "spawnCell": [22, 13]
+      "spawn": {
+        "cell": [22, 13]
+      }
     }
   ],
   "exit": {
     "definition": "bunker_door",
-    "spawnCell": [49, 14],
+    "spawn": {
+      "cell": [49, 14]
+    },
     "requirement": {
       "item": "key",
       "quantity": 1

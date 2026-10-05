@@ -28,6 +28,12 @@ namespace advanced_platformer
             }
             if (offset > 0 && text[offset - 1] == '"')
             {
+                const std::size_t next = text.find_first_not_of(" \t\r\n", offset);
+                if (next != std::string_view::npos && text[next] == ':' && offset >= 2)
+                {
+                    const std::size_t open = text.rfind('"', offset - 2);
+                    return open == std::string_view::npos ? offset - 1 : open;
+                }
                 return offset - 1;
             }
             constexpr std::string_view NumberCharacters = "0123456789+-.eE";
@@ -66,7 +72,7 @@ namespace advanced_platformer
             case glz::error_code::missing_key:
                 return std::format("missing '{}'", error.custom_error_message);
             case glz::error_code::unexpected_enum:
-                return std::format("unknown value '{}'; {}", token, error.custom_error_message);
+                return std::format("unknown value '{}'", token);
             case glz::error_code::expected_quote:
                 return std::format("expected text, found '{}'", token);
             case glz::error_code::parse_number_failure:

@@ -7,9 +7,7 @@
 #include "content_validation.hpp"
 #include "machine_catalog.hpp"
 
-#include <algorithm>
 #include <array>
-#include <vector>
 #include <variant>
 #include <filesystem>
 #include <format>
@@ -32,83 +30,100 @@
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/render/sprite.hpp"
 
-template <>
-struct glz::from<glz::JSON, advanced_platformer::Team>
-    : advanced_platformer::NamedEnumReader<advanced_platformer::Team>
+template <> struct glz::meta<advanced_platformer::Team>
 {
+    // NOLINTNEXTLINE(readability-identifier-naming)
+    static constexpr std::array keys{"player", "enemy", "neutral"};
+    // NOLINTNEXTLINE(readability-identifier-naming)
+    static constexpr std::array value{
+        advanced_platformer::Team::Player,
+        advanced_platformer::Team::Enemy,
+        advanced_platformer::Team::Neutral};
 };
 
-template <>
-struct glz::from<glz::JSON, advanced_platformer::Facing>
-    : advanced_platformer::NamedEnumReader<advanced_platformer::Facing>
+template <> struct glz::meta<advanced_platformer::Facing>
 {
+    // NOLINTNEXTLINE(readability-identifier-naming)
+    static constexpr std::array keys{"left", "right"};
+    // NOLINTNEXTLINE(readability-identifier-naming)
+    static constexpr std::array value{
+        advanced_platformer::Facing::Left,
+        advanced_platformer::Facing::Right};
 };
 
 namespace advanced_platformer
 {
-    enum class AttackKind;
-}
-
-template <>
-struct glz::from<glz::JSON, advanced_platformer::AttackKind>
-    : advanced_platformer::NamedEnumReader<advanced_platformer::AttackKind>
-{
-};
-
-namespace advanced_platformer
-{
-    template <> struct ContentNames<Team>
+    struct BiteFields
     {
-        static constexpr std::array Names{
-            std::pair{std::string_view{"player"}, Team::Player},
-            std::pair{std::string_view{"enemy"}, Team::Enemy},
-            std::pair{std::string_view{"neutral"}, Team::Neutral}};
-    };
-
-    template <> struct ContentNames<Facing>
-    {
-        static constexpr std::array Names{
-            std::pair{std::string_view{"left"}, Facing::Left},
-            std::pair{std::string_view{"right"}, Facing::Right}};
-    };
-
-    enum class AttackKind
-    {
-        Bite,
-        Ranged,
-        Contact,
-        Pounce
-    };
-
-    template <> struct ContentNames<AttackKind>
-    {
-        static constexpr std::array Names{
-            std::pair{std::string_view{"bite"}, AttackKind::Bite},
-            std::pair{std::string_view{"ranged"}, AttackKind::Ranged},
-            std::pair{std::string_view{"contact"}, AttackKind::Contact},
-            std::pair{std::string_view{"pounce"}, AttackKind::Pounce}};
-    };
-
-    struct AttackJson
-    {
-        AttackKind kind = AttackKind::Bite;
         std::optional<int> damage;
-        std::optional<WithDefaults<Knockback>> knockback;
         std::optional<glm::vec2> hitboxSize;
         std::optional<float> reach;
         std::optional<float> windupDuration;
         std::optional<float> activeDuration;
         std::optional<float> recoveryDuration;
+    };
+
+    struct RangedFields
+    {
+        std::optional<int> damage;
         std::optional<glm::vec2> projectileSize;
         std::optional<float> projectileSpeed;
         std::optional<float> projectileLifetime;
         std::optional<float> shootDuration;
+        std::optional<float> recoveryDuration;
         std::optional<bool> breaksTiles;
         std::optional<SpriteJson> sprite;
+    };
+
+    struct ContactFields
+    {
+        std::optional<int> damage;
+        std::optional<WithDefaults<Knockback>> knockback;
+    };
+
+    struct PounceFields
+    {
+        std::optional<int> damage;
+        std::optional<WithDefaults<Knockback>> knockback;
         std::optional<float> speed;
         std::optional<float> lift;
         std::optional<float> range;
+        std::optional<float> recoveryDuration;
     };
+
+    struct BiteJson
+    {
+        BiteFields bite;
+    };
+
+    struct RangedJson
+    {
+        RangedFields ranged;
+    };
+
+    struct ContactJson
+    {
+        ContactFields contact;
+    };
+
+    struct PounceJson
+    {
+        PounceFields pounce;
+    };
+
+    using AttackJson = std::variant<BiteJson, RangedJson, ContactJson, PounceJson>;
+
+    struct PlatformerJson
+    {
+        WithDefaults<PlatformerMovementConfig> platformer;
+    };
+
+    struct FlyingJson
+    {
+        WithDefaults<FlyingMovementConfig> flying;
+    };
+
+    using MovementJson = std::variant<PlatformerJson, FlyingJson>;
 
     struct ActorJson
     {
@@ -119,8 +134,7 @@ namespace advanced_platformer
         std::optional<std::string> animations;
         std::optional<int> health;
         std::optional<int> inventorySlots;
-        std::optional<WithDefaults<PlatformerMovementConfig>> platformer;
-        std::optional<WithDefaults<FlyingMovement>> flying;
+        MovementJson movement;
         std::optional<WithDefaults<SurfaceClimbConfig>> surfaceClimb;
         std::optional<WithDefaults<NpcSenses>> senses;
         std::optional<std::string> machine;
@@ -144,80 +158,6 @@ namespace advanced_platformer
             }
         }
 
-        std::string_view nameOf(AttackKind kind)
-        {
-            for (const auto& [name, value] : ContentNames<AttackKind>::Names)
-            {
-                if (value == kind)
-                {
-                    return name;
-                }
-            }
-            return "attack";
-        }
-
-        std::vector<std::string_view> fieldsOf(AttackKind kind)
-        {
-            switch (kind)
-            {
-            case AttackKind::Bite:
-                return {
-                    "damage",
-                    "hitboxSize",
-                    "reach",
-                    "windupDuration",
-                    "activeDuration",
-                    "recoveryDuration"};
-            case AttackKind::Ranged:
-                return {
-                    "damage",
-                    "projectileSize",
-                    "projectileSpeed",
-                    "projectileLifetime",
-                    "shootDuration",
-                    "recoveryDuration",
-                    "breaksTiles",
-                    "sprite"};
-            case AttackKind::Contact:
-                return {"damage", "knockback"};
-            case AttackKind::Pounce:
-                return {"damage", "knockback", "speed", "lift", "range", "recoveryDuration"};
-            }
-            return {};
-        }
-
-        void rejectForeignFields(const AttackJson& json, std::string_view slot)
-        {
-            const std::array<std::pair<std::string_view, bool>, 16> given{{
-                {"damage", json.damage.has_value()},
-                {"knockback", json.knockback.has_value()},
-                {"hitboxSize", json.hitboxSize.has_value()},
-                {"reach", json.reach.has_value()},
-                {"windupDuration", json.windupDuration.has_value()},
-                {"activeDuration", json.activeDuration.has_value()},
-                {"recoveryDuration", json.recoveryDuration.has_value()},
-                {"projectileSize", json.projectileSize.has_value()},
-                {"projectileSpeed", json.projectileSpeed.has_value()},
-                {"projectileLifetime", json.projectileLifetime.has_value()},
-                {"shootDuration", json.shootDuration.has_value()},
-                {"breaksTiles", json.breaksTiles.has_value()},
-                {"sprite", json.sprite.has_value()},
-                {"speed", json.speed.has_value()},
-                {"lift", json.lift.has_value()},
-                {"range", json.range.has_value()},
-            }};
-            const std::vector<std::string_view> allowed = fieldsOf(json.kind);
-            for (const auto& [key, isGiven] : given)
-            {
-                if (isGiven && !std::ranges::contains(allowed, key))
-                {
-                    throw std::invalid_argument(
-                        std::format(
-                            "{}: a {} attack has no field '{}'", slot, nameOf(json.kind), key));
-                }
-            }
-        }
-
         std::optional<Knockback> knockbackFrom(const std::optional<WithDefaults<Knockback>>& json)
         {
             if (!json.has_value())
@@ -227,54 +167,76 @@ namespace advanced_platformer
             return json->get();
         }
 
-        Attack attackFrom(const AttackJson& json, std::string_view slot)
+        Attack attackFrom(const BiteJson& json)
         {
-            rejectForeignFields(json, slot);
-            switch (json.kind)
+            const BiteFields& fields = json.bite;
+            BiteAttack bite;
+            setIfGiven(bite.damage, fields.damage);
+            setIfGiven(bite.hitboxSize, fields.hitboxSize);
+            setIfGiven(bite.reach, fields.reach);
+            setIfGiven(bite.windupDuration, fields.windupDuration);
+            setIfGiven(bite.activeDuration, fields.activeDuration);
+            setIfGiven(bite.recoveryDuration, fields.recoveryDuration);
+            return bite;
+        }
+
+        Attack attackFrom(const RangedJson& json)
+        {
+            const RangedFields& fields = json.ranged;
+            RangedWeapon ranged;
+            setIfGiven(ranged.damage, fields.damage);
+            setIfGiven(ranged.projectileSize, fields.projectileSize);
+            setIfGiven(ranged.projectileSpeed, fields.projectileSpeed);
+            setIfGiven(ranged.projectileLifetime, fields.projectileLifetime);
+            setIfGiven(ranged.shootDuration, fields.shootDuration);
+            setIfGiven(ranged.recoveryDuration, fields.recoveryDuration);
+            setIfGiven(ranged.breaksTiles, fields.breaksTiles);
+            if (fields.sprite.has_value())
             {
-            case AttackKind::Bite: {
-                BiteAttack bite;
-                setIfGiven(bite.damage, json.damage);
-                setIfGiven(bite.hitboxSize, json.hitboxSize);
-                setIfGiven(bite.reach, json.reach);
-                setIfGiven(bite.windupDuration, json.windupDuration);
-                setIfGiven(bite.activeDuration, json.activeDuration);
-                setIfGiven(bite.recoveryDuration, json.recoveryDuration);
-                return bite;
+                ranged.projectileSprite = spriteFrom(*fields.sprite);
             }
-            case AttackKind::Ranged: {
-                RangedWeapon ranged;
-                setIfGiven(ranged.damage, json.damage);
-                setIfGiven(ranged.projectileSize, json.projectileSize);
-                setIfGiven(ranged.projectileSpeed, json.projectileSpeed);
-                setIfGiven(ranged.projectileLifetime, json.projectileLifetime);
-                setIfGiven(ranged.shootDuration, json.shootDuration);
-                setIfGiven(ranged.recoveryDuration, json.recoveryDuration);
-                setIfGiven(ranged.breaksTiles, json.breaksTiles);
-                if (json.sprite.has_value())
-                {
-                    ranged.projectileSprite = spriteFrom(*json.sprite);
-                }
-                return ranged;
-            }
-            case AttackKind::Contact: {
-                ContactDamage contact;
-                setIfGiven(contact.damage, json.damage);
-                contact.knockback = knockbackFrom(json.knockback);
-                return contact;
-            }
-            case AttackKind::Pounce: {
-                Pounce pounce;
-                setIfGiven(pounce.config.damage, json.damage);
-                pounce.config.knockback = knockbackFrom(json.knockback);
-                setIfGiven(pounce.config.speed, json.speed);
-                setIfGiven(pounce.config.lift, json.lift);
-                setIfGiven(pounce.config.range, json.range);
-                setIfGiven(pounce.config.recoveryDuration, json.recoveryDuration);
-                return pounce;
-            }
-            }
-            throw std::invalid_argument(std::format("{}: unknown attack kind", slot));
+            return ranged;
+        }
+
+        Attack attackFrom(const ContactJson& json)
+        {
+            ContactDamage contact;
+            setIfGiven(contact.damage, json.contact.damage);
+            contact.knockback = knockbackFrom(json.contact.knockback);
+            return contact;
+        }
+
+        Attack attackFrom(const PounceJson& json)
+        {
+            const PounceFields& fields = json.pounce;
+            Pounce pounce;
+            setIfGiven(pounce.config.damage, fields.damage);
+            pounce.config.knockback = knockbackFrom(fields.knockback);
+            setIfGiven(pounce.config.speed, fields.speed);
+            setIfGiven(pounce.config.lift, fields.lift);
+            setIfGiven(pounce.config.range, fields.range);
+            setIfGiven(pounce.config.recoveryDuration, fields.recoveryDuration);
+            return pounce;
+        }
+
+        Attack attackFrom(const AttackJson& json)
+        {
+            return std::visit([](const auto& kind) { return attackFrom(kind); }, json);
+        }
+
+        MovementConfig movementFrom(const PlatformerJson& json)
+        {
+            return json.platformer.get();
+        }
+
+        MovementConfig movementFrom(const FlyingJson& json)
+        {
+            return json.flying.get();
+        }
+
+        MovementConfig movementFrom(const MovementJson& json)
+        {
+            return std::visit([](const auto& kind) { return movementFrom(kind); }, json);
         }
 
         template <class T> std::optional<T> configFrom(const std::optional<WithDefaults<T>>& json)
@@ -296,18 +258,17 @@ namespace advanced_platformer
             setIfGiven(result.animations, json.animations);
             result.health = json.health;
             result.inventorySlots = json.inventorySlots;
-            result.platformer = configFrom(json.platformer);
-            result.flying = configFrom(json.flying);
+            result.movement = movementFrom(json.movement);
             result.surfaceClimb = configFrom(json.surfaceClimb);
             result.senses = configFrom(json.senses);
             setIfGiven(result.machine, json.machine);
             if (json.primaryAttack.has_value())
             {
-                result.primaryAttack = attackFrom(*json.primaryAttack, "primaryAttack");
+                result.primaryAttack = attackFrom(*json.primaryAttack);
             }
             if (json.secondaryAttack.has_value())
             {
-                result.secondaryAttack = attackFrom(*json.secondaryAttack, "secondaryAttack");
+                result.secondaryAttack = attackFrom(*json.secondaryAttack);
             }
             return result;
         }

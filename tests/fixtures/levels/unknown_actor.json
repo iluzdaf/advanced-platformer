@@ -1,7 +1,25 @@
 {
-  "tileLegend": { ".": "empty", "#": "stone" },
+  "tileLegend": {
+    ".": "empty",
+    "#": "stone"
+  },
   "map": [".......", ".......", "#######"],
-  "playerSpawnCell": [0, 1],
-  "actors": [{ "id": "stranger", "definition": "missing", "spawnCell": [3, 1] }],
-  "exit": { "definition": "test_door", "spawnCell": [6, 1] }
+  "playerSpawn": {
+    "cell": [0, 1]
+  },
+  "actors": [
+    {
+      "id": "stranger",
+      "definition": "missing",
+      "spawn": {
+        "cell": [3, 1]
+      }
+    }
+  ],
+  "exit": {
+    "definition": "test_door",
+    "spawn": {
+      "cell": [6, 1]
+    }
+  }
 }

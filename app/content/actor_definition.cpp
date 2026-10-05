@@ -15,6 +15,7 @@
 #include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/combat/attack.hpp"
 #include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/movement/flying_movement.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
 #include "advanced_platformer/movement/pounce.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
@@ -75,15 +76,17 @@ namespace advanced_platformer
         actor.body.bounds = boxStandingOn(spawnFeet, definition.bodySize);
         actor.team = definition.team;
         actor.facing = definition.facing;
-        if (definition.platformer)
+        if (const auto* platformer = std::get_if<PlatformerMovementConfig>(&definition.movement))
         {
-            const auto& config = *definition.platformer;
-            validatePlatformerMovementConfig(config);
+            validatePlatformerMovementConfig(*platformer);
             actor.platformerMovement = PlatformerMovement{};
-            actor.platformerMovement->config = config;
+            actor.platformerMovement->config = *platformer;
             actor.platformerMovement->grounded = true;
         }
-        actor.flyingMovement = definition.flying;
+        else if (const auto* flying = std::get_if<FlyingMovementConfig>(&definition.movement))
+        {
+            actor.flyingMovement = FlyingMovement{*flying};
+        }
         if (definition.surfaceClimb)
         {
             actor.surfaceClimb = SurfaceClimb{*definition.surfaceClimb};
