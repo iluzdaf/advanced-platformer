@@ -6,6 +6,7 @@
 
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/navigation/navigation_path.hpp"
 #include "advanced_platformer/npc/npc_activity.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_facts.hpp"
@@ -28,7 +29,7 @@ namespace advanced_platformer
         std::optional<Patrol> patrol;
         std::optional<NpcFooting> footing;
         NpcFacts facts;
-        bool hasRoute = false;
+        std::optional<NavigationPathStatus> routeStatus;
         bool routeComplete = false;
     };
 

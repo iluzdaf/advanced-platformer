@@ -21,13 +21,8 @@ namespace advanced_platformer
 {
     namespace
     {
-        // In pixels: a goal that moves less than this keeps its path, so a goal that
-        // follows a drifting target is not planned for every frame.
         constexpr float ReplanDistance = 8.0F;
 
-        // Whether the follower needs a path to this goal: it has none, or one planned
-        // for a goal that has since moved away, or has finished its path and been moved
-        // off its end since.
         bool needsPath(const PathFollower& follower, glm::vec2 feet, glm::vec2 goal)
         {
             if (!follower.path.has_value() || !follower.goal.has_value())
@@ -42,16 +37,11 @@ namespace advanced_platformer
                    glm::distance(feet, endOf(*follower.path)) > ReplanDistance;
         }
 
-        // Whether a tile has broken since the path was planned. The path may run through
-        // it, so the follower plans again at once, whatever the goal.
         bool plannedBeforeABreak(const TileMap& map, const PathFollower& follower)
         {
             return follower.breaksWhenPlanned != map.brokenCells().size();
         }
 
-        // Keeps the follower's path to the goal, or finds a new one when needsPath or a
-        // break says to. The search simulates at the update's step, which this actor is
-        // about to be moved with.
         void planPathTo(
             const NpcUpdate& update,
             const Actor& actor,
@@ -82,18 +72,16 @@ namespace advanced_platformer
             }
             follower.goal = goalFeet;
             follower.breaksWhenPlanned = map.brokenCells().size();
-            if (pathResult->path.has_value())
+            follower.routeStatus = pathResult->status;
+            if (pathResult->status == NavigationPathStatus::Deferred ||
+                !pathResult->path.has_value())
             {
-                setPath(follower, std::move(pathResult->path.value()));
-            }
-            else
-            {
-                // A deferred search has no path, so the next step plans again once the
-                // fill has caught up.
                 follower.path.reset();
                 follower.nextStep = 0;
                 follower.programElapsed = 0.0F;
+                return;
             }
+            setPath(follower, std::move(*pathResult->path));
         }
     }
 

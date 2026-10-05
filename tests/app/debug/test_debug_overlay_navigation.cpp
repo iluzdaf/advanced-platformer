@@ -107,10 +107,8 @@ TEST_CASE("Debug overlay data samples the simulated jump curve", "[app][debug]")
                                          .platforming(movementConfig)
                                          .thinking({});
     npc.pathFollower = advanced_platformer::PathFollower{
-        tests::floorPath({2, 2}, {jump.step}),
-        0,
-        0.0F,
-        advanced_platformer::feetInCell(tests::TileSize, jump.step.destination.cell)};
+        .path = tests::floorPath({2, 2}, {jump.step}),
+        .goal = advanced_platformer::feetInCell(tests::TileSize, jump.step.destination.cell)};
 
     advanced_platformer::World world;
     world.addActor(npc);

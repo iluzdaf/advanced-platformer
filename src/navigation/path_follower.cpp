@@ -257,6 +257,7 @@ namespace advanced_platformer
         follower.nextStep = 0;
         follower.programElapsed = 0.0F;
         follower.goal.reset();
+        follower.routeStatus.reset();
     }
 
     bool pathComplete(const PathFollower& follower)

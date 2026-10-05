@@ -13,6 +13,7 @@
 
 #include "advanced_platformer/input/input_state.hpp"
 #include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/navigation/navigation_path.hpp"
 #include "advanced_platformer/npc/npc_activity_scripts.hpp"
 
 // NOLINTBEGIN(misc-include-cleaner)
@@ -123,6 +124,23 @@ namespace advanced_platformer
         }
     }
 
+    namespace
+    {
+        const char* routeStatusName(NavigationPathStatus status)
+        {
+            switch (status)
+            {
+            case NavigationPathStatus::Found:
+                return "found";
+            case NavigationPathStatus::Unreachable:
+                return "unreachable";
+            case NavigationPathStatus::Deferred:
+                return "deferred";
+            }
+            return "unknown";
+        }
+    }
+
     sol::table luaSnapshot(sol::state& lua, const NpcActivitySnapshot& snapshot)
     {
         sol::table result = lua.create_table();
@@ -160,7 +178,9 @@ namespace advanced_platformer
             result["footing"] = sol::lua_nil;
         }
         result["stateElapsed"] = snapshot.facts.stateElapsed;
-        result["hasRoute"] = snapshot.hasRoute;
+        result["routeStatus"] = snapshot.routeStatus.has_value()
+                                    ? sol::make_object(lua, routeStatusName(*snapshot.routeStatus))
+                                    : sol::make_object(lua, sol::lua_nil);
         result["routeComplete"] = snapshot.routeComplete;
 
         sol::table facts = lua.create_table();

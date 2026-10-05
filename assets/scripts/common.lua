@@ -1,5 +1,9 @@
 local LookTurnSeconds = 0.5
 
+local function followingRoute(snapshot)
+    return snapshot.routeStatus == "found" or snapshot.routeStatus == "unreachable"
+end
+
 local function lookAbout(snapshot)
     local toward = snapshot.lastKnownTargetFeet.x - snapshot.feet.x
     local side = toward < 0 and -1 or 1
@@ -60,7 +64,7 @@ return {
             update = function(self, snapshot)
                 local goal = snapshot.lastKnownTargetFeet
                 local command = { routeTo = goal }
-                if self.routed and (snapshot.routeComplete or not snapshot.hasRoute) then
+                if self.routed and (snapshot.routeComplete or not followingRoute(snapshot)) then
                     command.aimDirection = lookAbout(snapshot)
                 end
                 self.routed = true

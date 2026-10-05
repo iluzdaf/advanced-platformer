@@ -250,18 +250,18 @@ the visit, and a snapshot. `update` also gets the step in seconds, and returns a
 or `nil`. [`common.lua`](../assets/scripts/common.lua) has `idle`, `patrol`, `chase`,
 `attack`, `search`, `retreat` and `watch`.
 
-| Snapshot              | Meaning                                                                     |
-| --------------------- | --------------------------------------------------------------------------- |
-| `feet`, `center`      | The NPC's feet and body centre.                                             |
-| `targetFeet`          | The target's known feet, while it is known.                                 |
-| `lastKnownTargetFeet` | Where the target was last seen or heard; `{0, 0}` before any.               |
-| `targetCenter`        | The living target's body centre now, seen or not.                           |
-| `patrol`              | `firstFeet`, `secondFeet` and `headingToSecond`, when the NPC has a patrol. |
-| `footing`             | `left` and `right`: whether a walker could stand a body width that way.     |
-| `facts`               | The [facts](#facts).                                                        |
-| `stateElapsed`        | Seconds in this state.                                                      |
-| `hasRoute`            | Whether the engine holds a route.                                           |
-| `routeComplete`       | Whether the last route asked for has been followed to its end.              |
+| Snapshot              | Meaning                                                                                                                                                                           |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `feet`, `center`      | The NPC's feet and body centre.                                                                                                                                                   |
+| `targetFeet`          | The target's known feet, while it is known.                                                                                                                                       |
+| `lastKnownTargetFeet` | Where the target was last seen or heard; `{0, 0}` before any.                                                                                                                     |
+| `targetCenter`        | The living target's body centre now, seen or not.                                                                                                                                 |
+| `patrol`              | `firstFeet`, `secondFeet` and `headingToSecond`, when the NPC has a patrol.                                                                                                       |
+| `footing`             | `left` and `right`: whether a walker could stand a body width that way.                                                                                                           |
+| `facts`               | The [facts](#facts).                                                                                                                                                              |
+| `stateElapsed`        | Seconds in this state.                                                                                                                                                            |
+| `routeStatus`         | `found`, `unreachable` (the route ends as close to the goal as the NPC can get) or `deferred` (the engine is still working it out); `nil` before any route or after `clearRoute`. |
+| `routeComplete`       | Whether the last route asked for has been followed to its end.                                                                                                                    |
 
 | Command                                          | Meaning                                                                          |
 | ------------------------------------------------ | -------------------------------------------------------------------------------- |
