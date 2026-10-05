@@ -1,5 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
+#include <limits>
 #include <stdexcept>
+
+#include <glm/vec2.hpp>
 
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
@@ -53,6 +56,30 @@ TEST_CASE("Applied damage records the current simulation time", "[actor][lifecyc
 
     advanced_platformer::Actor& damaged = tests::actor(world, id);
     REQUIRE(damaged.lastDamageTimeSeconds == 2.0F);
+}
+
+TEST_CASE("Damage with knockback sets the target's velocity, even when fatal", "[actor][lifecycle]")
+{
+    advanced_platformer::World world;
+    int health = 3;
+    SECTION("A survivor is thrown")
+    {
+    }
+    SECTION("A fatal hit still throws")
+    {
+        health = 1;
+    }
+    const advanced_platformer::ActorId id = world.addActor(makeActor(health));
+    tests::platformerMovement(tests::actor(world, id)).grounded = true;
+    advanced_platformer::WorldRequests requests;
+    requests.damage(id, 1, glm::vec2{90.0F, -60.0F});
+
+    advanced_platformer::updateLifeState(world, requests, 0.1F);
+
+    advanced_platformer::Actor& thrown = tests::actor(world, id);
+    REQUIRE(thrown.body.velocity == glm::vec2{90.0F, -60.0F});
+    REQUIRE_FALSE(tests::platformerMovement(thrown).grounded);
+    REQUIRE(tests::health(thrown).current == health - 1);
 }
 
 TEST_CASE("Fatal damage begins a timed death", "[actor][lifecycle]")
@@ -158,4 +185,16 @@ TEST_CASE("Invalid lifecycle requests and timing are rejected", "[actor][lifecyc
     advanced_platformer::World world;
     REQUIRE_THROWS_AS(
         advanced_platformer::updateLifeState(world, requests, -1.0F), std::invalid_argument);
+}
+
+TEST_CASE("A knockback must be finite", "[actor][lifecycle]")
+{
+    advanced_platformer::World world;
+    const advanced_platformer::ActorId id = world.addActor(makeActor());
+    advanced_platformer::WorldRequests requests;
+
+    REQUIRE_THROWS_AS(
+        requests.damage(id, 1, glm::vec2{std::numeric_limits<float>::quiet_NaN(), 0.0F}),
+        std::invalid_argument);
+    REQUIRE(requests.empty());
 }

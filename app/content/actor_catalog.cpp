@@ -56,11 +56,6 @@ namespace advanced_platformer
             std::pair{std::string_view{"right"}, Facing::Right}};
     };
 
-    // actors.json as written: its member names are the file's keys. Glaze reflects only types
-    // with linkage, so these cannot go in an anonymous namespace. The movement and senses
-    // configs are read as they are, keeping C++ defaults for what a file leaves out; the attack
-    // components also hold runtime state, which a file must not set, so they have their own
-    // structs of optional settings.
     struct BiteJson
     {
         std::optional<int> damage;
@@ -74,6 +69,7 @@ namespace advanced_platformer
     struct ContactDamageJson
     {
         std::optional<int> damage;
+        std::optional<WithDefaults<Knockback>> knockback;
     };
 
     struct RangedJson
@@ -115,7 +111,6 @@ namespace advanced_platformer
 
     namespace
     {
-        // Sets the field when the file gives a value, and otherwise keeps its C++ default.
         template <class T> void setIfGiven(T& field, const std::optional<T>& given)
         {
             if (given.has_value())
@@ -124,8 +119,6 @@ namespace advanced_platformer
             }
         }
 
-        // Each component starts from the C++ defaults and takes only the fields the file
-        // names, so an empty object means "this component, as configured in code".
         BiteAttack biteFrom(const BiteJson& json)
         {
             BiteAttack bite;
@@ -142,6 +135,10 @@ namespace advanced_platformer
         {
             ContactDamage contact;
             setIfGiven(contact.damage, json.damage);
+            if (json.knockback.has_value())
+            {
+                contact.knockback = json.knockback->get();
+            }
             return contact;
         }
 

@@ -2,10 +2,12 @@
 
 #include <optional>
 #include <stdexcept>
+#include <string>
 
 #include "content/actor_catalog.hpp"
 #include "content/actor_definition.hpp"
 #include "content/machine_catalog.hpp"
+#include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/math/aabb.hpp"
@@ -60,6 +62,33 @@ TEST_CASE("Contact damage definitions compose fresh independent state", "[app][a
     REQUIRE(tests::contactDamage(composed).damage == 2);
     REQUIRE_FALSE(tests::contactDamage(composed).active);
     REQUIRE(tests::contactDamage(composed).actorsHit.empty());
+}
+
+TEST_CASE("Contact damage knockback is read with defaults and validated", "[app][actors][contact]")
+{
+    const auto heroWith = [](const char* contactDamage)
+    {
+        const auto catalog = advanced_platformer::parseActorCatalog(
+            std::string(R"({"player":"hero","actors":{"hero":{"bodySize":[12,20],"team":"player",
+                 "health":3,"inventorySlots":1,"platformer":{},"contactDamage":)") +
+                contactDamage + "}}}",
+            "knockback",
+            {});
+        return advanced_platformer::composeActor(
+            advanced_platformer::actorDefinition(catalog, "hero"), {}, 0);
+    };
+
+    advanced_platformer::Actor partlyConfigured = heroWith(R"({"knockback":{"speed":180}})");
+    const advanced_platformer::Knockback knockback =
+        tests::contactDamage(partlyConfigured)
+            .knockback.value_or(advanced_platformer::Knockback{0.0F, 0.0F});
+    REQUIRE(knockback.speed == 180.0F);
+    REQUIRE(knockback.lift == 120.0F);
+
+    advanced_platformer::Actor plain = heroWith("{}");
+    REQUIRE_FALSE(tests::contactDamage(plain).knockback.has_value());
+
+    REQUIRE_THROWS_AS(heroWith(R"({"knockback":{"speed":-1}})"), std::invalid_argument);
 }
 
 TEST_CASE(

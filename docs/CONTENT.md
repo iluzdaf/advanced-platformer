@@ -184,7 +184,7 @@ A component object may leave out any field to keep its default, so `{}` is all d
 | `senses`        | `noticeDistance` (96), `targetMemoryDuration` (1.5), `searchDuration` (2), `standoffDistance` (48)                                                                                                                                 |
 | `bite`          | `damage` (1), `hitboxSize` ([10, 8]), `reach` (4), `windupDuration` (0.12), `activeDuration` (0.08), `recoveryDuration` (0.3)                                                                                                      |
 | `ranged`        | `damage` (1), `projectileSize` ([4, 2]), `projectileSpeed` (180), `projectileLifetime` (2), `shootDuration` (0.15), `recoveryDuration` (0.2), `breaksTiles` (false), `sprite`                                                      |
-| `contactDamage` | `damage` (1)                                                                                                                                                                                                                       |
+| `contactDamage` | `damage` (1), `knockback` (none): `speed` (150), `lift` (120), the push away from the attacker and the lift, in pixels per second                                                                                                  |
 
 A `sprite`, here and for items, pickups and exits, has `position` and `size`, the atlas
 region, and `anchor`, `feet` (default) or `center`. A sprite draws at its region's size:

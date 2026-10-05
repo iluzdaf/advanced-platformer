@@ -736,7 +736,9 @@ The aim vector supports the full 360-degree range.
 `ContactDamage` is independent of movement and can coexist with a bite or ranged weapon.
 While the `contactDamage` intention is held, combat queues body-overlap damage once per
 opponent. Releasing it or dying disables damage and clears the hit history, so a later
-activation can hit again. It neither moves the actor nor selects an attack animation.
+activation can hit again. It neither moves the actor nor selects an attack animation. A
+`knockback` throws the opponent away from the attacker at its `speed` and up at its
+`lift`, applied by the life cycle together with the damage, so a fatal hit still throws.
 The boar's Lua charge activity combines this request with fast ordinary walking; recovery
 requests neither movement nor contact damage.
 

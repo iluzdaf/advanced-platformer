@@ -1,9 +1,14 @@
 #include "advanced_platformer/world/world_requests.hpp"
 
+#include "advanced_platformer/math/validation.hpp"
+
 #include <algorithm>
 #include <cstddef>
 #include <functional>
+#include <optional>
 #include <stdexcept>
+
+#include <glm/vec2.hpp>
 #include <vector>
 
 #include "advanced_platformer/actor/actor_id.hpp"
@@ -13,13 +18,17 @@
 
 namespace advanced_platformer
 {
-    void WorldRequests::damage(ActorId target, int amount)
+    void WorldRequests::damage(ActorId target, int amount, std::optional<glm::vec2> knockback)
     {
         if (!isValid(target) || amount <= 0)
         {
             throw std::invalid_argument("Damage requests require a target and positive amount");
         }
-        damageRequests.push_back({target, amount});
+        if (knockback.has_value() && !isFinite(*knockback))
+        {
+            throw std::invalid_argument("A knockback must be finite");
+        }
+        damageRequests.push_back({target, amount, knockback});
     }
 
     void WorldRequests::remove(ActorId target)
@@ -79,8 +88,6 @@ namespace advanced_platformer
 
     namespace
     {
-        // Removing by index shifts everything after it down, so the indexes go highest first
-        // and each one is removed only once however many times it was requested.
         void removeEachHighestFirst(
             std::vector<std::size_t>& indexes,
             const std::function<void(std::size_t)>& remove)

@@ -1,6 +1,7 @@
 #include "advanced_platformer/combat/attack_system.hpp"
 
 #include <algorithm>
+#include <optional>
 #include <cmath>
 #include <vector>
 
@@ -150,6 +151,24 @@ namespace advanced_platformer
             return activeDuringUpdate;
         }
 
+        std::optional<glm::vec2> knockbackFrom(
+            const Actor& actor,
+            const ContactDamage& contact,
+            const Actor& target)
+        {
+            if (!contact.knockback.has_value())
+            {
+                return std::nullopt;
+            }
+            const float offset = centerOf(target.body.bounds).x - centerOf(actor.body.bounds).x;
+            float direction = actor.facing == Facing::Left ? -1.0F : 1.0F;
+            if (offset != 0.0F)
+            {
+                direction = offset < 0.0F ? -1.0F : 1.0F;
+            }
+            return glm::vec2{direction * contact.knockback->speed, -contact.knockback->lift};
+        }
+
         void updateContactDamage(Actor& actor, const World& world, WorldRequests& requests)
         {
             if (!actor.contactDamage.has_value())
@@ -176,7 +195,8 @@ namespace advanced_platformer
                     {
                         continue;
                     }
-                    requests.damage(target.id, contact.damage);
+                    requests.damage(
+                        target.id, contact.damage, knockbackFrom(actor, contact, target));
                     contact.actorsHit.push_back(target.id);
                 }
             }

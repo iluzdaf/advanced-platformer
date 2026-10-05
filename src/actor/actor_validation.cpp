@@ -98,9 +98,20 @@ namespace advanced_platformer
                     throw std::invalid_argument("Actor bite data is invalid");
                 }
             }
-            if (actor.contactDamage.has_value() && actor.contactDamage->damage <= 0)
+            if (actor.contactDamage.has_value())
             {
-                throw std::invalid_argument("Actor contact damage must be positive");
+                const ContactDamage& contact = *actor.contactDamage;
+                if (contact.damage <= 0)
+                {
+                    throw std::invalid_argument("Actor contact damage must be positive");
+                }
+                if (contact.knockback.has_value() &&
+                    (!isFiniteNonNegative(contact.knockback->speed) ||
+                     !isFiniteNonNegative(contact.knockback->lift)))
+                {
+                    throw std::invalid_argument(
+                        "Actor contact knockback needs finite, non-negative speed and lift");
+                }
             }
             const int attacks = static_cast<int>(actor.rangedWeapon.has_value()) +
                                 static_cast<int>(actor.bite.has_value());

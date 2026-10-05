@@ -43,6 +43,14 @@ namespace advanced_platformer
 
             actor->health->current = std::max(0, actor->health->current - request.amount);
             actor->lastDamageTimeSeconds = world.simulationTimeSeconds();
+            if (request.knockback.has_value())
+            {
+                actor->body.velocity = *request.knockback;
+                if (actor->platformerMovement.has_value())
+                {
+                    actor->platformerMovement->grounded = false;
+                }
+            }
             if (actor->health->current == 0)
             {
                 actor->life = LifeState::Dying;
