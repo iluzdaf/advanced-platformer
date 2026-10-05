@@ -34,12 +34,12 @@ TEST_CASE("Damage is deferred until lifecycle requests are applied", "[actor][li
 
     requests.damage(id, 1);
     advanced_platformer::Actor& undamaged = tests::actor(world, id);
-    REQUIRE(tests::health(undamaged).current == 3);
+    REQUIRE(tests::component<advanced_platformer::Health>(undamaged).current == 3);
 
     advanced_platformer::updateLifeState(world, requests, 0.1F);
 
     advanced_platformer::Actor& damaged = tests::actor(world, id);
-    REQUIRE(tests::health(damaged).current == 2);
+    REQUIRE(tests::component<advanced_platformer::Health>(damaged).current == 2);
     REQUIRE(damaged.life == advanced_platformer::LifeState::Alive);
     REQUIRE(requests.empty());
 }
@@ -70,7 +70,8 @@ TEST_CASE("Damage with knockback sets the target's velocity, even when fatal", "
         health = 1;
     }
     const advanced_platformer::ActorId id = world.addActor(makeActor(health));
-    tests::platformerMovement(tests::actor(world, id)).grounded = true;
+    tests::component<advanced_platformer::PlatformerMovement>(tests::actor(world, id)).grounded =
+        true;
     advanced_platformer::WorldRequests requests;
     requests.damage(id, 1, glm::vec2{90.0F, -60.0F});
 
@@ -78,8 +79,8 @@ TEST_CASE("Damage with knockback sets the target's velocity, even when fatal", "
 
     advanced_platformer::Actor& thrown = tests::actor(world, id);
     REQUIRE(thrown.body.velocity == glm::vec2{90.0F, -60.0F});
-    REQUIRE_FALSE(tests::platformerMovement(thrown).grounded);
-    REQUIRE(tests::health(thrown).current == health - 1);
+    REQUIRE_FALSE(tests::component<advanced_platformer::PlatformerMovement>(thrown).grounded);
+    REQUIRE(tests::component<advanced_platformer::Health>(thrown).current == health - 1);
 }
 
 TEST_CASE("Fatal damage begins a timed death", "[actor][lifecycle]")
@@ -94,7 +95,7 @@ TEST_CASE("Fatal damage begins a timed death", "[actor][lifecycle]")
     advanced_platformer::updateLifeState(world, requests, 0.1F);
 
     advanced_platformer::Actor& dying = tests::actor(world, id);
-    REQUIRE(tests::health(dying).current == 0);
+    REQUIRE(tests::component<advanced_platformer::Health>(dying).current == 0);
     REQUIRE(dying.life == advanced_platformer::LifeState::Dying);
     REQUIRE(dying.deathTimeRemaining == 0.4F);
     REQUIRE(dying.lastDamageTimeSeconds == 0.0F);
@@ -113,7 +114,7 @@ TEST_CASE("Dying actors cannot take further damage", "[actor][lifecycle]")
     advanced_platformer::updateLifeState(world, requests, 0.1F);
 
     advanced_platformer::Actor& dying = tests::actor(world, id);
-    REQUIRE(tests::health(dying).current == 0);
+    REQUIRE(tests::component<advanced_platformer::Health>(dying).current == 0);
     REQUIRE(dying.deathTimeRemaining < 0.4F);
 }
 
@@ -138,9 +139,9 @@ TEST_CASE("The player respawns with restored runtime state", "[actor][lifecycle]
     advanced_platformer::Actor actor = makeActor(1);
     actor.health = advanced_platformer::Health{1, 3};
     actor.body.velocity = {20.0F, 30.0F};
-    tests::platformerMovement(actor).grounded = true;
-    tests::platformerMovement(actor).coyoteRemaining = 0.1F;
-    tests::platformerMovement(actor).jumpBufferRemaining = 0.1F;
+    tests::component<advanced_platformer::PlatformerMovement>(actor).grounded = true;
+    tests::component<advanced_platformer::PlatformerMovement>(actor).coyoteRemaining = 0.1F;
+    tests::component<advanced_platformer::PlatformerMovement>(actor).jumpBufferRemaining = 0.1F;
     const advanced_platformer::ActorId player = world.addActor(actor);
     world.setPlayer(player, {40.0F, 48.0F});
     advanced_platformer::WorldRequests requests;
@@ -152,14 +153,18 @@ TEST_CASE("The player respawns with restored runtime state", "[actor][lifecycle]
     advanced_platformer::Actor& respawned = tests::actor(world, player);
     REQUIRE(respawned.life == advanced_platformer::LifeState::Alive);
     REQUIRE_FALSE(respawned.lastDamageTimeSeconds.has_value());
-    REQUIRE(tests::health(respawned).current == 3);
+    REQUIRE(tests::component<advanced_platformer::Health>(respawned).current == 3);
     REQUIRE(advanced_platformer::feetOf(respawned.body.bounds).x == 40.0F);
     REQUIRE(advanced_platformer::feetOf(respawned.body.bounds).y == 48.0F);
     REQUIRE(respawned.body.velocity.x == 0.0F);
     REQUIRE(respawned.body.velocity.y == 0.0F);
-    REQUIRE_FALSE(tests::platformerMovement(respawned).grounded);
-    REQUIRE(tests::platformerMovement(respawned).coyoteRemaining == 0.0F);
-    REQUIRE(tests::platformerMovement(respawned).jumpBufferRemaining == 0.0F);
+    REQUIRE_FALSE(tests::component<advanced_platformer::PlatformerMovement>(respawned).grounded);
+    REQUIRE(
+        tests::component<advanced_platformer::PlatformerMovement>(respawned).coyoteRemaining ==
+        0.0F);
+    REQUIRE(
+        tests::component<advanced_platformer::PlatformerMovement>(respawned).jumpBufferRemaining ==
+        0.0F);
 }
 
 TEST_CASE("Explicit removals are deferred until world requests are applied", "[world][requests]")

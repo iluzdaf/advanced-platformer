@@ -63,13 +63,13 @@ TEST_CASE("A projectile damages the earliest opposing actor and disappears", "[c
     advanced_platformer::TileMap map = emptyMap();
     advanced_platformer::updateProjectiles(map, world, requests, 0.5F);
 
-    REQUIRE(tests::health(world, nearTarget).current == 3);
+    REQUIRE(tests::component<advanced_platformer::Health>(world, nearTarget).current == 3);
     REQUIRE(world.projectiles().size() == 1);
     REQUIRE(world.projectileBursts().empty());
     advanced_platformer::updateLifeState(world, requests, 0.0F);
     advanced_platformer::applyWorldRequests(world, requests);
-    REQUIRE(tests::health(world, nearTarget).current == 2);
-    REQUIRE(tests::health(world, farTarget).current == 3);
+    REQUIRE(tests::component<advanced_platformer::Health>(world, nearTarget).current == 2);
+    REQUIRE(tests::component<advanced_platformer::Health>(world, farTarget).current == 3);
     REQUIRE(world.projectiles().empty());
     REQUIRE(world.projectileBursts().size() == 1);
     REQUIRE(
@@ -93,7 +93,7 @@ TEST_CASE("A solid tile stops a projectile before an actor", "[combat][projectil
     advanced_platformer::updateLifeState(world, requests, 0.0F);
     advanced_platformer::applyWorldRequests(world, requests);
 
-    REQUIRE(tests::health(world, target).current == 3);
+    REQUIRE(tests::component<advanced_platformer::Health>(world, target).current == 3);
     REQUIRE(world.projectiles().empty());
     REQUIRE(world.projectileBursts().size() == 1);
     REQUIRE(
@@ -121,9 +121,9 @@ TEST_CASE("Projectiles ignore their owner and actors on the same team", "[combat
     advanced_platformer::updateLifeState(world, requests, 0.0F);
     advanced_platformer::applyWorldRequests(world, requests);
 
-    REQUIRE(tests::health(world, owner).current == 3);
-    REQUIRE(tests::health(world, teammate).current == 3);
-    REQUIRE(tests::health(world, enemy).current == 2);
+    REQUIRE(tests::component<advanced_platformer::Health>(world, owner).current == 3);
+    REQUIRE(tests::component<advanced_platformer::Health>(world, teammate).current == 3);
+    REQUIRE(tests::component<advanced_platformer::Health>(world, enemy).current == 2);
 }
 
 TEST_CASE("A projectile is removed when its lifetime expires", "[combat][projectile]")
@@ -181,7 +181,7 @@ TEST_CASE("Separate projectile hits have no shared invulnerability", "[combat][p
     advanced_platformer::updateLifeState(world, requests, 0.0F);
     advanced_platformer::applyWorldRequests(world, requests);
 
-    REQUIRE(tests::health(world, target).current == 1);
+    REQUIRE(tests::component<advanced_platformer::Health>(world, target).current == 1);
     REQUIRE(world.projectiles().empty());
     REQUIRE(world.projectileBursts().size() == 2);
 }

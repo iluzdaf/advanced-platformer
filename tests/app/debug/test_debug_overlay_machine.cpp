@@ -163,7 +163,7 @@ TEST_CASE("The machine window is told which transition fired last", "[app][debug
     const advanced_platformer::ActorId id = world.addActor(machineNpc({60.0F, 20.0F}));
     REQUIRE(
         advanced_platformer::advanceNpcMachine(
-            tests::machine(world, id),
+            tests::component<advanced_platformer::NpcMachine>(world, id),
             tests::NpcFactsBuilder::facts().knowingTarget(),
             tests::FixedStepSeconds) == 0);
 

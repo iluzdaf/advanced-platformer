@@ -30,8 +30,6 @@
 #include "support/recording_npc_scripts.hpp"
 
 using tests::actor;
-using tests::brain;
-using tests::machine;
 
 namespace
 {
@@ -72,40 +70,51 @@ TEST_CASE("A machine reacts to landing and blocked walking facts", "[npc][machin
                                .when("targetWithinNoticeDistance", true)
                                .transition("charge", "stunned")
                                .when("movementBlocked", true))
-                       .withContactDamage();
+                       .withPrimary(advanced_platformer::ContactDamage{});
     const auto npcId = world.addActor(std::move(charger));
-    tests::platformerMovement(actor(world, npcId)).grounded = true;
-    tests::platformerMovement(actor(world, playerId)).grounded = true;
+    tests::component<advanced_platformer::PlatformerMovement>(actor(world, npcId)).grounded = true;
+    tests::component<advanced_platformer::PlatformerMovement>(actor(world, playerId)).grounded =
+        true;
     tests::RecordingNpcScripts scripts;
     scripts.command.intentions.direction.x = 1.0F;
     scripts.command.intentions.avoidLedges = true;
-    scripts.command.intentions.contactDamage = true;
+    scripts.command.intentions.primaryAttackPressed = true;
     world.emitNoise({playerId, {56.0F, 32.0F}, advanced_platformer::NoiseKind::Landing});
 
     advanced_platformer::updateNpcSenses(map, world, 0.1F);
-    REQUIRE(tests::perception(world, npcId).heardLanding);
-    REQUIRE(brain(world, npcId).target == playerId);
+    REQUIRE(tests::component<advanced_platformer::NpcPerception>(world, npcId).heardLanding);
+    REQUIRE(tests::component<advanced_platformer::NpcBrain>(world, npcId).target == playerId);
     REQUIRE(
         advanced_platformer::onSameGroundRun(
             map, actor(world, npcId).body.bounds, actor(world, playerId).body.bounds));
     advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
-    REQUIRE(machine(world, npcId).definition.states[machine(world, npcId).active].name == "charge");
+    REQUIRE(
+        tests::component<advanced_platformer::NpcMachine>(world, npcId)
+            .definition
+            .states[tests::component<advanced_platformer::NpcMachine>(world, npcId).active]
+            .name == "charge");
     REQUIRE(actor(world, npcId).intentions.direction.x == 1.0F);
-    REQUIRE(actor(world, npcId).intentions.contactDamage);
+    REQUIRE(actor(world, npcId).intentions.primaryAttackPressed);
     REQUIRE(actor(world, npcId).intentions.avoidLedges);
 
-    for (int tick = 0; tick < 8 && !tests::platformerMovement(actor(world, npcId)).blocked; ++tick)
+    for (int tick = 0;
+         tick < 8 &&
+         !tests::component<advanced_platformer::PlatformerMovement>(actor(world, npcId)).blocked;
+         ++tick)
     {
         advanced_platformer::updateActorMovement(map, world, 0.1F);
     }
-    REQUIRE(tests::platformerMovement(actor(world, npcId)).blocked);
+    REQUIRE(tests::component<advanced_platformer::PlatformerMovement>(actor(world, npcId)).blocked);
     scripts.command = {};
     advanced_platformer::updateNpcSenses(map, world, 0.1F);
     advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
     REQUIRE(
-        machine(world, npcId).definition.states[machine(world, npcId).active].name == "stunned");
+        tests::component<advanced_platformer::NpcMachine>(world, npcId)
+            .definition
+            .states[tests::component<advanced_platformer::NpcMachine>(world, npcId).active]
+            .name == "stunned");
     REQUIRE(scripts.calls.back().snapshot.facts.movementBlocked);
-    REQUIRE_FALSE(actor(world, npcId).intentions.contactDamage);
+    REQUIRE_FALSE(actor(world, npcId).intentions.primaryAttackPressed);
     REQUIRE(actor(world, npcId).intentions.direction.x == 0.0F);
 }
 

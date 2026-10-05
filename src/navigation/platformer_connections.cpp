@@ -45,20 +45,12 @@ namespace advanced_platformer
         constexpr float FloorArrivalDistance = 1.0F;
         constexpr float SettledSpeed = 0.02F;
 
-        bool sameIntentions(const InputIntentions& first, const InputIntentions& second)
-        {
-            return first.direction == second.direction &&
-                   first.aimDirection == second.aimDirection &&
-                   first.jumpPressed == second.jumpPressed && first.jumpHeld == second.jumpHeld &&
-                   first.primaryAttackPressed == second.primaryAttackPressed;
-        }
-
         void recordSimulationInput(
             InputProgram& program,
             const InputIntentions& intentions,
             float stepSeconds)
         {
-            if (!program.empty() && sameIntentions(program.back().intentions, intentions))
+            if (!program.empty() && program.back().intentions == intentions)
             {
                 program.back().duration += stepSeconds;
                 return;

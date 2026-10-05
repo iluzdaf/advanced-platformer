@@ -2,11 +2,16 @@
 
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 
+#include <optional>
 #include <stdexcept>
+#include <string>
+#include <variant>
 
 #include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_attacks.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/combat/attack.hpp"
 #include "advanced_platformer/math/validation.hpp"
 #include "advanced_platformer/movement/pounce.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
@@ -53,15 +58,6 @@ namespace advanced_platformer
                 }
                 validateSurfaceClimbConfig(actor.surfaceClimb->config);
             }
-            if (actor.pounce.has_value())
-            {
-                if (!actor.platformerMovement.has_value())
-                {
-                    throw std::invalid_argument("Pouncing requires platformer movement");
-                }
-                validatePounceConfig(actor.pounce->config);
-                requireSeconds(actor.pounce->phaseTimeRemaining, "Pounce phase time remaining");
-            }
         }
 
         void validatePresentation(const Actor& actor)
@@ -80,56 +76,86 @@ namespace advanced_platformer
             }
         }
 
-        void validateCombat(const Actor& actor)
+        void validateKnockback(const std::optional<Knockback>& knockback, const char* what)
         {
-            if (actor.rangedWeapon.has_value())
+            if (knockback.has_value() &&
+                (!isFiniteNonNegative(knockback->speed) || !isFiniteNonNegative(knockback->lift)))
             {
-                const RangedWeapon& weapon = *actor.rangedWeapon;
-                requireSeconds(weapon.phaseTimeRemaining, "Ranged weapon phase time remaining");
-                if (weapon.damage <= 0 || !isFinitePositive(weapon.projectileSize) ||
-                    !isFinitePositive(weapon.projectileSpeed) ||
-                    !isFinitePositive(weapon.projectileLifetime) ||
-                    !isFinitePositive(weapon.shootDuration) ||
-                    !isFinitePositive(weapon.recoveryDuration) ||
-                    !isFinitePositive(weapon.projectileSprite.region.size))
+                throw std::invalid_argument(
+                    std::string(what) + " knockback needs finite, non-negative speed and lift");
+            }
+        }
+
+        void validateAttack(const Actor& actor, const Attack& attack)
+        {
+            if (const auto* weapon = std::get_if<RangedWeapon>(&attack))
+            {
+                requireSeconds(weapon->phaseTimeRemaining, "Ranged weapon phase time remaining");
+                if (weapon->damage <= 0 || !isFinitePositive(weapon->projectileSize) ||
+                    !isFinitePositive(weapon->projectileSpeed) ||
+                    !isFinitePositive(weapon->projectileLifetime) ||
+                    !isFinitePositive(weapon->shootDuration) ||
+                    !isFinitePositive(weapon->recoveryDuration) ||
+                    !isFinitePositive(weapon->projectileSprite.region.size))
                 {
                     throw std::invalid_argument("Actor ranged weapon data is invalid");
                 }
             }
-            if (actor.bite.has_value())
+            else if (const auto* bite = std::get_if<BiteAttack>(&attack))
             {
-                const BiteAttack& bite = *actor.bite;
-                requireSeconds(bite.phaseTimeRemaining, "Bite phase time remaining");
-                if (bite.damage <= 0 || !isFinitePositive(bite.hitboxSize) ||
-                    !isFiniteNonNegative(bite.reach) || !isFinitePositive(bite.windupDuration) ||
-                    !isFinitePositive(bite.activeDuration) ||
-                    !isFinitePositive(bite.recoveryDuration))
+                requireSeconds(bite->phaseTimeRemaining, "Bite phase time remaining");
+                if (bite->damage <= 0 || !isFinitePositive(bite->hitboxSize) ||
+                    !isFiniteNonNegative(bite->reach) || !isFinitePositive(bite->windupDuration) ||
+                    !isFinitePositive(bite->activeDuration) ||
+                    !isFinitePositive(bite->recoveryDuration))
                 {
                     throw std::invalid_argument("Actor bite data is invalid");
                 }
             }
-            if (actor.contactDamage.has_value())
+            else if (const auto* contact = std::get_if<ContactDamage>(&attack))
             {
-                const ContactDamage& contact = *actor.contactDamage;
-                if (contact.damage <= 0)
+                if (contact->damage <= 0)
                 {
                     throw std::invalid_argument("Actor contact damage must be positive");
                 }
-                if (contact.knockback.has_value() &&
-                    (!isFiniteNonNegative(contact.knockback->speed) ||
-                     !isFiniteNonNegative(contact.knockback->lift)))
-                {
-                    throw std::invalid_argument(
-                        "Actor contact knockback needs finite, non-negative speed and lift");
-                }
+                validateKnockback(contact->knockback, "Actor contact");
             }
-            const int attacks = static_cast<int>(actor.rangedWeapon.has_value()) +
-                                static_cast<int>(actor.bite.has_value());
-            if (attacks > 1)
+            else if (const auto* pounce = std::get_if<Pounce>(&attack))
             {
-                throw std::invalid_argument("An actor can have only one primary attack");
+                if (!actor.platformerMovement.has_value())
+                {
+                    throw std::invalid_argument("Pouncing requires platformer movement");
+                }
+                validatePounceConfig(pounce->config);
+                requireSeconds(pounce->phaseTimeRemaining, "Pounce phase time remaining");
+                if (pounce->config.damage <= 0)
+                {
+                    throw std::invalid_argument("Actor pounce damage must be positive");
+                }
+                validateKnockback(pounce->config.knockback, "Actor pounce");
             }
-            if ((attacks > 0 || actor.contactDamage.has_value()) && actor.team == Team::Neutral)
+        }
+
+        void validateCombat(const Actor& actor)
+        {
+            int attacks = 0;
+            int pounces = 0;
+            for (const AttackSlot slot : AttackSlots)
+            {
+                const std::optional<Attack>& attack = attackIn(actor, slot);
+                if (!attack.has_value())
+                {
+                    continue;
+                }
+                ++attacks;
+                pounces += static_cast<int>(std::holds_alternative<Pounce>(*attack));
+                validateAttack(actor, *attack);
+            }
+            if (pounces > 1)
+            {
+                throw std::invalid_argument("An actor can pounce from only one attack slot");
+            }
+            if (attacks > 0 && actor.team == Team::Neutral)
             {
                 throw std::invalid_argument("Actors with attacks require a non-neutral team");
             }

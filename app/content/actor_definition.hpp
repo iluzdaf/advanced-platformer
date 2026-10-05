@@ -6,10 +6,10 @@
 #include <glm/vec2.hpp>
 
 #include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/combat/attack.hpp"
 #include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/movement/flying_movement.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
-#include "advanced_platformer/movement/pounce.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/render/sprite.hpp"
@@ -31,12 +31,10 @@ namespace advanced_platformer
         std::optional<PlatformerMovementConfig> platformer;
         std::optional<FlyingMovement> flying;
         std::optional<SurfaceClimbConfig> surfaceClimb;
-        std::optional<PounceConfig> pounce;
         std::optional<NpcSenses> senses;
         std::string machine;
-        std::optional<BiteAttack> bite;
-        std::optional<ContactDamage> contactDamage;
-        std::optional<RangedWeapon> ranged;
+        std::optional<Attack> primaryAttack;
+        std::optional<Attack> secondaryAttack;
     };
 
     Actor composeActor(

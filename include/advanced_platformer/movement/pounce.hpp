@@ -1,5 +1,10 @@
 #pragma once
 
+#include <optional>
+#include <vector>
+
+#include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/physics/collision.hpp"
 
@@ -23,6 +28,8 @@ namespace advanced_platformer
         float lift = 120.0F;
         float range = 64.0F;
         float recoveryDuration = 0.5F;
+        int damage = 1;
+        std::optional<Knockback> knockback;
 
         bool operator==(const PounceConfig&) const = default;
     };
@@ -33,6 +40,7 @@ namespace advanced_platformer
         PouncePhase phase = PouncePhase::Ready;
         float phaseTimeRemaining = 0.0F;
         ClimbSurface launchedFrom = ClimbSurface::None;
+        std::vector<ActorId> actorsHit;
     };
 
     void validatePounceConfig(const PounceConfig& config);
@@ -44,5 +52,6 @@ namespace advanced_platformer
         SurfaceClimb* climb,
         Pounce& pounce,
         const InputIntentions& intentions,
+        bool pressed,
         float deltaTime);
 }

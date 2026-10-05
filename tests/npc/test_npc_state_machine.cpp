@@ -105,8 +105,8 @@ TEST_CASE("A transition with a hold fires once its conditions have held that lon
 
 TEST_CASE("A transition fires when every fact answers as asked", "[npc][fsm]")
 {
-    const advanced_platformer::NpcFacts facts = NpcFactsBuilder::facts().targetInSights();
-    REQUIRE(fires({{"targetKnown", true}, {"targetInSights", true}}, facts));
+    const advanced_platformer::NpcFacts facts = NpcFactsBuilder::facts().targetInPrimaryRange();
+    REQUIRE(fires({{"targetKnown", true}, {"targetInPrimaryRange", true}}, facts));
     REQUIRE_FALSE(fires({{"targetKnown", true}, {"hasPatrol", true}}, facts));
     REQUIRE(fires({}, facts));
 }

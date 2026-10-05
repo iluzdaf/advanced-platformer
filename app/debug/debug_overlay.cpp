@@ -11,6 +11,7 @@
 #include <glm/vec2.hpp>
 
 #include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_attacks.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/combat/attack_system.hpp"
 #include "advanced_platformer/combat/combat.hpp"
@@ -293,9 +294,10 @@ namespace advanced_platformer
                 info.patrol =
                     PatrolDebugInfo{patrol.firstFeet, patrol.secondFeet, patrol.headingToSecond};
             }
-            if (actor.bite.has_value() && actor.bite->phase == BitePhase::Active)
+            const BiteAttack* bite = findAttack<BiteAttack>(actor);
+            if (bite != nullptr && bite->phase == BitePhase::Active)
             {
-                info.biteHitbox = biteHitbox(actor.body.bounds, actor.bite.value(), actor.facing);
+                info.biteHitbox = biteHitbox(actor.body.bounds, *bite, actor.facing);
             }
             scene.actors.push_back(info);
         }

@@ -164,12 +164,12 @@ namespace advanced_platformer
         sol::table facts = lua.create_table();
         facts["targetKnown"] = snapshot.facts.targetKnown;
         facts["targetVisible"] = snapshot.facts.targetVisible;
-        facts["targetInBiteRange"] = snapshot.facts.targetInBiteRange;
-        facts["biteReady"] = snapshot.facts.biteReady;
-        facts["targetInPounceRange"] = snapshot.facts.targetInPounceRange;
-        facts["pounceReady"] = snapshot.facts.pounceReady;
-        facts["pouncing"] = snapshot.facts.pouncing;
-        facts["targetInSights"] = snapshot.facts.targetInSights;
+        facts["targetInPrimaryRange"] = snapshot.facts.targetInPrimaryRange;
+        facts["primaryReady"] = snapshot.facts.primaryReady;
+        facts["primaryActive"] = snapshot.facts.primaryActive;
+        facts["targetInSecondaryRange"] = snapshot.facts.targetInSecondaryRange;
+        facts["secondaryReady"] = snapshot.facts.secondaryReady;
+        facts["secondaryActive"] = snapshot.facts.secondaryActive;
         facts["targetWithinStandoffDistance"] = snapshot.facts.targetWithinStandoffDistance;
         facts["heardLanding"] = snapshot.facts.heardLanding;
         facts["targetOnSameSurface"] = snapshot.facts.targetOnSameSurface;
@@ -202,10 +202,9 @@ namespace advanced_platformer
              "jumpPressed",
              "jumpHeld",
              "primaryAttackPressed",
-             "pounce",
+             "secondaryAttackPressed",
              "climbGrip",
              "avoidLedges",
-             "contactDamage",
              "routeTo",
              "aimAt",
              "clearRoute",
@@ -251,10 +250,9 @@ namespace advanced_platformer
         readBoolean("jumpPressed", command.intentions.jumpPressed);
         readBoolean("jumpHeld", command.intentions.jumpHeld);
         readBoolean("primaryAttackPressed", command.intentions.primaryAttackPressed);
-        readBoolean("pounce", command.intentions.pouncePressed);
+        readBoolean("secondaryAttackPressed", command.intentions.secondaryAttackPressed);
         readClimbGrip("climbGrip", command.intentions.climbGrip);
         readBoolean("avoidLedges", command.intentions.avoidLedges);
-        readBoolean("contactDamage", command.intentions.contactDamage);
         readOptionalVector("routeTo", command.routeTo);
         readOptionalVector("aimAt", command.aimAt);
         readBoolean("clearRoute", command.clearRoute);

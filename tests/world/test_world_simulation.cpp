@@ -56,7 +56,7 @@ TEST_CASE("World simulation spawns a projectile after projectile movement", "[wo
                                             .atFeet({22.0F, 28.0F})
                                             .platforming()
                                             .onTeam(advanced_platformer::Team::Player)
-                                            .shooting();
+                                            .withPrimary(advanced_platformer::RangedWeapon{});
     player.intentions.aimDirection = {1.0F, 0.0F};
     player.intentions.primaryAttackPressed = true;
     const advanced_platformer::ActorId playerId = world.addActor(player);

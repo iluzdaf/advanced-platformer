@@ -3,12 +3,12 @@
 #include <optional>
 
 #include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/combat/attack.hpp"
 #include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/input/input_state.hpp"
 #include "advanced_platformer/inventory/inventory.hpp"
 #include "advanced_platformer/movement/flying_movement.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
-#include "advanced_platformer/movement/pounce.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/navigation/path_follower.hpp"
 #include "advanced_platformer/npc/npc.hpp"
@@ -39,7 +39,6 @@ namespace advanced_platformer
         std::optional<PlatformerMovement> platformerMovement;
         std::optional<FlyingMovement> flyingMovement;
         std::optional<SurfaceClimb> surfaceClimb;
-        std::optional<Pounce> pounce;
         Facing facing = Facing::Right;
 
         LifeState life = LifeState::Alive;
@@ -52,9 +51,8 @@ namespace advanced_platformer
         std::optional<Health> health;
         std::optional<Inventory> inventory;
         Team team = Team::Neutral;
-        std::optional<RangedWeapon> rangedWeapon;
-        std::optional<BiteAttack> bite;
-        std::optional<ContactDamage> contactDamage;
+        std::optional<Attack> primaryAttack;
+        std::optional<Attack> secondaryAttack;
         std::optional<NpcBrain> brain;
         std::optional<NpcPerception> perception;
         std::optional<NpcMachine> machine;

@@ -12,10 +12,13 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/combat/attack.hpp"
+#include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/inventory/inventory.hpp"
 #include "advanced_platformer/inventory/item.hpp"
 #include "advanced_platformer/math/aabb.hpp"
@@ -284,6 +287,45 @@ namespace advanced_platformer
         return result;
     }
 
+    namespace
+    {
+        void carryAttack(std::optional<Attack>& rebuilt, const std::optional<Attack>& live)
+        {
+            if (!rebuilt.has_value() || !live.has_value() || rebuilt->index() != live->index())
+            {
+                return;
+            }
+            if (auto* bite = std::get_if<BiteAttack>(&*rebuilt))
+            {
+                const BiteAttack& was = std::get<BiteAttack>(*live);
+                bite->phase = was.phase;
+                bite->phaseTimeRemaining = was.phaseTimeRemaining;
+                bite->actorsHit = was.actorsHit;
+            }
+            else if (auto* weapon = std::get_if<RangedWeapon>(&*rebuilt))
+            {
+                const RangedWeapon& was = std::get<RangedWeapon>(*live);
+                weapon->phase = was.phase;
+                weapon->phaseTimeRemaining = was.phaseTimeRemaining;
+                weapon->lastFiredTimeSeconds = was.lastFiredTimeSeconds;
+            }
+            else if (auto* contact = std::get_if<ContactDamage>(&*rebuilt))
+            {
+                const ContactDamage& was = std::get<ContactDamage>(*live);
+                contact->active = was.active;
+                contact->actorsHit = was.actorsHit;
+            }
+            else if (auto* pounce = std::get_if<Pounce>(&*rebuilt))
+            {
+                const Pounce& was = std::get<Pounce>(*live);
+                pounce->phase = was.phase;
+                pounce->phaseTimeRemaining = was.phaseTimeRemaining;
+                pounce->launchedFrom = was.launchedFrom;
+                pounce->actorsHit = was.actorsHit;
+            }
+        }
+    }
+
     Actor carryActorState(
         Actor rebuilt,
         const Actor& live,
@@ -312,12 +354,8 @@ namespace advanced_platformer
             rebuilt.surfaceClimb = live.surfaceClimb;
             rebuilt.surfaceClimb->config = config;
         }
-        if (rebuilt.pounce.has_value() && live.pounce.has_value())
-        {
-            rebuilt.pounce->phase = live.pounce->phase;
-            rebuilt.pounce->phaseTimeRemaining = live.pounce->phaseTimeRemaining;
-            rebuilt.pounce->launchedFrom = live.pounce->launchedFrom;
-        }
+        carryAttack(rebuilt.primaryAttack, live.primaryAttack);
+        carryAttack(rebuilt.secondaryAttack, live.secondaryAttack);
         if (rebuilt.animator.has_value() && live.animator.has_value())
         {
             rebuilt.animator->current = live.animator->current;
@@ -331,23 +369,6 @@ namespace advanced_platformer
         {
             rebuilt.inventory =
                 carryInventory(*live.inventory, rebuilt.inventory->slots().size(), itemIds, world);
-        }
-        if (rebuilt.rangedWeapon.has_value() && live.rangedWeapon.has_value())
-        {
-            rebuilt.rangedWeapon->phase = live.rangedWeapon->phase;
-            rebuilt.rangedWeapon->phaseTimeRemaining = live.rangedWeapon->phaseTimeRemaining;
-            rebuilt.rangedWeapon->lastFiredTimeSeconds = live.rangedWeapon->lastFiredTimeSeconds;
-        }
-        if (rebuilt.bite.has_value() && live.bite.has_value())
-        {
-            rebuilt.bite->phase = live.bite->phase;
-            rebuilt.bite->phaseTimeRemaining = live.bite->phaseTimeRemaining;
-            rebuilt.bite->actorsHit = live.bite->actorsHit;
-        }
-        if (rebuilt.contactDamage.has_value() && live.contactDamage.has_value())
-        {
-            rebuilt.contactDamage->active = live.contactDamage->active;
-            rebuilt.contactDamage->actorsHit = live.contactDamage->actorsHit;
         }
         if (rebuilt.brain.has_value() && live.brain.has_value())
         {

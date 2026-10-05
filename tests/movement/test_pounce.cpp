@@ -35,7 +35,7 @@ namespace
     InputIntentions pounceAt(glm::vec2 aim)
     {
         InputIntentions intentions;
-        intentions.pouncePressed = true;
+        intentions.primaryAttackPressed = true;
         intentions.aimDirection = aim;
         return intentions;
     }
@@ -59,7 +59,7 @@ TEST_CASE(
 {
     Body body = standing();
     PlatformerMovement movement = grounded();
-    Pounce pounce{Config};
+    Pounce pounce{.config = Config};
     glm::vec2 aim{1.0F, 0.0F};
     float expectedSpeedX = 200.0F;
     SECTION("A level aim is lifted")
@@ -72,7 +72,7 @@ TEST_CASE(
     }
 
     advanced_platformer::updatePounceMovement(
-        Room, body, movement, nullptr, pounce, pounceAt(aim), tests::FixedStepSeconds);
+        Room, body, movement, nullptr, pounce, pounceAt(aim), true, tests::FixedStepSeconds);
 
     REQUIRE_NEAR(body.velocity.x, expectedSpeedX);
     REQUIRE(body.velocity.y < -100.0F);
@@ -86,7 +86,7 @@ TEST_CASE("A pounce from a wall or ceiling lets go and leaps along the aim", "[m
     Body body{{{24.0F, 16.0F}, BodySize}, {0.0F, 0.0F}};
     PlatformerMovement movement;
     SurfaceClimb climb{{60.0F}, ClimbSurface::Ceiling};
-    Pounce pounce{Config};
+    Pounce pounce{.config = Config};
     glm::vec2 aim{0.6F, 0.8F};
     SECTION("From the ceiling, downwards")
     {
@@ -100,7 +100,7 @@ TEST_CASE("A pounce from a wall or ceiling lets go and leaps along the aim", "[m
     const glm::vec2 before = body.velocity;
 
     advanced_platformer::updatePounceMovement(
-        Room, body, movement, &climb, pounce, pounceAt(aim), tests::FixedStepSeconds);
+        Room, body, movement, &climb, pounce, pounceAt(aim), true, tests::FixedStepSeconds);
 
     REQUIRE_NEAR(body.velocity.x, aim.x * 200.0F);
     REQUIRE(body.velocity.y >= aim.y * 200.0F);
@@ -112,7 +112,7 @@ TEST_CASE("A pounce from a wall or ceiling lets go and leaps along the aim", "[m
     holdOn.climbGrip = ClimbGrip::Hold;
     holdOn.direction = {-1.0F, 0.0F};
     advanced_platformer::updatePounceMovement(
-        Room, body, movement, &climb, pounce, holdOn, tests::FixedStepSeconds);
+        Room, body, movement, &climb, pounce, holdOn, false, tests::FixedStepSeconds);
 
     REQUIRE(climb.surface == ClimbSurface::None);
     REQUIRE_NEAR(body.velocity.x, aim.x * 200.0F);
@@ -122,19 +122,26 @@ TEST_CASE("In flight a pounce ignores steering, then lands into a recovery", "[m
 {
     Body body = standing();
     PlatformerMovement movement = grounded();
-    Pounce pounce{Config};
+    Pounce pounce{.config = Config};
     advanced_platformer::updatePounceMovement(
-        Room, body, movement, nullptr, pounce, pounceAt({0.0F, -1.0F}), tests::FixedStepSeconds);
+        Room,
+        body,
+        movement,
+        nullptr,
+        pounce,
+        pounceAt({0.0F, -1.0F}),
+        true,
+        tests::FixedStepSeconds);
 
     InputIntentions steer;
     steer.direction = {-1.0F, 0.0F};
-    steer.pouncePressed = true;
+    steer.primaryAttackPressed = true;
     steer.aimDirection = {-1.0F, 0.0F};
     int ticks = 0;
     while (pounce.phase == PouncePhase::Airborne && ticks < 200)
     {
         advanced_platformer::updatePounceMovement(
-            Room, body, movement, nullptr, pounce, steer, tests::FixedStepSeconds);
+            Room, body, movement, nullptr, pounce, steer, true, tests::FixedStepSeconds);
         ++ticks;
     }
 
@@ -145,13 +152,13 @@ TEST_CASE("In flight a pounce ignores steering, then lands into a recovery", "[m
     REQUIRE(ticks > 5);
 
     advanced_platformer::updatePounceMovement(
-        Room, body, movement, nullptr, pounce, steer, tests::FixedStepSeconds);
+        Room, body, movement, nullptr, pounce, steer, true, tests::FixedStepSeconds);
     REQUIRE(pounce.phase == PouncePhase::Recovery);
 
     for (int tick = 0; tick < 30; ++tick)
     {
         advanced_platformer::updatePounceMovement(
-            Room, body, movement, nullptr, pounce, {}, tests::FixedStepSeconds);
+            Room, body, movement, nullptr, pounce, {}, false, tests::FixedStepSeconds);
     }
     REQUIRE(pounce.phase == PouncePhase::Ready);
 }
@@ -160,7 +167,7 @@ TEST_CASE("A pounce needs to be ready, resting and aimed", "[movement][pounce]")
 {
     Body body = standing();
     PlatformerMovement movement = grounded();
-    Pounce pounce{Config};
+    Pounce pounce{.config = Config};
     InputIntentions intentions = pounceAt({1.0F, 0.0F});
     SECTION("In the air")
     {
@@ -173,7 +180,7 @@ TEST_CASE("A pounce needs to be ready, resting and aimed", "[movement][pounce]")
     }
 
     advanced_platformer::updatePounceMovement(
-        Room, body, movement, nullptr, pounce, intentions, tests::FixedStepSeconds);
+        Room, body, movement, nullptr, pounce, intentions, true, tests::FixedStepSeconds);
 
     REQUIRE(pounce.phase == PouncePhase::Ready);
     REQUIRE(body.velocity.x == 0.0F);

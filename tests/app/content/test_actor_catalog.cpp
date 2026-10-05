@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include <string>
 
@@ -6,6 +7,8 @@
 #include <stdexcept>
 
 #include "content/actor_catalog.hpp"
+#include "advanced_platformer/movement/flying_movement.hpp"
+#include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/movement/pounce.hpp"
 #include "content/actor_definition.hpp"
 #include "content/animation_catalog.hpp"
@@ -31,7 +34,8 @@ TEST_CASE("Actor JSON accepts custom names and configures component choices", "[
           "hero":{"bodySize":[12,20],"platformer":{"jumpSpeed":210},"health":5,"inventorySlots":3},
           "scout":{"flying":{"speed":25},"team":"enemy","senses":{"noticeDistance":40,"searchDuration":3,"standoffDistance":30},
                    "machine":"test_machine",
-                   "bodySize":[8,6],"animations":"test_actor","spriteAnchor":"center","bite":{"damage":2}}
+                   "bodySize":[8,6],"animations":"test_actor","spriteAnchor":"center",
+                   "primaryAttack":{"kind":"bite","damage":2}}
         }})",
         "test actors",
         animations,
@@ -49,12 +53,14 @@ TEST_CASE("Actor JSON accepts custom names and configures component choices", "[
         advanced_platformer::activeNpcMachineState(
             actor.machine.value_or(advanced_platformer::NpcMachine{}))
             .name == "rest");
-    REQUIRE(tests::flyingMovement(actor).speed == 25);
-    REQUIRE(tests::bite(actor).damage == 2);
-    REQUIRE(tests::senses(actor).searchDuration == 3);
-    REQUIRE(tests::senses(actor).standoffDistance == 30);
-    REQUIRE(tests::sprite(actor).textureId == 7);
-    REQUIRE(tests::sprite(actor).anchor == advanced_platformer::SpriteAnchor::BodyCenter);
+    REQUIRE(tests::component<advanced_platformer::FlyingMovement>(actor).speed == 25);
+    REQUIRE(tests::component<advanced_platformer::BiteAttack>(actor).damage == 2);
+    REQUIRE(tests::component<advanced_platformer::NpcSenses>(actor).searchDuration == 3);
+    REQUIRE(tests::component<advanced_platformer::NpcSenses>(actor).standoffDistance == 30);
+    REQUIRE(tests::component<advanced_platformer::Sprite>(actor).textureId == 7);
+    REQUIRE(
+        tests::component<advanced_platformer::Sprite>(actor).anchor ==
+        advanced_platformer::SpriteAnchor::BodyCenter);
     REQUIRE_FALSE(actor.platformerMovement.has_value());
     REQUIRE_THROWS_AS(
         advanced_platformer::actorDefinition(catalog, "missing"), std::invalid_argument);
@@ -70,8 +76,10 @@ TEST_CASE("Actor JSON configures climbing without exposing attachment state", "[
 
     auto actor = advanced_platformer::composeActor(
         advanced_platformer::actorDefinition(catalog, "hero"), {}, 0);
-    REQUIRE(tests::surfaceClimb(actor).config.speed == 75.0F);
-    REQUIRE(tests::surfaceClimb(actor).surface == advanced_platformer::ClimbSurface::None);
+    REQUIRE(tests::component<advanced_platformer::SurfaceClimb>(actor).config.speed == 75.0F);
+    REQUIRE(
+        tests::component<advanced_platformer::SurfaceClimb>(actor).surface ==
+        advanced_platformer::ClimbSurface::None);
 }
 
 TEST_CASE("Climbing requires platformer movement and positive speed", "[app][actors][json]")
@@ -101,11 +109,40 @@ TEST_CASE("Climbing requires platformer movement and positive speed", "[app][act
         Catch::Matchers::ContainsSubstring("actors.json:"));
 }
 
+TEST_CASE("An attack takes only its kind's fields", "[app][actors][json]")
+{
+    auto actorJson = tests::parseJson(
+        R"({"player":"hero","actors":{"hero":{"bodySize":[12,12],"platformer":{},"team":"enemy",
+        "primaryAttack":{"kind":"bite"},"health":2,"inventorySlots":1}}})");
+    const char* expected = "";
+    SECTION("A bite with a projectile speed")
+    {
+        actorJson["actors"]["hero"]["primaryAttack"]["projectileSpeed"] = 100;
+        expected = "actors.json: actors.hero: primaryAttack: a bite attack has no field "
+                   "'projectileSpeed'";
+    }
+    SECTION("A contact attack with a reach")
+    {
+        actorJson["actors"]["hero"]["secondaryAttack"] =
+            tests::object({{"kind", "contact"}, {"reach", 4}});
+        expected = "actors.json: actors.hero: secondaryAttack: a contact attack has no field "
+                   "'reach'";
+    }
+    SECTION("An unknown kind")
+    {
+        actorJson["actors"]["hero"]["primaryAttack"]["kind"] = "laser";
+        expected = "unknown value 'laser'; expected bite, ranged, contact or pounce";
+    }
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::parseActorCatalog(tests::dumpJson(actorJson), "actors.json", {}),
+        Catch::Matchers::EndsWith(expected));
+}
+
 TEST_CASE("A pounce requires platformer movement and valid settings", "[app][actors][json]")
 {
     auto actorJson = tests::parseJson(
-        R"({"player":"hero","actors":{"hero":{"bodySize":[12,12],"platformer":{},
-        "pounce":{"speed":220},"health":2,"inventorySlots":1}}})");
+        R"({"player":"hero","actors":{"hero":{"bodySize":[12,12],"platformer":{},"team":"enemy",
+        "primaryAttack":{"kind":"pounce","speed":220},"health":2,"inventorySlots":1}}})");
     SECTION("Flying actor")
     {
         tests::eraseKey(actorJson["actors"]["hero"], "platformer");
@@ -113,11 +150,11 @@ TEST_CASE("A pounce requires platformer movement and valid settings", "[app][act
     }
     SECTION("Invalid speed")
     {
-        actorJson["actors"]["hero"]["pounce"]["speed"] = 0;
+        actorJson["actors"]["hero"]["primaryAttack"]["speed"] = 0;
     }
     SECTION("Runtime phase")
     {
-        actorJson["actors"]["hero"]["pounce"]["phase"] = "airborne";
+        actorJson["actors"]["hero"]["primaryAttack"]["phase"] = "airborne";
         REQUIRE_THROWS_WITH(
             advanced_platformer::parseActorCatalog(tests::dumpJson(actorJson), "actors.json", {}),
             Catch::Matchers::EndsWith("unknown field 'phase'"));
@@ -131,14 +168,16 @@ TEST_CASE("A pounce requires platformer movement and valid settings", "[app][act
 TEST_CASE("Pounce settings keep the C++ defaults a file leaves out", "[app][actors][json]")
 {
     const auto catalog = advanced_platformer::parseActorCatalog(
-        R"({"player":"hero","actors":{"hero":{"bodySize":[12,12],"platformer":{},
-        "pounce":{"speed":220},"health":2,"inventorySlots":1}}})",
+        R"({"player":"hero","actors":{"hero":{"bodySize":[12,12],"platformer":{},"team":"enemy",
+        "primaryAttack":{"kind":"pounce","speed":220},"health":2,"inventorySlots":1}}})",
         "actors.json",
         {});
 
     const advanced_platformer::PounceConfig pounce =
-        advanced_platformer::actorDefinition(catalog, "hero")
-            .pounce.value_or(advanced_platformer::PounceConfig{.speed = 0.0F});
+        std::get<advanced_platformer::Pounce>(
+            advanced_platformer::actorDefinition(catalog, "hero")
+                .primaryAttack.value_or(advanced_platformer::Pounce{}))
+            .config;
 
     REQUIRE(pounce.speed == 220.0F);
     REQUIRE(pounce.lift == 120.0F);
@@ -202,7 +241,8 @@ TEST_CASE(
     }
     SECTION("Runtime attack state")
     {
-        actorJson["actors"]["hero"]["bite"] = tests::object({{"phase", "active"}});
+        actorJson["actors"]["hero"]["primaryAttack"] =
+            tests::object({{"kind", "bite"}, {"phase", "active"}});
         start = "actors.json: line 1, column ";
         end = "unknown field 'phase'";
     }
@@ -229,7 +269,7 @@ TEST_CASE("Actor JSON keeps the C++ defaults a component leaves out", "[app][act
         "hero":{"bodySize":[12,20],"platformer":{},"health":3,"inventorySlots":2},
         "guard":{"bodySize":[12,20],"team":"enemy","health":2,
         "platformer":{"maximumSpeed":60},"senses":{"noticeDistance":80},"machine":"test_machine",
-        "bite":{"damage":2}}}})",
+        "primaryAttack":{"kind":"bite","damage":2}}}})",
         "actors.json",
         {},
         advanced_platformer::loadMachineCatalog("tests/fixtures/catalogs/machines.json"));
@@ -242,7 +282,9 @@ TEST_CASE("Actor JSON keeps the C++ defaults a component leaves out", "[app][act
     REQUIRE(guard.platformer.value_or(movementDefaults).gravity == movementDefaults.gravity);
     REQUIRE(guard.senses.value_or(sensesDefaults).noticeDistance == 80.0F);
     REQUIRE(guard.senses.value_or(sensesDefaults).searchDuration == sensesDefaults.searchDuration);
-    REQUIRE(guard.bite.value_or(biteDefaults).damage == 2);
-    REQUIRE(guard.bite.value_or(biteDefaults).reach == biteDefaults.reach);
+    const advanced_platformer::BiteAttack guardBite =
+        std::get<advanced_platformer::BiteAttack>(guard.primaryAttack.value_or(biteDefaults));
+    REQUIRE(guardBite.damage == 2);
+    REQUIRE(guardBite.reach == biteDefaults.reach);
     REQUIRE_FALSE(guard.flying.has_value());
 }

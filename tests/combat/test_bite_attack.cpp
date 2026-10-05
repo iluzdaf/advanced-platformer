@@ -22,7 +22,8 @@ namespace
             .at(topLeft)
             .platforming()
             .withHealth(3, 3)
-            .onTeam(team);
+            .onTeam(team)
+            .withPrimary(advanced_platformer::BiteAttack{});
     }
 }
 
@@ -31,8 +32,7 @@ TEST_CASE("A bite uses windup active and recovery phases", "[combat][bite]")
     advanced_platformer::World world;
     advanced_platformer::Actor attacker =
         makeActor({10.0F, 10.0F}, advanced_platformer::Team::Enemy);
-    attacker.bite = advanced_platformer::BiteAttack{};
-    tests::bite(attacker).reach = 0.0F;
+    tests::component<advanced_platformer::BiteAttack>(attacker).reach = 0.0F;
     attacker.intentions.primaryAttackPressed = true;
     const advanced_platformer::ActorId attackerId = world.addActor(attacker);
     const advanced_platformer::ActorId target =
@@ -40,24 +40,32 @@ TEST_CASE("A bite uses windup active and recovery phases", "[combat][bite]")
     advanced_platformer::WorldRequests requests;
 
     advanced_platformer::updateAttacks(world, requests, 0.1F);
-    REQUIRE(tests::health(world, target).current == 3);
-    REQUIRE(tests::bite(world, attackerId).phase == advanced_platformer::BitePhase::Windup);
+    REQUIRE(tests::component<advanced_platformer::Health>(world, target).current == 3);
+    REQUIRE(
+        tests::component<advanced_platformer::BiteAttack>(world, attackerId).phase ==
+        advanced_platformer::BitePhase::Windup);
 
     advanced_platformer::updateAttacks(world, requests, 0.12F);
     advanced_platformer::updateLifeState(world, requests, 0.0F);
     advanced_platformer::applyWorldRequests(world, requests);
-    REQUIRE(tests::health(world, target).current == 2);
-    REQUIRE(tests::bite(world, attackerId).phase == advanced_platformer::BitePhase::Active);
+    REQUIRE(tests::component<advanced_platformer::Health>(world, target).current == 2);
+    REQUIRE(
+        tests::component<advanced_platformer::BiteAttack>(world, attackerId).phase ==
+        advanced_platformer::BitePhase::Active);
 
     advanced_platformer::updateAttacks(world, requests, 0.04F);
     advanced_platformer::updateLifeState(world, requests, 0.0F);
     advanced_platformer::applyWorldRequests(world, requests);
-    REQUIRE(tests::health(world, target).current == 2);
+    REQUIRE(tests::component<advanced_platformer::Health>(world, target).current == 2);
 
     advanced_platformer::updateAttacks(world, requests, 0.04F);
-    REQUIRE(tests::bite(world, attackerId).phase == advanced_platformer::BitePhase::Recovery);
+    REQUIRE(
+        tests::component<advanced_platformer::BiteAttack>(world, attackerId).phase ==
+        advanced_platformer::BitePhase::Recovery);
     advanced_platformer::updateAttacks(world, requests, 0.30F);
-    REQUIRE(tests::bite(world, attackerId).phase == advanced_platformer::BitePhase::Ready);
+    REQUIRE(
+        tests::component<advanced_platformer::BiteAttack>(world, attackerId).phase ==
+        advanced_platformer::BitePhase::Ready);
 }
 
 TEST_CASE("A ready bite is harmless and never lunges", "[combat][bite]")
@@ -65,7 +73,6 @@ TEST_CASE("A ready bite is harmless and never lunges", "[combat][bite]")
     advanced_platformer::World world;
     advanced_platformer::Actor attacker =
         makeActor({10.0F, 10.0F}, advanced_platformer::Team::Enemy);
-    attacker.bite = advanced_platformer::BiteAttack{};
     const advanced_platformer::ActorId attackerId = world.addActor(attacker);
     const advanced_platformer::ActorId target =
         world.addActor(makeActor({15.0F, 10.0F}, advanced_platformer::Team::Player));
@@ -74,7 +81,7 @@ TEST_CASE("A ready bite is harmless and never lunges", "[combat][bite]")
     advanced_platformer::updateAttacks(world, requests, 1.0F);
     advanced_platformer::applyWorldRequests(world, requests);
 
-    REQUIRE(tests::health(world, target).current == 3);
+    REQUIRE(tests::component<advanced_platformer::Health>(world, target).current == 3);
     REQUIRE(tests::actor(world, attackerId).body.bounds.topLeft.x == 10.0F);
 }
 
@@ -83,8 +90,7 @@ TEST_CASE("A committed bite completes but can miss", "[combat][bite]")
     advanced_platformer::World world;
     advanced_platformer::Actor attacker =
         makeActor({10.0F, 10.0F}, advanced_platformer::Team::Enemy);
-    attacker.bite = advanced_platformer::BiteAttack{};
-    tests::bite(attacker).reach = 0.0F;
+    tests::component<advanced_platformer::BiteAttack>(attacker).reach = 0.0F;
     attacker.intentions.primaryAttackPressed = true;
     const advanced_platformer::ActorId attackerId = world.addActor(attacker);
     const advanced_platformer::ActorId target =
@@ -97,8 +103,10 @@ TEST_CASE("A committed bite completes but can miss", "[combat][bite]")
     advanced_platformer::updateAttacks(world, requests, 0.51F);
     advanced_platformer::applyWorldRequests(world, requests);
 
-    REQUIRE(tests::health(world, target).current == 3);
-    REQUIRE(tests::bite(world, attackerId).phase == advanced_platformer::BitePhase::Ready);
+    REQUIRE(tests::component<advanced_platformer::Health>(world, target).current == 3);
+    REQUIRE(
+        tests::component<advanced_platformer::BiteAttack>(world, attackerId).phase ==
+        advanced_platformer::BitePhase::Ready);
 }
 
 TEST_CASE("Bite hitboxes are placed in the retained facing direction", "[combat][bite]")

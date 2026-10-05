@@ -47,9 +47,10 @@ TEST_CASE("A region past the atlas is reported by its file and field", "[app][co
     SECTION("A projectile sprite")
     {
         auto& [name, definition] = *catalogs.actors.definitions.begin();
-        definition.ranged = advanced_platformer::RangedWeapon{};
-        definition.ranged->projectileSprite.region = PastTheEdge;
-        expected = "actors.json: actors." + name + ".ranged.sprite";
+        advanced_platformer::RangedWeapon weapon;
+        weapon.projectileSprite.region = PastTheEdge;
+        definition.primaryAttack = weapon;
+        expected = "actors.json: actors." + name + ".primaryAttack.sprite";
     }
     SECTION("An item icon")
     {

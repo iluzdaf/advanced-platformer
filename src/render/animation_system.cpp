@@ -1,8 +1,14 @@
 #include "advanced_platformer/render/animation_system.hpp"
 
+#include <algorithm>
+#include <optional>
+#include <variant>
 #include <stdexcept>
 
 #include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_attacks.hpp"
+#include "advanced_platformer/combat/attack.hpp"
+#include "advanced_platformer/movement/pounce.hpp"
 #include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/math/validation.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
@@ -11,6 +17,26 @@
 
 namespace advanced_platformer
 {
+    namespace
+    {
+        bool attackAnimates(const Attack& attack)
+        {
+            if (const auto* bite = std::get_if<BiteAttack>(&attack))
+            {
+                return bite->phase != BitePhase::Ready;
+            }
+            if (const auto* weapon = std::get_if<RangedWeapon>(&attack))
+            {
+                return weapon->phase == RangedPhase::Shoot;
+            }
+            if (const auto* pounce = std::get_if<Pounce>(&attack))
+            {
+                return pounce->phase == PouncePhase::Airborne;
+            }
+            return false;
+        }
+    }
+
     namespace
     {
         void updateActorAnimations(World& world, float deltaTime)
@@ -27,14 +53,16 @@ namespace advanced_platformer
                     throw std::logic_error("An animated actor is missing a required component");
                 }
 
-                const bool biting = actor.bite.has_value() && actor.bite->phase != BitePhase::Ready;
-                const bool shooting = actor.rangedWeapon.has_value() &&
-                                      actor.rangedWeapon->phase == RangedPhase::Shoot;
-                const bool attacking = biting || shooting;
+                const bool attacking = std::ranges::any_of(
+                    AttackSlots,
+                    [&actor](AttackSlot slot)
+                    {
+                        const std::optional<Attack>& attack = attackIn(actor, slot);
+                        return attack.has_value() && attackAnimates(*attack);
+                    });
                 const ClimbSurface surface = actor.surfaceClimb.has_value()
                                                  ? actor.surfaceClimb->surface
                                                  : ClimbSurface::None;
-                // A climber holding a surface stands on it: it idles or moves there.
                 const bool grounded = surface != ClimbSurface::None ||
                                       !actor.platformerMovement.has_value() ||
                                       actor.platformerMovement->grounded;

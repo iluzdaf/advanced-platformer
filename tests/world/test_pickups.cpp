@@ -71,10 +71,10 @@ TEST_CASE(
     world.addPickup(pickupAt({80.0F, 20.0F}, {8.0F, 8.0F}, {1, 2}));
     advanced_platformer::WorldRequests requests;
     advanced_platformer::updatePickups(world, requests);
-    REQUIRE(tests::inventory(tests::player(world)).count(1) == 0);
+    REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(1) == 0);
     REQUIRE(world.pickups().size() == 2);
     advanced_platformer::applyWorldRequests(world, requests);
-    REQUIRE(tests::inventory(tests::player(world)).count(1) == 3);
+    REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(1) == 3);
     REQUIRE(world.pickups().size() == 1);
     REQUIRE(world.pickups().front().body.bounds.topLeft.x == 80.0F);
     REQUIRE(requests.empty());
@@ -86,17 +86,18 @@ TEST_CASE(
 {
     auto world = makeWorld();
     tests::player(world).inventory = advanced_platformer::Inventory(1);
-    tests::inventory(tests::player(world)).add(world.itemDefinition(1), 4);
+    tests::component<advanced_platformer::Inventory>(tests::player(world))
+        .add(world.itemDefinition(1), 4);
     world.addPickup(pickupAt({18.0F, 20.0F}, {8.0F, 8.0F}, {1, 4}));
     collect(world);
-    REQUIRE(tests::inventory(tests::player(world)).count(1) == 5);
+    REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(1) == 5);
     REQUIRE(world.pickups().front().stack.quantity == 3);
     collect(world);
     REQUIRE(world.pickups().front().stack.quantity == 3);
-    tests::inventory(tests::player(world)).remove(1, 3);
+    tests::component<advanced_platformer::Inventory>(tests::player(world)).remove(1, 3);
     collect(world);
     REQUIRE(world.pickups().empty());
-    REQUIRE(tests::inventory(tests::player(world)).count(1) == 5);
+    REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(1) == 5);
 }
 
 TEST_CASE(
@@ -111,8 +112,8 @@ TEST_CASE(
     advanced_platformer::updatePickups(world, requests);
     advanced_platformer::applyWorldRequests(world, requests);
     REQUIRE(world.pickups().empty());
-    REQUIRE(tests::inventory(tests::player(world)).count(1) == 2);
-    REQUIRE(tests::inventory(tests::player(world)).count(2) == 1);
+    REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(1) == 2);
+    REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(2) == 1);
 }
 
 TEST_CASE("Dead players and players without inventory do not collect pickups", "[world][pickups]")

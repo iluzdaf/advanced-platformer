@@ -21,11 +21,12 @@ namespace advanced_platformer
             const PlatformerMovement& movement,
             const SurfaceClimb* climb,
             const Pounce& pounce,
-            const InputIntentions& intentions)
+            const InputIntentions& intentions,
+            bool pressed)
         {
             const bool resting =
                 movement.grounded || (climb != nullptr && climb->surface != ClimbSurface::None);
-            return pounce.phase == PouncePhase::Ready && intentions.pouncePressed && resting &&
+            return pounce.phase == PouncePhase::Ready && pressed && resting &&
                    intentions.aimDirection != glm::vec2{0.0F, 0.0F};
         }
 
@@ -51,6 +52,7 @@ namespace advanced_platformer
             movement.grounded = false;
             movement.coyoteRemaining = 0.0F;
             movement.jumpBufferRemaining = 0.0F;
+            pounce.actorsHit.clear();
             pounce.phase = PouncePhase::Airborne;
         }
 
@@ -93,13 +95,14 @@ namespace advanced_platformer
         SurfaceClimb* climb,
         Pounce& pounce,
         const InputIntentions& intentions,
+        bool pressed,
         float deltaTime)
     {
         requireSeconds(deltaTime, "Pounce time step");
         validatePounceConfig(pounce.config);
         requireFinite(intentions.aimDirection, "Input intentions");
 
-        const bool launchedThisUpdate = launches(movement, climb, pounce, intentions);
+        const bool launchedThisUpdate = launches(movement, climb, pounce, intentions, pressed);
         if (launchedThisUpdate)
         {
             launch(body, movement, climb, pounce, intentions);

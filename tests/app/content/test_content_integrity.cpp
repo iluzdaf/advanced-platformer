@@ -120,17 +120,17 @@ TEST_CASE("Every shipped Lua activity runs without errors", "[app][content][lua]
     for (advanced_platformer::NpcActivitySnapshot& snapshot : situations)
     {
         snapshot.feet = {40.0F, 80.0F};
-        snapshot.facts.biteReady = true;
+        snapshot.facts.primaryReady = true;
     }
     situations[0].targetFeet = {{60.0F, 80.0F}};
     situations[0].patrol = advanced_platformer::Patrol{{24.0F, 80.0F}, {96.0F, 80.0F}, true};
     situations[0].facts.targetKnown = true;
     situations[0].facts.targetVisible = true;
-    situations[0].facts.targetInBiteRange = true;
+    situations[0].facts.targetInPrimaryRange = true;
     situations[1].patrol = situations[0].patrol;
     situations[2].routeComplete = true;
     situations[2].patrol = situations[0].patrol;
-    situations[3].facts.biteReady = false;
+    situations[3].facts.primaryReady = false;
     situations[3].targetFeet = situations[0].targetFeet;
 
     std::uint32_t nextActor = 1;

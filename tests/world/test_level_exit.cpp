@@ -87,10 +87,12 @@ TEST_CASE("An exit checks overlap and its required quantity", "[world][exit]")
     auto world = makeWorld();
     world.setExit(
         exitWith({{18.0F, 16.0F}, {16.0F, 16.0F}}, advanced_platformer::ItemStack{1, 2}, false, 2));
-    tests::inventory(tests::player(world)).add(world.itemDefinition(1), 1);
+    tests::component<advanced_platformer::Inventory>(tests::player(world))
+        .add(world.itemDefinition(1), 1);
     advanced_platformer::updateLevelExit(world);
     REQUIRE_FALSE(world.levelComplete());
-    tests::inventory(tests::player(world)).add(world.itemDefinition(1), 1);
+    tests::component<advanced_platformer::Inventory>(tests::player(world))
+        .add(world.itemDefinition(1), 1);
     tests::player(world).body.bounds.topLeft.x = 60.0F;
     advanced_platformer::updateLevelExit(world);
     REQUIRE_FALSE(world.levelComplete());
@@ -102,7 +104,7 @@ TEST_CASE("An exit checks overlap and its required quantity", "[world][exit]")
     advanced_platformer::updateLevelExit(world);
     REQUIRE(world.levelComplete());
     REQUIRE_FALSE(advanced_platformer::exitOpening(world));
-    REQUIRE(tests::inventory(tests::player(world)).count(1) == 2);
+    REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(1) == 2);
     REQUIRE(exitOf(world).nextLevel == 2);
 }
 
@@ -129,16 +131,17 @@ TEST_CASE("An exit consumes its requirement once and supports final levels", "[w
     auto world = makeWorld();
     world.setExit(
         exitWith({{18.0F, 16.0F}, {16.0F, 16.0F}}, advanced_platformer::ItemStack{1, 2}, true, {}));
-    tests::inventory(tests::player(world)).add(world.itemDefinition(1), 4);
+    tests::component<advanced_platformer::Inventory>(tests::player(world))
+        .add(world.itemDefinition(1), 4);
     advanced_platformer::updateLevelExit(world);
-    REQUIRE(tests::inventory(tests::player(world)).count(1) == 2);
+    REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(1) == 2);
     advanced_platformer::updateLevelExit(world);
-    REQUIRE(tests::inventory(tests::player(world)).count(1) == 2);
+    REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(1) == 2);
     REQUIRE_FALSE(world.levelComplete());
     world.advanceSimulationTime(advanced_platformer::ExitOpenSeconds);
     advanced_platformer::updateLevelExit(world);
     REQUIRE(world.levelComplete());
-    REQUIRE(tests::inventory(tests::player(world)).count(1) == 2);
+    REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(1) == 2);
     REQUIRE_FALSE(exitOf(world).nextLevel.has_value());
 }
 
@@ -208,7 +211,7 @@ TEST_CASE(
     advanced_platformer::TileMap map = tests::TileMapBuilder({"......", "......", "######"});
     advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
     REQUIRE(tests::player(world).life == advanced_platformer::LifeState::Dying);
-    REQUIRE(tests::inventory(tests::player(world)).count(3) == 0);
+    REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(3) == 0);
     REQUIRE(world.pickups().size() == 1);
     REQUIRE_FALSE(world.levelComplete());
 }
@@ -250,7 +253,8 @@ TEST_CASE("A locked exit records when the living player last stood in it", "[wor
     advanced_platformer::updateLevelExit(world);
     REQUIRE(exitOf(world).lastLockedTouchTimeSeconds == 0.75F);
 
-    tests::inventory(tests::player(world)).add(world.itemDefinition(3), 1);
+    tests::component<advanced_platformer::Inventory>(tests::player(world))
+        .add(world.itemDefinition(3), 1);
     world.advanceSimulationTime(0.25F);
     advanced_platformer::updateLevelExit(world);
     REQUIRE(advanced_platformer::exitOpening(world));

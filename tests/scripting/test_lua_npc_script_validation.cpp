@@ -78,9 +78,9 @@ TEST_CASE("Lua movement and contact requests require booleans", "[lua][npc]")
     {
         field = "avoidLedges";
     }
-    SECTION("Contact damage")
+    SECTION("Secondary attack")
     {
-        field = "contactDamage";
+        field = "secondaryAttackPressed";
     }
     advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScriptText(
@@ -88,7 +88,7 @@ TEST_CASE("Lua movement and contact requests require booleans", "[lua][npc]")
     const advanced_platformer::NpcActivitySnapshot snapshot;
     scripts.enter(FirstActor, Activity, snapshot);
     const auto command = scripts.update(FirstActor, Activity, snapshot, 0.1F);
-    REQUIRE_FALSE(command.intentions.contactDamage);
+    REQUIRE_FALSE(command.intentions.secondaryAttackPressed);
     REQUIRE_FALSE(command.intentions.avoidLedges);
     REQUIRE_THAT(scripts.diagnostics().back().message, Catch::Matchers::ContainsSubstring(field));
 }

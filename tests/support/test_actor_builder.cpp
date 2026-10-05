@@ -5,7 +5,10 @@
 
 #include <glm/vec2.hpp>
 
+#include "advanced_platformer/navigation/path_follower.hpp"
+#include "advanced_platformer/movement/flying_movement.hpp"
 #include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_attacks.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/math/aabb.hpp"
@@ -63,7 +66,7 @@ TEST_CASE("The actor builder gives exactly one movement component", "[support][a
 
     REQUIRE(platformer.platformerMovement.has_value());
     REQUIRE_FALSE(platformer.flyingMovement.has_value());
-    REQUIRE(tests::flyingMovement(flyer).speed == 40.0F);
+    REQUIRE(tests::component<advanced_platformer::FlyingMovement>(flyer).speed == 40.0F);
     REQUIRE_FALSE(flyer.platformerMovement.has_value());
 }
 
@@ -77,19 +80,23 @@ TEST_CASE("An NPC from the actor builder is one World accepts", "[support][actor
             .onTeam(advanced_platformer::Team::Enemy)
             .thinking({64.0F, 2.0F})
             .patrolling({8.0F, 32.0F}, {56.0F, 32.0F})
-            .biting());
+            .withPrimary(advanced_platformer::BiteAttack{}));
 
     advanced_platformer::Actor& npc = tests::actor(world, id);
     REQUIRE(npc.team == advanced_platformer::Team::Enemy);
-    REQUIRE(advanced_platformer::activeNpcMachineState(tests::machine(npc)).name == "idle");
-    REQUIRE_FALSE(tests::perception(npc).targetVisible);
-    REQUIRE_FALSE(tests::perception(npc).heardLanding);
-    REQUIRE(tests::senses(npc).noticeDistance == 64.0F);
-    REQUIRE(tests::senses(npc).targetMemoryDuration == 2.0F);
-    REQUIRE_FALSE(tests::pathFollower(npc).path.has_value());
-    REQUIRE(tests::patrol(npc).firstFeet == glm::vec2{8.0F, 32.0F});
-    REQUIRE(tests::patrol(npc).secondFeet == glm::vec2{56.0F, 32.0F});
-    REQUIRE(npc.bite.has_value());
+    REQUIRE(
+        advanced_platformer::activeNpcMachineState(
+            tests::component<advanced_platformer::NpcMachine>(npc))
+            .name == "idle");
+    REQUIRE_FALSE(tests::component<advanced_platformer::NpcPerception>(npc).targetVisible);
+    REQUIRE_FALSE(tests::component<advanced_platformer::NpcPerception>(npc).heardLanding);
+    REQUIRE(tests::component<advanced_platformer::NpcSenses>(npc).noticeDistance == 64.0F);
+    REQUIRE(tests::component<advanced_platformer::NpcSenses>(npc).targetMemoryDuration == 2.0F);
+    REQUIRE_FALSE(tests::component<advanced_platformer::PathFollower>(npc).path.has_value());
+    REQUIRE(tests::component<advanced_platformer::Patrol>(npc).firstFeet == glm::vec2{8.0F, 32.0F});
+    REQUIRE(
+        tests::component<advanced_platformer::Patrol>(npc).secondFeet == glm::vec2{56.0F, 32.0F});
+    REQUIRE(advanced_platformer::findAttack<advanced_platformer::BiteAttack>(npc) != nullptr);
 }
 
 TEST_CASE("A thinking actor from the builder can run a machine", "[support][actor-builder]")

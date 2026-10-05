@@ -4,12 +4,6 @@
 
 namespace tests
 {
-    // Builds the facts a transition decides on, stated in the order a test reads them:
-    //
-    //   NpcFactsBuilder::facts().withPatrol().knowingTarget().biteReadyFor(0.1F)
-    //
-    // Every fact starts false, so a chain names only the ones the transition depends on.
-    // The chain converts to NpcFacts wherever one is expected, such as advanceNpcMachine.
     class NpcFactsBuilder
     {
     public:
@@ -30,25 +24,14 @@ namespace tests
             return *this;
         }
 
-        // A visible target inside the bite's hitbox, which is known as well.
-        NpcFactsBuilder targetInBiteRange() &&
+        NpcFactsBuilder targetInPrimaryRange() &&
         {
             built.targetKnown = true;
             built.targetVisible = true;
-            built.targetInBiteRange = true;
+            built.targetInPrimaryRange = true;
             return *this;
         }
 
-        // A visible target with a ranged weapon to shoot it, which is known as well.
-        NpcFactsBuilder targetInSights() &&
-        {
-            built.targetKnown = true;
-            built.targetVisible = true;
-            built.targetInSights = true;
-            return *this;
-        }
-
-        // A known target nearer than the standoff distance.
         NpcFactsBuilder targetWithinStandoffDistance() &&
         {
             built.targetKnown = true;
@@ -56,14 +39,12 @@ namespace tests
             return *this;
         }
 
-        // The NPC searches for a lost target, with time still to search.
         NpcFactsBuilder searching() &&
         {
             built.searches = true;
             return *this;
         }
 
-        // The NPC searches for a lost target, and its search has run its time.
         NpcFactsBuilder searchTimeUp() &&
         {
             built.searches = true;
@@ -71,10 +52,9 @@ namespace tests
             return *this;
         }
 
-        // The bite is ready this many seconds into the state.
-        NpcFactsBuilder biteReadyFor(float stateElapsed) &&
+        NpcFactsBuilder primaryReadyFor(float stateElapsed) &&
         {
-            built.biteReady = true;
+            built.primaryReady = true;
             built.stateElapsed = stateElapsed;
             return *this;
         }

@@ -190,14 +190,26 @@ namespace advanced_platformer
 
         void handleMouseButton(GLFWwindow* window, int button, int action, int)
         {
-            if (button != GLFW_MOUSE_BUTTON_LEFT ||
-                (action != GLFW_PRESS && action != GLFW_RELEASE))
+            if (action != GLFW_PRESS && action != GLFW_RELEASE)
+            {
+                return;
+            }
+            std::optional<InputButton> attack;
+            if (button == GLFW_MOUSE_BUTTON_LEFT)
+            {
+                attack = InputButton::PrimaryAttack;
+            }
+            else if (button == GLFW_MOUSE_BUTTON_RIGHT)
+            {
+                attack = InputButton::SecondaryAttack;
+            }
+            if (!attack.has_value())
             {
                 return;
             }
 
             auto* context = static_cast<ApplicationContext*>(glfwGetWindowUserPointer(window));
-            context->input.setButton(InputButton::PrimaryAttack, action == GLFW_PRESS);
+            context->input.setButton(*attack, action == GLFW_PRESS);
         }
 
         std::filesystem::path atlasPath(const std::filesystem::path& assetDirectory)
@@ -246,6 +258,7 @@ namespace advanced_platformer
             else
             {
                 intentions.primaryAttackPressed = false;
+                intentions.secondaryAttackPressed = false;
             }
             intentions.aimDirection = context.aimDirection;
             return intentions;
@@ -378,6 +391,7 @@ namespace advanced_platformer
                         debugTools.machineActor = clicked;
                     }
                     context.input.clearButton(InputButton::PrimaryAttack);
+                    context.input.clearButton(InputButton::SecondaryAttack);
                 }
             }
             std::optional<glm::vec2> gameCursor = internalCursor;
@@ -395,6 +409,7 @@ namespace advanced_platformer
             else if (!gameCursor.has_value())
             {
                 context.input.clearButton(InputButton::PrimaryAttack);
+                context.input.clearButton(InputButton::SecondaryAttack);
             }
 
             const auto step = [&](float deltaTime)

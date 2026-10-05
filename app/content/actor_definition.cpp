@@ -6,12 +6,14 @@
 #include <cstddef>
 #include <optional>
 #include <stdexcept>
+#include <variant>
 #include <string>
 #include <utility>
 
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_validation.hpp"
 #include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/combat/attack.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
 #include "advanced_platformer/movement/pounce.hpp"
@@ -23,6 +25,44 @@
 
 namespace advanced_platformer
 {
+    namespace
+    {
+        std::optional<Attack> freshAttack(const std::optional<Attack>& definition, int textureId)
+        {
+            if (!definition.has_value())
+            {
+                return std::nullopt;
+            }
+            Attack attack = *definition;
+            if (auto* bite = std::get_if<BiteAttack>(&attack))
+            {
+                bite->phase = BitePhase::Ready;
+                bite->phaseTimeRemaining = 0.0F;
+                bite->actorsHit.clear();
+            }
+            else if (auto* weapon = std::get_if<RangedWeapon>(&attack))
+            {
+                weapon->phase = RangedPhase::Ready;
+                weapon->phaseTimeRemaining = 0.0F;
+                weapon->lastFiredTimeSeconds = std::nullopt;
+                weapon->projectileSprite.textureId = textureId;
+            }
+            else if (auto* contact = std::get_if<ContactDamage>(&attack))
+            {
+                contact->active = false;
+                contact->actorsHit.clear();
+            }
+            else if (auto* pounce = std::get_if<Pounce>(&attack))
+            {
+                pounce->phase = PouncePhase::Ready;
+                pounce->phaseTimeRemaining = 0.0F;
+                pounce->launchedFrom = ClimbSurface::None;
+                pounce->actorsHit.clear();
+            }
+            return attack;
+        }
+    }
+
     Actor composeActor(
         const ActorDefinition& definition,
         const AnimationCatalog& animations,
@@ -47,10 +87,6 @@ namespace advanced_platformer
         if (definition.surfaceClimb)
         {
             actor.surfaceClimb = SurfaceClimb{*definition.surfaceClimb};
-        }
-        if (definition.pounce)
-        {
-            actor.pounce = Pounce{*definition.pounce};
         }
         if (definition.health)
         {
@@ -81,27 +117,8 @@ namespace advanced_platformer
             throw std::invalid_argument("A state machine requires senses");
         }
         actor.patrol = patrol;
-        actor.bite = definition.bite;
-        actor.contactDamage = definition.contactDamage;
-        if (actor.contactDamage)
-        {
-            actor.contactDamage->active = false;
-            actor.contactDamage->actorsHit.clear();
-        }
-        if (actor.bite)
-        {
-            actor.bite->phase = BitePhase::Ready;
-            actor.bite->phaseTimeRemaining = 0;
-            actor.bite->actorsHit.clear();
-        }
-        actor.rangedWeapon = definition.ranged;
-        if (actor.rangedWeapon)
-        {
-            actor.rangedWeapon->phase = RangedPhase::Ready;
-            actor.rangedWeapon->phaseTimeRemaining = 0;
-            actor.rangedWeapon->lastFiredTimeSeconds = std::nullopt;
-            actor.rangedWeapon->projectileSprite.textureId = textureId;
-        }
+        actor.primaryAttack = freshAttack(definition.primaryAttack, textureId);
+        actor.secondaryAttack = freshAttack(definition.secondaryAttack, textureId);
         if (!definition.animations.empty())
         {
             Animator animator;
