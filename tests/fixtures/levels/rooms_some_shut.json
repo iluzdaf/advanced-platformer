@@ -1,0 +1,53 @@
+{
+  "roomSize": [8, 6],
+  "tileLegend": {
+    ".": "empty",
+    "#": "stone"
+  },
+  "wall": "#",
+  "open": ".",
+  "markers": {
+    "start": "S",
+    "exit": "E",
+    "actors": {
+      "g": "test_guard"
+    },
+    "pickups": {
+      "m": "medicine_box"
+    }
+  },
+  "exit": "test_door",
+  "pieces": [
+    {
+      "name": "start",
+      "role": "start",
+      "doors": ["left", "right", "up", "down"],
+      "map": ["##....##", "#......#", "........", "........", ".S......", "##....##"]
+    },
+    {
+      "name": "hall",
+      "role": "corridor",
+      "doors": ["left", "right", "up", "down"],
+      "map": ["##....##", "#......#", "........", "........", "......g.", "##....##"]
+    },
+    {
+      "name": "store",
+      "role": "arena",
+      "doors": ["left"],
+      "mirror": false,
+      "map": ["########", "#......#", ".......#", ".......#", "..m....#", "########"]
+    },
+    {
+      "name": "exit",
+      "role": "exit",
+      "doors": ["left", "right", "up", "down"],
+      "map": ["##....##", "#......#", "........", "........", "......E.", "##....##"]
+    },
+    {
+      "name": "shut exit",
+      "role": "exit",
+      "doors": ["left", "right", "up", "down"],
+      "map": ["##....##", "#......#", "...###..", "...#E#..", "...###..", "##....##"]
+    }
+  ]
+}

@@ -63,7 +63,8 @@ namespace advanced_platformer
               this->levelCatalog.startLevel,
               textureId,
               this->gameCatalogs,
-              composePlayer(this->gameCatalogs, textureId))),
+              composePlayer(this->gameCatalogs, textureId),
+              stepSeconds)),
           atlasTextureId(textureId),
           simulationStepSeconds(stepSeconds)
     {
@@ -82,13 +83,19 @@ namespace advanced_platformer
             nextPlayer.health = previousPlayer->health;
             nextPlayer.inventory = previousPlayer->inventory;
         }
-        replaceLevel(levelNumber, std::move(nextPlayer), seed);
+        replaceLevel(levelNumber, nextPlayer, seed);
     }
 
-    void Game::replaceLevel(int levelNumber, Actor player, std::optional<std::uint32_t> seed)
+    void Game::replaceLevel(int levelNumber, const Actor& player, std::optional<std::uint32_t> seed)
     {
         GameLevel next = composeStartedLevel(
-            levelCatalog, levelNumber, atlasTextureId, gameCatalogs, std::move(player), seed);
+            levelCatalog,
+            levelNumber,
+            atlasTextureId,
+            gameCatalogs,
+            player,
+            simulationStepSeconds,
+            seed);
         for (const Actor& actor : level.world.actors())
         {
             npcScripts.forget(actor.id);
@@ -322,6 +329,7 @@ namespace advanced_platformer
             atlasTextureId,
             content.gameCatalogs,
             composePlayer(content.gameCatalogs, atlasTextureId),
+            simulationStepSeconds,
             level.seed);
         GameLevel next = level;
         LevelReload result = reloadLevel(

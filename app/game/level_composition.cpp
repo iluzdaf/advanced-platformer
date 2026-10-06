@@ -233,20 +233,59 @@ namespace advanced_platformer
         return composeActor(actorDefinition(actors, actors.player), catalogs.animations, textureId);
     }
 
+    namespace
+    {
+        GameLevel composeWithPlayer(
+            const LevelCatalog& catalog,
+            int levelNumber,
+            int textureId,
+            const GameCatalogs& catalogs,
+            const Actor& player,
+            std::optional<std::uint32_t> seed)
+        {
+            GameLevel level = composeGameLevel(catalog, levelNumber, textureId, catalogs, seed);
+            Actor placed = player;
+            moveFeetTo(placed.body.bounds, level.playerSpawnFeet);
+            const ActorId playerId = level.world.addActor(std::move(placed));
+            level.actorDefinitionNames.emplace(playerId.value, catalogs.actors.player);
+            level.world.setPlayer(playerId, level.playerSpawnFeet);
+            validateLevelActors(level.map, level.world, level.number);
+            return level;
+        }
+    }
+
     GameLevel composeStartedLevel(
         const LevelCatalog& catalog,
         int levelNumber,
         int textureId,
         const GameCatalogs& catalogs,
-        Actor player,
+        const Actor& player,
+        float stepSeconds,
         std::optional<std::uint32_t> seed)
     {
-        GameLevel level = composeGameLevel(catalog, levelNumber, textureId, catalogs, seed);
-        moveFeetTo(player.body.bounds, level.playerSpawnFeet);
-        const ActorId playerId = level.world.addActor(std::move(player));
-        level.actorDefinitionNames.emplace(playerId.value, catalogs.actors.player);
-        level.world.setPlayer(playerId, level.playerSpawnFeet);
-        validateLevelActors(level.map, level.world, level.number);
+        GameLevel level =
+            composeWithPlayer(catalog, levelNumber, textureId, catalogs, player, seed);
+        if (!level.seed.has_value())
+        {
+            return level;
+        }
+        const std::uint32_t firstSeed = *level.seed;
+        for (std::uint32_t nextSeed = firstSeed + 1U;
+             !playerCanReachExit(level.map, level.world, stepSeconds);
+             ++nextSeed)
+        {
+            if (nextSeed - firstSeed == GenerationAttempts)
+            {
+                throw std::invalid_argument(
+                    std::format(
+                        "Level {}: no seed from {} to {} gives a route from the spawn to the "
+                        "exit",
+                        levelNumber,
+                        firstSeed,
+                        nextSeed - 1U));
+            }
+            level = composeWithPlayer(catalog, levelNumber, textureId, catalogs, player, nextSeed);
+        }
         return level;
     }
 }

@@ -233,6 +233,8 @@ team, and life state, plus optional components.
   cache of its own. Each time the search defers, the fill builds just the cell it asked
   for, so only the cells the search reaches are simulated. It ignores the exit's
   requirement and breakable tiles.
+- Starting a generated level runs it on each seed in turn until one passes, so a restart,
+  reload or F6 dump rebuilds a level the player can finish.
 
 ## NPC behaviour
 
