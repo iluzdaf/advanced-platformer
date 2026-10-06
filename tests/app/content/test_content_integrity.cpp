@@ -92,22 +92,25 @@ TEST_CASE("Every catalog level has valid actor placement", "[app][content]")
     }
 }
 
-TEST_CASE("Every catalog level has a route from the respawn to the exit", "[app][content]")
+TEST_CASE("Every catalog level starts with a route from the respawn to the exit", "[app][content]")
 {
     const auto catalog = advanced_platformer::loadLevelCatalog("assets/levels/levels.json");
     const auto catalogs =
         advanced_platformer::loadGameCatalogs("assets/catalogs", pngSize(ShippedAtlas));
     for (const advanced_platformer::LevelCatalogEntry& entry : catalog.levels)
     {
-        auto content = advanced_platformer::composeGameLevel(catalog, entry.number, 0, catalogs);
-        advanced_platformer::Actor player = advanced_platformer::composePlayer(catalogs, 0);
-        advanced_platformer::moveFeetTo(player.body.bounds, content.playerSpawnFeet);
-        tests::addPlayer(content.world, player);
+        const advanced_platformer::GameLevel level = advanced_platformer::composeStartedLevel(
+            catalog,
+            entry.number,
+            0,
+            catalogs,
+            advanced_platformer::composePlayer(catalogs, 0),
+            tests::FixedStepSeconds);
 
         INFO("Level " << entry.number);
         REQUIRE(
             advanced_platformer::playerCanReachExit(
-                content.map, content.world, tests::FixedStepSeconds));
+                level.map, level.world, tests::FixedStepSeconds));
     }
 }
 
