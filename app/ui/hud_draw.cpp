@@ -33,12 +33,6 @@ namespace advanced_platformer
         drawList.AddText(font, size, position, colour, text, nullptr, wrapWidth);
     }
 
-    void drawCenteredText(ImDrawList& drawList, float centerX, float y, const char* text)
-    {
-        const float left = centerX - ImGui::CalcTextSize(text).x * 0.5F;
-        drawShadowedText(drawList, {left, y}, HudTextColour, text);
-    }
-
     void drawAtlasRegion(
         ImDrawList& drawList,
         const Texture& atlas,

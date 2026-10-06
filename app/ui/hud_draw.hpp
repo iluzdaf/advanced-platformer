@@ -15,7 +15,6 @@ namespace advanced_platformer
         ImU32 colour,
         const char* text,
         float wrapWidth = 0.0F);
-    void drawCenteredText(ImDrawList& drawList, float centerX, float y, const char* text);
 
     void drawAtlasRegion(
         ImDrawList& drawList,

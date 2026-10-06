@@ -7,7 +7,6 @@
 #include "ui/exit_hint_ui.hpp"
 #include "ui/health_hud_ui.hpp"
 #include "ui/inventory_ui.hpp"
-#include "ui/level_number_ui.hpp"
 #include "ui/pause_ui.hpp"
 
 namespace advanced_platformer
@@ -25,7 +24,6 @@ namespace advanced_platformer
             return requests;
         }
         drawHealthHud(game.playerHealth(), game.hudIcons(), atlas, *viewport);
-        drawLevelNumber(game.levelNumber(), *viewport);
         requests.toggleInventory = drawInventoryButton(atlas, game.hudIcons().bag, *viewport);
         drawLockedExitHint(game, atlas, *viewport);
         if (simulationPaused)
