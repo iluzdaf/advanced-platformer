@@ -9,15 +9,13 @@
 
 #include "game/game.hpp"
 #include "lua_npc_scripts.hpp"
-#include "lua_presentation_script.hpp"
-#include "content/game_catalogs.hpp"
 #include "content/run_settings.hpp"
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/input/input_state.hpp"
 #include "advanced_platformer/inventory/inventory.hpp"
 #include "advanced_platformer/render/sprite.hpp"
-#include "support/atlas_size.hpp"
 #include "support/fixed_step.hpp"
+#include "support/fixture_game.hpp"
 
 namespace
 {
@@ -62,14 +60,7 @@ TEST_CASE(
     "The exit leads to the next level and keeps the player's progress",
     "[app][level-transition]")
 {
-    advanced_platformer::Game game(
-        0,
-        advanced_platformer::loadRunSettings("tests/fixtures/levels/finish_run.json"),
-        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
-        advanced_platformer::LuaNpcScripts{},
-        advanced_platformer::LuaPresentationScript{},
-        tests::FixedStepSeconds,
-        1);
+    advanced_platformer::Game game = tests::fixtureGame("tests/fixtures/levels/finish_run.json");
     advanced_platformer::InputIntentions intentions;
     intentions.direction.x = -1.0F;
 
@@ -97,16 +88,10 @@ TEST_CASE(
     "Defeat restarts the run at level 1 with a fresh player and a new run seed",
     "[app][level-transition]")
 {
-    advanced_platformer::LuaNpcScripts scripts;
-    scripts.loadScript("spikes", "tests/fixtures/scripts/spikes.lua");
-    advanced_platformer::Game game(
-        0,
-        advanced_platformer::loadRunSettings("tests/fixtures/levels/spikes_run.json"),
-        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
-        std::move(scripts),
-        advanced_platformer::LuaPresentationScript{},
-        tests::FixedStepSeconds,
-        1);
+    advanced_platformer::GameContent content =
+        tests::fixtureContent("tests/fixtures/levels/spikes_run.json");
+    content.npcScripts.loadScript("spikes", "tests/fixtures/scripts/spikes.lua");
+    advanced_platformer::Game game = tests::fixtureGame(std::move(content));
     const auto initialHealth = game.playerHealth();
     const auto initialInventory = game.playerInventory();
     advanced_platformer::InputIntentions intentions;
@@ -132,14 +117,8 @@ TEST_CASE(
     "The game hints the missing item while the player stands in a locked exit",
     "[app][level-transition][exit]")
 {
-    advanced_platformer::Game game(
-        0,
-        advanced_platformer::loadRunSettings("tests/fixtures/levels/locked_door_run.json"),
-        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
-        advanced_platformer::LuaNpcScripts{},
-        advanced_platformer::LuaPresentationScript{},
-        tests::FixedStepSeconds,
-        1);
+    advanced_platformer::Game game =
+        tests::fixtureGame("tests/fixtures/levels/locked_door_run.json");
     REQUIRE_FALSE(game.lockedExitHintIcon().has_value());
 
     advanced_platformer::InputIntentions walkLeft;

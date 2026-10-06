@@ -7,12 +7,9 @@
 
 #include <glm/vec2.hpp>
 
-#include "content/game_catalogs.hpp"
-#include "content/run_settings.hpp"
 #include "debug/debug_overlay.hpp"
 #include "debug/navigation_debug.hpp"
 #include "game/game.hpp"
-#include "lua_presentation_script.hpp"
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/combat/combat.hpp"
@@ -29,11 +26,11 @@
 #include "advanced_platformer/world/tile_map.hpp"
 #include "support/actor_builder.hpp"
 #include "support/actor_components.hpp"
-#include "support/atlas_size.hpp"
 #include "support/tile_map_builder.hpp"
 #include "support/tile_size.hpp"
 #include "support/add_player.hpp"
 #include "support/fixed_step.hpp"
+#include "support/fixture_game.hpp"
 
 TEST_CASE("Debug overlay data reports player presentation and NPC state", "[app][debug]")
 {
@@ -123,16 +120,8 @@ TEST_CASE("Debug overlay data supports actors without presentation components", 
 
 TEST_CASE("Game debug data retains actor definition names", "[app][debug]")
 {
-    const auto run =
-        advanced_platformer::loadRunSettings("tests/fixtures/levels/actor_placement_run.json");
-    advanced_platformer::Game game(
-        0,
-        run,
-        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
-        advanced_platformer::LuaNpcScripts{},
-        advanced_platformer::LuaPresentationScript{},
-        tests::FixedStepSeconds,
-        1);
+    advanced_platformer::Game game =
+        tests::fixtureGame("tests/fixtures/levels/actor_placement_run.json");
 
     const advanced_platformer::DebugOverlay debug = game.debugOverlay(128.0F, std::nullopt, 0);
     const auto npc = std::ranges::find_if(
@@ -152,16 +141,8 @@ TEST_CASE("Game debug data retains actor definition names", "[app][debug]")
 
 TEST_CASE("Debug overlay data names a climbing NPC's navigation profile", "[app][debug]")
 {
-    const auto run =
-        advanced_platformer::loadRunSettings("tests/fixtures/levels/climber_placement_run.json");
-    advanced_platformer::Game game(
-        0,
-        run,
-        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
-        advanced_platformer::LuaNpcScripts{},
-        advanced_platformer::LuaPresentationScript{},
-        tests::FixedStepSeconds,
-        1);
+    advanced_platformer::Game game =
+        tests::fixtureGame("tests/fixtures/levels/climber_placement_run.json");
 
     const advanced_platformer::DebugOverlay debug = game.debugOverlay(128.0F, std::nullopt, 0);
     REQUIRE(debug.navigationCache.has_value());

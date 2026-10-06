@@ -5,32 +5,18 @@
 
 #include "game/game.hpp"
 #include "game/level_composition.hpp"
-#include "lua_presentation_script.hpp"
 #include "content/game_catalogs.hpp"
 #include "content/run_settings.hpp"
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/world/level_validation.hpp"
 #include "support/atlas_size.hpp"
 #include "support/fixed_step.hpp"
-
-namespace
-{
-    advanced_platformer::Game gameFrom(const char* run, std::uint32_t runSeed)
-    {
-        return {
-            0,
-            advanced_platformer::loadRunSettings(run),
-            advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
-            advanced_platformer::LuaNpcScripts{},
-            advanced_platformer::LuaPresentationScript{},
-            tests::FixedStepSeconds,
-            runSeed};
-    }
-}
+#include "support/fixture_game.hpp"
 
 TEST_CASE("A run starts at level 1 with the seed its run seed gives", "[app][generation]")
 {
-    const advanced_platformer::Game game = gameFrom("tests/fixtures/levels/finish_run.json", 5);
+    const advanced_platformer::Game game =
+        tests::fixtureGame(tests::fixtureContent("tests/fixtures/levels/finish_run.json"), 5);
 
     REQUIRE(game.runSeed() == 5U);
     REQUIRE(game.levelNumber() == 1);
@@ -41,7 +27,8 @@ TEST_CASE(
     "Rerolling builds the level from the next seed and restarting keeps it",
     "[app][generation]")
 {
-    advanced_platformer::Game game = gameFrom("tests/fixtures/levels/finish_run.json", 5);
+    advanced_platformer::Game game =
+        tests::fixtureGame(tests::fixtureContent("tests/fixtures/levels/finish_run.json"), 5);
     const std::uint32_t seed = game.levelSeed();
     const advanced_platformer::Health health = game.playerHealth();
 

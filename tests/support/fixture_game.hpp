@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <utility>
 
 #include "content/game_catalogs.hpp"
@@ -13,18 +14,21 @@
 
 namespace tests
 {
-    inline advanced_platformer::GameContent fixtureContent()
+    constexpr const char* FixtureRun = "tests/fixtures/levels/actor_placement_run.json";
+
+    inline advanced_platformer::GameContent fixtureContent(const char* run = FixtureRun)
     {
         return {
-            advanced_platformer::loadRunSettings("tests/fixtures/levels/actor_placement_run.json"),
+            advanced_platformer::loadRunSettings(run),
             advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", AtlasSize),
             advanced_platformer::LuaNpcScripts{},
             advanced_platformer::LuaPresentationScript{}};
     }
 
-    inline advanced_platformer::Game fixtureGame()
+    inline advanced_platformer::Game fixtureGame(
+        advanced_platformer::GameContent content,
+        std::uint32_t runSeed = 1)
     {
-        advanced_platformer::GameContent content = fixtureContent();
         return {
             0,
             std::move(content.run),
@@ -32,6 +36,11 @@ namespace tests
             std::move(content.npcScripts),
             std::move(content.presentation),
             FixedStepSeconds,
-            1};
+            runSeed};
+    }
+
+    inline advanced_platformer::Game fixtureGame(const char* run = FixtureRun)
+    {
+        return fixtureGame(fixtureContent(run));
     }
 }
