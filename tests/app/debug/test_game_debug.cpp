@@ -5,7 +5,7 @@
 
 TEST_CASE("Breaking a tile under a position breaks nothing that cannot break", "[app][debug]")
 {
-    advanced_platformer::Game game = tests::fixtureGame("tests/fixtures/levels/rooms_run.json");
+    advanced_platformer::Game game = tests::fixtureGame("tests/fixtures/levels/rooms.json");
     REQUIRE_FALSE(game.breakTileAt({-100.0F, -100.0F}));
     REQUIRE_FALSE(game.breakTileAt({8.0F, 8.0F}));
 }

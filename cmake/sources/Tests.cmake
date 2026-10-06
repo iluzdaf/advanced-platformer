@@ -27,7 +27,6 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/app/content/npc_script_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/pickup_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/room_pieces.cpp
-        ${PROJECT_SOURCE_DIR}/app/content/run_settings.cpp
         ${PROJECT_SOURCE_DIR}/app/content/tile_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/game/game.cpp
         ${PROJECT_SOURCE_DIR}/app/game/level_composition.cpp
@@ -65,7 +64,6 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_pickup_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_room_piece_routes.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_room_pieces.cpp
-        ${PROJECT_SOURCE_DIR}/tests/app/content/test_run_settings.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_tile_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_console_log.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_debug_cursor.cpp

@@ -354,4 +354,34 @@ namespace advanced_platformer
         }
         return stitchRooms(catalog, layout, choices, sourceName);
     }
+
+    int roomsForLevel(const RunSettings& run, int levelNumber)
+    {
+        if (levelNumber <= 0)
+        {
+            throw std::invalid_argument(
+                std::format("Level {}: level numbers start at 1", levelNumber));
+        }
+        const std::int64_t rooms =
+            run.firstRooms + (static_cast<std::int64_t>(levelNumber - 1) * run.roomsPerLevel);
+        return static_cast<int>(std::min<std::int64_t>(rooms, run.maxRooms));
+    }
+
+    LevelGeneration levelGeneration(const RunSettings& run, int levelNumber, std::uint32_t seed)
+    {
+        return {.grid = run.grid, .roomCount = roomsForLevel(run, levelNumber), .seed = seed};
+    }
+
+    std::uint32_t runLevelSeed(std::uint32_t runSeed, int levelNumber)
+    {
+        LevelRandom random{
+            (static_cast<std::uint64_t>(runSeed) << 32U) | static_cast<std::uint32_t>(levelNumber)};
+        return static_cast<std::uint32_t>(nextRandom(random) >> 32U);
+    }
+
+    std::uint32_t nextRunSeed(std::uint32_t runSeed)
+    {
+        LevelRandom random{runSeed};
+        return static_cast<std::uint32_t>(nextRandom(random) >> 32U);
+    }
 }

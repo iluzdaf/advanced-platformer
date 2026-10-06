@@ -37,21 +37,20 @@ again from the next seed, also keeping health and items.
 
 ## Files
 
-| File                                                             | Holds                                               | Loader                                                                                                                       |
-| ---------------------------------------------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| [`levels/run.json`](../assets/levels/run.json)                   | Room pieces and how levels grow through a run       | [`run_settings.cpp`](../app/content/run_settings.cpp)                                                                        |
-| [`levels/rooms.json`](../assets/levels/rooms.json)               | Room pieces that generated levels are stitched from | [`room_pieces.cpp`](../app/content/room_pieces.cpp), [`level_generator.cpp`](../app/content/level_generator.cpp)             |
-| [`catalogs/tiles.json`](../assets/catalogs/tiles.json)           | Tile size and tiles                                 | [`tile_catalog.cpp`](../app/content/tile_catalog.cpp)                                                                        |
-| [`catalogs/actors.json`](../assets/catalogs/actors.json)         | The player and every actor definition               | [`actor_catalog.cpp`](../app/content/actor_catalog.cpp), [`actor_definition.cpp`](../app/content/actor_definition.cpp)       |
-| [`catalogs/animations.json`](../assets/catalogs/animations.json) | Animation sets                                      | [`animation_catalog.cpp`](../app/content/animation_catalog.cpp)                                                              |
-| [`catalogs/machines.json`](../assets/catalogs/machines.json)     | NPC state machines                                  | [`machine_catalog.cpp`](../app/content/machine_catalog.cpp)                                                                  |
-| [`scripts/*.lua`](../assets/scripts)                             | Lua activities                                      | [`npc_script_catalog.cpp`](../app/content/npc_script_catalog.cpp), [`lua_npc_scripts.cpp`](../scripting/lua_npc_scripts.cpp) |
-| [`scripts/presentation.lua`](../assets/scripts/presentation.lua) | Effects that answer world events                    | [`lua_presentation_script.cpp`](../scripting/lua_presentation_script.cpp)                                                    |
-| [`catalogs/items.json`](../assets/catalogs/items.json)           | Inventory items                                     | [`item_catalog.cpp`](../app/content/item_catalog.cpp)                                                                        |
-| [`catalogs/pickups.json`](../assets/catalogs/pickups.json)       | World pickups                                       | [`pickup_catalog.cpp`](../app/content/pickup_catalog.cpp)                                                                    |
-| [`catalogs/exits.json`](../assets/catalogs/exits.json)           | Exit bodies and sprites                             | [`exit_catalog.cpp`](../app/content/exit_catalog.cpp)                                                                        |
-| [`catalogs/hud.json`](../assets/catalogs/hud.json)               | HUD icon regions                                    | [`hud_catalog.cpp`](../app/content/hud_catalog.cpp)                                                                          |
-| [`catalogs/camera.json`](../assets/catalogs/camera.json)         | Camera dead zone                                    | [`camera_settings.cpp`](../app/content/camera_settings.cpp)                                                                  |
+| File                                                             | Holds                                              | Loader                                                                                                                       |
+| ---------------------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| [`levels/rooms.json`](../assets/levels/rooms.json)               | Room pieces, and how a run's levels grow from them | [`room_pieces.cpp`](../app/content/room_pieces.cpp), [`level_generator.cpp`](../app/content/level_generator.cpp)             |
+| [`catalogs/tiles.json`](../assets/catalogs/tiles.json)           | Tile size and tiles                                | [`tile_catalog.cpp`](../app/content/tile_catalog.cpp)                                                                        |
+| [`catalogs/actors.json`](../assets/catalogs/actors.json)         | The player and every actor definition              | [`actor_catalog.cpp`](../app/content/actor_catalog.cpp), [`actor_definition.cpp`](../app/content/actor_definition.cpp)       |
+| [`catalogs/animations.json`](../assets/catalogs/animations.json) | Animation sets                                     | [`animation_catalog.cpp`](../app/content/animation_catalog.cpp)                                                              |
+| [`catalogs/machines.json`](../assets/catalogs/machines.json)     | NPC state machines                                 | [`machine_catalog.cpp`](../app/content/machine_catalog.cpp)                                                                  |
+| [`scripts/*.lua`](../assets/scripts)                             | Lua activities                                     | [`npc_script_catalog.cpp`](../app/content/npc_script_catalog.cpp), [`lua_npc_scripts.cpp`](../scripting/lua_npc_scripts.cpp) |
+| [`scripts/presentation.lua`](../assets/scripts/presentation.lua) | Effects that answer world events                   | [`lua_presentation_script.cpp`](../scripting/lua_presentation_script.cpp)                                                    |
+| [`catalogs/items.json`](../assets/catalogs/items.json)           | Inventory items                                    | [`item_catalog.cpp`](../app/content/item_catalog.cpp)                                                                        |
+| [`catalogs/pickups.json`](../assets/catalogs/pickups.json)       | World pickups                                      | [`pickup_catalog.cpp`](../app/content/pickup_catalog.cpp)                                                                    |
+| [`catalogs/exits.json`](../assets/catalogs/exits.json)           | Exit bodies and sprites                            | [`exit_catalog.cpp`](../app/content/exit_catalog.cpp)                                                                        |
+| [`catalogs/hud.json`](../assets/catalogs/hud.json)               | HUD icon regions                                   | [`hud_catalog.cpp`](../app/content/hud_catalog.cpp)                                                                          |
+| [`catalogs/camera.json`](../assets/catalogs/camera.json)         | Camera dead zone                                   | [`camera_settings.cpp`](../app/content/camera_settings.cpp)                                                                  |
 
 Every catalog is required, even when empty. Every sprite region, frame and icon must lie
 inside the atlas.
@@ -61,15 +60,15 @@ inside the atlas.
 A run is endless. It starts at level 1, and each exit leads to the next level. When the
 player dies, the run starts again at level 1 with full health, no items and a new run
 seed. Each level's seed follows from the run seed and the level number, so a run seed
-always gives the same levels.
+always gives the same levels. The `run` block of [`rooms.json`](#room-pieces) says how
+the levels grow:
 
 ```json
-{ "pieces": "rooms.json", "firstRooms": 6, "roomsPerLevel": 3, "maxRooms": 18 }
+"run": { "firstRooms": 6, "roomsPerLevel": 3, "maxRooms": 18 }
 ```
 
 | Field           | Required | Meaning                                                          |
 | --------------- | -------- | ---------------------------------------------------------------- |
-| `pieces`        | Yes      | The room piece file, relative to this file.                      |
 | `firstRooms`    | Yes      | How many rooms level 1 has, from 2 up to `maxRooms`.             |
 | `roomsPerLevel` | Yes      | How many rooms each later level adds. Zero or more.              |
 | `maxRooms`      | Yes      | The most rooms a level has, from 2 up to the number of slots.    |
@@ -93,6 +92,7 @@ breaks.
 ```json
 {
   "roomSize": [20, 12],
+  "run": { "firstRooms": 6, "roomsPerLevel": 3, "maxRooms": 18 },
   "tileLegend": { ".": "empty", "#": "stone" },
   "wall": "#",
   "open": ".",
@@ -117,6 +117,7 @@ breaks.
 | Field        | Meaning                                                                                                                   |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------- |
 | `roomSize`   | Every piece's size in cells: an even width of at least 8 and a height of at least 6.                                      |
+| `run`        | How many rooms each level of a [run](#run) has.                                                                           |
 | `tileLegend` | One-character map symbols to tile names in `tiles.json`.                                                                  |
 | `wall`       | The tile symbol that seals unused doors and fills empty slots.                                                            |
 | `open`       | The tile symbol of every door opening, and what a marker leaves behind.                                                   |

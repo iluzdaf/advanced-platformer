@@ -289,7 +289,7 @@ app/           application shell, graphics, UI, and debug tools
   content/     JSON loaders, catalogs, and content validators
 assets/        runtime game content
   catalogs/    shared JSON definitions
-  levels/      run settings and room pieces
+  levels/      room pieces, with how a run grows
   scripts/     Lua NPC activities
   textures/    runtime sprite atlas
 cmake/         dependencies, quality rules, and explicit target source manifests

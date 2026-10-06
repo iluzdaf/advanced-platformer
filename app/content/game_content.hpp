@@ -5,7 +5,7 @@
 #include <glm/vec2.hpp>
 
 #include "game_catalogs.hpp"
-#include "run_settings.hpp"
+#include "room_pieces.hpp"
 #include "lua_npc_scripts.hpp"
 #include "lua_presentation_script.hpp"
 
@@ -13,7 +13,7 @@ namespace advanced_platformer
 {
     struct GameContent
     {
-        RunSettings run;
+        RoomPieceCatalog pieces;
         GameCatalogs gameCatalogs;
         LuaNpcScripts npcScripts;
         LuaPresentationScript presentation;

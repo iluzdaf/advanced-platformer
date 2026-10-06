@@ -1,7 +1,0 @@
-{
-  "pieces": "rooms_some_shut.json",
-  "grid": [5, 1],
-  "firstRooms": 3,
-  "roomsPerLevel": 0,
-  "maxRooms": 3
-}

@@ -23,7 +23,7 @@ namespace
         advanced_platformer::LuaPresentationScript presentation;
         presentation.loadScriptText(presentationSource, "fx.lua");
         advanced_platformer::GameContent content =
-            tests::fixtureContent("tests/fixtures/levels/finish_run.json");
+            tests::fixtureContent("tests/fixtures/levels/finish.json");
         content.presentation = std::move(presentation);
         return tests::fixtureGame(std::move(content));
     }

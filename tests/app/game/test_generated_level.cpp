@@ -6,7 +6,8 @@
 #include "game/game.hpp"
 #include "game/level_composition.hpp"
 #include "content/game_catalogs.hpp"
-#include "content/run_settings.hpp"
+#include "content/level_generator.hpp"
+#include "content/room_pieces.hpp"
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/world/level_validation.hpp"
 #include "support/atlas_size.hpp"
@@ -16,7 +17,7 @@
 TEST_CASE("A run starts at level 1 with the seed its run seed gives", "[app][generation]")
 {
     const advanced_platformer::Game game =
-        tests::fixtureGame(tests::fixtureContent("tests/fixtures/levels/finish_run.json"), 5);
+        tests::fixtureGame(tests::fixtureContent("tests/fixtures/levels/finish.json"), 5);
 
     REQUIRE(game.runSeed() == 5U);
     REQUIRE(game.levelNumber() == 1);
@@ -28,7 +29,7 @@ TEST_CASE(
     "[app][generation]")
 {
     advanced_platformer::Game game =
-        tests::fixtureGame(tests::fixtureContent("tests/fixtures/levels/finish_run.json"), 5);
+        tests::fixtureGame(tests::fixtureContent("tests/fixtures/levels/finish.json"), 5);
     const std::uint32_t seed = game.levelSeed();
     const advanced_platformer::Health health = game.playerHealth();
 
@@ -44,15 +45,15 @@ TEST_CASE(
 
 TEST_CASE("A generated level skips seeds whose exit the player cannot reach", "[app][generation]")
 {
-    const auto run =
-        advanced_platformer::loadRunSettings("tests/fixtures/levels/rooms_some_shut_run.json");
+    const auto pieces =
+        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/levels/rooms_some_shut.json");
     const auto catalogs =
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
     bool skipped = false;
     for (std::uint32_t seed = 0; seed < 16; ++seed)
     {
         const advanced_platformer::GameLevel level = advanced_platformer::composeStartedLevel(
-            run,
+            pieces,
             1,
             seed,
             0,
@@ -71,14 +72,14 @@ TEST_CASE("A generated level skips seeds whose exit the player cannot reach", "[
 
 TEST_CASE("A generated level whose every seed is shut off fails to start", "[app][generation]")
 {
-    const auto run =
-        advanced_platformer::loadRunSettings("tests/fixtures/levels/rooms_all_shut_run.json");
+    const auto pieces =
+        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/levels/rooms_all_shut.json");
     const auto catalogs =
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
 
     REQUIRE_THROWS_WITH(
         advanced_platformer::composeStartedLevel(
-            run,
+            pieces,
             2,
             1,
             0,

@@ -82,9 +82,18 @@ namespace advanced_platformer
         std::vector<std::string> map;
     };
 
+    struct RunJson
+    {
+        std::optional<std::array<int, 2>> grid;
+        int firstRooms = 0;
+        int roomsPerLevel = 0;
+        int maxRooms = 0;
+    };
+
     struct RoomPieceCatalogJson
     {
         std::array<int, 2> roomSize{};
+        RunJson run;
         std::map<std::string, std::string> tileLegend;
         std::string wall;
         std::string open;
@@ -424,6 +433,43 @@ namespace advanced_platformer
             piece.rows = json.map;
             return piece;
         }
+
+        constexpr std::array<int, 2> DefaultGenerationGrid = {9, 7};
+
+        RunSettings runFrom(const RunJson& json, std::string_view sourceName)
+        {
+            RunSettings run;
+            const std::array<int, 2> grid = json.grid.value_or(DefaultGenerationGrid);
+            run.grid = {grid[0], grid[1]};
+            if (run.grid.width <= 0 || run.grid.height <= 0)
+            {
+                failJson(sourceName, "run.grid", "expected a positive size");
+            }
+            const int slots = run.grid.width * run.grid.height;
+            run.firstRooms = json.firstRooms;
+            run.roomsPerLevel = json.roomsPerLevel;
+            run.maxRooms = json.maxRooms;
+            if (run.maxRooms < 2 || run.maxRooms > slots)
+            {
+                failJson(
+                    sourceName,
+                    "run.maxRooms",
+                    std::format(
+                        "expected at least 2 rooms and no more than the grid's {} slots", slots));
+            }
+            if (run.firstRooms < 2 || run.firstRooms > run.maxRooms)
+            {
+                failJson(
+                    sourceName,
+                    "run.firstRooms",
+                    "expected at least 2 rooms and no more than maxRooms");
+            }
+            if (run.roomsPerLevel < 0)
+            {
+                failJson(sourceName, "run.roomsPerLevel", "expected zero or more rooms");
+            }
+            return run;
+        }
     }
 
     RoomPieceCatalog parseRoomPieceCatalog(std::string_view text, std::string_view sourceName)
@@ -431,6 +477,7 @@ namespace advanced_platformer
         const auto file = readContent<RoomPieceCatalogJson>(text, sourceName);
         RoomPieceCatalog result;
         result.roomSize = {file.roomSize[0], file.roomSize[1]};
+        result.run = runFrom(file.run, sourceName);
         if (result.roomSize.width < MinimumRoomWidth ||
             result.roomSize.height < MinimumRoomHeight || result.roomSize.width % 2 != 0)
         {

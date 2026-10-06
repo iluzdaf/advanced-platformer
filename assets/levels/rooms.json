@@ -1,5 +1,10 @@
 {
   "roomSize": [20, 12],
+  "run": {
+    "firstRooms": 6,
+    "roomsPerLevel": 3,
+    "maxRooms": 18
+  },
   "tileLegend": {
     ".": "empty",
     "#": "stone",

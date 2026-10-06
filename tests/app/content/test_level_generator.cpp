@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <variant>
@@ -197,4 +198,32 @@ TEST_CASE(
         REQUIRE(advanced_platformer::randomBelow(first, 7) < 7);
         advanced_platformer::randomBelow(second, 7);
     }
+}
+
+TEST_CASE("Each level adds rooms until the run's cap", "[app][content][generation]")
+{
+    const advanced_platformer::RunSettings run{
+        .grid = {9, 7}, .firstRooms = 4, .roomsPerLevel = 2, .maxRooms = 9};
+
+    REQUIRE(advanced_platformer::roomsForLevel(run, 1) == 4);
+    REQUIRE(advanced_platformer::roomsForLevel(run, 2) == 6);
+    REQUIRE(advanced_platformer::roomsForLevel(run, 3) == 8);
+    REQUIRE(advanced_platformer::roomsForLevel(run, 4) == 9);
+    REQUIRE(advanced_platformer::roomsForLevel(run, 1000000) == 9);
+    REQUIRE_THROWS_AS(advanced_platformer::roomsForLevel(run, 0), std::invalid_argument);
+    const advanced_platformer::LevelGeneration generation =
+        advanced_platformer::levelGeneration(run, 2, 17);
+    REQUIRE(generation.roomCount == 6);
+    REQUIRE(generation.seed == 17);
+    REQUIRE(generation.grid.width == 9);
+    REQUIRE(generation.grid.height == 7);
+}
+
+TEST_CASE("Level seeds follow from the run seed", "[app][content][generation]")
+{
+    REQUIRE(advanced_platformer::runLevelSeed(5, 1) == advanced_platformer::runLevelSeed(5, 1));
+    REQUIRE(advanced_platformer::runLevelSeed(5, 1) != advanced_platformer::runLevelSeed(5, 2));
+    REQUIRE(advanced_platformer::runLevelSeed(5, 1) != advanced_platformer::runLevelSeed(6, 1));
+    REQUIRE(advanced_platformer::nextRunSeed(5) == advanced_platformer::nextRunSeed(5));
+    REQUIRE(advanced_platformer::nextRunSeed(5) != 5);
 }

@@ -15,7 +15,7 @@
 namespace advanced_platformer
 {
     struct Actor;
-    struct RunSettings;
+    struct RoomPieceCatalog;
     struct GameCatalogs;
 
     constexpr std::uint32_t GenerationAttempts = 100;
@@ -39,23 +39,26 @@ namespace advanced_platformer
         std::string sourceName;
     };
 
-    GeneratedLevel generateRunLevel(const RunSettings& run, int levelNumber, std::uint32_t seed);
+    GeneratedLevel generateRunLevel(
+        const RoomPieceCatalog& pieces,
+        int levelNumber,
+        std::uint32_t seed);
     GameLevel composeGameLevel(
-        const RunSettings& run,
+        const RoomPieceCatalog& pieces,
         int levelNumber,
         std::uint32_t seed,
         int textureId,
         const GameCatalogs& catalogs);
     Actor composePlayer(const GameCatalogs& catalogs, int textureId);
     GameLevel composeLevelAtSeed(
-        const RunSettings& run,
+        const RoomPieceCatalog& pieces,
         int levelNumber,
         std::uint32_t seed,
         int textureId,
         const GameCatalogs& catalogs,
         const Actor& player);
     GameLevel composeStartedLevel(
-        const RunSettings& run,
+        const RoomPieceCatalog& pieces,
         int levelNumber,
         std::uint32_t seed,
         int textureId,

@@ -5,7 +5,6 @@
 #include "content/item_catalog.hpp"
 #include "content/pickup_catalog.hpp"
 #include "content/exit_catalog.hpp"
-#include "content/run_settings.hpp"
 #include "content/level_data.hpp"
 #include "content/level_generator.hpp"
 #include "content/room_pieces.hpp"
@@ -90,24 +89,25 @@ namespace advanced_platformer
         }
     }
 
-    GeneratedLevel generateRunLevel(const RunSettings& run, int levelNumber, std::uint32_t seed)
+    GeneratedLevel generateRunLevel(
+        const RoomPieceCatalog& pieces,
+        int levelNumber,
+        std::uint32_t seed)
     {
-        const LevelGeneration generation = levelGeneration(run, levelNumber, seed);
-        const auto piecesPath = run.levelDirectory / run.relativePieces;
-        std::string sourceName =
-            std::format("{} (level {}, seed {})", piecesPath.string(), levelNumber, seed);
-        LevelData data = generateLevel(loadRoomPieceCatalog(piecesPath), generation, sourceName);
+        const LevelGeneration generation = levelGeneration(pieces.run, levelNumber, seed);
+        std::string sourceName = std::format("Level {} (seed {})", levelNumber, seed);
+        LevelData data = generateLevel(pieces, generation, sourceName);
         return {std::move(data), std::move(sourceName)};
     }
 
     GameLevel composeGameLevel(
-        const RunSettings& run,
+        const RoomPieceCatalog& pieces,
         int levelNumber,
         std::uint32_t seed,
         int textureId,
         const GameCatalogs& catalogs)
     {
-        const GeneratedLevel source = generateRunLevel(run, levelNumber, seed);
+        const GeneratedLevel source = generateRunLevel(pieces, levelNumber, seed);
         const LevelData& data = source.data;
         const std::string& path = source.sourceName;
         const auto& tiles = catalogs.tiles;
@@ -223,14 +223,14 @@ namespace advanced_platformer
     }
 
     GameLevel composeLevelAtSeed(
-        const RunSettings& run,
+        const RoomPieceCatalog& pieces,
         int levelNumber,
         std::uint32_t seed,
         int textureId,
         const GameCatalogs& catalogs,
         const Actor& player)
     {
-        GameLevel level = composeGameLevel(run, levelNumber, seed, textureId, catalogs);
+        GameLevel level = composeGameLevel(pieces, levelNumber, seed, textureId, catalogs);
         Actor placed = player;
         moveFeetTo(placed.body.bounds, level.playerSpawnFeet);
         const ActorId playerId = level.world.addActor(std::move(placed));
@@ -241,7 +241,7 @@ namespace advanced_platformer
     }
 
     GameLevel composeStartedLevel(
-        const RunSettings& run,
+        const RoomPieceCatalog& pieces,
         int levelNumber,
         std::uint32_t seed,
         int textureId,
@@ -249,7 +249,8 @@ namespace advanced_platformer
         const Actor& player,
         float stepSeconds)
     {
-        GameLevel level = composeLevelAtSeed(run, levelNumber, seed, textureId, catalogs, player);
+        GameLevel level =
+            composeLevelAtSeed(pieces, levelNumber, seed, textureId, catalogs, player);
         const std::uint32_t firstSeed = seed;
         for (std::uint32_t nextSeed = firstSeed + 1U;
              !playerCanReachExit(level.map, level.world, stepSeconds);
@@ -265,7 +266,7 @@ namespace advanced_platformer
                         firstSeed,
                         nextSeed - 1U));
             }
-            level = composeLevelAtSeed(run, levelNumber, nextSeed, textureId, catalogs, player);
+            level = composeLevelAtSeed(pieces, levelNumber, nextSeed, textureId, catalogs, player);
         }
         return level;
     }

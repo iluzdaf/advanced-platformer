@@ -5,7 +5,7 @@
 
 #include "game/level_composition.hpp"
 #include "content/game_catalogs.hpp"
-#include "content/run_settings.hpp"
+#include "content/room_pieces.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
@@ -18,10 +18,11 @@
 
 TEST_CASE("A level's cells become the feet of those cells on its map", "[app][content]")
 {
-    const auto run = advanced_platformer::loadRunSettings("tests/fixtures/levels/opening_run.json");
+    const auto pieces =
+        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/levels/opening.json");
     const auto gameCatalogs =
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
-    const auto gameLevel = advanced_platformer::composeGameLevel(run, 1, 1, 0, gameCatalogs);
+    const auto gameLevel = advanced_platformer::composeGameLevel(pieces, 1, 1, 0, gameCatalogs);
     const int tileSize = gameLevel.map.tileSize();
 
     REQUIRE(gameLevel.playerSpawnFeet == advanced_platformer::feetInCell(tileSize, {12, 4}));
@@ -41,11 +42,11 @@ TEST_CASE("A level's cells become the feet of those cells on its map", "[app][co
 
 TEST_CASE("A level composes an actor from its catalog definition", "[app][actors]")
 {
-    const auto run =
-        advanced_platformer::loadRunSettings("tests/fixtures/levels/actor_placement_run.json");
+    const auto pieces =
+        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/levels/actor_placement.json");
     const auto gameCatalogs =
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
-    auto gameLevel = advanced_platformer::composeGameLevel(run, 1, 1, 0, gameCatalogs);
+    auto gameLevel = advanced_platformer::composeGameLevel(pieces, 1, 1, 0, gameCatalogs);
     REQUIRE(gameLevel.world.actors().size() == 1);
     auto& actor = gameLevel.world.actors().front();
     REQUIRE(
@@ -53,25 +54,14 @@ TEST_CASE("A level composes an actor from its catalog definition", "[app][actors
     REQUIRE(advanced_platformer::feetOf(actor.body.bounds).x == 152);
 }
 
-TEST_CASE("A run must reference an existing room piece file", "[app][content]")
-{
-    const auto run =
-        advanced_platformer::loadRunSettings("tests/fixtures/levels/missing_pieces_run.json");
-    const auto gameCatalogs =
-        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
-
-    REQUIRE_THROWS_AS(
-        advanced_platformer::composeGameLevel(run, 1, 1, 0, gameCatalogs), std::invalid_argument);
-}
-
 TEST_CASE("Level composition reports unknown actor definitions", "[app][actors]")
 {
-    const auto run =
-        advanced_platformer::loadRunSettings("tests/fixtures/levels/unknown_actor_run.json");
+    const auto pieces =
+        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/levels/unknown_actor.json");
     const auto gameCatalogs =
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
     REQUIRE_THROWS_WITH(
-        advanced_platformer::composeGameLevel(run, 1, 1, 0, gameCatalogs),
+        advanced_platformer::composeGameLevel(pieces, 1, 1, 0, gameCatalogs),
         Catch::Matchers::ContainsSubstring(
             "actors[0].definition: unknown actor definition 'missing'"));
 }

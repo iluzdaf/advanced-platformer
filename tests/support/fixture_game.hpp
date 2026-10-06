@@ -5,7 +5,7 @@
 
 #include "content/game_catalogs.hpp"
 #include "content/game_content.hpp"
-#include "content/run_settings.hpp"
+#include "content/room_pieces.hpp"
 #include "game/game.hpp"
 #include "lua_npc_scripts.hpp"
 #include "lua_presentation_script.hpp"
@@ -14,12 +14,12 @@
 
 namespace tests
 {
-    constexpr const char* FixtureRun = "tests/fixtures/levels/actor_placement_run.json";
+    constexpr const char* FixturePieces = "tests/fixtures/levels/actor_placement.json";
 
-    inline advanced_platformer::GameContent fixtureContent(const char* run = FixtureRun)
+    inline advanced_platformer::GameContent fixtureContent(const char* pieces = FixturePieces)
     {
         return {
-            advanced_platformer::loadRunSettings(run),
+            advanced_platformer::loadRoomPieceCatalog(pieces),
             advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", AtlasSize),
             advanced_platformer::LuaNpcScripts{},
             advanced_platformer::LuaPresentationScript{}};
@@ -31,7 +31,7 @@ namespace tests
     {
         return {
             0,
-            std::move(content.run),
+            std::move(content.pieces),
             std::move(content.gameCatalogs),
             std::move(content.npcScripts),
             std::move(content.presentation),
@@ -39,8 +39,8 @@ namespace tests
             runSeed};
     }
 
-    inline advanced_platformer::Game fixtureGame(const char* run = FixtureRun)
+    inline advanced_platformer::Game fixtureGame(const char* pieces = FixturePieces)
     {
-        return fixtureGame(fixtureContent(run));
+        return fixtureGame(fixtureContent(pieces));
     }
 }

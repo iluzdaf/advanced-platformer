@@ -57,9 +57,18 @@ namespace advanced_platformer
         bool mirror = true;
     };
 
+    struct RunSettings
+    {
+        GridSize grid;
+        int firstRooms = 0;
+        int roomsPerLevel = 0;
+        int maxRooms = 0;
+    };
+
     struct RoomPieceCatalog
     {
         GridSize roomSize;
+        RunSettings run;
         std::map<char, std::string> tileLegend;
         char wall = '#';
         char open = '.';

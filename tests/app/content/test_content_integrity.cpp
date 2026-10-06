@@ -10,7 +10,8 @@
 #include <glm/vec2.hpp>
 
 #include "content/game_catalogs.hpp"
-#include "content/run_settings.hpp"
+#include "content/level_generator.hpp"
+#include "content/room_pieces.hpp"
 #include "content/npc_script_catalog.hpp"
 #include "game/level_composition.hpp"
 #include "advanced_platformer/actor/actor.hpp"
@@ -50,13 +51,13 @@ namespace
 
 TEST_CASE("Every run level can be composed until the rooms stop growing", "[app][content]")
 {
-    const auto run = advanced_platformer::loadRunSettings("assets/levels/run.json");
+    const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/levels/rooms.json");
     const auto catalogs =
         advanced_platformer::loadGameCatalogs("assets/catalogs", pngSize(ShippedAtlas));
-    for (int number = 1; number <= tests::levelsUntilCap(run); ++number)
+    for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
     {
         const auto content = advanced_platformer::composeGameLevel(
-            run, number, advanced_platformer::runLevelSeed(1, number), 0, catalogs);
+            pieces, number, advanced_platformer::runLevelSeed(1, number), 0, catalogs);
         INFO("Level " << number);
         REQUIRE(content.number == number);
         REQUIRE(content.world.exit().has_value());
@@ -65,13 +66,13 @@ TEST_CASE("Every run level can be composed until the rooms stop growing", "[app]
 
 TEST_CASE("Every run level has valid actor placement", "[app][content]")
 {
-    const auto run = advanced_platformer::loadRunSettings("assets/levels/run.json");
+    const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/levels/rooms.json");
     const auto catalogs =
         advanced_platformer::loadGameCatalogs("assets/catalogs", pngSize(ShippedAtlas));
-    for (int number = 1; number <= tests::levelsUntilCap(run); ++number)
+    for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
     {
         auto content = advanced_platformer::composeGameLevel(
-            run, number, advanced_platformer::runLevelSeed(1, number), 0, catalogs);
+            pieces, number, advanced_platformer::runLevelSeed(1, number), 0, catalogs);
         advanced_platformer::Actor player = advanced_platformer::composePlayer(catalogs, 0);
         advanced_platformer::moveFeetTo(player.body.bounds, content.playerSpawnFeet);
         tests::addPlayer(content.world, player);
@@ -84,13 +85,13 @@ TEST_CASE("Every run level has valid actor placement", "[app][content]")
 
 TEST_CASE("Every run level starts with a route from the spawn to the exit", "[app][content]")
 {
-    const auto run = advanced_platformer::loadRunSettings("assets/levels/run.json");
+    const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/levels/rooms.json");
     const auto catalogs =
         advanced_platformer::loadGameCatalogs("assets/catalogs", pngSize(ShippedAtlas));
-    for (int number = 1; number <= tests::levelsUntilCap(run); ++number)
+    for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
     {
         const advanced_platformer::GameLevel level = advanced_platformer::composeStartedLevel(
-            run,
+            pieces,
             number,
             advanced_platformer::runLevelSeed(1, number),
             0,

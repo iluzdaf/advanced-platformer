@@ -1,7 +1,0 @@
-{
-  "pieces": "spikes.json",
-  "grid": [2, 1],
-  "firstRooms": 2,
-  "roomsPerLevel": 0,
-  "maxRooms": 2
-}

@@ -64,4 +64,9 @@ namespace advanced_platformer
         const RoomPieceCatalog& catalog,
         const LevelGeneration& generation,
         std::string_view sourceName);
+
+    int roomsForLevel(const RunSettings& run, int levelNumber);
+    LevelGeneration levelGeneration(const RunSettings& run, int levelNumber, std::uint32_t seed);
+    std::uint32_t runLevelSeed(std::uint32_t runSeed, int levelNumber);
+    std::uint32_t nextRunSeed(std::uint32_t runSeed);
 }

@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "content/game_catalogs.hpp"
-#include "content/run_settings.hpp"
+#include "content/room_pieces.hpp"
 #include "content/level_data.hpp"
 #include "content/level_generator.hpp"
 #include "content/room_pieces.hpp"
@@ -91,13 +91,11 @@ namespace
 
 TEST_CASE("Every shipped run level reaches its exit across seeds", "[app][content][generation]")
 {
-    const advanced_platformer::RunSettings run =
-        advanced_platformer::loadRunSettings("assets/levels/run.json");
+    const advanced_platformer::RoomPieceCatalog pieces =
+        advanced_platformer::loadRoomPieceCatalog("assets/levels/rooms.json");
     const advanced_platformer::GameCatalogs catalogs =
         advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
-    const advanced_platformer::RoomPieceCatalog pieces =
-        advanced_platformer::loadRoomPieceCatalog(run.levelDirectory / run.relativePieces);
-    for (int number = 1; number <= tests::levelsUntilCap(run); ++number)
+    for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
     {
         for (std::uint32_t seed = 1; seed <= 20; ++seed)
         {
@@ -106,7 +104,7 @@ TEST_CASE("Every shipped run level reaches its exit across seeds", "[app][conten
                 tests::playerReachesExit(
                     advanced_platformer::generateLevel(
                         pieces,
-                        advanced_platformer::levelGeneration(run, number, seed),
+                        advanced_platformer::levelGeneration(pieces.run, number, seed),
                         "rooms.json"),
                     catalogs));
         }

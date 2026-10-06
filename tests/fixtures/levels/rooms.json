@@ -1,5 +1,11 @@
 {
   "roomSize": [8, 6],
+  "run": {
+    "grid": [5, 5],
+    "firstRooms": 6,
+    "roomsPerLevel": 0,
+    "maxRooms": 6
+  },
   "tileLegend": { ".": "empty", "#": "stone" },
   "wall": "#",
   "open": ".",

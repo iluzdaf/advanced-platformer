@@ -8,7 +8,7 @@
 
 #include "content/game_catalogs.hpp"
 #include "content/game_content.hpp"
-#include "content/run_settings.hpp"
+#include "content/room_pieces.hpp"
 #include "game/game.hpp"
 #include "game/level_reload.hpp"
 #include "support/fixed_step.hpp"
@@ -46,11 +46,11 @@ TEST_CASE("A failed reload leaves the game as it was", "[app][reload]")
 TEST_CASE("A reload that shuts off the exit leaves the game as it was", "[app][reload]")
 {
     advanced_platformer::Game running =
-        tests::fixtureGame("tests/fixtures/levels/rooms_some_shut_run.json");
+        tests::fixtureGame("tests/fixtures/levels/rooms_some_shut.json");
     const std::uint32_t seed = running.levelSeed();
     advanced_platformer::GameContent shut = tests::fixtureContent();
-    shut.run =
-        advanced_platformer::loadRunSettings("tests/fixtures/levels/rooms_all_shut_run.json");
+    shut.pieces =
+        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/levels/rooms_all_shut.json");
 
     REQUIRE_THROWS_WITH(
         running.reload(std::move(shut)),

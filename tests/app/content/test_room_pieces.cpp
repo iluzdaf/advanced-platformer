@@ -72,6 +72,76 @@ TEST_CASE("A room piece file can lock its exit behind an item", "[app][content][
     REQUIRE(catalog.consumeExitItem);
 }
 
+TEST_CASE("A room piece file says how a run's levels grow", "[app][content][generation]")
+{
+    tests::Json document = fixturePieces();
+    document["run"] =
+        tests::parseJson(R"({"grid": [5, 3], "firstRooms": 4, "roomsPerLevel": 2, "maxRooms": 9})");
+
+    const advanced_platformer::RoomPieceCatalog catalog =
+        advanced_platformer::parseRoomPieceCatalog(tests::dumpJson(document), "rooms.json");
+
+    REQUIRE(catalog.run.grid.width == 5);
+    REQUIRE(catalog.run.grid.height == 3);
+    REQUIRE(catalog.run.firstRooms == 4);
+    REQUIRE(catalog.run.roomsPerLevel == 2);
+    REQUIRE(catalog.run.maxRooms == 9);
+
+    tests::eraseKey(document["run"], "grid");
+    const advanced_platformer::RoomPieceCatalog defaulted =
+        advanced_platformer::parseRoomPieceCatalog(tests::dumpJson(document), "rooms.json");
+    REQUIRE(defaulted.run.grid.width == 9);
+    REQUIRE(defaulted.run.grid.height == 7);
+}
+
+TEST_CASE("A room piece file rejects runs it cannot build", "[app][content][generation]")
+{
+    tests::Json document = fixturePieces();
+    document["run"] =
+        tests::parseJson(R"({"grid": [3, 3], "firstRooms": 4, "roomsPerLevel": 1, "maxRooms": 6})");
+    auto& run = document["run"];
+
+    SECTION("No run")
+    {
+        tests::eraseKey(document, "run");
+        requireRejected(document, "rooms.json:");
+    }
+    SECTION("Too few first rooms")
+    {
+        run["firstRooms"] = 1;
+        requireRejected(
+            document, "run.firstRooms: expected at least 2 rooms and no more than maxRooms");
+    }
+    SECTION("More first rooms than the cap")
+    {
+        run["firstRooms"] = 7;
+        requireRejected(
+            document, "run.firstRooms: expected at least 2 rooms and no more than maxRooms");
+    }
+    SECTION("Fewer rooms each level")
+    {
+        run["roomsPerLevel"] = -1;
+        requireRejected(document, "run.roomsPerLevel: expected zero or more rooms");
+    }
+    SECTION("A cap above what the grid holds")
+    {
+        run["maxRooms"] = 10;
+        requireRejected(
+            document,
+            "run.maxRooms: expected at least 2 rooms and no more than the grid's 9 slots");
+    }
+    SECTION("An empty grid")
+    {
+        run["grid"] = tests::numbers({0, 3});
+        requireRejected(document, "run.grid: expected a positive size");
+    }
+    SECTION("A field typo")
+    {
+        run["maxRoom"] = 6;
+        requireRejected(document, "rooms.json:");
+    }
+}
+
 TEST_CASE("A room piece file rejects pieces that cannot be stitched", "[app][content][generation]")
 {
     tests::Json document = fixturePieces();

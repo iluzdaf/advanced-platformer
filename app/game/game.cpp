@@ -4,7 +4,8 @@
 #include "content/actor_catalog.hpp"
 #include "debug/navigation_debug.hpp"
 #include "level_composition.hpp"
-#include "content/run_settings.hpp"
+#include "content/level_generator.hpp"
+#include "content/room_pieces.hpp"
 #include "content/game_catalogs.hpp"
 #include "content/hud_catalog.hpp"
 #include "content/game_content.hpp"
@@ -48,18 +49,18 @@ namespace advanced_platformer
 {
     Game::Game(
         int textureId,
-        RunSettings run,
+        RoomPieceCatalog pieces,
         GameCatalogs gameCatalogs,
         LuaNpcScripts npcScripts,
         LuaPresentationScript presentation,
         float stepSeconds,
         std::uint32_t runSeed)
-        : run(std::move(run)),
+        : pieces(std::move(pieces)),
           gameCatalogs(std::move(gameCatalogs)),
           npcScripts(std::move(npcScripts)),
           presentation(std::move(presentation)),
           level(composeStartedLevel(
-              this->run,
+              this->pieces,
               1,
               runLevelSeed(runSeed, 1),
               textureId,
@@ -97,7 +98,7 @@ namespace advanced_platformer
     void Game::replaceLevel(int levelNumber, const Actor& player, std::uint32_t seed)
     {
         GameLevel next = composeStartedLevel(
-            run, levelNumber, seed, atlasTextureId, gameCatalogs, player, simulationStepSeconds);
+            pieces, levelNumber, seed, atlasTextureId, gameCatalogs, player, simulationStepSeconds);
         for (const Actor& actor : level.world.actors())
         {
             npcScripts.forget(actor.id);
@@ -297,7 +298,7 @@ namespace advanced_platformer
     LevelReload Game::reload(GameContent content)
     {
         GameLevel fresh = composeLevelAtSeed(
-            content.run,
+            content.pieces,
             level.number,
             level.seed,
             atlasTextureId,
@@ -316,7 +317,7 @@ namespace advanced_platformer
             next, std::move(fresh), matchItemIds(gameCatalogs.items, content.gameCatalogs.items));
 
         level = std::move(next);
-        run = std::move(content.run);
+        pieces = std::move(content.pieces);
         gameCatalogs = std::move(content.gameCatalogs);
         npcScripts = std::move(content.npcScripts);
         presentation = std::move(content.presentation);
