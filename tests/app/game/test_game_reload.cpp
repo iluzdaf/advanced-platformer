@@ -57,10 +57,8 @@ TEST_CASE("A reload that shuts off the exit leaves the game as it was", "[app][r
         tests::FixedStepSeconds};
     const std::uint32_t seed = running.levelSeed();
     advanced_platformer::GameContent shut = tests::fixtureContent();
-    shut.levelCatalog = advanced_platformer::parseLevelCatalog(
-        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"pieces":"rooms_all_shut.json","rooms":3,"grid":[5,1]}]})",
-        "fixture",
-        "tests/fixtures/levels");
+    shut.levelCatalog =
+        advanced_platformer::loadLevelCatalog("tests/fixtures/levels/all_shut_levels.json");
 
     REQUIRE_THROWS_WITH(
         running.reload(std::move(shut)),

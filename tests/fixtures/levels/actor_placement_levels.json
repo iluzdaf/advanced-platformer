@@ -1,0 +1,12 @@
+{
+  "startLevel": 1,
+  "cameraDeadZone": [80, 45],
+  "levels": [
+    {
+      "number": 1,
+      "pieces": "actor_placement.json",
+      "rooms": 2,
+      "grid": [2, 1]
+    }
+  ]
+}

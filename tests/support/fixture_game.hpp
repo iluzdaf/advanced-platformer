@@ -16,10 +16,8 @@ namespace tests
     inline advanced_platformer::GameContent fixtureContent()
     {
         return {
-            advanced_platformer::parseLevelCatalog(
-                R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"pieces":"actor_placement.json","rooms":2,"grid":[2,1]}]})",
-                "fixture",
-                "tests/fixtures/levels"),
+            advanced_platformer::loadLevelCatalog(
+                "tests/fixtures/levels/actor_placement_levels.json"),
             advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", AtlasSize),
             advanced_platformer::LuaNpcScripts{},
             advanced_platformer::LuaPresentationScript{}};
