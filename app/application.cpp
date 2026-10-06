@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <cstdlib>
 #include <exception>
-#include <filesystem>
 #include <format>
 #include <iostream>
 #include <optional>
@@ -17,13 +16,12 @@
 
 #include <imgui.h>
 
-#include "content/asset_watcher.hpp"
+#include "content/content_session.hpp"
 #include "content/game_content.hpp"
 #include "debug/console_log.hpp"
 #include "debug/debug_tools.hpp"
 #include "debug/frame_profile_ui.hpp"
 #include "game/game.hpp"
-#include "game/level_reload.hpp"
 #include "game/play_control.hpp"
 #include "graphics/display_viewport.hpp"
 #include "graphics/game_window.hpp"
@@ -50,7 +48,6 @@ namespace advanced_platformer
         constexpr const char* AssetDirectory = "assets";
         constexpr bool WatchAssets = false;
 #endif
-        constexpr float AssetPollSeconds = 0.25F;
 
         struct ApplicationContext
         {
@@ -64,20 +61,9 @@ namespace advanced_platformer
             bool rerollLevelRequested = false;
         };
 
-        struct Atlas
-        {
-            int textureId = 0;
-            Texture texture;
-        };
-
         ApplicationContext& contextOf(GLFWwindow* window)
         {
             return *static_cast<ApplicationContext*>(glfwGetWindowUserPointer(window));
-        }
-
-        std::filesystem::path atlasPath(const std::filesystem::path& assetDirectory)
-        {
-            return assetDirectory / "textures" / "sprites.png";
         }
 
         bool DebugToolVisibility::* debugToolForKey(int key)
@@ -285,40 +271,6 @@ namespace advanced_platformer
             }
         }
 
-        bool assetsChanged(std::optional<AssetWatcher>& assetWatcher, Stopwatch& assetPollClock)
-        {
-            if (!assetWatcher.has_value() || assetPollClock.elapsedSeconds() < AssetPollSeconds)
-            {
-                return false;
-            }
-
-            assetPollClock.lapSeconds();
-            return assetWatcher->poll();
-        }
-
-        void reloadContent(
-            Game& game,
-            SpriteRenderer& renderer,
-            Atlas& atlas,
-            const std::filesystem::path& assetDirectory,
-            ConsoleLog& console)
-        {
-            try
-            {
-                const Image image = loadImage(atlasPath(assetDirectory).string());
-                const LevelReload reload =
-                    game.reload(loadGameContent(assetDirectory, {image.width, image.height}));
-                renderer.replaceTexture(atlas.textureId, image);
-                atlas.texture = renderer.texture(atlas.textureId);
-                console.write(ConsoleLevel::Info, describeReload(reload));
-            }
-            catch (const std::exception& error)
-            {
-                console.write(
-                    ConsoleLevel::Error, std::format("Could not reload content: {}", error.what()));
-            }
-        }
-
         void applyInterfaceRequests(
             ApplicationContext& context,
             Game& game,
@@ -427,29 +379,19 @@ namespace advanced_platformer
         glfwSetMouseButtonCallback(window.handle(), handleMouseButton);
         const ImGuiSession imgui(window.handle());
 
-        const std::filesystem::path assetDirectory = AssetDirectory;
         SpriteRenderer renderer;
-        Atlas atlas;
-        atlas.textureId = renderer.loadTexture(loadImage(atlasPath(assetDirectory).string()));
-        atlas.texture = renderer.texture(atlas.textureId);
+        ContentSession content(AssetDirectory, renderer, WatchAssets);
         FixedStep fixedStep;
-        GameContent content =
-            loadGameContent(assetDirectory, {atlas.texture.width, atlas.texture.height});
+        GameContent loaded = content.load();
         Game game(
-            atlas.textureId,
-            std::move(content.levelCatalog),
-            std::move(content.gameCatalogs),
-            std::move(content.npcScripts),
-            std::move(content.presentation),
+            content.atlasTextureId(),
+            std::move(loaded.levelCatalog),
+            std::move(loaded.gameCatalogs),
+            std::move(loaded.npcScripts),
+            std::move(loaded.presentation),
             static_cast<float>(fixedStep.stepSeconds()));
         DebugTools debugTools;
         Stopwatch frameClock;
-        std::optional<AssetWatcher> assetWatcher;
-        if (WatchAssets)
-        {
-            assetWatcher.emplace(assetDirectory);
-        }
-        Stopwatch assetPollClock;
 
         while (!window.shouldClose())
         {
@@ -457,9 +399,9 @@ namespace advanced_platformer
             imgui.beginFrame();
 
             applyLevelRequests(context, game, console);
-            if (assetsChanged(assetWatcher, assetPollClock))
+            if (content.assetsChanged())
             {
-                reloadContent(game, renderer, atlas, assetDirectory, console);
+                content.reload(game, console);
                 context.play.interrupt();
             }
 
@@ -470,9 +412,10 @@ namespace advanced_platformer
             FrameProfile profile;
             profile.frameSeconds = frameClock.lapSeconds();
             const Stopwatch interfaceWatch;
+            const Texture atlas = content.atlas();
             const InterfaceRequests interfaceRequests = drawInterface(
                 game,
-                atlas.texture,
+                atlas,
                 windowViewport,
                 context.play.inventoryOpen(),
                 context.play.simulationPaused());
@@ -501,7 +444,7 @@ namespace advanced_platformer
                     debugTools,
                     profile,
                     game.debugOverlay(
-                        static_cast<float>(atlas.texture.width),
+                        static_cast<float>(atlas.width),
                         internalCursor,
                         context.debugBodyIndex,
                         debugTools.machineActor),

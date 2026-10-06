@@ -19,6 +19,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/app/content/actor_definition.cpp
         ${PROJECT_SOURCE_DIR}/app/content/animation_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/asset_watcher.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/content_session.cpp
         ${PROJECT_SOURCE_DIR}/app/content/content_diagnostics.cpp
         ${PROJECT_SOURCE_DIR}/app/content/content_glaze.cpp
         ${PROJECT_SOURCE_DIR}/app/content/content_validation.cpp
