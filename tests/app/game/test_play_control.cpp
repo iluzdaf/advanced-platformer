@@ -1,46 +1,20 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include <utility>
-
 #include <glm/vec2.hpp>
 
-#include "content/game_catalogs.hpp"
-#include "content/game_content.hpp"
-#include "content/level_catalog.hpp"
 #include "game/game.hpp"
 #include "game/play_control.hpp"
-#include "lua_npc_scripts.hpp"
-#include "lua_presentation_script.hpp"
 #include "advanced_platformer/input/input_state.hpp"
 #include "advanced_platformer/timing/fixed_step.hpp"
 #include "advanced_platformer/timing/frame_profile.hpp"
-#include "support/atlas_size.hpp"
 #include "support/fixed_step.hpp"
+#include "support/fixture_game.hpp"
 
 namespace
 {
     constexpr float FrameSeconds = 3.5F * tests::FixedStepSeconds;
     constexpr int TicksPerFrame = 3;
     constexpr glm::vec2 Cursor = {0.0F, 0.0F};
-
-    advanced_platformer::Game game()
-    {
-        advanced_platformer::GameContent content{
-            advanced_platformer::parseLevelCatalog(
-                R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"pieces":"actor_placement.json","rooms":2,"grid":[2,1]}]})",
-                "fixture",
-                "tests/fixtures/levels"),
-            advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
-            advanced_platformer::LuaNpcScripts{},
-            advanced_platformer::LuaPresentationScript{}};
-        return {
-            0,
-            std::move(content.levelCatalog),
-            std::move(content.gameCatalogs),
-            std::move(content.npcScripts),
-            std::move(content.presentation),
-            tests::FixedStepSeconds};
-    }
 
     int advanceFrame(
         advanced_platformer::PlayControl& play,
@@ -57,7 +31,7 @@ namespace
 
 TEST_CASE("Running play advances the simulation by the fixed step", "[app][play-control]")
 {
-    advanced_platformer::Game running = game();
+    advanced_platformer::Game running = tests::fixtureGame();
     advanced_platformer::FixedStep fixedStep;
     advanced_platformer::PlayControl play;
 
@@ -68,7 +42,7 @@ TEST_CASE("Running play advances the simulation by the fixed step", "[app][play-
 
 TEST_CASE("Pausing stops the simulation and drops the pending frame time", "[app][play-control]")
 {
-    advanced_platformer::Game running = game();
+    advanced_platformer::Game running = tests::fixtureGame();
     advanced_platformer::FixedStep fixedStep;
     advanced_platformer::PlayControl play;
     advanceFrame(play, running, fixedStep);
@@ -89,7 +63,7 @@ TEST_CASE("Pausing stops the simulation and drops the pending frame time", "[app
 
 TEST_CASE("A step request while paused runs exactly one tick once", "[app][play-control]")
 {
-    advanced_platformer::Game running = game();
+    advanced_platformer::Game running = tests::fixtureGame();
     advanced_platformer::FixedStep fixedStep;
     advanced_platformer::PlayControl play;
     play.togglePause();
@@ -103,7 +77,7 @@ TEST_CASE("A step request while paused runs exactly one tick once", "[app][play-
 
 TEST_CASE("A step request is ignored while play is running", "[app][play-control]")
 {
-    advanced_platformer::Game running = game();
+    advanced_platformer::Game running = tests::fixtureGame();
     advanced_platformer::FixedStep fixedStep;
     advanced_platformer::PlayControl play;
 
@@ -118,7 +92,7 @@ TEST_CASE("A step request is ignored while play is running", "[app][play-control
 
 TEST_CASE("An interrupt skips one frame of simulation", "[app][play-control]")
 {
-    advanced_platformer::Game running = game();
+    advanced_platformer::Game running = tests::fixtureGame();
     advanced_platformer::FixedStep fixedStep;
     advanced_platformer::PlayControl play;
     advanceFrame(play, running, fixedStep);
@@ -132,7 +106,7 @@ TEST_CASE("An interrupt skips one frame of simulation", "[app][play-control]")
 
 TEST_CASE("An open inventory pauses play and blocks stepping", "[app][play-control]")
 {
-    advanced_platformer::Game running = game();
+    advanced_platformer::Game running = tests::fixtureGame();
     advanced_platformer::FixedStep fixedStep;
     advanced_platformer::PlayControl play;
 
@@ -176,7 +150,7 @@ TEST_CASE("A pause set from outside clears held input only when it changes", "[a
 
 TEST_CASE("Restarting closes the inventory and resets the aim", "[app][play-control]")
 {
-    advanced_platformer::Game running = game();
+    advanced_platformer::Game running = tests::fixtureGame();
     advanced_platformer::FixedStep fixedStep;
     advanced_platformer::PlayControl play;
     const glm::vec2 aimedAtCursor = running.playerAimDirection(Cursor);
@@ -193,7 +167,7 @@ TEST_CASE("Restarting closes the inventory and resets the aim", "[app][play-cont
 
 TEST_CASE("Aim follows the cursor and keeps the last direction without one", "[app][play-control]")
 {
-    advanced_platformer::Game running = game();
+    advanced_platformer::Game running = tests::fixtureGame();
     advanced_platformer::PlayControl play;
     const glm::vec2 aimedAtCursor = running.playerAimDirection(Cursor);
     REQUIRE(aimedAtCursor != glm::vec2{0.0F, 0.0F});
@@ -205,7 +179,7 @@ TEST_CASE("Aim follows the cursor and keeps the last direction without one", "[a
 
 TEST_CASE("Attacks reach the player only while the cursor is on the game", "[app][play-control]")
 {
-    advanced_platformer::Game running = game();
+    advanced_platformer::Game running = tests::fixtureGame();
     advanced_platformer::PlayControl play;
 
     play.setButton(advanced_platformer::InputButton::PrimaryAttack, true);
@@ -226,7 +200,7 @@ TEST_CASE("Attacks reach the player only while the cursor is on the game", "[app
 
 TEST_CASE("Held movement is dropped while the UI captures the keyboard", "[app][play-control]")
 {
-    advanced_platformer::Game running = game();
+    advanced_platformer::Game running = tests::fixtureGame();
     advanced_platformer::FixedStep fixedStep;
     advanced_platformer::PlayControl play;
     play.setButton(advanced_platformer::InputButton::Left, true);
@@ -238,7 +212,7 @@ TEST_CASE("Held movement is dropped while the UI captures the keyboard", "[app][
 
 TEST_CASE("Only attacks are dropped while the cursor is off the game", "[app][play-control]")
 {
-    advanced_platformer::Game running = game();
+    advanced_platformer::Game running = tests::fixtureGame();
     advanced_platformer::FixedStep fixedStep;
     advanced_platformer::PlayControl play;
     play.setButton(advanced_platformer::InputButton::Left, true);
@@ -252,7 +226,7 @@ TEST_CASE("Only attacks are dropped while the cursor is off the game", "[app][pl
 
 TEST_CASE("Paused play drops all held input", "[app][play-control]")
 {
-    advanced_platformer::Game running = game();
+    advanced_platformer::Game running = tests::fixtureGame();
     advanced_platformer::FixedStep fixedStep;
     advanced_platformer::PlayControl play;
     play.setButton(advanced_platformer::InputButton::Left, true);

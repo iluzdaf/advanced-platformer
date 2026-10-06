@@ -3,6 +3,7 @@
 #include <cstddef>
 
 #include "debug/debug_tool_visibility.hpp"
+#include "game/level_requests.hpp"
 #include "game/play_control.hpp"
 
 namespace advanced_platformer
@@ -30,13 +31,11 @@ namespace advanced_platformer
     struct ApplicationContext
     {
         PlayControl play;
+        LevelRequests levelRequests;
         bool showDebugOverlay = false;
         DebugToolVisibility debugToolVisibility;
         std::size_t debugBodyIndex = 0;
         bool breakTileRequested = false;
-        bool restartRequested = false;
-        bool restartLevelRequested = false;
-        bool rerollLevelRequested = false;
         bool quitRequested = false;
     };
 

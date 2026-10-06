@@ -2,8 +2,6 @@
 #include "application_context.hpp"
 
 #include <cstdlib>
-#include <exception>
-#include <format>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -22,6 +20,7 @@
 #include "debug/debug_tools.hpp"
 #include "debug/frame_profile_ui.hpp"
 #include "game/game.hpp"
+#include "game/level_requests.hpp"
 #include "game/play_control.hpp"
 #include "graphics/display_viewport.hpp"
 #include "graphics/game_window.hpp"
@@ -166,75 +165,6 @@ namespace advanced_platformer
             }
         }
 
-        void restartCompletedGame(ApplicationContext& context, Game& game)
-        {
-            if (!game.complete())
-            {
-                return;
-            }
-
-            game.restart();
-            context.play.restart();
-        }
-
-        void restartLevel(ApplicationContext& context, Game& game, ConsoleLog& console)
-        {
-            try
-            {
-                game.restartLevel();
-                context.play.interrupt();
-            }
-            catch (const std::exception& error)
-            {
-                console.write(
-                    ConsoleLevel::Error,
-                    std::format("Could not restart the level: {}", error.what()));
-            }
-        }
-
-        void rerollLevel(ApplicationContext& context, Game& game, ConsoleLog& console)
-        {
-            try
-            {
-                if (!game.rerollLevel())
-                {
-                    console.write(ConsoleLevel::Info, "A completed game has no level to reroll");
-                    return;
-                }
-
-                context.play.interrupt();
-                console.write(
-                    ConsoleLevel::Info,
-                    std::format(
-                        "Generated level {} from seed {}", game.levelNumber(), game.levelSeed()));
-            }
-            catch (const std::exception& error)
-            {
-                console.write(
-                    ConsoleLevel::Error,
-                    std::format("Could not reroll the level: {}", error.what()));
-            }
-        }
-
-        void applyLevelRequests(ApplicationContext& context, Game& game, ConsoleLog& console)
-        {
-            if (context.restartRequested)
-            {
-                restartCompletedGame(context, game);
-                context.restartRequested = false;
-            }
-            if (context.restartLevelRequested)
-            {
-                restartLevel(context, game, console);
-                context.restartLevelRequested = false;
-            }
-            if (context.rerollLevelRequested)
-            {
-                rerollLevel(context, game, console);
-                context.rerollLevelRequested = false;
-            }
-        }
-
         void applyInterfaceRequests(
             ApplicationContext& context,
             Game& game,
@@ -362,7 +292,7 @@ namespace advanced_platformer
             glfwPollEvents();
             imgui.beginFrame();
 
-            applyLevelRequests(context, game, console);
+            applyLevelRequests(context.levelRequests, game, context.play, console);
             if (content.assetsChanged())
             {
                 content.reload(game, console);

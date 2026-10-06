@@ -5,6 +5,7 @@
 
 #include "application_context.hpp"
 #include "debug/debug_tool_visibility.hpp"
+#include "game/level_requests.hpp"
 #include "game/play_control.hpp"
 
 namespace
@@ -52,18 +53,18 @@ TEST_CASE("Level commands raise one request each", "[app][commands]")
 
     applyCommand(context, ApplicationCommand::RestartGame);
 
-    REQUIRE(context.restartRequested);
-    REQUIRE_FALSE(context.restartLevelRequested);
-    REQUIRE_FALSE(context.rerollLevelRequested);
+    REQUIRE(context.levelRequests.restartGame);
+    REQUIRE_FALSE(context.levelRequests.restartLevel);
+    REQUIRE_FALSE(context.levelRequests.rerollLevel);
 
     applyCommand(context, ApplicationCommand::RestartLevel);
 
-    REQUIRE(context.restartLevelRequested);
-    REQUIRE_FALSE(context.rerollLevelRequested);
+    REQUIRE(context.levelRequests.restartLevel);
+    REQUIRE_FALSE(context.levelRequests.rerollLevel);
 
     applyCommand(context, ApplicationCommand::RerollLevel);
 
-    REQUIRE(context.rerollLevelRequested);
+    REQUIRE(context.levelRequests.rerollLevel);
 }
 
 TEST_CASE("Quit raises the quit request", "[app][commands]")

@@ -1,6 +1,7 @@
 #include "application_context.hpp"
 
 #include "debug/debug_tool_visibility.hpp"
+#include "game/level_requests.hpp"
 
 namespace advanced_platformer
 {
@@ -32,13 +33,13 @@ namespace advanced_platformer
             context.play.requestStep();
             return;
         case ApplicationCommand::RestartGame:
-            context.restartRequested = true;
+            context.levelRequests.restartGame = true;
             return;
         case ApplicationCommand::RestartLevel:
-            context.restartLevelRequested = true;
+            context.levelRequests.restartLevel = true;
             return;
         case ApplicationCommand::RerollLevel:
-            context.rerollLevelRequested = true;
+            context.levelRequests.rerollLevel = true;
             return;
         case ApplicationCommand::ToggleDebugOverlay:
             context.showDebugOverlay = !context.showDebugOverlay;
