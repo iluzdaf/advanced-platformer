@@ -122,10 +122,10 @@ TEST_CASE("Breaking a tile is requested only while the overlay is shown", "[app]
 
     applyCommand(context, ApplicationCommand::BreakTile);
 
-    REQUIRE_FALSE(context.breakTileRequested);
+    REQUIRE_FALSE(context.debugCursor.breakTileRequested);
 
     applyCommand(context, ApplicationCommand::ToggleDebugOverlay);
     applyCommand(context, ApplicationCommand::BreakTile);
 
-    REQUIRE(context.breakTileRequested);
+    REQUIRE(context.debugCursor.breakTileRequested);
 }

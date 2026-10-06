@@ -4,6 +4,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/app/application.cpp
         ${PROJECT_SOURCE_DIR}/app/application_context.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/console_log.cpp
+        ${PROJECT_SOURCE_DIR}/app/debug/debug_cursor.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/console_ui.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/debug_draw.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/debug_overlay.cpp

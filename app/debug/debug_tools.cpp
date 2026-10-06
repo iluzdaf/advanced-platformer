@@ -4,18 +4,21 @@
 #include "console_ui.hpp"
 #include "debug_overlay.hpp"
 #include "debug_overlay_ui.hpp"
+#include "debug_tool_visibility.hpp"
 #include "frame_profile_ui.hpp"
 #include "frame_selection.hpp"
 #include "machine_graph_ui.hpp"
 
 #include <optional>
 
+#include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/timing/frame_profile.hpp"
 
 namespace advanced_platformer
 {
     FramePlotRequest drawDebugTools(
         DebugTools& tools,
+        std::optional<ActorId>& machineActor,
         const FrameProfile& profile,
         const DebugOverlay& overlay,
         const std::optional<WindowViewport>& viewport,
@@ -23,10 +26,10 @@ namespace advanced_platformer
         const ConsoleLog& console,
         bool paused)
     {
-        if (tools.machineActor.has_value() &&
-            (!overlay.machine.has_value() || overlay.machine->actor != *tools.machineActor))
+        if (machineActor.has_value() &&
+            (!overlay.machine.has_value() || overlay.machine->actor != *machineActor))
         {
-            tools.machineActor.reset();
+            machineActor.reset();
         }
         if (visibility.worldAndCameraOverlay || visibility.actorText ||
             visibility.navigationCacheText)
@@ -41,7 +44,7 @@ namespace advanced_platformer
         }
         if (visibility.stateMachine)
         {
-            drawMachineGraph(tools.machineEditors, overlay.machine, tools.machineActor.has_value());
+            drawMachineGraph(tools.machineEditors, overlay.machine, machineActor.has_value());
         }
         if (visibility.console)
         {

@@ -2,6 +2,7 @@
 
 #include <cstddef>
 
+#include "debug/debug_cursor.hpp"
 #include "debug/debug_tool_visibility.hpp"
 #include "game/level_requests.hpp"
 #include "game/play_control.hpp"
@@ -35,7 +36,7 @@ namespace advanced_platformer
         bool showDebugOverlay = false;
         DebugToolVisibility debugToolVisibility;
         std::size_t debugBodyIndex = 0;
-        bool breakTileRequested = false;
+        DebugCursor debugCursor;
         bool quitRequested = false;
     };
 

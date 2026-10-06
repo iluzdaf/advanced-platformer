@@ -3,6 +3,7 @@ target_sources(
     PRIVATE
         ${PROJECT_SOURCE_DIR}/app/application_context.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/console_log.cpp
+        ${PROJECT_SOURCE_DIR}/app/debug/debug_cursor.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/debug_overlay.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/frame_axes.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/frame_selection.cpp
@@ -65,6 +66,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_room_pieces.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_tile_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_console_log.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/debug/test_debug_cursor.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_debug_overlay.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_debug_overlay_machine.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_debug_overlay_navigation.cpp

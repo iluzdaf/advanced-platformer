@@ -23,12 +23,12 @@ namespace advanced_platformer
         FrameSelection frameSelection;
         FrameAxes frameAxes;
         MachineGraphEditors machineEditors;
-        std::optional<ActorId> machineActor;
         ConsoleView consoleView;
     };
 
     FramePlotRequest drawDebugTools(
         DebugTools& tools,
+        std::optional<ActorId>& machineActor,
         const FrameProfile& profile,
         const DebugOverlay& overlay,
         const std::optional<WindowViewport>& viewport,

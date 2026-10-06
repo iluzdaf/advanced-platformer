@@ -50,7 +50,7 @@ namespace advanced_platformer
         case ApplicationCommand::BreakTile:
             if (context.showDebugOverlay)
             {
-                context.breakTileRequested = true;
+                context.debugCursor.breakTileRequested = true;
             }
             return;
         case ApplicationCommand::ToggleFrameProfileDetails:

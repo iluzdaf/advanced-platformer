@@ -17,6 +17,7 @@
 #include "content/content_session.hpp"
 #include "content/game_content.hpp"
 #include "debug/console_log.hpp"
+#include "debug/debug_cursor.hpp"
 #include "debug/debug_tools.hpp"
 #include "debug/frame_profile_ui.hpp"
 #include "game/game.hpp"
@@ -27,7 +28,6 @@
 #include "graphics/imgui_session.hpp"
 #include "graphics/sprite_renderer.hpp"
 #include "ui/interface_ui.hpp"
-#include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/input/input_state.hpp"
 #include "advanced_platformer/render/render_scene.hpp"
 #include "lua_npc_scripts.hpp"
@@ -180,53 +180,6 @@ namespace advanced_platformer
             }
         }
 
-        void breakRequestedTile(
-            ApplicationContext& context,
-            Game& game,
-            const std::optional<glm::vec2>& internalCursor)
-        {
-            if (!context.breakTileRequested)
-            {
-                return;
-            }
-
-            if (internalCursor.has_value())
-            {
-                game.breakTileAt(*internalCursor);
-            }
-            context.breakTileRequested = false;
-        }
-
-        void selectClickedMachineActor(
-            ApplicationContext& context,
-            const Game& game,
-            DebugTools& debugTools,
-            const std::optional<glm::vec2>& internalCursor)
-        {
-            if (!context.showDebugOverlay || !context.debugToolVisibility.stateMachine ||
-                !internalCursor.has_value() || !ImGui::IsMouseClicked(ImGuiMouseButton_Left) ||
-                ImGui::GetIO().WantCaptureMouse)
-            {
-                return;
-            }
-
-            const std::optional<ActorId> clicked = game.machineActorAt(*internalCursor);
-            if (!clicked.has_value())
-            {
-                return;
-            }
-
-            if (debugTools.machineActor == clicked)
-            {
-                debugTools.machineActor.reset();
-            }
-            else
-            {
-                debugTools.machineActor = clicked;
-            }
-            context.play.clearAttackButtons();
-        }
-
         void writeScriptDiagnostics(Game& game, ConsoleLog& console)
         {
             for (const LuaScriptDiagnostic& diagnostic : game.takeScriptDiagnostics())
@@ -318,8 +271,17 @@ namespace advanced_platformer
 
             const std::optional<glm::vec2> internalCursor =
                 windowToInternal(reading.cursor, reading.size, reading.framebufferSize);
-            breakRequestedTile(context, game, internalCursor);
-            selectClickedMachineActor(context, game, debugTools, internalCursor);
+            breakRequestedTile(context.debugCursor, game, internalCursor);
+            if (context.showDebugOverlay && context.debugToolVisibility.stateMachine)
+            {
+                selectClickedMachineActor(
+                    context.debugCursor,
+                    game,
+                    context.play,
+                    {internalCursor,
+                     ImGui::IsMouseClicked(ImGuiMouseButton_Left),
+                     ImGui::GetIO().WantCaptureMouse});
+            }
             const bool paused = context.play.paused(game);
             context.play.advance(
                 game,
@@ -336,12 +298,13 @@ namespace advanced_platformer
             {
                 const FramePlotRequest plotRequest = drawDebugTools(
                     debugTools,
+                    context.debugCursor.machineActor,
                     profile,
                     game.debugOverlay(
                         static_cast<float>(atlas.width),
                         internalCursor,
                         context.debugBodyIndex,
-                        debugTools.machineActor),
+                        context.debugCursor.machineActor),
                     windowViewport,
                     context.debugToolVisibility,
                     console,
