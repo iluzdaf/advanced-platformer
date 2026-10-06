@@ -76,7 +76,7 @@ TEST_CASE("Every catalog level can be composed", "[app][content]")
         const advanced_platformer::LevelExit& exit = levelExit.value();
         if (exit.nextLevel.has_value())
         {
-            REQUIRE_NOTHROW(advanced_platformer::levelPath(catalog, exit.nextLevel.value()));
+            REQUIRE_NOTHROW(advanced_platformer::levelEntry(catalog, exit.nextLevel.value()));
         }
     }
 }

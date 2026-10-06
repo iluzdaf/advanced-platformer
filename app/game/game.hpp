@@ -3,6 +3,8 @@
 #include <optional>
 #include <vector>
 #include <cstddef>
+#include <cstdint>
+#include <string>
 
 #include <glm/vec2.hpp>
 
@@ -61,8 +63,15 @@ namespace advanced_platformer
         bool breakTileAt(glm::vec2 internalPosition);
         void restart();
         void restartLevel();
+        // Builds a generated level again from the next seed, keeping the player's health
+        // and items. Reports false, and changes nothing, for a level read from a file.
+        bool rerollLevel();
         LevelReload reload(GameContent content);
         int levelNumber() const;
+        // The seed the current level was generated from, if it was.
+        std::optional<std::uint32_t> levelSeed() const;
+        // The current level as a level file, as it was when it started.
+        std::string levelJson() const;
         bool complete() const;
         std::optional<glm::vec2> levelExitScreenPosition() const;
         bool exitReady() const;
@@ -73,8 +82,11 @@ namespace advanced_platformer
         Camera renderCamera() const;
 
     private:
-        void loadLevel(int levelNumber);
-        void replaceLevel(int levelNumber, Actor player);
+        void loadLevel(int levelNumber, std::optional<std::uint32_t> seed = std::nullopt);
+        void replaceLevel(
+            int levelNumber,
+            Actor player,
+            std::optional<std::uint32_t> seed = std::nullopt);
         void startCamera();
         CameraController& cameraControllerValue();
         const CameraController& cameraControllerValue() const;

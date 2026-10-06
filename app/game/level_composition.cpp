@@ -7,6 +7,8 @@
 #include "content/exit_catalog.hpp"
 #include "content/level_catalog.hpp"
 #include "content/level_data.hpp"
+#include "content/level_generator.hpp"
+#include "content/room_pieces.hpp"
 #include "content/tile_catalog.hpp"
 #include <cstdint>
 #include <format>
@@ -89,14 +91,36 @@ namespace advanced_platformer
         }
     }
 
+    CatalogLevel loadCatalogLevel(
+        const LevelCatalog& catalog,
+        int levelNumber,
+        std::optional<std::uint32_t> seed)
+    {
+        const LevelCatalogEntry& entry = levelEntry(catalog, levelNumber);
+        if (!entry.generation.has_value())
+        {
+            const auto path = levelPath(catalog, levelNumber);
+            return {loadLevelData(path), path.string(), std::nullopt};
+        }
+        LevelGeneration generation = *entry.generation;
+        generation.seed = seed.value_or(generation.seed);
+        const auto piecesPath = catalog.levelDirectory / generation.relativePieces;
+        std::string sourceName = std::format(
+            "{} (level {}, seed {})", piecesPath.string(), levelNumber, generation.seed);
+        LevelData data = generateLevel(loadRoomPieceCatalog(piecesPath), generation, sourceName);
+        return {std::move(data), std::move(sourceName), generation.seed};
+    }
+
     GameLevel composeGameLevel(
         const LevelCatalog& catalog,
         int levelNumber,
         int textureId,
-        const GameCatalogs& catalogs)
+        const GameCatalogs& catalogs,
+        std::optional<std::uint32_t> seed)
     {
-        const auto path = levelPath(catalog, levelNumber);
-        const LevelData data = loadLevelData(path);
+        const CatalogLevel source = loadCatalogLevel(catalog, levelNumber, seed);
+        const LevelData& data = source.data;
+        const std::string& path = source.sourceName;
         const auto& tiles = catalogs.tiles;
         const auto& actors = catalogs.actors;
         const auto& exits = catalogs.exits;
@@ -111,7 +135,7 @@ namespace advanced_platformer
             catch (const std::invalid_argument& error)
             {
                 throw std::invalid_argument(
-                    std::format("{}: {}: {}", path.string(), reference.first, error.what()));
+                    std::format("{}: {}: {}", path, reference.first, error.what()));
             }
         }
         for (const auto& reference : data.itemReferences)
@@ -123,7 +147,7 @@ namespace advanced_platformer
             catch (const std::invalid_argument& error)
             {
                 throw std::invalid_argument(
-                    std::format("{}: {}: {}", path.string(), reference.first, error.what()));
+                    std::format("{}: {}: {}", path, reference.first, error.what()));
             }
         }
         for (const auto& reference : data.pickupReferences)
@@ -135,7 +159,7 @@ namespace advanced_platformer
             catch (const std::invalid_argument& error)
             {
                 throw std::invalid_argument(
-                    std::format("{}: {}: {}", path.string(), reference.first, error.what()));
+                    std::format("{}: {}: {}", path, reference.first, error.what()));
             }
         }
         for (const auto& reference : data.actorReferences)
@@ -147,7 +171,7 @@ namespace advanced_platformer
             catch (const std::invalid_argument& error)
             {
                 throw std::invalid_argument(
-                    std::format("{}: {}: {}", path.string(), reference.first, error.what()));
+                    std::format("{}: {}: {}", path, reference.first, error.what()));
             }
         }
         TileMap map = composeTileMap(data.mapRows, data.tileLegend, tiles);
@@ -174,10 +198,7 @@ namespace advanced_platformer
             {
                 throw std::invalid_argument(
                     std::format(
-                        "{}: actor '{}': {}",
-                        path.string(),
-                        placement.definitionName,
-                        error.what()));
+                        "{}: actor '{}': {}", path, placement.definitionName, error.what()));
             }
         }
         for (const auto& placement : data.pickups)
@@ -202,7 +223,8 @@ namespace advanced_platformer
             std::move(actorDefinitionNames),
             std::move(actorPlacementIds),
             std::move(pickupPlacementIds),
-            std::move(placedIds)};
+            std::move(placedIds),
+            source.seed};
     }
 
     Actor composePlayer(const GameCatalogs& catalogs, int textureId)
@@ -216,9 +238,10 @@ namespace advanced_platformer
         int levelNumber,
         int textureId,
         const GameCatalogs& catalogs,
-        Actor player)
+        Actor player,
+        std::optional<std::uint32_t> seed)
     {
-        GameLevel level = composeGameLevel(catalog, levelNumber, textureId, catalogs);
+        GameLevel level = composeGameLevel(catalog, levelNumber, textureId, catalogs, seed);
         moveFeetTo(player.body.bounds, level.playerSpawnFeet);
         const ActorId playerId = level.world.addActor(std::move(player));
         level.actorDefinitionNames.emplace(playerId.value, catalogs.actors.player);

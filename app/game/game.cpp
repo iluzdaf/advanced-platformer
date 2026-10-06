@@ -8,10 +8,13 @@
 #include "content/game_catalogs.hpp"
 #include "content/hud_catalog.hpp"
 #include "content/game_content.hpp"
+#include "content/level_data.hpp"
 #include "level_reload.hpp"
 
 #include <cstddef>
+#include <cstdint>
 #include <iterator>
+#include <string>
 #include <cmath>
 #include <optional>
 #include <variant>
@@ -71,7 +74,7 @@ namespace advanced_platformer
         startCamera();
     }
 
-    void Game::loadLevel(int levelNumber)
+    void Game::loadLevel(int levelNumber, std::optional<std::uint32_t> seed)
     {
         Actor nextPlayer = composePlayer(gameCatalogs, atlasTextureId);
         if (const Actor* previousPlayer = level.world.findActor(level.world.playerId()))
@@ -79,13 +82,13 @@ namespace advanced_platformer
             nextPlayer.health = previousPlayer->health;
             nextPlayer.inventory = previousPlayer->inventory;
         }
-        replaceLevel(levelNumber, std::move(nextPlayer));
+        replaceLevel(levelNumber, std::move(nextPlayer), seed);
     }
 
-    void Game::replaceLevel(int levelNumber, Actor player)
+    void Game::replaceLevel(int levelNumber, Actor player, std::optional<std::uint32_t> seed)
     {
         GameLevel next = composeStartedLevel(
-            levelCatalog, levelNumber, atlasTextureId, gameCatalogs, std::move(player));
+            levelCatalog, levelNumber, atlasTextureId, gameCatalogs, std::move(player), seed);
         for (const Actor& actor : level.world.actors())
         {
             npcScripts.forget(actor.id);
@@ -297,8 +300,18 @@ namespace advanced_platformer
     {
         if (!gameComplete)
         {
-            loadLevel(level.number);
+            loadLevel(level.number, level.seed);
         }
+    }
+
+    bool Game::rerollLevel()
+    {
+        if (gameComplete || !level.seed.has_value())
+        {
+            return false;
+        }
+        loadLevel(level.number, *level.seed + 1U);
+        return true;
     }
 
     LevelReload Game::reload(GameContent content)
@@ -308,7 +321,8 @@ namespace advanced_platformer
             level.number,
             atlasTextureId,
             content.gameCatalogs,
-            composePlayer(content.gameCatalogs, atlasTextureId));
+            composePlayer(content.gameCatalogs, atlasTextureId),
+            level.seed);
         GameLevel next = level;
         LevelReload result = reloadLevel(
             next, std::move(fresh), matchItemIds(gameCatalogs.items, content.gameCatalogs.items));
@@ -332,6 +346,16 @@ namespace advanced_platformer
     int Game::levelNumber() const
     {
         return level.number;
+    }
+
+    std::optional<std::uint32_t> Game::levelSeed() const
+    {
+        return level.seed;
+    }
+
+    std::string Game::levelJson() const
+    {
+        return formatLevelData(loadCatalogLevel(levelCatalog, level.number, level.seed).data);
     }
 
     bool Game::complete() const

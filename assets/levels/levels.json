@@ -13,6 +13,10 @@
     {
       "number": 3,
       "file": "level_3.json"
+    },
+    {
+      "number": 4,
+      "generate": { "pieces": "rooms.json", "rooms": 8 }
     }
   ]
 }

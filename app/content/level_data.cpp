@@ -189,6 +189,105 @@ namespace advanced_platformer
             return result;
         }
 
+        std::string jsonString(std::string_view text)
+        {
+            std::string result = "\"";
+            for (const char character : text)
+            {
+                switch (character)
+                {
+                case '"':
+                    result += "\\\"";
+                    break;
+                case '\\':
+                    result += "\\\\";
+                    break;
+                default:
+                    if (static_cast<unsigned char>(character) < 0x20U)
+                    {
+                        result += std::format("\\u{:04x}", static_cast<unsigned>(character));
+                    }
+                    else
+                    {
+                        result += character;
+                    }
+                }
+            }
+            return result + "\"";
+        }
+
+        std::string formatPosition(const LevelPosition& position)
+        {
+            if (const auto* cell = std::get_if<Cell>(&position))
+            {
+                return std::format("{{ \"cell\": [{}, {}] }}", cell->x, cell->y);
+            }
+            const glm::vec2 feet = std::get<glm::vec2>(position);
+            return std::format("{{ \"feet\": [{}, {}] }}", feet.x, feet.y);
+        }
+
+        std::string formatActor(const ActorPlacement& actor)
+        {
+            std::string result = std::format(
+                "{{ \"id\": {}, \"definition\": {}, \"spawn\": {}",
+                jsonString(actor.id),
+                jsonString(actor.definitionName),
+                formatPosition(actor.spawn));
+            if (actor.patrol.has_value())
+            {
+                result += std::format(
+                    ", \"patrol\": {{ \"first\": {}, \"second\": {} }}",
+                    formatPosition(actor.patrol->first),
+                    formatPosition(actor.patrol->second));
+            }
+            return result + " }";
+        }
+
+        std::string formatPickup(const PickupPlacement& pickup)
+        {
+            return std::format(
+                "{{ \"id\": {}, \"definition\": {}, \"spawn\": {} }}",
+                jsonString(pickup.id),
+                jsonString(pickup.definitionName),
+                formatPosition(pickup.spawn));
+        }
+
+        std::string formatExit(const ExitPlacement& exit)
+        {
+            std::string result = std::format(
+                "{{\n    \"definition\": {},\n    \"spawn\": {}",
+                jsonString(exit.definitionName),
+                formatPosition(exit.spawn));
+            if (exit.requirement.has_value())
+            {
+                result += std::format(
+                    ",\n    \"requirement\": {{ \"item\": {}, \"quantity\": {} }}",
+                    jsonString(exit.requirement->item),
+                    exit.requirement->quantity);
+            }
+            if (exit.consumeItem)
+            {
+                result += ",\n    \"consumeItem\": true";
+            }
+            if (exit.nextLevel.has_value())
+            {
+                result += std::format(",\n    \"nextLevel\": {}", *exit.nextLevel);
+            }
+            return result + "\n  }";
+        }
+
+        template <class T, class Format>
+        std::string formatList(const std::vector<T>& values, Format format)
+        {
+            std::string result = "[";
+            for (std::size_t index = 0; index < values.size(); ++index)
+            {
+                result += index == 0 ? "\n    " : ",\n    ";
+                result += format(values[index]);
+            }
+            return result + (values.empty() ? "]" : "\n  ]");
+        }
+
         void requireUniqueId(
             std::map<std::string, std::string>& seen,
             const std::string& id,
@@ -272,5 +371,33 @@ namespace advanced_platformer
     LevelData loadLevelData(const std::filesystem::path& path)
     {
         return parseLevelData(loadContentText(path), path.string());
+    }
+
+    std::string formatLevelData(const LevelData& level)
+    {
+        std::string legend;
+        for (const auto& [symbol, tile] : level.tileLegend)
+        {
+            legend += std::format(
+                "{}{}: {}",
+                legend.empty() ? "" : ", ",
+                jsonString(std::string(1, symbol)),
+                jsonString(tile));
+        }
+        return std::format(
+            "{{\n"
+            "  \"tileLegend\": {{ {} }},\n"
+            "  \"map\": {},\n"
+            "  \"playerSpawn\": {},\n"
+            "  \"actors\": {},\n"
+            "  \"pickups\": {},\n"
+            "  \"exit\": {}\n"
+            "}}\n",
+            legend,
+            formatList(level.mapRows, [](const std::string& row) { return jsonString(row); }),
+            formatPosition(level.playerSpawn),
+            formatList(level.actors, formatActor),
+            formatList(level.pickups, formatPickup),
+            formatExit(level.exit));
     }
 }

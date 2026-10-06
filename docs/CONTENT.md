@@ -30,7 +30,13 @@ applies the new content without restarting:
   the first state, and every activity starts again under the new scripts.
 
 The console reports what was kept, spawned and removed. F5 restarts the current level
-from its file, keeping the player's health and items.
+from its file, keeping the player's health and items. A generated level reloads and
+restarts from the same seed.
+
+F6 writes the current level, as it was when it started, to `level_N.json` in the working
+directory, or `level_N_seed_S.json` for a generated level, so a generated level can be
+kept and edited by hand. F7 generates the current level again from the next seed,
+keeping the player's health and items.
 
 ## Files
 
@@ -38,6 +44,7 @@ from its file, keeping the player's health and items.
 | ---------------------------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | [`levels/levels.json`](../assets/levels/levels.json)             | Start level, camera dead zone, level numbers to files | [`level_catalog.cpp`](../app/content/level_catalog.cpp)                                                                      |
 | `levels/level_N.json`                                            | A level's map, legends and placements                 | [`level_data.cpp`](../app/content/level_data.cpp)                                                                            |
+| [`levels/rooms.json`](../assets/levels/rooms.json)               | Room pieces that generated levels are stitched from   | [`room_pieces.cpp`](../app/content/room_pieces.cpp), [`level_generator.cpp`](../app/content/level_generator.cpp)             |
 | [`catalogs/tiles.json`](../assets/catalogs/tiles.json)           | Tile size and tiles                                   | [`tile_catalog.cpp`](../app/content/tile_catalog.cpp)                                                                        |
 | [`catalogs/actors.json`](../assets/catalogs/actors.json)         | The player and every actor definition                 | [`actor_catalog.cpp`](../app/content/actor_catalog.cpp), [`actor_definition.cpp`](../app/content/actor_definition.cpp)       |
 | [`catalogs/animations.json`](../assets/catalogs/animations.json) | Animation sets                                        | [`animation_catalog.cpp`](../app/content/animation_catalog.cpp)                                                              |
@@ -67,6 +74,75 @@ inside the atlas.
 | `startLevel`     | The `number` of the first level.                                                       |
 | `cameraDeadZone` | The part of the 320 by 180 view the player moves in before the camera follows.         |
 | `levels`         | `number`, a positive unique ID that exits refer to, and `file`, relative to this file. |
+
+An entry may `generate` its level from room pieces instead of naming a `file`:
+
+```json
+{ "number": 4, "generate": { "pieces": "rooms.json", "rooms": 8, "grid": [9, 7], "seed": 4 } }
+```
+
+| Field       | Required | Meaning                                                                   |
+| ----------- | -------- | ------------------------------------------------------------------------- |
+| `pieces`    | Yes      | The room piece file, relative to this file.                               |
+| `rooms`     | Yes      | How many rooms, from 2 up to the number of grid slots.                    |
+| `grid`      | No       | The grid of room slots, `[columns, rows]`. Defaults to `[9, 7]`.          |
+| `seed`      | No       | The same seed always builds the same level. Defaults to the level number. |
+| `nextLevel` | No       | Where the exit leads. Without it, the generated level completes the game. |
+
+The rooms grow from the centre slot of the grid, each new room opening off one room
+already placed and touching no other, so they form branching corridors without loops.
+The start is the centre room, and the exit is the room the most doors away from it.
+Each room takes a random piece of its role whose doors include the room's. The pieces
+are laid out on one map with neighbours sharing the wall between them, unused doors are
+walled up, and empty slots are filled with wall. The result is read back as a level
+file, so it passes every check a level file does.
+
+## Room pieces
+
+```json
+{
+  "roomSize": [20, 12],
+  "tileLegend": { ".": "empty", "#": "stone" },
+  "wall": "#",
+  "open": ".",
+  "markers": {
+    "start": "S",
+    "exit": "E",
+    "actors": { "z": "zombie" },
+    "pickups": { "c": "coin_pile" }
+  },
+  "exit": "bunker_door",
+  "pieces": [
+    {
+      "name": "hall",
+      "role": "corridor",
+      "doors": ["left", "right"],
+      "map": ["####################", "#..................#", "..."]
+    }
+  ]
+}
+```
+
+| Field        | Meaning                                                                                           |
+| ------------ | ------------------------------------------------------------------------------------------------- |
+| `roomSize`   | Every piece's size in cells: an even width of at least 8 and a height of at least 6.              |
+| `tileLegend` | Map symbols to tile names, as in a level file.                                                    |
+| `wall`       | The tile symbol that seals unused doors and fills empty slots.                                    |
+| `open`       | The tile symbol of every door opening, and what a marker leaves behind.                           |
+| `markers`    | Symbols for the player's start, the exit, and actor and pickup definitions.                       |
+| `exit`       | The exit definition from `exits.json`.                                                            |
+| `pieces`     | `name`, unique; `role`; `doors`; optional `mirror` (default `true`); and `map`, the piece's rows. |
+
+A piece's `role` is `start`, with one start marker; `exit`, with one exit marker; or
+`corridor`, `shaft` or `arena`, with neither. Its `doors` list some of `left`, `right`,
+`up` and `down`. Side doors are three cells tall and stand on the bottom row; doors
+above and below are four cells wide and centred. A piece's edges are `open` on its
+doors and `wall` everywhere else. With `mirror`, the generator may also flip the piece
+left to right.
+
+Every set of doors a room can have must fit some start piece and some corridor, shaft
+or arena, and every single door some exit piece. Tests check that the player can walk
+and jump through every shipped piece from each of its doors to each other.
 
 ## Level files
 

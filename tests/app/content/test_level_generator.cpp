@@ -1,0 +1,250 @@
+#include <catch2/catch_test_macros.hpp>
+
+#include <cstddef>
+#include <algorithm>
+#include <cstdint>
+#include <cstdlib>
+#include <set>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
+
+#include "content/game_catalogs.hpp"
+#include "content/level_catalog.hpp"
+#include "content/level_data.hpp"
+#include "content/level_generator.hpp"
+#include "content/room_pieces.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "support/atlas_size.hpp"
+#include "support/player_reach.hpp"
+
+namespace
+{
+    using advanced_platformer::Cell;
+    using advanced_platformer::GridSize;
+    using advanced_platformer::LevelRandom;
+    using advanced_platformer::RoomLayout;
+    using advanced_platformer::RoomSide;
+    using advanced_platformer::RoomSlot;
+
+    constexpr const char* FixturePieces = "tests/fixtures/levels/rooms.json";
+
+    const RoomSlot* roomAt(const RoomLayout& layout, Cell grid)
+    {
+        for (const RoomSlot& room : layout.rooms)
+        {
+            if (room.grid == grid)
+            {
+                return &room;
+            }
+        }
+        return nullptr;
+    }
+
+    advanced_platformer::LevelGeneration generation(std::uint32_t seed)
+    {
+        return {
+            .relativePieces = "rooms.json",
+            .roomCount = 6,
+            .grid = {5, 5},
+            .seed = seed,
+            .nextLevel = 2};
+    }
+}
+
+TEST_CASE(
+    "The level random numbers repeat for a seed and stay in range",
+    "[app][content][generation]")
+{
+    LevelRandom first{42};
+    LevelRandom second{42};
+    for (int draw = 0; draw < 100; ++draw)
+    {
+        REQUIRE(advanced_platformer::nextRandom(first) == advanced_platformer::nextRandom(second));
+        REQUIRE(advanced_platformer::randomBelow(first, 7) < 7);
+        advanced_platformer::randomBelow(second, 7);
+    }
+}
+
+TEST_CASE("A room layout is a tree grown from the grid's centre", "[app][content][generation]")
+{
+    const GridSize grid{9, 7};
+    for (std::uint64_t seed = 1; seed <= 50; ++seed)
+    {
+        LevelRandom random{seed};
+        const RoomLayout layout = advanced_platformer::layoutRooms(grid, 12, random);
+        INFO("seed " << seed);
+
+        REQUIRE(layout.rooms.size() == 12);
+        REQUIRE(layout.rooms.front().grid == Cell{4, 3});
+        REQUIRE(layout.rooms.front().depth == 0);
+        std::set<std::pair<int, int>> slots;
+        int doors = 0;
+        int deepest = 0;
+        for (const RoomSlot& room : layout.rooms)
+        {
+            REQUIRE(room.grid.x >= 0);
+            REQUIRE(room.grid.x < grid.width);
+            REQUIRE(room.grid.y >= 0);
+            REQUIRE(room.grid.y < grid.height);
+            REQUIRE(slots.insert({room.grid.x, room.grid.y}).second);
+            deepest = std::max(deepest, room.depth);
+            for (const RoomSide side :
+                 {RoomSide::Left, RoomSide::Right, RoomSide::Up, RoomSide::Down})
+            {
+                const RoomSlot* neighbour =
+                    roomAt(layout, advanced_platformer::stepTowards(room.grid, side));
+                const bool joined = advanced_platformer::hasDoor(room.doors, side);
+                // Rooms only touch where a door joins them, so the rooms never form a loop.
+                REQUIRE(joined == (neighbour != nullptr));
+                if (joined)
+                {
+                    REQUIRE(
+                        advanced_platformer::hasDoor(
+                            neighbour->doors, advanced_platformer::oppositeOf(side)));
+                    REQUIRE(std::abs(neighbour->depth - room.depth) == 1);
+                    ++doors;
+                }
+            }
+        }
+        // A tree of n rooms has n - 1 joins, each counted from both of its rooms.
+        REQUIRE(doors == 2 * 11);
+        const RoomSlot& exit = layout.rooms[layout.exit];
+        REQUIRE(exit.depth == deepest);
+        REQUIRE(advanced_platformer::doorCount(exit.doors) == 1);
+    }
+}
+
+TEST_CASE("The same seed lays out the same rooms", "[app][content][generation]")
+{
+    LevelRandom first{7};
+    LevelRandom second{7};
+    const RoomLayout one = advanced_platformer::layoutRooms({9, 7}, 10, first);
+    const RoomLayout two = advanced_platformer::layoutRooms({9, 7}, 10, second);
+
+    REQUIRE(one.exit == two.exit);
+    REQUIRE(one.rooms.size() == two.rooms.size());
+    for (std::size_t room = 0; room < one.rooms.size(); ++room)
+    {
+        REQUIRE(one.rooms[room].grid == two.rooms[room].grid);
+        REQUIRE(one.rooms[room].doors == two.rooms[room].doors);
+    }
+}
+
+TEST_CASE("Stitched rooms share walls and seal unused doors", "[app][content][generation]")
+{
+    const advanced_platformer::RoomPieceCatalog catalog =
+        advanced_platformer::loadRoomPieceCatalog(FixturePieces);
+    // start (doors right) beside hall (doors left and right) beside exit (doors left).
+    const RoomLayout layout{
+        .grid = {3, 1},
+        .rooms =
+            {{{0, 0}, advanced_platformer::withDoor({}, RoomSide::Right), 0},
+             {{1, 0},
+              advanced_platformer::withDoor(
+                  advanced_platformer::withDoor({}, RoomSide::Left), RoomSide::Right),
+              1},
+             {{2, 0}, advanced_platformer::withDoor({}, RoomSide::Left), 2}},
+        .exit = 2};
+    const advanced_platformer::LevelData level = advanced_platformer::stitchRooms(
+        catalog, layout, {{0, false}, {1, false}, {3, false}}, 2, "rooms.json");
+
+    // Three 8-wide rooms sharing two walls.
+    REQUIRE(level.mapRows.size() == 6);
+    REQUIRE(level.mapRows.front().size() == 3 * 7 + 1);
+    // The shared walls are open where the doors meet, and the outer walls stay closed.
+    for (int row = 2; row <= 4; ++row)
+    {
+        const std::string& line = level.mapRows[static_cast<std::size_t>(row)];
+        REQUIRE(line[0] == '#');
+        REQUIRE(line[7] == '.');
+        REQUIRE(line[14] == '.');
+        REQUIRE(line[21] == '#');
+    }
+    // The pieces' doors above and below join nothing here, so they are sealed.
+    REQUIRE(level.mapRows.front() == std::string(22, '#'));
+    REQUIRE(level.mapRows.back() == std::string(22, '#'));
+    REQUIRE(std::holds_alternative<Cell>(level.playerSpawn));
+    REQUIRE(level.exit.definitionName == "test_door");
+    REQUIRE(level.exit.nextLevel == 2);
+    REQUIRE(level.actors.size() == 1);
+    REQUIRE(level.actors.front().definitionName == "test_guard");
+}
+
+TEST_CASE("The same seed generates the same level file", "[app][content][generation]")
+{
+    const advanced_platformer::RoomPieceCatalog catalog =
+        advanced_platformer::loadRoomPieceCatalog(FixturePieces);
+    const std::string first = advanced_platformer::formatLevelData(
+        advanced_platformer::generateLevel(catalog, generation(7), "rooms.json"));
+
+    REQUIRE(
+        advanced_platformer::formatLevelData(
+            advanced_platformer::generateLevel(catalog, generation(7), "rooms.json")) == first);
+    std::set<std::string> levels;
+    for (std::uint32_t seed = 1; seed <= 10; ++seed)
+    {
+        levels.insert(
+            advanced_platformer::formatLevelData(
+                advanced_platformer::generateLevel(catalog, generation(seed), "rooms.json")));
+    }
+    REQUIRE(levels.size() > 1);
+}
+
+TEST_CASE("Every shipped level file reads back the same after formatting", "[app][content][json]")
+{
+    const advanced_platformer::LevelCatalog catalog =
+        advanced_platformer::loadLevelCatalog("assets/levels/levels.json");
+    for (const advanced_platformer::LevelCatalogEntry& entry : catalog.levels)
+    {
+        if (entry.generation.has_value())
+        {
+            continue;
+        }
+        const advanced_platformer::LevelData level = advanced_platformer::loadLevelData(
+            advanced_platformer::levelPath(catalog, entry.number));
+        const std::string text = advanced_platformer::formatLevelData(level);
+        INFO("level " << entry.number);
+        REQUIRE(
+            advanced_platformer::formatLevelData(
+                advanced_platformer::parseLevelData(text, "formatted")) == text);
+        const advanced_platformer::LevelData again =
+            advanced_platformer::parseLevelData(text, "formatted");
+        REQUIRE(again.mapRows == level.mapRows);
+        REQUIRE(again.actors.size() == level.actors.size());
+        REQUIRE(again.pickups.size() == level.pickups.size());
+        REQUIRE(again.exit.nextLevel == level.exit.nextLevel);
+    }
+}
+
+TEST_CASE(
+    "Every shipped generated level reaches its exit across seeds",
+    "[app][content][generation]")
+{
+    const advanced_platformer::LevelCatalog catalog =
+        advanced_platformer::loadLevelCatalog("assets/levels/levels.json");
+    const advanced_platformer::GameCatalogs catalogs =
+        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
+    for (const advanced_platformer::LevelCatalogEntry& entry : catalog.levels)
+    {
+        if (!entry.generation.has_value())
+        {
+            continue;
+        }
+        const advanced_platformer::LevelGeneration shipped = *entry.generation;
+        const advanced_platformer::RoomPieceCatalog pieces =
+            advanced_platformer::loadRoomPieceCatalog(
+                catalog.levelDirectory / shipped.relativePieces);
+        for (std::uint32_t seed = 1; seed <= 12; ++seed)
+        {
+            advanced_platformer::LevelGeneration generation = shipped;
+            generation.seed = seed;
+            INFO("level " << entry.number << " seed " << seed);
+            REQUIRE(
+                tests::playerReachesExit(
+                    advanced_platformer::generateLevel(pieces, generation, "rooms.json"),
+                    catalogs));
+        }
+    }
+}

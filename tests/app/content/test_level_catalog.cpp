@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <filesystem>
+#include <string>
 #include <stdexcept>
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include <glm/vec2.hpp>
@@ -124,4 +125,80 @@ TEST_CASE(
     REQUIRE_THROWS_WITH(
         advanced_platformer::parseLevelCatalog(tests::dumpJson(levelCatalogJson), "levels.json"),
         Catch::Matchers::ContainsSubstring("cameraDeadZone"));
+}
+
+TEST_CASE("A level catalog entry can generate its level from room pieces", "[app][content][json]")
+{
+    const auto catalog = advanced_platformer::parseLevelCatalog(
+        R"({
+            "startLevel": 1,
+            "cameraDeadZone": [80, 45],
+            "levels": [
+                {"number": 1, "generate": {"pieces": "rooms.json", "rooms": 6, "grid": [5, 3], "seed": 9, "nextLevel": 2}},
+                {"number": 2, "generate": {"pieces": "rooms.json", "rooms": 4}}
+            ]
+        })",
+        "test catalog",
+        "levels");
+
+    const advanced_platformer::LevelCatalogEntry& first =
+        advanced_platformer::levelEntry(catalog, 1);
+    REQUIRE(first.generation.has_value());
+    const advanced_platformer::LevelGeneration one =
+        first.generation.value_or(advanced_platformer::LevelGeneration{});
+    REQUIRE(one.relativePieces == std::filesystem::path("rooms.json"));
+    REQUIRE(one.roomCount == 6);
+    REQUIRE(one.grid.width == 5);
+    REQUIRE(one.grid.height == 3);
+    REQUIRE(one.seed == 9);
+    REQUIRE(one.nextLevel == 2);
+    const advanced_platformer::LevelCatalogEntry& second =
+        advanced_platformer::levelEntry(catalog, 2);
+    REQUIRE(second.generation.has_value());
+    const advanced_platformer::LevelGeneration two =
+        second.generation.value_or(advanced_platformer::LevelGeneration{});
+    REQUIRE(two.grid.width == 9);
+    REQUIRE(two.grid.height == 7);
+    REQUIRE(two.seed == 2);
+    REQUIRE_FALSE(two.nextLevel.has_value());
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::levelPath(catalog, 1),
+        Catch::Matchers::ContainsSubstring("Level 1 is generated"));
+}
+
+TEST_CASE("A level catalog rejects a generated entry it cannot build", "[app][content][json]")
+{
+    auto levelCatalogJson = tests::parseJson(
+        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"generate":{"pieces":"rooms.json","rooms":4}}]})");
+    auto& entry = levelCatalogJson["levels"][0];
+    std::string message;
+    SECTION("Both a file and a generation")
+    {
+        entry["file"] = "one.json";
+        message = "levels[0]: expected exactly one of file and generate";
+    }
+    SECTION("Neither a file nor a generation")
+    {
+        tests::eraseKey(entry, "generate");
+        message = "levels[0]: expected exactly one of file and generate";
+    }
+    SECTION("Too few rooms")
+    {
+        entry["generate"]["rooms"] = 1;
+        message = "levels[0].generate.rooms: expected at least 2 rooms";
+    }
+    SECTION("More rooms than the grid holds")
+    {
+        entry["generate"]["grid"] = tests::numbers({2, 2});
+        entry["generate"]["rooms"] = 5;
+        message = "no more than the grid's 4 slots";
+    }
+    SECTION("A piece file outside the level directory")
+    {
+        entry["generate"]["pieces"] = "../rooms.json";
+        message = "levels[0].generate.pieces: file must stay inside the level directory";
+    }
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::parseLevelCatalog(tests::dumpJson(levelCatalogJson), "levels.json"),
+        Catch::Matchers::ContainsSubstring(message));
 }

@@ -88,3 +88,6 @@ belong to.
 | Catalog             | A JSON file of named definitions, such as `actors.json` or `items.json`.                                                 |
 | Definition          | One named entry in a catalog, which levels refer to by name.                                                             |
 | Legend              | The part of a level file that says what each character in its map rows means.                                            |
+| Room piece          | A hand-drawn room with doors on its edges and a role, which the generator stitches into levels. See `rooms.json`.        |
+| Room layout         | The grid slots a generated level's rooms fill, the doors between them, and which room is the exit.                       |
+| Seed                | The number a generated level is built from. The same seed always builds the same level.                                  |
