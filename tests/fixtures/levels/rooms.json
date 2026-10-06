@@ -9,7 +9,7 @@
     "actors": { "g": "test_guard" },
     "pickups": { "m": "medicine_box" }
   },
-  "exit": "test_door",
+  "exit": { "definition": "test_door" },
   "pieces": [
     {
       "name": "start",

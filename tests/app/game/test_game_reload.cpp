@@ -19,7 +19,7 @@ namespace
     {
         return {
             advanced_platformer::parseLevelCatalog(
-                R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"actor_placement.json"}]})",
+                R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"pieces":"actor_placement.json","rooms":2,"grid":[2,1]}]})",
                 "fixture",
                 "tests/fixtures/levels"),
             advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),

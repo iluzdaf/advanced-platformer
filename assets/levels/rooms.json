@@ -21,7 +21,7 @@
       "h": "health_potion"
     }
   },
-  "exit": "bunker_door",
+  "exit": { "definition": "bunker_door" },
   "pieces": [
     {
       "name": "start_shaft",

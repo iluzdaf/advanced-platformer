@@ -4,21 +4,17 @@
   "levels": [
     {
       "number": 1,
-      "generate": {
-        "pieces": "rooms_some_shut.json",
-        "rooms": 3,
-        "grid": [5, 1],
-        "seed": 1
-      }
+      "pieces": "rooms_some_shut.json",
+      "rooms": 3,
+      "grid": [5, 1],
+      "seed": 1
     },
     {
       "number": 2,
-      "generate": {
-        "pieces": "rooms_all_shut.json",
-        "rooms": 3,
-        "grid": [5, 1],
-        "seed": 1
-      }
+      "pieces": "rooms_all_shut.json",
+      "rooms": 3,
+      "grid": [5, 1],
+      "seed": 1
     }
   ]
 }

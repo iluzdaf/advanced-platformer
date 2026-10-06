@@ -1,15 +1,12 @@
 #include "application.hpp"
 
 #include <cstddef>
-#include <cstdint>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
 #include <format>
-#include <fstream>
 #include <iostream>
 #include <optional>
-#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -69,7 +66,6 @@ namespace advanced_platformer
             bool restartRequested = false;
             bool restartLevelRequested = false;
             bool rerollLevelRequested = false;
-            bool dumpLevelRequested = false;
         };
 
         std::optional<InputButton> buttonForKey(int key)
@@ -111,11 +107,6 @@ namespace advanced_platformer
             if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
             {
                 context->restartLevelRequested = true;
-                return;
-            }
-            if (key == GLFW_KEY_F6 && action == GLFW_PRESS)
-            {
-                context->dumpLevelRequested = true;
                 return;
             }
             if (key == GLFW_KEY_F7 && action == GLFW_PRESS)
@@ -257,31 +248,6 @@ namespace advanced_platformer
             }
         }
 
-        void dumpLevel(const Game& game, ConsoleLog& console)
-        {
-            try
-            {
-                const std::optional<std::uint32_t> seed = game.levelSeed();
-                const std::filesystem::path path = std::filesystem::absolute(
-                    seed.has_value()
-                        ? std::format("level_{}_seed_{}.json", game.levelNumber(), *seed)
-                        : std::format("level_{}.json", game.levelNumber()));
-                std::ofstream file(path);
-                file << game.levelJson();
-                file.close();
-                if (!file)
-                {
-                    throw std::runtime_error(std::format("could not write {}", path.string()));
-                }
-                console.write(ConsoleLevel::Info, std::format("Wrote {}", path.string()));
-            }
-            catch (const std::exception& error)
-            {
-                console.write(
-                    ConsoleLevel::Error, std::format("Could not dump the level: {}", error.what()));
-            }
-        }
-
         InputIntentions playerIntentions(
             ApplicationContext& context,
             const Game& game,
@@ -386,11 +352,12 @@ namespace advanced_platformer
                             std::format(
                                 "Generated level {} from seed {}",
                                 game.levelNumber(),
-                                game.levelSeed().value_or(0U)));
+                                game.levelSeed()));
                     }
                     else
                     {
-                        console.write(ConsoleLevel::Info, "Only a generated level can be rerolled");
+                        console.write(
+                            ConsoleLevel::Info, "A completed game has no level to reroll");
                     }
                 }
                 catch (const std::exception& error)
@@ -400,11 +367,6 @@ namespace advanced_platformer
                         std::format("Could not reroll the level: {}", error.what()));
                 }
                 context.rerollLevelRequested = false;
-            }
-            if (context.dumpLevelRequested)
-            {
-                dumpLevel(game, console);
-                context.dumpLevelRequested = false;
             }
             if (assetWatcher.has_value() && assetPollClock.elapsedSeconds() >= AssetPollSeconds)
             {

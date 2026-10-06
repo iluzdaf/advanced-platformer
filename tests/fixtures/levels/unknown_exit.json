@@ -1,16 +1,32 @@
 {
+  "roomSize": [8, 6],
   "tileLegend": {
     ".": "empty",
     "#": "stone"
   },
-  "map": ["....", "....", "####"],
-  "playerSpawn": {
-    "cell": [0, 1]
+  "wall": "#",
+  "open": ".",
+  "markers": {
+    "start": "S",
+    "exit": "E"
   },
   "exit": {
-    "definition": "missing",
-    "spawn": {
-      "cell": [3, 1]
+    "definition": "missing"
+  },
+  "pieces": [
+    {
+      "name": "start",
+      "role": "start",
+      "doors": ["left"],
+      "mirror": false,
+      "map": ["########", "#......#", ".......#", ".......#", "......S#", "########"]
+    },
+    {
+      "name": "exit",
+      "role": "exit",
+      "doors": ["right"],
+      "mirror": false,
+      "map": ["########", "#......#", "#.......", "#.......", "#.E.....", "########"]
     }
-  }
+  ]
 }

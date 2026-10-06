@@ -4,11 +4,16 @@
   "levels": [
     {
       "number": 10,
-      "file": "locked_door.json"
+      "pieces": "locked_door.json",
+      "rooms": 2,
+      "grid": [2, 1],
+      "nextLevel": 25
     },
     {
       "number": 25,
-      "file": "finish.json"
+      "pieces": "finish.json",
+      "rooms": 2,
+      "grid": [2, 1]
     }
   ]
 }

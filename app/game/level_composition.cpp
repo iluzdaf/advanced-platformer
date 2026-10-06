@@ -96,13 +96,7 @@ namespace advanced_platformer
         int levelNumber,
         std::optional<std::uint32_t> seed)
     {
-        const LevelCatalogEntry& entry = levelEntry(catalog, levelNumber);
-        if (!entry.generation.has_value())
-        {
-            const auto path = levelPath(catalog, levelNumber);
-            return {loadLevelData(path), path.string(), std::nullopt};
-        }
-        LevelGeneration generation = *entry.generation;
+        LevelGeneration generation = levelEntry(catalog, levelNumber).generation;
         generation.seed = seed.value_or(generation.seed);
         const auto piecesPath = catalog.levelDirectory / generation.relativePieces;
         std::string sourceName = std::format(
@@ -265,11 +259,7 @@ namespace advanced_platformer
     {
         GameLevel level =
             composeWithPlayer(catalog, levelNumber, textureId, catalogs, player, seed);
-        if (!level.seed.has_value())
-        {
-            return level;
-        }
-        const std::uint32_t firstSeed = *level.seed;
+        const std::uint32_t firstSeed = level.seed;
         for (std::uint32_t nextSeed = firstSeed + 1U;
              !playerCanReachExit(level.map, level.world, stepSeconds);
              ++nextSeed)

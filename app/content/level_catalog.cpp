@@ -24,20 +24,14 @@
 
 namespace advanced_platformer
 {
-    struct LevelGenerationJson
+    struct LevelEntryJson
     {
+        int number = 0;
         std::string pieces;
         int rooms = 0;
         std::optional<std::array<int, 2>> grid;
         std::optional<std::uint32_t> seed;
         std::optional<int> nextLevel;
-    };
-
-    struct LevelEntryJson
-    {
-        int number = 0;
-        std::optional<std::string> file;
-        std::optional<LevelGenerationJson> generate;
     };
 
     struct LevelCatalogJson
@@ -67,21 +61,20 @@ namespace advanced_platformer
             const std::filesystem::path file = text;
             if (file.empty() || file.is_absolute())
             {
-                failJson(sourceName, path, "file must be a non-empty relative path");
+                failJson(sourceName, path, "expected a non-empty relative path");
             }
             for (const std::filesystem::path& part : file)
             {
                 if (part == "..")
                 {
-                    failJson(sourceName, path, "file must stay inside the level directory");
+                    failJson(sourceName, path, "expected a path inside the level directory");
                 }
             }
             return file;
         }
 
         LevelGeneration generationFrom(
-            const LevelGenerationJson& json,
-            int number,
+            const LevelEntryJson& json,
             std::string_view sourceName,
             std::string_view path)
         {
@@ -104,7 +97,7 @@ namespace advanced_platformer
                         "expected at least 2 rooms and no more than the grid's {} slots",
                         result.grid.width * result.grid.height));
             }
-            result.seed = json.seed.value_or(static_cast<std::uint32_t>(number));
+            result.seed = json.seed.value_or(static_cast<std::uint32_t>(json.number));
             if (json.nextLevel.has_value())
             {
                 requirePositiveLevel(*json.nextLevel, sourceName, fieldPath(path, "nextLevel"));
@@ -150,20 +143,7 @@ namespace advanced_platformer
             requirePositiveLevel(json.number, sourceName, fieldPath(path, "number"));
             LevelCatalogEntry entry;
             entry.number = json.number;
-            if (json.file.has_value() == json.generate.has_value())
-            {
-                failJson(sourceName, path, "expected exactly one of file and generate");
-            }
-            if (json.file.has_value())
-            {
-                entry.relativeFile =
-                    relativeFileFrom(*json.file, sourceName, fieldPath(path, "file"));
-            }
-            else
-            {
-                entry.generation = generationFrom(
-                    *json.generate, json.number, sourceName, fieldPath(path, "generate"));
-            }
+            entry.generation = generationFrom(json, sourceName, path);
 
             const auto duplicateNumber = std::ranges::find_if(
                 result.levels,
@@ -202,16 +182,5 @@ namespace advanced_platformer
             throw std::invalid_argument(std::format("Level {} is not in the catalog", levelNumber));
         }
         return *found;
-    }
-
-    std::filesystem::path levelPath(const LevelCatalog& catalog, int levelNumber)
-    {
-        const LevelCatalogEntry& entry = levelEntry(catalog, levelNumber);
-        if (entry.generation.has_value())
-        {
-            throw std::invalid_argument(
-                std::format("Level {} is generated, not read from a file", levelNumber));
-        }
-        return catalog.levelDirectory / entry.relativeFile;
     }
 }

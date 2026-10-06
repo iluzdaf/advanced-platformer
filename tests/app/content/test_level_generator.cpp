@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_string.hpp>
 
 #include <cstddef>
 #include <algorithm>
@@ -26,6 +27,16 @@ namespace
     using advanced_platformer::RoomSlot;
 
     constexpr const char* FixturePieces = "tests/fixtures/levels/rooms.json";
+
+    advanced_platformer::LevelGeneration generation(std::uint32_t seed)
+    {
+        return {
+            .relativePieces = "rooms.json",
+            .roomCount = 6,
+            .grid = {5, 5},
+            .seed = seed,
+            .nextLevel = 2};
+    }
 }
 
 namespace
@@ -142,19 +153,6 @@ TEST_CASE("Stitched rooms share walls and seal unused doors", "[app][content][ge
     REQUIRE(level.actors.front().definitionName == "test_guard");
 }
 
-namespace
-{
-    advanced_platformer::LevelGeneration generation(std::uint32_t seed)
-    {
-        return {
-            .relativePieces = "rooms.json",
-            .roomCount = 6,
-            .grid = {5, 5},
-            .seed = seed,
-            .nextLevel = 2};
-    }
-}
-
 TEST_CASE("The same seed generates the same level file", "[app][content][generation]")
 {
     const advanced_platformer::RoomPieceCatalog catalog =
@@ -173,6 +171,25 @@ TEST_CASE("The same seed generates the same level file", "[app][content][generat
                 advanced_platformer::generateLevel(catalog, generation(seed), "rooms.json")));
     }
     REQUIRE(levels.size() > 1);
+}
+
+TEST_CASE(
+    "A level fails to generate when no piece fits a room's doors",
+    "[app][content][generation]")
+{
+    advanced_platformer::RoomPieceCatalog catalog =
+        advanced_platformer::loadRoomPieceCatalog(FixturePieces);
+    std::erase_if(
+        catalog.pieces,
+        [](const advanced_platformer::RoomPiece& piece)
+        {
+            return piece.role != advanced_platformer::RoomRole::Start &&
+                   piece.role != advanced_platformer::RoomRole::Exit;
+        });
+
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::generateLevel(catalog, generation(7), "rooms.json"),
+        Catch::Matchers::StartsWith("rooms.json: no corridor, shaft or arena piece has doors "));
 }
 
 TEST_CASE(

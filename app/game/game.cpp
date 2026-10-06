@@ -8,13 +8,11 @@
 #include "content/game_catalogs.hpp"
 #include "content/hud_catalog.hpp"
 #include "content/game_content.hpp"
-#include "content/level_data.hpp"
 #include "level_reload.hpp"
 
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
-#include <string>
 #include <cmath>
 #include <optional>
 #include <variant>
@@ -313,11 +311,11 @@ namespace advanced_platformer
 
     bool Game::rerollLevel()
     {
-        if (gameComplete || !level.seed.has_value())
+        if (gameComplete)
         {
             return false;
         }
-        loadLevel(level.number, *level.seed + 1U);
+        loadLevel(level.number, level.seed + 1U);
         return true;
     }
 
@@ -356,14 +354,9 @@ namespace advanced_platformer
         return level.number;
     }
 
-    std::optional<std::uint32_t> Game::levelSeed() const
+    std::uint32_t Game::levelSeed() const
     {
         return level.seed;
-    }
-
-    std::string Game::levelJson() const
-    {
-        return formatLevelData(loadCatalogLevel(levelCatalog, level.number, level.seed).data);
     }
 
     bool Game::complete() const

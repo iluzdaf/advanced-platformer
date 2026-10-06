@@ -24,8 +24,7 @@ namespace advanced_platformer
     struct LevelCatalogEntry
     {
         int number = 0;
-        std::filesystem::path relativeFile;
-        std::optional<LevelGeneration> generation;
+        LevelGeneration generation;
     };
 
     struct LevelCatalog
@@ -42,5 +41,4 @@ namespace advanced_platformer
         const std::filesystem::path& levelDirectory = {});
     LevelCatalog loadLevelCatalog(const std::filesystem::path& path);
     const LevelCatalogEntry& levelEntry(const LevelCatalog& catalog, int levelNumber);
-    std::filesystem::path levelPath(const LevelCatalog& catalog, int levelNumber);
 }

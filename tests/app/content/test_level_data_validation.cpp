@@ -1,4 +1,3 @@
-#include <filesystem>
 #include <stdexcept>
 
 #include <catch2/catch_test_macros.hpp>
@@ -22,26 +21,82 @@ namespace
     }
 }
 
-TEST_CASE(
-    "Level integer fields reject values outside their destination types",
-    "[app][content][json]")
+TEST_CASE("Level JSON requires a tile legend", "[app][content][json]")
 {
     auto level = minimalLevel();
-    SECTION("Oversized cell")
-    {
-        level["playerSpawn"]["cell"][0] = 4294967296LL;
-    }
-    SECTION("Undersized cell")
-    {
-        level["playerSpawn"]["cell"][1] = -4294967296LL;
-    }
-    SECTION("Exit destination")
-    {
-        level["exit"]["nextLevel"] = 4294967297LL;
-    }
+    tests::eraseKey(level, "tileLegend");
+
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "no legend"),
+        Catch::Matchers::ContainsSubstring("tileLegend"));
+}
+
+TEST_CASE("Tile legend keys must be one character", "[app][content][json]")
+{
+    auto level = minimalLevel();
+    level["tileLegend"]["long"] = "grass";
+
     REQUIRE_THROWS_AS(
-        advanced_platformer::parseLevelData(tests::dumpJson(level), "placements.json"),
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "bad legend"),
         std::invalid_argument);
+}
+
+TEST_CASE("Map symbols must be declared in a legend", "[app][content][json]")
+{
+    auto level = minimalLevel();
+    level["map"][0] = ".X..";
+
+    REQUIRE_THROWS_AS(
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "bad symbol"),
+        std::invalid_argument);
+}
+
+TEST_CASE("Level maps require rectangular rows", "[app][content][json]")
+{
+    auto level = minimalLevel();
+    level["map"][1] = "###";
+
+    REQUIRE_THROWS_AS(
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "ragged level"),
+        std::invalid_argument);
+}
+
+TEST_CASE("Levels may omit placement arrays", "[app][content][json]")
+{
+    const auto data = advanced_platformer::parseLevelData(
+        R"({
+            "tileLegend": {".": "empty"},
+            "map": ["..."],
+            "playerSpawn": {"cell": [0, 0]},
+            "exit": {"definition": "test_door", "spawn": {"cell": [2, 0]}}
+        })",
+        "empty level");
+
+    REQUIRE(data.actors.empty());
+    REQUIRE(data.pickups.empty());
+}
+
+TEST_CASE("Present placement lists must be arrays", "[app][content][json]")
+{
+    auto level = minimalLevel();
+    level["actors"] = tests::emptyObject();
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "placements.json"),
+        Catch::Matchers::StartsWith("placements.json: line 1, column ") &&
+            Catch::Matchers::EndsWith("expected a list, found '{'"));
+
+    level = minimalLevel();
+    level["pickups"] = "coins";
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "placements.json"),
+        Catch::Matchers::StartsWith("placements.json: line 1, column ") &&
+            Catch::Matchers::EndsWith("expected a list, found 'coins'"));
+
+    level = minimalLevel();
+    level["pickups"] = nullptr;
+    REQUIRE(
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "placements.json")
+            .pickups.empty());
 }
 
 TEST_CASE("Explicit level placements reject unknown fields", "[app][content][json]")
@@ -90,74 +145,6 @@ TEST_CASE("Explicit level placements reject unknown fields", "[app][content][jso
     }
     REQUIRE_THROWS_AS(
         advanced_platformer::parseLevelData(tests::dumpJson(level), "placements.json"),
-        std::invalid_argument);
-}
-
-TEST_CASE("Present placement lists must be arrays", "[app][content][json]")
-{
-    auto level = minimalLevel();
-    level["actors"] = tests::emptyObject();
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::parseLevelData(tests::dumpJson(level), "placements.json"),
-        Catch::Matchers::StartsWith("placements.json: line 1, column ") &&
-            Catch::Matchers::EndsWith("expected a list, found '{'"));
-
-    level = minimalLevel();
-    level["pickups"] = "coins";
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::parseLevelData(tests::dumpJson(level), "placements.json"),
-        Catch::Matchers::StartsWith("placements.json: line 1, column ") &&
-            Catch::Matchers::EndsWith("expected a list, found 'coins'"));
-
-    level = minimalLevel();
-    level["pickups"] = nullptr;
-    REQUIRE(
-        advanced_platformer::parseLevelData(tests::dumpJson(level), "placements.json")
-            .pickups.empty());
-}
-
-TEST_CASE("Levels may omit placement arrays", "[app][content][json]")
-{
-    const auto data = advanced_platformer::parseLevelData(
-        R"({
-            "tileLegend": {".": "empty"},
-            "map": ["..."],
-            "playerSpawn": {"cell": [0, 0]},
-            "exit": {"definition": "test_door", "spawn": {"cell": [2, 0]}}
-        })",
-        "empty level");
-
-    REQUIRE(data.actors.empty());
-    REQUIRE(data.pickups.empty());
-}
-
-TEST_CASE("Tile legend keys must be one character", "[app][content][json]")
-{
-    auto level = minimalLevel();
-    level["tileLegend"]["long"] = "grass";
-
-    REQUIRE_THROWS_AS(
-        advanced_platformer::parseLevelData(tests::dumpJson(level), "bad legend"),
-        std::invalid_argument);
-}
-
-TEST_CASE("Map symbols must be declared in a legend", "[app][content][json]")
-{
-    auto level = minimalLevel();
-    level["map"][0] = ".X..";
-
-    REQUIRE_THROWS_AS(
-        advanced_platformer::parseLevelData(tests::dumpJson(level), "bad symbol"),
-        std::invalid_argument);
-}
-
-TEST_CASE("Level maps require rectangular rows", "[app][content][json]")
-{
-    auto level = minimalLevel();
-    level["map"][1] = "###";
-
-    REQUIRE_THROWS_AS(
-        advanced_platformer::parseLevelData(tests::dumpJson(level), "ragged level"),
         std::invalid_argument);
 }
 
@@ -236,20 +223,24 @@ TEST_CASE("Pickup definition names cannot be empty", "[app][content][json]")
         "level.json: pickups[0].definition: pickup definition name cannot be empty");
 }
 
-TEST_CASE("Missing level JSON is rejected at the file boundary", "[app][content][json]")
-{
-    REQUIRE_THROWS_AS(
-        advanced_platformer::loadLevelData(
-            std::filesystem::path("assets/levels/does_not_exist.json")),
-        std::invalid_argument);
-}
-
-TEST_CASE("Level JSON requires a tile legend", "[app][content][json]")
+TEST_CASE(
+    "Level integer fields reject values outside their destination types",
+    "[app][content][json]")
 {
     auto level = minimalLevel();
-    tests::eraseKey(level, "tileLegend");
-
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::parseLevelData(tests::dumpJson(level), "no legend"),
-        Catch::Matchers::ContainsSubstring("tileLegend"));
+    SECTION("Oversized cell")
+    {
+        level["playerSpawn"]["cell"][0] = 4294967296LL;
+    }
+    SECTION("Undersized cell")
+    {
+        level["playerSpawn"]["cell"][1] = -4294967296LL;
+    }
+    SECTION("Exit destination")
+    {
+        level["exit"]["nextLevel"] = 4294967297LL;
+    }
+    REQUIRE_THROWS_AS(
+        advanced_platformer::parseLevelData(tests::dumpJson(level), "placements.json"),
+        std::invalid_argument);
 }

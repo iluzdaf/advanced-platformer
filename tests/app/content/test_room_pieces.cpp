@@ -57,6 +57,21 @@ namespace
     }
 }
 
+TEST_CASE("A room piece file can lock its exit behind an item", "[app][content][generation]")
+{
+    tests::Json document = fixturePieces();
+    document["exit"] = tests::parseJson(
+        R"({"definition": "test_door", "requirement": {"item": "key", "quantity": 2}, "consumeItem": true})");
+
+    const advanced_platformer::RoomPieceCatalog catalog =
+        advanced_platformer::parseRoomPieceCatalog(tests::dumpJson(document), "rooms.json");
+
+    REQUIRE(catalog.exitRequirement.has_value());
+    REQUIRE(catalog.exitRequirement.value_or(advanced_platformer::NamedItemStack{}).item == "key");
+    REQUIRE(catalog.exitRequirement.value_or(advanced_platformer::NamedItemStack{}).quantity == 2);
+    REQUIRE(catalog.consumeExitItem);
+}
+
 TEST_CASE("A room piece file rejects pieces that cannot be stitched", "[app][content][generation]")
 {
     tests::Json document = fixturePieces();
@@ -107,11 +122,10 @@ TEST_CASE("A room piece file rejects pieces that cannot be stitched", "[app][con
         document["markers"]["actors"] = tests::parseJson(R"({"#": "test_guard"})");
         requireRejected(document, "markers.actors.#: symbol is already a tile or marker");
     }
-    SECTION("No ordinary room for some doors")
+    SECTION("An exit with no definition")
     {
-        hall["doors"] = tests::parseJson(R"(["left", "right", "up"])");
-        hall["map"][5] = "########";
-        requireRejected(document, "no corridor, shaft or arena has doors");
+        document["exit"]["definition"] = "";
+        requireRejected(document, "exit.definition: exit definition name cannot be empty");
     }
     SECTION("An odd room width")
     {

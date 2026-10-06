@@ -6,7 +6,6 @@
 #include "item_catalog.hpp"
 
 #include <cstddef>
-#include <filesystem>
 #include <format>
 #include <map>
 #include <optional>
@@ -366,11 +365,6 @@ namespace advanced_platformer
             result.itemReferences.emplace("exit.requirement.item", result.exit.requirement->item);
         }
         return result;
-    }
-
-    LevelData loadLevelData(const std::filesystem::path& path)
-    {
-        return parseLevelData(loadContentText(path), path.string());
     }
 
     std::string formatLevelData(const LevelData& level)

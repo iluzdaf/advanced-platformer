@@ -3,11 +3,14 @@
 #include <cstdint>
 #include <filesystem>
 #include <map>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
 #include "advanced_platformer/math/coordinates.hpp"
+
+#include "item_catalog.hpp"
 
 namespace advanced_platformer
 {
@@ -65,6 +68,8 @@ namespace advanced_platformer
         std::map<char, std::string> actorMarkers;
         std::map<char, std::string> pickupMarkers;
         std::string exitDefinition;
+        std::optional<NamedItemStack> exitRequirement;
+        bool consumeExitItem = false;
         std::vector<RoomPiece> pieces;
     };
 

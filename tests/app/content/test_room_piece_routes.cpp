@@ -99,11 +99,7 @@ TEST_CASE(
         advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
     for (const advanced_platformer::LevelCatalogEntry& entry : catalog.levels)
     {
-        if (!entry.generation.has_value())
-        {
-            continue;
-        }
-        const advanced_platformer::LevelGeneration shipped = *entry.generation;
+        const advanced_platformer::LevelGeneration& shipped = entry.generation;
         const advanced_platformer::RoomPieceCatalog pieces =
             advanced_platformer::loadRoomPieceCatalog(
                 catalog.levelDirectory / shipped.relativePieces);

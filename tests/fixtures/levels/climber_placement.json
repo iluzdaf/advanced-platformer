@@ -1,25 +1,35 @@
 {
+  "roomSize": [8, 6],
   "tileLegend": {
     ".": "empty",
     "#": "stone"
   },
-  "map": [".......", ".......", "#######"],
-  "playerSpawn": {
-    "cell": [0, 1]
+  "wall": "#",
+  "open": ".",
+  "markers": {
+    "start": "S",
+    "exit": "E",
+    "actors": {
+      "c": "test_climber"
+    }
   },
-  "actors": [
-    {
-      "id": "climber",
-      "definition": "test_climber",
-      "spawn": {
-        "cell": [3, 1]
-      }
-    }
-  ],
   "exit": {
-    "definition": "test_door",
-    "spawn": {
-      "cell": [6, 1]
+    "definition": "test_door"
+  },
+  "pieces": [
+    {
+      "name": "start",
+      "role": "start",
+      "doors": ["left"],
+      "mirror": false,
+      "map": ["########", "#......#", ".......#", ".......#", "..c...S#", "########"]
+    },
+    {
+      "name": "exit",
+      "role": "exit",
+      "doors": ["right"],
+      "mirror": false,
+      "map": ["########", "#......#", "#.......", "#.......", "#.E.....", "########"]
     }
-  }
+  ]
 }

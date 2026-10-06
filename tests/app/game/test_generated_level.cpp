@@ -1,10 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_string.hpp>
 
 #include <cstdint>
-#include <optional>
-#include <string>
-
-#include <catch2/matchers/catch_matchers_string.hpp>
 
 #include "game/game.hpp"
 #include "game/level_composition.hpp"
@@ -36,7 +33,6 @@ TEST_CASE("A generated level starts from its catalog seed", "[app][generation]")
 
     REQUIRE(game.levelNumber() == 1);
     REQUIRE(game.levelSeed() == 12U);
-    REQUIRE(game.levelJson().contains("\"nextLevel\": 2"));
 }
 
 TEST_CASE(
@@ -44,19 +40,15 @@ TEST_CASE(
     "[app][generation]")
 {
     advanced_platformer::Game game = gameFrom("tests/fixtures/levels/generated_levels.json");
-    const std::string first = game.levelJson();
     const advanced_platformer::Health health = game.playerHealth();
 
     REQUIRE(game.rerollLevel());
     REQUIRE(game.levelNumber() == 1);
     REQUIRE(game.levelSeed() == 13U);
     REQUIRE(game.playerHealth().current == health.current);
-    const std::string second = game.levelJson();
-    REQUIRE(second != first);
 
     game.restartLevel();
     REQUIRE(game.levelSeed() == 13U);
-    REQUIRE(game.levelJson() == second);
 }
 
 TEST_CASE("A generated level skips seeds whose exit the player cannot reach", "[app][generation]")
@@ -102,14 +94,4 @@ TEST_CASE("A generated level whose every seed is shut off fails to start", "[app
             advanced_platformer::composePlayer(catalogs, 0),
             tests::FixedStepSeconds),
         "Level 2: no seed from 1 to 100 gives a route from the spawn to the exit");
-}
-
-TEST_CASE("A level read from a file has no seed and cannot be rerolled", "[app][generation]")
-{
-    advanced_platformer::Game game = gameFrom("tests/fixtures/levels/levels.json");
-    const std::string level = game.levelJson();
-
-    REQUIRE_FALSE(game.levelSeed().has_value());
-    REQUIRE_FALSE(game.rerollLevel());
-    REQUIRE(game.levelJson() == level);
 }

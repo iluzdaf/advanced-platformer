@@ -150,6 +150,33 @@ namespace advanced_platformer
 
     namespace
     {
+        std::string doorNames(RoomDoors doors)
+        {
+            std::string result;
+            for (const RoomSide side : AllSides)
+            {
+                if (hasDoor(doors, side))
+                {
+                    result += result.empty() ? "" : ", ";
+                    result += nameOf(side);
+                }
+            }
+            return result;
+        }
+
+        std::string_view roleNeeded(std::size_t room, const RoomLayout& layout)
+        {
+            if (room == 0)
+            {
+                return "start";
+            }
+            if (room == layout.exit)
+            {
+                return "exit";
+            }
+            return "corridor, shaft or arena";
+        }
+
         bool roleFits(RoomRole role, std::size_t room, const RoomLayout& layout)
         {
             if (room == 0)
@@ -193,7 +220,9 @@ namespace advanced_platformer
             }
             if (candidates.empty())
             {
-                throw std::invalid_argument(std::format("No room piece fits {}", roomName(room)));
+                throw std::invalid_argument(
+                    std::format(
+                        "no {} piece has doors {}", roleNeeded(room, layout), doorNames(doors)));
             }
             choices.push_back(candidates[randomBelow(random, candidates.size())]);
         }
@@ -229,6 +258,8 @@ namespace advanced_platformer
             static_cast<std::size_t>(height),
             std::string(static_cast<std::size_t>(width), catalog.wall));
         level.exit.definitionName = catalog.exitDefinition;
+        level.exit.requirement = catalog.exitRequirement;
+        level.exit.consumeItem = catalog.consumeExitItem;
         level.exit.nextLevel = nextLevel;
 
         for (std::size_t room = 0; room < layout.rooms.size(); ++room)
@@ -315,7 +346,15 @@ namespace advanced_platformer
     {
         LevelRandom random{generation.seed};
         const RoomLayout layout = layoutRooms(generation.grid, generation.roomCount, random);
-        const std::vector<RoomChoice> choices = chooseRooms(catalog, layout, random);
+        std::vector<RoomChoice> choices;
+        try
+        {
+            choices = chooseRooms(catalog, layout, random);
+        }
+        catch (const std::invalid_argument& error)
+        {
+            throw std::invalid_argument(std::format("{}: {}", sourceName, error.what()));
+        }
         return stitchRooms(catalog, layout, choices, generation.nextLevel, sourceName);
     }
 }

@@ -4,11 +4,17 @@
   "levels": [
     {
       "number": 1,
-      "generate": { "pieces": "rooms.json", "rooms": 6, "grid": [5, 5], "seed": 12, "nextLevel": 2 }
+      "pieces": "rooms.json",
+      "rooms": 6,
+      "grid": [5, 5],
+      "seed": 12,
+      "nextLevel": 2
     },
     {
       "number": 2,
-      "file": "finish.json"
+      "pieces": "finish.json",
+      "rooms": 2,
+      "grid": [2, 1]
     }
   ]
 }

@@ -17,13 +17,53 @@
 #include "support/actor_components.hpp"
 #include "support/atlas_size.hpp"
 
-TEST_CASE("A catalog entry must reference an existing level file", "[app][content]")
+TEST_CASE("A level's cells become the feet of those cells on its map", "[app][content]")
+{
+    const auto levelCatalog = advanced_platformer::loadLevelCatalog(
+        std::filesystem::path("tests/fixtures/levels/levels.json"));
+    const auto gameCatalogs =
+        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
+    const auto gameLevel = advanced_platformer::composeGameLevel(levelCatalog, 10, 0, gameCatalogs);
+    const int tileSize = gameLevel.map.tileSize();
+
+    REQUIRE(gameLevel.playerSpawnFeet == advanced_platformer::feetInCell(tileSize, {12, 4}));
+    REQUIRE(gameLevel.world.pickups().size() == 1);
+    REQUIRE(
+        advanced_platformer::feetOf(gameLevel.world.pickups().front().body.bounds) ==
+        advanced_platformer::feetInCell(tileSize, {10, 4}));
+    const auto& levelExit = gameLevel.world.exit();
+    if (!levelExit.has_value())
+    {
+        throw std::logic_error("The opening level must have an exit");
+    }
+    REQUIRE(
+        advanced_platformer::feetOf(levelExit->bounds) ==
+        advanced_platformer::feetInCell(tileSize, {2, 4}));
+}
+
+TEST_CASE("A level composes an actor from its catalog definition", "[app][actors]")
+{
+    const auto levelCatalog = advanced_platformer::parseLevelCatalog(
+        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"pieces":"actor_placement.json","rooms":2,"grid":[2,1]}]})",
+        "fixture",
+        "tests/fixtures/levels");
+    const auto gameCatalogs =
+        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
+    auto gameLevel = advanced_platformer::composeGameLevel(levelCatalog, 1, 0, gameCatalogs);
+    REQUIRE(gameLevel.world.actors().size() == 1);
+    auto& actor = gameLevel.world.actors().front();
+    REQUIRE(
+        tests::component<advanced_platformer::PlatformerMovement>(actor).config.maximumSpeed == 23);
+    REQUIRE(advanced_platformer::feetOf(actor.body.bounds).x == 152);
+}
+
+TEST_CASE("A catalog entry must reference an existing room piece file", "[app][content]")
 {
     const auto levelCatalog = advanced_platformer::parseLevelCatalog(
         R"({
             "startLevel": 1,
             "cameraDeadZone": [80, 45],
-            "levels": [{"number": 1, "file": "missing.json"}]
+            "levels": [{"number": 1, "pieces": "missing.json", "rooms": 2, "grid": [2, 1]}]
         })",
         "test catalog",
         "tests/fixtures/levels");
@@ -35,50 +75,10 @@ TEST_CASE("A catalog entry must reference an existing level file", "[app][conten
         std::invalid_argument);
 }
 
-TEST_CASE("A level's cells become the feet of those cells on its map", "[app][content]")
-{
-    const auto levelCatalog = advanced_platformer::loadLevelCatalog(
-        std::filesystem::path("tests/fixtures/levels/levels.json"));
-    const auto gameCatalogs =
-        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
-    const auto gameLevel = advanced_platformer::composeGameLevel(levelCatalog, 10, 0, gameCatalogs);
-    const int tileSize = gameLevel.map.tileSize();
-
-    REQUIRE(gameLevel.playerSpawnFeet == advanced_platformer::feetInCell(tileSize, {1, 2}));
-    REQUIRE(gameLevel.world.pickups().size() == 1);
-    REQUIRE(
-        advanced_platformer::feetOf(gameLevel.world.pickups().front().body.bounds) ==
-        advanced_platformer::feetInCell(tileSize, {2, 2}));
-    const auto& levelExit = gameLevel.world.exit();
-    if (!levelExit.has_value())
-    {
-        throw std::logic_error("The opening level must have an exit");
-    }
-    REQUIRE(
-        advanced_platformer::feetOf(levelExit->bounds) ==
-        advanced_platformer::feetInCell(tileSize, {5, 2}));
-}
-
-TEST_CASE("A level composes an actor from its catalog definition", "[app][actors]")
-{
-    const auto levelCatalog = advanced_platformer::parseLevelCatalog(
-        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"actor_placement.json"}]})",
-        "fixture",
-        "tests/fixtures/levels");
-    const auto gameCatalogs =
-        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
-    auto gameLevel = advanced_platformer::composeGameLevel(levelCatalog, 1, 0, gameCatalogs);
-    REQUIRE(gameLevel.world.actors().size() == 1);
-    auto& actor = gameLevel.world.actors().front();
-    REQUIRE(
-        tests::component<advanced_platformer::PlatformerMovement>(actor).config.maximumSpeed == 23);
-    REQUIRE(advanced_platformer::feetOf(actor.body.bounds).x == 56);
-}
-
 TEST_CASE("Level composition reports unknown actor definitions", "[app][actors]")
 {
     const auto invalidLevelCatalog = advanced_platformer::parseLevelCatalog(
-        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"unknown_actor.json"}]})",
+        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"pieces":"unknown_actor.json","rooms":2,"grid":[2,1]}]})",
         "fixture",
         "tests/fixtures/levels");
     const auto gameCatalogs =
