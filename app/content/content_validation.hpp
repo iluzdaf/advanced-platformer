@@ -9,7 +9,6 @@
 
 #include "advanced_platformer/render/sprite.hpp"
 
-#include "level_data.hpp"
 #include "tile_catalog.hpp"
 
 namespace advanced_platformer
@@ -21,10 +20,6 @@ namespace advanced_platformer
         std::string_view sourceName,
         std::string_view path);
 
-    void validateExitSettings(
-        const ExitPlacement& placement,
-        const std::string& path = "exit",
-        std::string_view sourceName = {});
     void validateTileCatalog(const TileCatalog& catalog);
     void validateTileLegend(const std::map<char, std::string>& legend, const TileCatalog& catalog);
     void validateLegendSymbols(

@@ -13,8 +13,8 @@
 #include <variant>
 #include <vector>
 
-#include "content/level_data.hpp"
-#include "content/level_generator.hpp"
+#include "game/level_data.hpp"
+#include "game/level_generator.hpp"
 #include "content/room_pieces.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 

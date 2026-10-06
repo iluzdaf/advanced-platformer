@@ -1,7 +1,6 @@
 #include "content_validation.hpp"
 
 #include "content_diagnostics.hpp"
-#include "level_data.hpp"
 #include "tile_catalog.hpp"
 
 #include <cstddef>
@@ -43,26 +42,6 @@ namespace advanced_platformer
                 sourceName,
                 path,
                 std::format("region runs past the {} by {} atlas", atlasSize.x, atlasSize.y));
-        }
-    }
-
-    void validateExitSettings(
-        const ExitPlacement& placement,
-        const std::string& path,
-        std::string_view sourceName)
-    {
-        if (placement.definitionName.empty())
-        {
-            failJson(
-                sourceName, fieldPath(path, "definition"), "exit definition name cannot be empty");
-        }
-        if (placement.requirement && placement.requirement->quantity <= 0)
-        {
-            failJson(
-                sourceName,
-                fieldPath(path, "requirement.quantity"),
-                std::format(
-                    "expected a positive integer, got {}", placement.requirement->quantity));
         }
     }
 

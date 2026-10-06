@@ -539,17 +539,18 @@ namespace advanced_platformer
         result.exitDefinition = file.exit.definition;
         if (file.exit.requirement.has_value())
         {
+            if (file.exit.requirement->quantity <= 0)
+            {
+                failJson(
+                    sourceName,
+                    "exit.requirement.quantity",
+                    std::format(
+                        "expected a positive integer, got {}", file.exit.requirement->quantity));
+            }
             result.exitRequirement =
                 NamedItemStack{file.exit.requirement->item, file.exit.requirement->quantity};
         }
         result.consumeExitItem = file.exit.consumeItem.value_or(false);
-        validateExitSettings(
-            {.definitionName = result.exitDefinition,
-             .spawn = {},
-             .requirement = result.exitRequirement,
-             .consumeItem = result.consumeExitItem},
-            "exit",
-            sourceName);
 
         std::set<std::string> names;
         for (std::size_t index = 0; index < file.pieces.size(); ++index)

@@ -10,7 +10,7 @@
 
 #include "advanced_platformer/math/coordinates.hpp"
 
-#include "item_catalog.hpp"
+#include "content/item_catalog.hpp"
 
 namespace advanced_platformer
 {

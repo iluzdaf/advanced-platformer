@@ -5,8 +5,8 @@
 #include "content/item_catalog.hpp"
 #include "content/pickup_catalog.hpp"
 #include "content/exit_catalog.hpp"
-#include "content/level_data.hpp"
-#include "content/level_generator.hpp"
+#include "level_data.hpp"
+#include "level_generator.hpp"
 #include "content/room_pieces.hpp"
 #include "content/tile_catalog.hpp"
 #include <cstdint>

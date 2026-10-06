@@ -10,7 +10,7 @@
 #include <glm/vec2.hpp>
 
 #include "content/game_catalogs.hpp"
-#include "content/level_generator.hpp"
+#include "game/level_generator.hpp"
 #include "content/room_pieces.hpp"
 #include "content/npc_script_catalog.hpp"
 #include "game/level_composition.hpp"

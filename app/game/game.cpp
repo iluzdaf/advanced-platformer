@@ -4,7 +4,7 @@
 #include "content/actor_catalog.hpp"
 #include "debug/navigation_debug.hpp"
 #include "level_composition.hpp"
-#include "content/level_generator.hpp"
+#include "level_generator.hpp"
 #include "content/room_pieces.hpp"
 #include "content/game_catalogs.hpp"
 #include "content/hud_catalog.hpp"

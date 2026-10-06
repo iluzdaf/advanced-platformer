@@ -1,7 +1,7 @@
 #include "level_generator.hpp"
 
 #include "level_data.hpp"
-#include "room_pieces.hpp"
+#include "content/room_pieces.hpp"
 
 #include <algorithm>
 #include <array>

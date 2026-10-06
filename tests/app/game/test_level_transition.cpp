@@ -9,7 +9,7 @@
 
 #include "game/game.hpp"
 #include "lua_npc_scripts.hpp"
-#include "content/level_generator.hpp"
+#include "game/level_generator.hpp"
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/input/input_state.hpp"
 #include "advanced_platformer/inventory/inventory.hpp"

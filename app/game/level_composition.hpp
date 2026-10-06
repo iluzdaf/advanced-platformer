@@ -10,7 +10,7 @@
 
 #include "advanced_platformer/world/tile_map.hpp"
 #include "advanced_platformer/world/world.hpp"
-#include "content/level_data.hpp"
+#include "level_data.hpp"
 
 namespace advanced_platformer
 {

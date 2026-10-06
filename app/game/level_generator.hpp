@@ -8,7 +8,7 @@
 #include "advanced_platformer/math/coordinates.hpp"
 
 #include "level_data.hpp"
-#include "room_pieces.hpp"
+#include "content/room_pieces.hpp"
 
 namespace advanced_platformer
 {

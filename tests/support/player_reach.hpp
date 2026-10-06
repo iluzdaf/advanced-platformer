@@ -6,7 +6,7 @@
 #include <glm/vec2.hpp>
 
 #include "content/game_catalogs.hpp"
-#include "content/level_data.hpp"
+#include "game/level_data.hpp"
 #include "content/tile_catalog.hpp"
 #include "game/level_composition.hpp"
 #include "advanced_platformer/actor/actor.hpp"

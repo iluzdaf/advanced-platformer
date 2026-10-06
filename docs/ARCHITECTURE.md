@@ -27,16 +27,16 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 
 ### Application folders
 
-| Location              | Responsibility                                                                                           |
-| --------------------- | -------------------------------------------------------------------------------------------------------- |
-| `app/application.cpp` | Window events, input, fixed steps, pause and single step, UI requests, hot reload, and rendering         |
-| `app/game`            | Session flow: `Game` owns the current level, catalogs, scripts, and camera; level composition and reload |
-| `app/content`         | Content definitions, Glaze loaders, catalogs, validators, and the asset watcher                          |
-| `app/graphics`        | Window and OpenGL context, ImGui session, viewport conversion, and sprite submission                     |
-| `app/ui`              | HUD, inventory, exit hint, and pause notice                                                              |
-| `app/debug`           | Debug snapshots and their ImGui presentation, the console, and the frame profile UI                      |
-| `scripting`           | Lua VM, sandbox, `vec2` binding, and the activity adapter                                                |
-| `assets`              | Levels, catalogs, Lua scripts, and the atlas                                                             |
+| Location              | Responsibility                                                                                                       |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `app/application.cpp` | Window events, input, fixed steps, pause and single step, UI requests, hot reload, and rendering                     |
+| `app/game`            | Session flow: `Game` owns the current level, catalogs, scripts, and camera; level generation, composition and reload |
+| `app/content`         | Content definitions, Glaze loaders, catalogs, validators, and the asset watcher                                      |
+| `app/graphics`        | Window and OpenGL context, ImGui session, viewport conversion, and sprite submission                                 |
+| `app/ui`              | HUD, inventory, exit hint, and pause notice                                                                          |
+| `app/debug`           | Debug snapshots and their ImGui presentation, the console, and the frame profile UI                                  |
+| `scripting`           | Lua VM, sandbox, `vec2` binding, and the activity adapter                                                            |
+| `assets`              | Levels, catalogs, Lua scripts, and the atlas                                                                         |
 
 - `GameLevel` keeps the level number, map, world, player spawn, actor definition names,
   and the placement id of each actor and pickup together. Replacing it starts a fresh
@@ -434,7 +434,7 @@ to the traversal profile. The search itself does not change.
 | -------------------- | ------------------------------------ | ---------------------------------------------------------------------------------- |
 | Load shared catalogs | `app/content/game_catalogs.cpp`      | Definitions checked against the atlas size and kept for the session                |
 | Load scripts         | `app/content/npc_script_catalog.cpp` | Each script a machine names, with every named activity present                     |
-| Generate a level     | `app/content/level_generator.cpp`    | Room pieces laid out from the seed and stitched into a `LevelData` of placements   |
+| Generate a level     | `app/game/level_generator.cpp`       | Room pieces laid out from the seed and stitched into a `LevelData` of placements   |
 | Compose the level    | `app/game/level_composition.cpp`     | Names resolved into a map, world, and placed objects                               |
 | Start the level      | `composeStartedLevel`, then `Game`   | Player inserted, placements validated, camera made, and the navigation fill queued |
 
