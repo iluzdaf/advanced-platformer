@@ -29,6 +29,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/app/game/game.cpp
         ${PROJECT_SOURCE_DIR}/app/game/level_composition.cpp
         ${PROJECT_SOURCE_DIR}/app/game/level_reload.cpp
+        ${PROJECT_SOURCE_DIR}/app/game/play_control.cpp
         ${PROJECT_SOURCE_DIR}/app/graphics/display_viewport.cpp
         ${PROJECT_SOURCE_DIR}/app/ui/inventory_layout.cpp
         ${PROJECT_SOURCE_DIR}/tests/actor/test_actor_system.cpp
@@ -75,6 +76,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/app/game/test_level_object_composition.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/game/test_level_reload.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/game/test_level_transition.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/game/test_play_control.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/graphics/test_display_viewport.cpp
         ${PROJECT_SOURCE_DIR}/tests/input/test_input_state.cpp
         ${PROJECT_SOURCE_DIR}/tests/input/test_input_program.cpp

@@ -24,6 +24,7 @@
 #include "debug/frame_profile_ui.hpp"
 #include "game/game.hpp"
 #include "game/level_reload.hpp"
+#include "game/play_control.hpp"
 #include "graphics/display_viewport.hpp"
 #include "graphics/game_window.hpp"
 #include "graphics/imgui_session.hpp"
@@ -50,20 +51,14 @@ namespace advanced_platformer
         constexpr bool WatchAssets = false;
 #endif
         constexpr float AssetPollSeconds = 0.25F;
-        constexpr glm::vec2 InitialAimDirection = {1.0F, 0.0F};
 
         struct ApplicationContext
         {
-            InputState input;
-            glm::vec2 aimDirection = InitialAimDirection;
+            PlayControl play;
             bool showDebugOverlay = false;
             DebugToolVisibility debugToolVisibility;
             std::size_t debugBodyIndex = 0;
             bool breakTileRequested = false;
-            bool inventoryOpen = false;
-            bool simulationPaused = false;
-            bool stepRequested = false;
-            bool playInterrupted = false;
             bool restartRequested = false;
             bool restartLevelRequested = false;
             bool rerollLevelRequested = false;
@@ -80,26 +75,11 @@ namespace advanced_platformer
             return *static_cast<ApplicationContext*>(glfwGetWindowUserPointer(window));
         }
 
-        void toggleInventory(ApplicationContext& context)
-        {
-            context.inventoryOpen = !context.inventoryOpen;
-            context.playInterrupted = true;
-        }
-
-        void clearAttackButtons(InputState& input)
-        {
-            input.clearButton(InputButton::PrimaryAttack);
-            input.clearButton(InputButton::SecondaryAttack);
-        }
-
         std::filesystem::path atlasPath(const std::filesystem::path& assetDirectory)
         {
             return assetDirectory / "textures" / "sprites.png";
         }
-    }
 
-    namespace
-    {
         bool DebugToolVisibility::* debugToolForKey(int key)
         {
             switch (key)
@@ -129,17 +109,13 @@ namespace advanced_platformer
                 glfwSetWindowShouldClose(window, GLFW_TRUE);
                 return;
             case GLFW_KEY_Q:
-                toggleInventory(context);
+                context.play.toggleInventory();
                 return;
             case GLFW_KEY_P:
-                context.simulationPaused = !context.simulationPaused;
-                context.playInterrupted = true;
+                context.play.togglePause();
                 return;
             case GLFW_KEY_PERIOD:
-                if (context.simulationPaused)
-                {
-                    context.stepRequested = true;
-                }
+                context.play.requestStep();
                 return;
             case GLFW_KEY_R:
                 context.restartRequested = true;
@@ -209,7 +185,7 @@ namespace advanced_platformer
             const std::optional<InputButton> button = buttonForKey(key);
             if (button.has_value())
             {
-                context.input.setButton(*button, action == GLFW_PRESS);
+                context.play.setButton(*button, action == GLFW_PRESS);
             }
         }
 
@@ -236,7 +212,7 @@ namespace advanced_platformer
             const std::optional<InputButton> attack = attackForMouseButton(button);
             if (attack.has_value())
             {
-                contextOf(window).input.setButton(*attack, action == GLFW_PRESS);
+                contextOf(window).play.setButton(*attack, action == GLFW_PRESS);
             }
         }
 
@@ -248,9 +224,7 @@ namespace advanced_platformer
             }
 
             game.restart();
-            context.inventoryOpen = false;
-            context.aimDirection = InitialAimDirection;
-            context.playInterrupted = true;
+            context.play.restart();
         }
 
         void restartLevel(ApplicationContext& context, Game& game, ConsoleLog& console)
@@ -258,7 +232,7 @@ namespace advanced_platformer
             try
             {
                 game.restartLevel();
-                context.playInterrupted = true;
+                context.play.interrupt();
             }
             catch (const std::exception& error)
             {
@@ -278,7 +252,7 @@ namespace advanced_platformer
                     return;
                 }
 
-                context.playInterrupted = true;
+                context.play.interrupt();
                 console.write(
                     ConsoleLevel::Info,
                     std::format(
@@ -352,7 +326,7 @@ namespace advanced_platformer
         {
             if (requests.toggleInventory)
             {
-                toggleInventory(context);
+                context.play.toggleInventory();
             }
             if (requests.useInventorySlot.has_value())
             {
@@ -404,87 +378,7 @@ namespace advanced_platformer
             {
                 debugTools.machineActor = clicked;
             }
-            clearAttackButtons(context.input);
-        }
-
-        std::optional<glm::vec2> gameplayCursor(
-            const ApplicationContext& context,
-            const std::optional<glm::vec2>& internalCursor)
-        {
-            if (ImGui::GetIO().WantCaptureMouse || context.inventoryOpen)
-            {
-                return std::nullopt;
-            }
-            return internalCursor;
-        }
-
-        void clearBlockedInput(
-            ApplicationContext& context,
-            bool paused,
-            const std::optional<glm::vec2>& gameCursor)
-        {
-            if (paused || context.playInterrupted || ImGui::GetIO().WantCaptureKeyboard)
-            {
-                context.input = {};
-            }
-            else if (!gameCursor.has_value())
-            {
-                clearAttackButtons(context.input);
-            }
-        }
-
-        InputIntentions playerIntentions(
-            ApplicationContext& context,
-            const Game& game,
-            const std::optional<glm::vec2>& gameCursor)
-        {
-            InputIntentions intentions = context.input.consumeIntentions();
-            if (gameCursor.has_value())
-            {
-                const glm::vec2 aimDirection = game.playerAimDirection(*gameCursor);
-                if (aimDirection != glm::vec2{0.0F, 0.0F})
-                {
-                    context.aimDirection = aimDirection;
-                }
-            }
-            else
-            {
-                intentions.primaryAttackPressed = false;
-                intentions.secondaryAttackPressed = false;
-            }
-            intentions.aimDirection = context.aimDirection;
-            return intentions;
-        }
-
-        void advanceSimulation(
-            ApplicationContext& context,
-            Game& game,
-            FixedStep& fixedStep,
-            const std::optional<glm::vec2>& gameCursor,
-            bool paused,
-            FrameProfile& profile)
-        {
-            const auto step = [&](float deltaTime)
-            { game.update(playerIntentions(context, game, gameCursor), deltaTime, &profile); };
-
-            if (!paused && !context.playInterrupted)
-            {
-                const Stopwatch simulationWatch;
-                const FixedStepResult stepped = fixedStep.advance(profile.frameSeconds, step);
-                profile.simulationTicks = static_cast<int>(stepped.updates);
-                profile.simulationSeconds = simulationWatch.elapsedSeconds();
-                return;
-            }
-
-            fixedStep.reset();
-            context.playInterrupted = false;
-            if (context.stepRequested && !context.inventoryOpen && !game.complete())
-            {
-                const Stopwatch simulationWatch;
-                step(static_cast<float>(fixedStep.stepSeconds()));
-                profile.simulationTicks = 1;
-                profile.simulationSeconds = simulationWatch.elapsedSeconds();
-            }
+            context.play.clearAttackButtons();
         }
 
         void writeScriptDiagnostics(Game& game, ConsoleLog& console)
@@ -510,19 +404,11 @@ namespace advanced_platformer
             profile.renderSeconds = renderWatch.elapsedSeconds();
         }
 
-        void applyFramePlotRequest(ApplicationContext& context, FramePlotRequest request)
+        void applyFramePlotRequest(PlayControl& play, FramePlotRequest request)
         {
-            if (request == FramePlotRequest::None)
+            if (request != FramePlotRequest::None)
             {
-                return;
-            }
-
-            const bool requestedPause = request == FramePlotRequest::Pause;
-            if (context.simulationPaused != requestedPause)
-            {
-                context.simulationPaused = requestedPause;
-                context.playInterrupted = true;
-                context.input = {};
+                play.setPaused(request == FramePlotRequest::Pause);
             }
         }
     }
@@ -574,7 +460,7 @@ namespace advanced_platformer
             if (assetsChanged(assetWatcher, assetPollClock))
             {
                 reloadContent(game, renderer, atlas, assetDirectory, console);
-                context.playInterrupted = true;
+                context.play.interrupt();
             }
 
             const WindowReading reading = window.read();
@@ -588,8 +474,8 @@ namespace advanced_platformer
                 game,
                 atlas.texture,
                 windowViewport,
-                context.inventoryOpen,
-                context.simulationPaused);
+                context.play.inventoryOpen(),
+                context.play.simulationPaused());
             profile.interfaceSeconds = interfaceWatch.elapsedSeconds();
             applyInterfaceRequests(context, game, interfaceRequests);
 
@@ -597,13 +483,14 @@ namespace advanced_platformer
                 windowToInternal(reading.cursor, reading.size, reading.framebufferSize);
             breakRequestedTile(context, game, internalCursor);
             selectClickedMachineActor(context, game, debugTools, internalCursor);
-            const std::optional<glm::vec2> gameCursor = gameplayCursor(context, internalCursor);
-
-            const bool paused =
-                context.inventoryOpen || game.complete() || context.simulationPaused;
-            clearBlockedInput(context, paused, gameCursor);
-            advanceSimulation(context, game, fixedStep, gameCursor, paused, profile);
-            context.stepRequested = false;
+            const bool paused = context.play.paused(game);
+            context.play.advance(
+                game,
+                fixedStep,
+                {internalCursor,
+                 ImGui::GetIO().WantCaptureMouse,
+                 ImGui::GetIO().WantCaptureKeyboard},
+                profile);
 
             writeScriptDiagnostics(game, console);
             renderGame(game, renderer, reading.framebufferSize, profile);
@@ -622,7 +509,7 @@ namespace advanced_platformer
                     context.debugToolVisibility,
                     console,
                     paused);
-                applyFramePlotRequest(context, plotRequest);
+                applyFramePlotRequest(context.play, plotRequest);
             }
             imgui.render();
             window.present();
