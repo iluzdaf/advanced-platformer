@@ -24,7 +24,6 @@ namespace
         return tests::ActorBuilder::sized({12.0F, 20.0F}).atFeet(feet).platforming();
     }
 
-    // A world whose player stands in one cell and whose exit stands in another.
     advanced_platformer::World worldWithExit(
         advanced_platformer::Cell player,
         advanced_platformer::Cell exit)

@@ -94,8 +94,6 @@ namespace advanced_platformer
             validatePlacement(map, actor, bounds, level, place, needsGround);
         }
 
-        // A climber can patrol to a wall or ceiling; navigation takes it to the nearest
-        // place it can hold.
         bool patrolNeedsGround(const Actor& actor)
         {
             return actor.platformerMovement.has_value() && !actor.surfaceClimb.has_value();
@@ -150,8 +148,6 @@ namespace advanced_platformer
         PlatformerConnectionCache cache;
         std::optional<NavigationPathResult> result =
             findActorPath(map, atRespawn, goal, stepSeconds, cache);
-        // A deferred search has put the cell it needs at the front of the fill, and the
-        // fill builds only that cell before the search runs again.
         while (result.has_value() && result->status == NavigationPathStatus::Deferred)
         {
             advanceNavigationFill(map, cache, 1);
