@@ -65,27 +65,6 @@ TEST_CASE("A reroll generates the next seed and reports it", "[app][level-reques
     REQUIRE(playInterrupted(play, game));
 }
 
-TEST_CASE("A game restart is refused while the game is running", "[app][level-requests]")
-{
-    advanced_platformer::Game game = tests::fixtureGame();
-    advanced_platformer::PlayControl play;
-    std::ostringstream echo;
-    advanced_platformer::ConsoleLog console(echo);
-    const std::uint32_t seed = game.levelSeed();
-    play.toggleInventory();
-    advanced_platformer::LevelRequests requests;
-    requests.restartGame = true;
-
-    applyLevelRequests(requests, game, play, console);
-
-    REQUIRE(game.levelSeed() == seed);
-    REQUIRE(play.inventoryOpen());
-    REQUIRE_FALSE(requests.restartGame);
-    REQUIRE(console.entries().size() == 1);
-    REQUIRE(console.entries().back().level == advanced_platformer::ConsoleLevel::Info);
-    REQUIRE(console.entries().back().text == "Only a completed game restarts");
-}
-
 TEST_CASE("An applied request does not repeat on the next frame", "[app][level-requests]")
 {
     advanced_platformer::Game game = tests::fixtureGame();

@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <optional>
+#include <random>
 #include <string>
 #include <utility>
 
@@ -65,8 +66,6 @@ namespace advanced_platformer
                 return ApplicationCommand::TogglePause;
             case GLFW_KEY_PERIOD:
                 return ApplicationCommand::StepSimulation;
-            case GLFW_KEY_R:
-                return ApplicationCommand::RestartGame;
             case GLFW_KEY_F5:
                 return ApplicationCommand::RestartLevel;
             case GLFW_KEY_F7:
@@ -232,11 +231,12 @@ namespace advanced_platformer
         GameContent loaded = content.load();
         Game game(
             content.atlasTextureId(),
-            std::move(loaded.levelCatalog),
+            std::move(loaded.run),
             std::move(loaded.gameCatalogs),
             std::move(loaded.npcScripts),
             std::move(loaded.presentation),
-            static_cast<float>(fixedStep.stepSeconds()));
+            static_cast<float>(fixedStep.stepSeconds()),
+            std::random_device{}());
         DebugTools debugTools;
         Stopwatch frameClock;
 
@@ -282,7 +282,7 @@ namespace advanced_platformer
                      ImGui::IsMouseClicked(ImGuiMouseButton_Left),
                      ImGui::GetIO().WantCaptureMouse});
             }
-            const bool paused = context.play.paused(game);
+            const bool paused = context.play.paused();
             context.play.advance(
                 game,
                 fixedStep,

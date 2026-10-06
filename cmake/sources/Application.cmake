@@ -21,6 +21,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/app/content/actor_definition.cpp
         ${PROJECT_SOURCE_DIR}/app/content/animation_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/asset_watcher.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/camera_settings.cpp
         ${PROJECT_SOURCE_DIR}/app/content/content_session.cpp
         ${PROJECT_SOURCE_DIR}/app/content/content_diagnostics.cpp
         ${PROJECT_SOURCE_DIR}/app/content/content_glaze.cpp
@@ -30,13 +31,13 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/app/content/game_content.cpp
         ${PROJECT_SOURCE_DIR}/app/content/hud_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/item_catalog.cpp
-        ${PROJECT_SOURCE_DIR}/app/content/level_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/level_data.cpp
         ${PROJECT_SOURCE_DIR}/app/content/level_generator.cpp
         ${PROJECT_SOURCE_DIR}/app/content/machine_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/npc_script_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/pickup_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/room_pieces.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/run_settings.cpp
         ${PROJECT_SOURCE_DIR}/app/content/tile_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/game/game.cpp
         ${PROJECT_SOURCE_DIR}/app/game/level_composition.cpp
@@ -48,12 +49,12 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/app/graphics/imgui_session.cpp
         ${PROJECT_SOURCE_DIR}/app/graphics/sprite_renderer.cpp
         ${PROJECT_SOURCE_DIR}/app/main.cpp
-        ${PROJECT_SOURCE_DIR}/app/ui/completion_ui.cpp
         ${PROJECT_SOURCE_DIR}/app/ui/exit_hint_ui.cpp
         ${PROJECT_SOURCE_DIR}/app/ui/health_hud_ui.cpp
         ${PROJECT_SOURCE_DIR}/app/ui/hud_draw.cpp
         ${PROJECT_SOURCE_DIR}/app/ui/interface_ui.cpp
         ${PROJECT_SOURCE_DIR}/app/ui/inventory_layout.cpp
         ${PROJECT_SOURCE_DIR}/app/ui/inventory_ui.cpp
+        ${PROJECT_SOURCE_DIR}/app/ui/level_number_ui.cpp
         ${PROJECT_SOURCE_DIR}/app/ui/pause_ui.cpp
 )

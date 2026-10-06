@@ -35,7 +35,7 @@ TEST_CASE("Running play advances the simulation by the fixed step", "[app][play-
     advanced_platformer::FixedStep fixedStep;
     advanced_platformer::PlayControl play;
 
-    REQUIRE_FALSE(play.paused(running));
+    REQUIRE_FALSE(play.paused());
     REQUIRE(advanceFrame(play, running, fixedStep) == TicksPerFrame);
     REQUIRE(fixedStep.pendingSeconds() > 0.0);
 }
@@ -50,7 +50,7 @@ TEST_CASE("Pausing stops the simulation and drops the pending frame time", "[app
     play.togglePause();
 
     REQUIRE(play.simulationPaused());
-    REQUIRE(play.paused(running));
+    REQUIRE(play.paused());
     REQUIRE(advanceFrame(play, running, fixedStep) == 0);
     REQUIRE(fixedStep.pendingSeconds() == 0.0);
 
@@ -113,7 +113,7 @@ TEST_CASE("An open inventory pauses play and blocks stepping", "[app][play-contr
     play.toggleInventory();
 
     REQUIRE(play.inventoryOpen());
-    REQUIRE(play.paused(running));
+    REQUIRE(play.paused());
     REQUIRE(advanceFrame(play, running, fixedStep) == 0);
 
     play.togglePause();
@@ -124,7 +124,7 @@ TEST_CASE("An open inventory pauses play and blocks stepping", "[app][play-contr
     play.toggleInventory();
 
     REQUIRE_FALSE(play.inventoryOpen());
-    REQUIRE(play.paused(running));
+    REQUIRE(play.paused());
 }
 
 TEST_CASE("A pause set from outside clears held input only when it changes", "[app][play-control]")
@@ -146,23 +146,6 @@ TEST_CASE("A pause set from outside clears held input only when it changes", "[a
 
     REQUIRE_FALSE(play.simulationPaused());
     REQUIRE_FALSE(play.input().isHeld(advanced_platformer::InputButton::Left));
-}
-
-TEST_CASE("Restarting closes the inventory and resets the aim", "[app][play-control]")
-{
-    advanced_platformer::Game running = tests::fixtureGame();
-    advanced_platformer::FixedStep fixedStep;
-    advanced_platformer::PlayControl play;
-    const glm::vec2 aimedAtCursor = running.playerAimDirection(Cursor);
-    REQUIRE(aimedAtCursor != glm::vec2{0.0F, 0.0F});
-    play.playerIntentions(running, {Cursor});
-    play.toggleInventory();
-
-    play.restart();
-
-    REQUIRE_FALSE(play.inventoryOpen());
-    REQUIRE(play.playerIntentions(running, {}).aimDirection == glm::vec2{1.0F, 0.0F});
-    REQUIRE(advanceFrame(play, running, fixedStep) == 0);
 }
 
 TEST_CASE("Aim follows the cursor and keeps the last direction without one", "[app][play-control]")

@@ -94,7 +94,6 @@ ctest --preset mac-debug -R "Pickup" --output-on-failure
 | Collect an item                                     | Walk over it                              |
 | Open or close the inventory (pauses the game)       | Q, or click the bag at the bottom-left    |
 | Drink a health potion                               | Click it in the open inventory            |
-| Restart from the starting level                     | R, at the completion message              |
 | Restart the current level, keeping health and items | F5                                        |
 | Generate the current level again from the next seed | F7, on a generated level                  |
 | Pause or resume the simulation                      | P                                         |
@@ -105,8 +104,9 @@ ctest --preset mac-debug -R "Pickup" --output-on-failure
 The hearts at the top-left show the player's current and maximum health.
 
 Every level is generated from room pieces, starting in the centre room. Reach the bunker
-door in the farthest room to move on; the third level's door completes the example
-campaign.
+door in the farthest room to move on to the next level, which has more rooms. The run
+never ends: dying starts a new run at level 1 with full health and no items. The level
+number shows at the top of the screen.
 
 ## Debug overlay
 
@@ -290,7 +290,7 @@ app/           application shell, graphics, UI, and debug tools
   content/     JSON loaders, catalogs, and content validators
 assets/        runtime game content
   catalogs/    shared JSON definitions
-  levels/      level catalog and maps
+  levels/      run settings and room pieces
   scripts/     Lua NPC activities
   textures/    runtime sprite atlas
 cmake/         dependencies, quality rules, and explicit target source manifests

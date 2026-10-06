@@ -11,7 +11,6 @@
 #include <variant>
 #include <vector>
 
-#include "content/level_catalog.hpp"
 #include "content/level_data.hpp"
 #include "content/level_generator.hpp"
 #include "content/room_pieces.hpp"
@@ -30,12 +29,7 @@ namespace
 
     advanced_platformer::LevelGeneration generation(std::uint32_t seed)
     {
-        return {
-            .relativePieces = "rooms.json",
-            .roomCount = 6,
-            .grid = {5, 5},
-            .seed = seed,
-            .nextLevel = 2};
+        return {.grid = {5, 5}, .roomCount = 6, .seed = seed};
     }
 }
 
@@ -132,7 +126,7 @@ TEST_CASE("Stitched rooms share walls and seal unused doors", "[app][content][ge
              {{2, 0}, advanced_platformer::withDoor({}, RoomSide::Left), 2}},
         .exit = 2};
     const advanced_platformer::LevelData level = advanced_platformer::stitchRooms(
-        catalog, layout, {{0, false}, {1, false}, {3, false}}, 2, "rooms.json");
+        catalog, layout, {{0, false}, {1, false}, {3, false}}, "rooms.json");
 
     REQUIRE(level.mapRows.size() == 6);
     REQUIRE(level.mapRows.front().size() == 3 * 7 + 1);
@@ -148,7 +142,6 @@ TEST_CASE("Stitched rooms share walls and seal unused doors", "[app][content][ge
     REQUIRE(level.mapRows.back() == std::string(22, '#'));
     REQUIRE(std::holds_alternative<Cell>(level.playerSpawn));
     REQUIRE(level.exit.definitionName == "test_door");
-    REQUIRE(level.exit.nextLevel == 2);
     REQUIRE(level.actors.size() == 1);
     REQUIRE(level.actors.front().definitionName == "test_guard");
 }

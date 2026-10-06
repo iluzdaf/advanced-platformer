@@ -8,7 +8,7 @@
 
 #include "content/game_catalogs.hpp"
 #include "content/game_content.hpp"
-#include "content/level_catalog.hpp"
+#include "content/run_settings.hpp"
 #include "game/game.hpp"
 #include "game/level_reload.hpp"
 #include "lua_npc_scripts.hpp"
@@ -50,15 +50,16 @@ TEST_CASE("A reload that shuts off the exit leaves the game as it was", "[app][r
 {
     advanced_platformer::Game running = {
         0,
-        advanced_platformer::loadLevelCatalog("tests/fixtures/levels/shut_exit_levels.json"),
+        advanced_platformer::loadRunSettings("tests/fixtures/levels/rooms_some_shut_run.json"),
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
         advanced_platformer::LuaNpcScripts{},
         advanced_platformer::LuaPresentationScript{},
-        tests::FixedStepSeconds};
+        tests::FixedStepSeconds,
+        1};
     const std::uint32_t seed = running.levelSeed();
     advanced_platformer::GameContent shut = tests::fixtureContent();
-    shut.levelCatalog =
-        advanced_platformer::loadLevelCatalog("tests/fixtures/levels/all_shut_levels.json");
+    shut.run =
+        advanced_platformer::loadRunSettings("tests/fixtures/levels/rooms_all_shut_run.json");
 
     REQUIRE_THROWS_WITH(
         running.reload(std::move(shut)),

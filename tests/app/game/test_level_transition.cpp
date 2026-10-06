@@ -2,13 +2,16 @@
 #include <catch2/catch_message.hpp>
 
 #include <cstddef>
+#include <cstdint>
+#include <utility>
 
 #include <glm/vec2.hpp>
 
 #include "game/game.hpp"
+#include "lua_npc_scripts.hpp"
 #include "lua_presentation_script.hpp"
 #include "content/game_catalogs.hpp"
-#include "content/level_catalog.hpp"
+#include "content/run_settings.hpp"
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/input/input_state.hpp"
 #include "advanced_platformer/inventory/inventory.hpp"
@@ -56,51 +59,71 @@ namespace
 }
 
 TEST_CASE(
-    "The game carries progress across levels and restarts after the final exit",
+    "The exit leads to the next level and keeps the player's progress",
     "[app][level-transition]")
 {
     advanced_platformer::Game game(
         0,
-        advanced_platformer::loadLevelCatalog("tests/fixtures/levels/levels.json"),
+        advanced_platformer::loadRunSettings("tests/fixtures/levels/finish_run.json"),
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
         advanced_platformer::LuaNpcScripts{},
         advanced_platformer::LuaPresentationScript{},
-        tests::FixedStepSeconds);
-    const auto initialHealth = game.playerHealth();
-    const auto initialInventory = game.playerInventory();
-    const int initialLevel = game.levelNumber();
+        tests::FixedStepSeconds,
+        1);
     advanced_platformer::InputIntentions intentions;
     intentions.direction.x = -1.0F;
-    bool changedLevel = false;
 
-    for (int tick = 0; tick < MaximumSimulationTicks && !game.complete(); ++tick)
+    for (int expected = 2; expected <= 3; ++expected)
     {
-        const int previousLevel = game.levelNumber();
-        const auto previousHealth = game.playerHealth();
-        const auto previousInventory = game.playerInventory();
-        game.update(intentions, tests::FixedStepSeconds);
-        if (game.levelNumber() != previousLevel)
+        for (int tick = 0; tick < MaximumSimulationTicks && game.levelNumber() < expected; ++tick)
         {
-            changedLevel = true;
-            REQUIRE(sameHealth(game.playerHealth(), previousHealth));
-            REQUIRE(sameInventory(game.playerInventory(), previousInventory));
+            const int previousLevel = game.levelNumber();
+            const auto previousHealth = game.playerHealth();
+            const auto previousInventory = game.playerInventory();
+            game.update(intentions, tests::FixedStepSeconds);
+            if (game.levelNumber() != previousLevel)
+            {
+                REQUIRE(sameHealth(game.playerHealth(), previousHealth));
+                REQUIRE(sameInventory(game.playerInventory(), previousInventory));
+            }
         }
+        REQUIRE(game.levelNumber() == expected);
+        REQUIRE(game.levelSeed() == advanced_platformer::runLevelSeed(1, expected));
+        REQUIRE(game.runSeed() == 1U);
+    }
+}
+
+TEST_CASE(
+    "Defeat restarts the run at level 1 with a fresh player and a new run seed",
+    "[app][level-transition]")
+{
+    advanced_platformer::LuaNpcScripts scripts;
+    scripts.loadScript("spikes", "tests/fixtures/scripts/spikes.lua");
+    advanced_platformer::Game game(
+        0,
+        advanced_platformer::loadRunSettings("tests/fixtures/levels/spikes_run.json"),
+        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
+        std::move(scripts),
+        advanced_platformer::LuaPresentationScript{},
+        tests::FixedStepSeconds,
+        1);
+    const auto initialHealth = game.playerHealth();
+    const auto initialInventory = game.playerInventory();
+    advanced_platformer::InputIntentions intentions;
+    intentions.direction.x = -1.0F;
+    bool collected = false;
+
+    for (int tick = 0; tick < MaximumSimulationTicks && game.runSeed() == 1U; ++tick)
+    {
+        game.update(intentions, tests::FixedStepSeconds);
+        collected = collected || game.playerInventory().count(1) > 0;
     }
 
-    REQUIRE(changedLevel);
-    REQUIRE(game.complete());
-    const auto health = game.playerHealth();
-    game.update(intentions, tests::FixedStepSeconds);
-    REQUIRE(game.complete());
-    REQUIRE(sameHealth(game.playerHealth(), health));
-    REQUIRE(game.levelExitScreenPosition().has_value());
-    REQUIRE_FALSE(game.restartLevel());
-    REQUIRE_FALSE(game.rerollLevel());
-    REQUIRE(game.complete());
-
-    REQUIRE(game.restart());
-    REQUIRE_FALSE(game.complete());
-    REQUIRE(game.levelNumber() == initialLevel);
+    REQUIRE(collected);
+    const std::uint32_t runSeed = advanced_platformer::nextRunSeed(1);
+    REQUIRE(game.runSeed() == runSeed);
+    REQUIRE(game.levelNumber() == 1);
+    REQUIRE(game.levelSeed() == advanced_platformer::runLevelSeed(runSeed, 1));
     REQUIRE(sameHealth(game.playerHealth(), initialHealth));
     REQUIRE(sameInventory(game.playerInventory(), initialInventory));
 }
@@ -111,11 +134,12 @@ TEST_CASE(
 {
     advanced_platformer::Game game(
         0,
-        advanced_platformer::loadLevelCatalog("tests/fixtures/levels/locked_levels.json"),
+        advanced_platformer::loadRunSettings("tests/fixtures/levels/locked_door_run.json"),
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
         advanced_platformer::LuaNpcScripts{},
         advanced_platformer::LuaPresentationScript{},
-        tests::FixedStepSeconds);
+        tests::FixedStepSeconds,
+        1);
     REQUIRE_FALSE(game.lockedExitHintIcon().has_value());
 
     advanced_platformer::InputIntentions walkLeft;
@@ -151,5 +175,5 @@ TEST_CASE(
     {
         game.update(walkRight, tests::FixedStepSeconds);
     }
-    REQUIRE(game.levelNumber() == 25);
+    REQUIRE(game.levelNumber() == lockedLevel + 1);
 }

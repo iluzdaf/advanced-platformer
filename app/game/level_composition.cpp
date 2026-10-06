@@ -5,7 +5,7 @@
 #include "content/item_catalog.hpp"
 #include "content/pickup_catalog.hpp"
 #include "content/exit_catalog.hpp"
-#include "content/level_catalog.hpp"
+#include "content/run_settings.hpp"
 #include "content/level_data.hpp"
 #include "content/level_generator.hpp"
 #include "content/room_pieces.hpp"
@@ -86,33 +86,28 @@ namespace advanced_platformer
                 exit.requirement = composeItemStack(items, *placement.requirement);
             }
             exit.consumeItem = placement.consumeItem;
-            exit.nextLevel = placement.nextLevel;
             return exit;
         }
     }
 
-    CatalogLevel loadCatalogLevel(
-        const LevelCatalog& catalog,
-        int levelNumber,
-        std::optional<std::uint32_t> seed)
+    GeneratedLevel generateRunLevel(const RunSettings& run, int levelNumber, std::uint32_t seed)
     {
-        LevelGeneration generation = levelEntry(catalog, levelNumber).generation;
-        generation.seed = seed.value_or(generation.seed);
-        const auto piecesPath = catalog.levelDirectory / generation.relativePieces;
-        std::string sourceName = std::format(
-            "{} (level {}, seed {})", piecesPath.string(), levelNumber, generation.seed);
+        const LevelGeneration generation = levelGeneration(run, levelNumber, seed);
+        const auto piecesPath = run.levelDirectory / run.relativePieces;
+        std::string sourceName =
+            std::format("{} (level {}, seed {})", piecesPath.string(), levelNumber, seed);
         LevelData data = generateLevel(loadRoomPieceCatalog(piecesPath), generation, sourceName);
-        return {std::move(data), std::move(sourceName), generation.seed};
+        return {std::move(data), std::move(sourceName)};
     }
 
     GameLevel composeGameLevel(
-        const LevelCatalog& catalog,
+        const RunSettings& run,
         int levelNumber,
+        std::uint32_t seed,
         int textureId,
-        const GameCatalogs& catalogs,
-        std::optional<std::uint32_t> seed)
+        const GameCatalogs& catalogs)
     {
-        const CatalogLevel source = loadCatalogLevel(catalog, levelNumber, seed);
+        const GeneratedLevel source = generateRunLevel(run, levelNumber, seed);
         const LevelData& data = source.data;
         const std::string& path = source.sourceName;
         const auto& tiles = catalogs.tiles;
@@ -218,7 +213,7 @@ namespace advanced_platformer
             std::move(actorPlacementIds),
             std::move(pickupPlacementIds),
             std::move(placedIds),
-            source.seed};
+            seed};
     }
 
     Actor composePlayer(const GameCatalogs& catalogs, int textureId)
@@ -228,14 +223,14 @@ namespace advanced_platformer
     }
 
     GameLevel composeLevelAtSeed(
-        const LevelCatalog& catalog,
+        const RunSettings& run,
         int levelNumber,
+        std::uint32_t seed,
         int textureId,
         const GameCatalogs& catalogs,
-        const Actor& player,
-        std::optional<std::uint32_t> seed)
+        const Actor& player)
     {
-        GameLevel level = composeGameLevel(catalog, levelNumber, textureId, catalogs, seed);
+        GameLevel level = composeGameLevel(run, levelNumber, seed, textureId, catalogs);
         Actor placed = player;
         moveFeetTo(placed.body.bounds, level.playerSpawnFeet);
         const ActorId playerId = level.world.addActor(std::move(placed));
@@ -246,17 +241,16 @@ namespace advanced_platformer
     }
 
     GameLevel composeStartedLevel(
-        const LevelCatalog& catalog,
+        const RunSettings& run,
         int levelNumber,
+        std::uint32_t seed,
         int textureId,
         const GameCatalogs& catalogs,
         const Actor& player,
-        float stepSeconds,
-        std::optional<std::uint32_t> seed)
+        float stepSeconds)
     {
-        GameLevel level =
-            composeLevelAtSeed(catalog, levelNumber, textureId, catalogs, player, seed);
-        const std::uint32_t firstSeed = level.seed;
+        GameLevel level = composeLevelAtSeed(run, levelNumber, seed, textureId, catalogs, player);
+        const std::uint32_t firstSeed = seed;
         for (std::uint32_t nextSeed = firstSeed + 1U;
              !playerCanReachExit(level.map, level.world, stepSeconds);
              ++nextSeed)
@@ -271,7 +265,7 @@ namespace advanced_platformer
                         firstSeed,
                         nextSeed - 1U));
             }
-            level = composeLevelAtSeed(catalog, levelNumber, textureId, catalogs, player, nextSeed);
+            level = composeLevelAtSeed(run, levelNumber, nextSeed, textureId, catalogs, player);
         }
         return level;
     }

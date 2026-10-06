@@ -15,7 +15,6 @@ namespace advanced_platformer
         ToggleInventory,
         TogglePause,
         StepSimulation,
-        RestartGame,
         RestartLevel,
         RerollLevel,
         ToggleDebugOverlay,

@@ -3,18 +3,18 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <optional>
 #include <string>
 #include <vector>
 
 #include "content/game_catalogs.hpp"
-#include "content/level_catalog.hpp"
+#include "content/run_settings.hpp"
 #include "content/level_data.hpp"
 #include "content/level_generator.hpp"
 #include "content/room_pieces.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "support/atlas_size.hpp"
 #include "support/player_reach.hpp"
+#include "support/run_levels.hpp"
 
 namespace
 {
@@ -78,8 +78,8 @@ namespace
             advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
         const RoomLayout layout{
             .grid = {3, 3}, .rooms = route.rooms, .exit = route.rooms.size() - 1};
-        const advanced_platformer::LevelData level = advanced_platformer::stitchRooms(
-            catalog, layout, route.choices, std::nullopt, "rooms.json");
+        const advanced_platformer::LevelData level =
+            advanced_platformer::stitchRooms(catalog, layout, route.choices, "rooms.json");
         return tests::playerReachesExit(level, shippedCatalogs);
     }
 
@@ -89,28 +89,25 @@ namespace
     }
 }
 
-TEST_CASE(
-    "Every shipped generated level reaches its exit across seeds",
-    "[app][content][generation]")
+TEST_CASE("Every shipped run level reaches its exit across seeds", "[app][content][generation]")
 {
-    const advanced_platformer::LevelCatalog catalog =
-        advanced_platformer::loadLevelCatalog("assets/levels/levels.json");
+    const advanced_platformer::RunSettings run =
+        advanced_platformer::loadRunSettings("assets/levels/run.json");
     const advanced_platformer::GameCatalogs catalogs =
         advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
-    for (const advanced_platformer::LevelCatalogEntry& entry : catalog.levels)
+    const advanced_platformer::RoomPieceCatalog pieces =
+        advanced_platformer::loadRoomPieceCatalog(run.levelDirectory / run.relativePieces);
+    for (int number = 1; number <= tests::levelsUntilCap(run); ++number)
     {
-        const advanced_platformer::LevelGeneration& shipped = entry.generation;
-        const advanced_platformer::RoomPieceCatalog pieces =
-            advanced_platformer::loadRoomPieceCatalog(
-                catalog.levelDirectory / shipped.relativePieces);
         for (std::uint32_t seed = 1; seed <= 20; ++seed)
         {
-            advanced_platformer::LevelGeneration generation = shipped;
-            generation.seed = seed;
-            INFO("level " << entry.number << " seed " << seed);
+            INFO("level " << number << " seed " << seed);
             REQUIRE(
                 tests::playerReachesExit(
-                    advanced_platformer::generateLevel(pieces, generation, "rooms.json"),
+                    advanced_platformer::generateLevel(
+                        pieces,
+                        advanced_platformer::levelGeneration(run, number, seed),
+                        "rooms.json"),
                     catalogs));
         }
     }

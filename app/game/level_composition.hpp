@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <optional>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -16,7 +15,7 @@
 namespace advanced_platformer
 {
     struct Actor;
-    struct LevelCatalog;
+    struct RunSettings;
     struct GameCatalogs;
 
     constexpr std::uint32_t GenerationAttempts = 100;
@@ -34,37 +33,33 @@ namespace advanced_platformer
         std::uint32_t seed = 0;
     };
 
-    struct CatalogLevel
+    struct GeneratedLevel
     {
         LevelData data;
         std::string sourceName;
-        std::uint32_t seed = 0;
     };
 
-    CatalogLevel loadCatalogLevel(
-        const LevelCatalog& catalog,
-        int levelNumber,
-        std::optional<std::uint32_t> seed = std::nullopt);
+    GeneratedLevel generateRunLevel(const RunSettings& run, int levelNumber, std::uint32_t seed);
     GameLevel composeGameLevel(
-        const LevelCatalog& catalog,
+        const RunSettings& run,
         int levelNumber,
+        std::uint32_t seed,
         int textureId,
-        const GameCatalogs& catalogs,
-        std::optional<std::uint32_t> seed = std::nullopt);
+        const GameCatalogs& catalogs);
     Actor composePlayer(const GameCatalogs& catalogs, int textureId);
     GameLevel composeLevelAtSeed(
-        const LevelCatalog& catalog,
+        const RunSettings& run,
         int levelNumber,
+        std::uint32_t seed,
         int textureId,
         const GameCatalogs& catalogs,
-        const Actor& player,
-        std::optional<std::uint32_t> seed = std::nullopt);
+        const Actor& player);
     GameLevel composeStartedLevel(
-        const LevelCatalog& catalog,
+        const RunSettings& run,
         int levelNumber,
+        std::uint32_t seed,
         int textureId,
         const GameCatalogs& catalogs,
         const Actor& player,
-        float stepSeconds,
-        std::optional<std::uint32_t> seed = std::nullopt);
+        float stepSeconds);
 }

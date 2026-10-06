@@ -22,7 +22,6 @@
 #include "advanced_platformer/navigation/platformer_connection_cache.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/validation.hpp"
-#include "advanced_platformer/movement/platformer_movement.hpp"
 
 namespace advanced_platformer
 {
@@ -54,7 +53,6 @@ namespace advanced_platformer
                 throw std::invalid_argument("Projectile burst data is invalid");
             }
         }
-
     }
 
     World::World(std::vector<ItemDefinition> items)
@@ -289,6 +287,7 @@ namespace advanced_platformer
 
         controlledPlayer = id;
         controlledPlayerSpawnFeet = spawnFeet;
+        defeated = false;
     }
 
     ActorId World::playerId() const
@@ -305,29 +304,17 @@ namespace advanced_platformer
         return controlledPlayerSpawnFeet;
     }
 
-    void World::respawnPlayer()
+    void World::defeatPlayer()
     {
-        Actor* player = findActor(controlledPlayer);
-        if (player == nullptr)
+        if (findActor(controlledPlayer) == nullptr)
         {
-            throw std::logic_error("The world has no player to respawn");
+            throw std::logic_error("The world has no player to defeat");
         }
+        defeated = true;
+    }
 
-        moveFeetTo(player->body.bounds, controlledPlayerSpawnFeet);
-        player->body.velocity = {0.0F, 0.0F};
-        player->intentions = {};
-        player->life = LifeState::Alive;
-        player->deathTimeRemaining = 0.0F;
-        player->lastDamageTimeSeconds.reset();
-        if (player->health.has_value())
-        {
-            player->health->current = player->health->maximum;
-        }
-        if (player->platformerMovement.has_value())
-        {
-            player->platformerMovement->grounded = false;
-            player->platformerMovement->coyoteRemaining = 0.0F;
-            player->platformerMovement->jumpBufferRemaining = 0.0F;
-        }
+    bool World::playerDefeated() const
+    {
+        return defeated;
     }
 }

@@ -15,20 +15,12 @@ TEST_CASE("Exit settings are validated without JSON", "[app][content][validation
     exit.definitionName = "test_door";
     REQUIRE_NOTHROW(advanced_platformer::validateExitSettings(exit));
     exit.requirement = advanced_platformer::NamedItemStack{"key", 1};
-    exit.nextLevel = 2;
     REQUIRE_NOTHROW(advanced_platformer::validateExitSettings(exit));
     exit.requirement->quantity = 0;
     REQUIRE_THROWS_WITH(
         advanced_platformer::validateExitSettings(exit),
         "exit.requirement.quantity: expected a positive integer, got 0");
     exit.requirement->quantity = -1;
-    REQUIRE_THROWS_AS(advanced_platformer::validateExitSettings(exit), std::invalid_argument);
-    exit.requirement.reset();
-    exit.nextLevel = 0;
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::validateExitSettings(exit),
-        "exit.nextLevel: level number must be positive");
-    exit.nextLevel = -1;
     REQUIRE_THROWS_AS(advanced_platformer::validateExitSettings(exit), std::invalid_argument);
 }
 

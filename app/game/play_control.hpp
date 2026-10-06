@@ -29,7 +29,6 @@ namespace advanced_platformer
         void setPaused(bool paused);
         void requestStep();
         void interrupt();
-        void restart();
         InputIntentions playerIntentions(const Game& game, const PlayFrame& frame);
         void advance(
             Game& game,
@@ -39,7 +38,7 @@ namespace advanced_platformer
 
         bool inventoryOpen() const;
         bool simulationPaused() const;
-        bool paused(const Game& game) const;
+        bool paused() const;
         const InputState& input() const;
 
     private:

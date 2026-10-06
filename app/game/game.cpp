@@ -4,7 +4,7 @@
 #include "content/actor_catalog.hpp"
 #include "debug/navigation_debug.hpp"
 #include "level_composition.hpp"
-#include "content/level_catalog.hpp"
+#include "content/run_settings.hpp"
 #include "content/game_catalogs.hpp"
 #include "content/hud_catalog.hpp"
 #include "content/game_content.hpp"
@@ -48,24 +48,27 @@ namespace advanced_platformer
 {
     Game::Game(
         int textureId,
-        LevelCatalog levelCatalog,
+        RunSettings run,
         GameCatalogs gameCatalogs,
         LuaNpcScripts npcScripts,
         LuaPresentationScript presentation,
-        float stepSeconds)
-        : levelCatalog(std::move(levelCatalog)),
+        float stepSeconds,
+        std::uint32_t runSeed)
+        : run(std::move(run)),
           gameCatalogs(std::move(gameCatalogs)),
           npcScripts(std::move(npcScripts)),
           presentation(std::move(presentation)),
           level(composeStartedLevel(
-              this->levelCatalog,
-              this->levelCatalog.startLevel,
+              this->run,
+              1,
+              runLevelSeed(runSeed, 1),
               textureId,
               this->gameCatalogs,
               composePlayer(this->gameCatalogs, textureId),
               stepSeconds)),
           atlasTextureId(textureId),
-          simulationStepSeconds(stepSeconds)
+          simulationStepSeconds(stepSeconds),
+          currentRunSeed(runSeed)
     {
         if (!isFinitePositive(simulationStepSeconds))
         {
@@ -74,7 +77,13 @@ namespace advanced_platformer
         startCamera();
     }
 
-    void Game::loadLevel(int levelNumber, std::optional<std::uint32_t> seed)
+    void Game::startRun(std::uint32_t seed)
+    {
+        currentRunSeed = seed;
+        replaceLevel(1, composePlayer(gameCatalogs, atlasTextureId), runLevelSeed(seed, 1));
+    }
+
+    void Game::loadLevel(int levelNumber, std::uint32_t seed)
     {
         Actor nextPlayer = composePlayer(gameCatalogs, atlasTextureId);
         if (const Actor* previousPlayer = level.world.findActor(level.world.playerId()))
@@ -85,16 +94,10 @@ namespace advanced_platformer
         replaceLevel(levelNumber, nextPlayer, seed);
     }
 
-    void Game::replaceLevel(int levelNumber, const Actor& player, std::optional<std::uint32_t> seed)
+    void Game::replaceLevel(int levelNumber, const Actor& player, std::uint32_t seed)
     {
         GameLevel next = composeStartedLevel(
-            levelCatalog,
-            levelNumber,
-            atlasTextureId,
-            gameCatalogs,
-            player,
-            simulationStepSeconds,
-            seed);
+            run, levelNumber, seed, atlasTextureId, gameCatalogs, player, simulationStepSeconds);
         for (const Actor& actor : level.world.actors())
         {
             npcScripts.forget(actor.id);
@@ -111,16 +114,12 @@ namespace advanced_platformer
             throw std::logic_error("The game could not initialise its camera");
         }
         cameraController =
-            makeCameraController(level.map, playerActor->body.bounds, levelCatalog.cameraDeadZone);
+            makeCameraController(level.map, playerActor->body.bounds, gameCatalogs.camera.deadZone);
         queueNavigationFill(level.map, level.world, simulationStepSeconds);
     }
 
     void Game::update(const InputIntentions& intentions, float deltaTime, FrameProfile* profile)
     {
-        if (gameComplete)
-        {
-            return;
-        }
         Actor* player = level.world.findActor(level.world.playerId());
         if (player == nullptr)
         {
@@ -132,20 +131,13 @@ namespace advanced_platformer
 
         if (level.world.levelComplete())
         {
-            const auto& completedExit = level.world.exit();
-            if (!completedExit.has_value())
-            {
-                throw std::logic_error("A completed game level must have an exit");
-            }
-            const auto nextLevel = completedExit->nextLevel;
-            if (nextLevel.has_value())
-            {
-                loadLevel(*nextLevel);
-            }
-            else
-            {
-                gameComplete = true;
-            }
+            const int nextLevel = level.number + 1;
+            loadLevel(nextLevel, runLevelSeed(currentRunSeed, nextLevel));
+            return;
+        }
+        if (level.world.playerDefeated())
+        {
+            startRun(nextRunSeed(currentRunSeed));
             return;
         }
 
@@ -276,10 +268,6 @@ namespace advanced_platformer
 
     void Game::useInventoryItem(std::size_t slot)
     {
-        if (gameComplete)
-        {
-            return;
-        }
         WorldRequests requests;
         requests.useItem(level.world.playerId(), slot);
         applyWorldRequests(level.world, requests);
@@ -296,46 +284,25 @@ namespace advanced_platformer
         return level.map.breakTile(cellAt(level.map.tileSize(), world));
     }
 
-    bool Game::restart()
+    void Game::restartLevel()
     {
-        if (!gameComplete)
-        {
-            return false;
-        }
-        replaceLevel(levelCatalog.startLevel, composePlayer(gameCatalogs, atlasTextureId));
-        gameComplete = false;
-        return true;
-    }
-
-    bool Game::restartLevel()
-    {
-        if (gameComplete)
-        {
-            return false;
-        }
         loadLevel(level.number, level.seed);
-        return true;
     }
 
-    bool Game::rerollLevel()
+    void Game::rerollLevel()
     {
-        if (gameComplete)
-        {
-            return false;
-        }
         loadLevel(level.number, level.seed + 1U);
-        return true;
     }
 
     LevelReload Game::reload(GameContent content)
     {
         GameLevel fresh = composeLevelAtSeed(
-            content.levelCatalog,
+            content.run,
             level.number,
+            level.seed,
             atlasTextureId,
             content.gameCatalogs,
-            composePlayer(content.gameCatalogs, atlasTextureId),
-            level.seed);
+            composePlayer(content.gameCatalogs, atlasTextureId));
         if (!playerCanReachExit(fresh.map, fresh.world, simulationStepSeconds))
         {
             throw std::invalid_argument(
@@ -349,12 +316,12 @@ namespace advanced_platformer
             next, std::move(fresh), matchItemIds(gameCatalogs.items, content.gameCatalogs.items));
 
         level = std::move(next);
-        levelCatalog = std::move(content.levelCatalog);
+        run = std::move(content.run);
         gameCatalogs = std::move(content.gameCatalogs);
         npcScripts = std::move(content.npcScripts);
         presentation = std::move(content.presentation);
         CameraController& camera = cameraControllerValue();
-        camera.deadZoneSize = levelCatalog.cameraDeadZone;
+        camera.deadZoneSize = gameCatalogs.camera.deadZone;
         const Actor* player = level.world.findActor(level.world.playerId());
         if (player != nullptr)
         {
@@ -374,9 +341,9 @@ namespace advanced_platformer
         return level.seed;
     }
 
-    bool Game::complete() const
+    std::uint32_t Game::runSeed() const
     {
-        return gameComplete;
+        return currentRunSeed;
     }
 
     std::optional<glm::vec2> Game::levelExitScreenPosition() const

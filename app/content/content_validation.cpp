@@ -64,10 +64,6 @@ namespace advanced_platformer
                 std::format(
                     "expected a positive integer, got {}", placement.requirement->quantity));
         }
-        if (placement.nextLevel && *placement.nextLevel <= 0)
-        {
-            failJson(sourceName, fieldPath(path, "nextLevel"), "level number must be positive");
-        }
     }
 
     void validateTileCatalog(const TileCatalog& catalog)

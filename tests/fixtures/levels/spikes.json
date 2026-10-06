@@ -1,0 +1,38 @@
+{
+  "roomSize": [8, 6],
+  "tileLegend": {
+    ".": "empty",
+    "#": "stone"
+  },
+  "wall": "#",
+  "open": ".",
+  "markers": {
+    "start": "S",
+    "exit": "E",
+    "actors": {
+      "x": "test_spikes"
+    },
+    "pickups": {
+      "k": "door_key"
+    }
+  },
+  "exit": {
+    "definition": "test_door"
+  },
+  "pieces": [
+    {
+      "name": "start",
+      "role": "start",
+      "doors": ["left"],
+      "mirror": false,
+      "map": ["########", "#......#", ".......#", ".......#", "..x.kS.#", "########"]
+    },
+    {
+      "name": "exit",
+      "role": "exit",
+      "doors": ["right"],
+      "mirror": false,
+      "map": ["########", "#......#", "#.......", "#.......", "#.E.....", "########"]
+    }
+  ]
+}

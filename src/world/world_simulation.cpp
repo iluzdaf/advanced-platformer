@@ -24,15 +24,13 @@ namespace advanced_platformer
         NpcActivityScripts& scripts,
         FrameProfile* profile)
     {
-        if (world.levelComplete())
+        if (world.levelComplete() || world.playerDefeated())
         {
             return;
         }
         world.advanceSimulationTime(deltaTime);
         const auto phase = [&](const char* category, const char* name, auto&& run)
         { timePhase(profile, category, name, run); };
-        // While the exit opens the game is paused: only the clock runs, so the door can
-        // finish opening.
         if (exitOpening(world))
         {
             phase("World", "Level exit", [&] { updateLevelExit(world); });

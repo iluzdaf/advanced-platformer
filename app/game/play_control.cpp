@@ -10,11 +10,6 @@
 
 namespace advanced_platformer
 {
-    namespace
-    {
-        constexpr glm::vec2 InitialAimDirection = {1.0F, 0.0F};
-    }
-
     void PlayControl::setButton(InputButton button, bool down)
     {
         inputState.setButton(button, down);
@@ -63,13 +58,6 @@ namespace advanced_platformer
         interrupted = true;
     }
 
-    void PlayControl::restart()
-    {
-        inventoryShown = false;
-        aim = InitialAimDirection;
-        interrupted = true;
-    }
-
     InputIntentions PlayControl::playerIntentions(const Game& game, const PlayFrame& frame)
     {
         InputIntentions intentions = inputState.consumeIntentions();
@@ -97,7 +85,7 @@ namespace advanced_platformer
         const PlayFrame& frame,
         FrameProfile& profile)
     {
-        const bool blocked = paused(game);
+        const bool blocked = paused();
         clearBlockedInput(blocked, frame);
         const auto step = [&](float deltaTime)
         { game.update(playerIntentions(game, frame), deltaTime, &profile); };
@@ -114,7 +102,7 @@ namespace advanced_platformer
 
         fixedStep.reset();
         interrupted = false;
-        if (stepPending && !inventoryShown && !game.complete())
+        if (stepPending && !inventoryShown)
         {
             const Stopwatch simulationWatch;
             step(static_cast<float>(fixedStep.stepSeconds()));
@@ -134,9 +122,9 @@ namespace advanced_platformer
         return pausedByUser;
     }
 
-    bool PlayControl::paused(const Game& game) const
+    bool PlayControl::paused() const
     {
-        return inventoryShown || game.complete() || pausedByUser;
+        return inventoryShown || pausedByUser;
     }
 
     const InputState& PlayControl::input() const

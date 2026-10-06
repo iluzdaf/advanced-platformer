@@ -26,10 +26,6 @@ namespace advanced_platformer
                 throw std::invalid_argument("Exit requirements must be positive");
             }
         }
-        if (exit.nextLevel.has_value() && *exit.nextLevel < 0)
-        {
-            throw std::invalid_argument("Level IDs must be non-negative");
-        }
     }
 
     void World::setExit(LevelExit exit)

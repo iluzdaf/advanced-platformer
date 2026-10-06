@@ -4,7 +4,7 @@
 
 #include "content/game_catalogs.hpp"
 #include "content/game_content.hpp"
-#include "content/level_catalog.hpp"
+#include "content/run_settings.hpp"
 #include "game/game.hpp"
 #include "lua_npc_scripts.hpp"
 #include "lua_presentation_script.hpp"
@@ -16,8 +16,7 @@ namespace tests
     inline advanced_platformer::GameContent fixtureContent()
     {
         return {
-            advanced_platformer::loadLevelCatalog(
-                "tests/fixtures/levels/actor_placement_levels.json"),
+            advanced_platformer::loadRunSettings("tests/fixtures/levels/actor_placement_run.json"),
             advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", AtlasSize),
             advanced_platformer::LuaNpcScripts{},
             advanced_platformer::LuaPresentationScript{}};
@@ -28,10 +27,11 @@ namespace tests
         advanced_platformer::GameContent content = fixtureContent();
         return {
             0,
-            std::move(content.levelCatalog),
+            std::move(content.run),
             std::move(content.gameCatalogs),
             std::move(content.npcScripts),
             std::move(content.presentation),
-            FixedStepSeconds};
+            FixedStepSeconds,
+            1};
     }
 }

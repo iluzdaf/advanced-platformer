@@ -8,7 +8,7 @@
 #include <glm/vec2.hpp>
 
 #include "content/game_catalogs.hpp"
-#include "content/level_catalog.hpp"
+#include "content/run_settings.hpp"
 #include "debug/debug_overlay.hpp"
 #include "debug/navigation_debug.hpp"
 #include "game/game.hpp"
@@ -123,17 +123,16 @@ TEST_CASE("Debug overlay data supports actors without presentation components", 
 
 TEST_CASE("Game debug data retains actor definition names", "[app][debug]")
 {
-    const auto levels = advanced_platformer::parseLevelCatalog(
-        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"pieces":"actor_placement.json","rooms":2,"grid":[2,1]}]})",
-        "test catalog",
-        "tests/fixtures/levels");
+    const auto run =
+        advanced_platformer::loadRunSettings("tests/fixtures/levels/actor_placement_run.json");
     advanced_platformer::Game game(
         0,
-        levels,
+        run,
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
         advanced_platformer::LuaNpcScripts{},
         advanced_platformer::LuaPresentationScript{},
-        tests::FixedStepSeconds);
+        tests::FixedStepSeconds,
+        1);
 
     const advanced_platformer::DebugOverlay debug = game.debugOverlay(128.0F, std::nullopt, 0);
     const auto npc = std::ranges::find_if(
@@ -153,17 +152,16 @@ TEST_CASE("Game debug data retains actor definition names", "[app][debug]")
 
 TEST_CASE("Debug overlay data names a climbing NPC's navigation profile", "[app][debug]")
 {
-    const auto levels = advanced_platformer::parseLevelCatalog(
-        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"pieces":"climber_placement.json","rooms":2,"grid":[2,1]}]})",
-        "test catalog",
-        "tests/fixtures/levels");
+    const auto run =
+        advanced_platformer::loadRunSettings("tests/fixtures/levels/climber_placement_run.json");
     advanced_platformer::Game game(
         0,
-        levels,
+        run,
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
         advanced_platformer::LuaNpcScripts{},
         advanced_platformer::LuaPresentationScript{},
-        tests::FixedStepSeconds);
+        tests::FixedStepSeconds,
+        1);
 
     const advanced_platformer::DebugOverlay debug = game.debugOverlay(128.0F, std::nullopt, 0);
     REQUIRE(debug.navigationCache.has_value());

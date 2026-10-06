@@ -51,12 +51,6 @@ TEST_CASE("Level commands raise one request each", "[app][commands]")
 {
     ApplicationContext context;
 
-    applyCommand(context, ApplicationCommand::RestartGame);
-
-    REQUIRE(context.levelRequests.restartGame);
-    REQUIRE_FALSE(context.levelRequests.restartLevel);
-    REQUIRE_FALSE(context.levelRequests.rerollLevel);
-
     applyCommand(context, ApplicationCommand::RestartLevel);
 
     REQUIRE(context.levelRequests.restartLevel);

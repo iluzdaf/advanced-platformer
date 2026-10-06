@@ -32,9 +32,6 @@ namespace advanced_platformer
         case ApplicationCommand::StepSimulation:
             context.play.requestStep();
             return;
-        case ApplicationCommand::RestartGame:
-            context.levelRequests.restartGame = true;
-            return;
         case ApplicationCommand::RestartLevel:
             context.levelRequests.restartLevel = true;
             return;

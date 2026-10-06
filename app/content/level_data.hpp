@@ -44,7 +44,6 @@ namespace advanced_platformer
         LevelPosition spawn;
         std::optional<NamedItemStack> requirement;
         bool consumeItem = false;
-        std::optional<int> nextLevel;
     };
 
     struct LevelData

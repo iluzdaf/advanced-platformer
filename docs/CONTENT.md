@@ -39,7 +39,7 @@ again from the next seed, also keeping health and items.
 
 | File                                                             | Holds                                               | Loader                                                                                                                       |
 | ---------------------------------------------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| [`levels/levels.json`](../assets/levels/levels.json)             | Start level, camera dead zone, and each level       | [`level_catalog.cpp`](../app/content/level_catalog.cpp)                                                                      |
+| [`levels/run.json`](../assets/levels/run.json)                   | Room pieces and how levels grow through a run       | [`run_settings.cpp`](../app/content/run_settings.cpp)                                                                        |
 | [`levels/rooms.json`](../assets/levels/rooms.json)               | Room pieces that generated levels are stitched from | [`room_pieces.cpp`](../app/content/room_pieces.cpp), [`level_generator.cpp`](../app/content/level_generator.cpp)             |
 | [`catalogs/tiles.json`](../assets/catalogs/tiles.json)           | Tile size and tiles                                 | [`tile_catalog.cpp`](../app/content/tile_catalog.cpp)                                                                        |
 | [`catalogs/actors.json`](../assets/catalogs/actors.json)         | The player and every actor definition               | [`actor_catalog.cpp`](../app/content/actor_catalog.cpp), [`actor_definition.cpp`](../app/content/actor_definition.cpp)       |
@@ -51,37 +51,29 @@ again from the next seed, also keeping health and items.
 | [`catalogs/pickups.json`](../assets/catalogs/pickups.json)       | World pickups                                       | [`pickup_catalog.cpp`](../app/content/pickup_catalog.cpp)                                                                    |
 | [`catalogs/exits.json`](../assets/catalogs/exits.json)           | Exit bodies and sprites                             | [`exit_catalog.cpp`](../app/content/exit_catalog.cpp)                                                                        |
 | [`catalogs/hud.json`](../assets/catalogs/hud.json)               | HUD icon regions                                    | [`hud_catalog.cpp`](../app/content/hud_catalog.cpp)                                                                          |
+| [`catalogs/camera.json`](../assets/catalogs/camera.json)         | Camera dead zone                                    | [`camera_settings.cpp`](../app/content/camera_settings.cpp)                                                                  |
 
 Every catalog is required, even when empty. Every sprite region, frame and icon must lie
 inside the atlas.
 
-## Level catalog
+## Run
+
+A run is endless. It starts at level 1, and each exit leads to the next level. When the
+player dies, the run starts again at level 1 with full health, no items and a new run
+seed. Each level's seed follows from the run seed and the level number, so a run seed
+always gives the same levels.
 
 ```json
-{
-  "startLevel": 1,
-  "cameraDeadZone": [80, 45],
-  "levels": [
-    { "number": 1, "pieces": "rooms.json", "rooms": 6, "nextLevel": 2 },
-    { "number": 2, "pieces": "rooms.json", "rooms": 9, "grid": [9, 7], "seed": 40 }
-  ]
-}
+{ "pieces": "rooms.json", "firstRooms": 6, "roomsPerLevel": 3, "maxRooms": 18 }
 ```
 
-| Field            | Meaning                                                                        |
-| ---------------- | ------------------------------------------------------------------------------ |
-| `startLevel`     | The `number` of the first level.                                               |
-| `cameraDeadZone` | The part of the 320 by 180 view the player moves in before the camera follows. |
-| `levels`         | Each level, generated from room pieces.                                        |
-
-| Field       | Required | Meaning                                                                   |
-| ----------- | -------- | ------------------------------------------------------------------------- |
-| `number`    | Yes      | A positive unique ID that exits refer to.                                 |
-| `pieces`    | Yes      | The room piece file, relative to this file.                               |
-| `rooms`     | Yes      | How many rooms, from 2 up to the number of grid slots.                    |
-| `grid`      | No       | The grid of room slots, `[columns, rows]`. Defaults to `[9, 7]`.          |
-| `seed`      | No       | The same seed always builds the same level. Defaults to the level number. |
-| `nextLevel` | No       | Where the exit leads. Without it, the generated level completes the game. |
+| Field           | Required | Meaning                                                          |
+| --------------- | -------- | ---------------------------------------------------------------- |
+| `pieces`        | Yes      | The room piece file, relative to this file.                      |
+| `firstRooms`    | Yes      | How many rooms level 1 has, from 2 up to `maxRooms`.             |
+| `roomsPerLevel` | Yes      | How many rooms each later level adds. Zero or more.              |
+| `maxRooms`      | Yes      | The most rooms a level has, from 2 up to the number of slots.    |
+| `grid`          | No       | The grid of room slots, `[columns, rows]`. Defaults to `[9, 7]`. |
 
 The rooms grow from the centre slot of the grid, each new room opening off one room
 already placed and touching no other, so they form branching corridors without loops.
@@ -419,10 +411,19 @@ Saves, if added, should store item names: item IDs are assigned at load and can 
 ```
 
 `bodySize` and `sprite` are required. The requirement and consumption belong to a room
-piece file's [`exit`](#room-pieces), and the next level to the
-[level catalog](#level-catalog), so doors that look alike can lead to different levels.
+piece file's [`exit`](#room-pieces). Every exit leads to the next level of the
+[run](#run).
 
 ## HUD icons
 
 `hud.json` has the regions `fullHeart`, `emptyHeart` and `bag`, each with `position` and
 `size`. The HUD draws them all at one size.
+
+## Camera
+
+`camera.json` holds `deadZone`, the part of the 320 by 180 view the player moves in
+before the camera follows.
+
+```json
+{ "deadZone": [80, 45] }
+```

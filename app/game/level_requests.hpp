@@ -8,7 +8,6 @@ namespace advanced_platformer
 
     struct LevelRequests
     {
-        bool restartGame = false;
         bool restartLevel = false;
         bool rerollLevel = false;
     };
