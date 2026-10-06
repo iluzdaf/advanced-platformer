@@ -104,16 +104,28 @@ TEST_CASE("Level JSON accepts a custom tile legend", "[app][content][json]")
 
 TEST_CASE("A formatted level reads back as the same level", "[app][content][json]")
 {
-    for (const char* path :
-         {"tests/fixtures/levels/opening.json",
-          "tests/fixtures/levels/actor_placement.json",
-          "tests/fixtures/levels/pickup_placement.json",
-          "tests/fixtures/levels/locked_door.json",
-          "tests/fixtures/levels/climber_placement.json"})
+    for (const char* source :
+         {R"({
+            "tileLegend": {".": "empty", "#": "stone"},
+            "map": ["......", "######"],
+            "playerSpawn": {"cell": [0, 0]},
+            "actors": [{"id": "guard", "definition": "test_guard", "spawn": {"feet": [40.5, 16]},
+                        "patrol": {"first": {"cell": [1, 0]}, "second": {"feet": [72, 16]}}}],
+            "pickups": [{"id": "key", "definition": "door_key", "spawn": {"cell": [3, 0]}}],
+            "exit": {"definition": "test_door", "spawn": {"cell": [5, 0]},
+                     "requirement": {"item": "key", "quantity": 2}, "consumeItem": true, "nextLevel": 4}
+         })",
+          R"({
+            "tileLegend": {".": "empty", "\"": "stone"},
+            "map": ["..", "\"\""],
+            "playerSpawn": {"cell": [0, 0]},
+            "exit": {"definition": "test_door", "spawn": {"cell": [1, 0]}}
+         })"})
     {
-        const advanced_platformer::LevelData level = advanced_platformer::loadLevelData(path);
+        const advanced_platformer::LevelData level =
+            advanced_platformer::parseLevelData(source, "level");
         const std::string text = advanced_platformer::formatLevelData(level);
-        INFO(path);
+        INFO(text);
         REQUIRE(
             advanced_platformer::formatLevelData(
                 advanced_platformer::parseLevelData(text, "formatted")) == text);
@@ -123,5 +135,6 @@ TEST_CASE("A formatted level reads back as the same level", "[app][content][json
         REQUIRE(again.actors.size() == level.actors.size());
         REQUIRE(again.pickups.size() == level.pickups.size());
         REQUIRE(again.exit.nextLevel == level.exit.nextLevel);
+        REQUIRE(again.exit.consumeItem == level.exit.consumeItem);
     }
 }

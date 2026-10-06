@@ -2,17 +2,8 @@
   "startLevel": 1,
   "cameraDeadZone": [80, 45],
   "levels": [
-    {
-      "number": 1,
-      "generate": { "pieces": "rooms.json", "rooms": 6, "nextLevel": 2 }
-    },
-    {
-      "number": 2,
-      "generate": { "pieces": "rooms.json", "rooms": 9, "nextLevel": 3 }
-    },
-    {
-      "number": 3,
-      "generate": { "pieces": "rooms.json", "rooms": 12 }
-    }
+    { "number": 1, "pieces": "rooms.json", "rooms": 6, "nextLevel": 2 },
+    { "number": 2, "pieces": "rooms.json", "rooms": 9, "nextLevel": 3 },
+    { "number": 3, "pieces": "rooms.json", "rooms": 12 }
   ]
 }

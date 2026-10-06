@@ -426,7 +426,7 @@ to the traversal profile. The search itself does not change.
 | Load shared catalogs | `app/content/game_catalogs.cpp`      | Definitions checked against the atlas size and kept for the session                |
 | Load scripts         | `app/content/npc_script_catalog.cpp` | Each script a machine names, with every named activity present                     |
 | Generate a level     | `app/content/level_generator.cpp`    | Room pieces laid out from the seed and stitched into level JSON                    |
-| Load a level         | `app/content/level_data.cpp`         | Plain `LevelData` of explicit placements, each actor and pickup with an id         |
+| Read the level       | `app/content/level_data.cpp`         | Plain `LevelData` of explicit placements, each actor and pickup with an id         |
 | Compose the level    | `app/game/level_composition.cpp`     | Names resolved into a map, world, and placed objects                               |
 | Start the level      | `composeStartedLevel`, then `Game`   | Player inserted, placements validated, camera made, and the navigation fill queued |
 

@@ -4,7 +4,6 @@
 #include <vector>
 #include <cstddef>
 #include <cstdint>
-#include <string>
 
 #include <glm/vec2.hpp>
 
@@ -66,8 +65,7 @@ namespace advanced_platformer
         bool rerollLevel();
         LevelReload reload(GameContent content);
         int levelNumber() const;
-        std::optional<std::uint32_t> levelSeed() const;
-        std::string levelJson() const;
+        std::uint32_t levelSeed() const;
         bool complete() const;
         std::optional<glm::vec2> levelExitScreenPosition() const;
         bool exitReady() const;

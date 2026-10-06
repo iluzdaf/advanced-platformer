@@ -8,15 +8,15 @@
 #include "content/level_catalog.hpp"
 #include "support/json_document.hpp"
 
-TEST_CASE("A level catalog maps stable IDs to arbitrary file names", "[app][content][json]")
+TEST_CASE("A level catalog lists generated levels by stable IDs", "[app][content][json]")
 {
     const auto catalog = advanced_platformer::parseLevelCatalog(
         R"({
             "startLevel": 10,
             "cameraDeadZone": [80, 45],
             "levels": [
-                {"number": 10, "file": "opening.json"},
-                {"number": 25, "file": "areas/final_room.json"}
+                {"number": 10, "pieces": "areas/rooms.json", "rooms": 6, "grid": [5, 3], "seed": 9, "nextLevel": 25},
+                {"number": 25, "pieces": "rooms.json", "rooms": 4}
             ]
         })",
         "test catalog",
@@ -24,120 +24,69 @@ TEST_CASE("A level catalog maps stable IDs to arbitrary file names", "[app][cont
 
     REQUIRE(catalog.startLevel == 10);
     REQUIRE(catalog.cameraDeadZone == glm::vec2{80.0F, 45.0F});
+    REQUIRE(catalog.levelDirectory == std::filesystem::path("levels"));
     REQUIRE(catalog.levels.size() == 2);
-    REQUIRE(
-        advanced_platformer::levelPath(catalog, 25) ==
-        std::filesystem::path("levels/areas/final_room.json"));
-    REQUIRE_THROWS_AS(advanced_platformer::levelPath(catalog, 1), std::invalid_argument);
+    const advanced_platformer::LevelGeneration& first =
+        advanced_platformer::levelEntry(catalog, 10).generation;
+    REQUIRE(first.relativePieces == std::filesystem::path("areas/rooms.json"));
+    REQUIRE(first.roomCount == 6);
+    REQUIRE(first.grid.width == 5);
+    REQUIRE(first.grid.height == 3);
+    REQUIRE(first.seed == 9);
+    REQUIRE(first.nextLevel == 25);
+    REQUIRE_THROWS_AS(advanced_platformer::levelEntry(catalog, 1), std::invalid_argument);
 }
 
-TEST_CASE("A level catalog entry can generate its level from room pieces", "[app][content][json]")
+TEST_CASE("A level's grid and seed have defaults", "[app][content][json]")
 {
     const auto catalog = advanced_platformer::parseLevelCatalog(
-        R"({
-            "startLevel": 1,
-            "cameraDeadZone": [80, 45],
-            "levels": [
-                {"number": 1, "generate": {"pieces": "rooms.json", "rooms": 6, "grid": [5, 3], "seed": 9, "nextLevel": 2}},
-                {"number": 2, "generate": {"pieces": "rooms.json", "rooms": 4}}
-            ]
-        })",
-        "test catalog",
-        "levels");
+        R"({"startLevel": 3, "cameraDeadZone": [80, 45], "levels": [{"number": 3, "pieces": "rooms.json", "rooms": 4}]})",
+        "test catalog");
 
-    const advanced_platformer::LevelCatalogEntry& first =
-        advanced_platformer::levelEntry(catalog, 1);
-    REQUIRE(first.generation.has_value());
-    const advanced_platformer::LevelGeneration one =
-        first.generation.value_or(advanced_platformer::LevelGeneration{});
-    REQUIRE(one.relativePieces == std::filesystem::path("rooms.json"));
-    REQUIRE(one.roomCount == 6);
-    REQUIRE(one.grid.width == 5);
-    REQUIRE(one.grid.height == 3);
-    REQUIRE(one.seed == 9);
-    REQUIRE(one.nextLevel == 2);
-    const advanced_platformer::LevelCatalogEntry& second =
-        advanced_platformer::levelEntry(catalog, 2);
-    REQUIRE(second.generation.has_value());
-    const advanced_platformer::LevelGeneration two =
-        second.generation.value_or(advanced_platformer::LevelGeneration{});
-    REQUIRE(two.grid.width == 9);
-    REQUIRE(two.grid.height == 7);
-    REQUIRE(two.seed == 2);
-    REQUIRE_FALSE(two.nextLevel.has_value());
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::levelPath(catalog, 1),
-        Catch::Matchers::ContainsSubstring("Level 1 is generated"));
+    const advanced_platformer::LevelGeneration& level =
+        advanced_platformer::levelEntry(catalog, 3).generation;
+    REQUIRE(level.grid.width == 9);
+    REQUIRE(level.grid.height == 7);
+    REQUIRE(level.seed == 3);
+    REQUIRE_FALSE(level.nextLevel.has_value());
 }
 
-TEST_CASE("A level catalog rejects ambiguous or unsafe entries", "[app][content][json]")
-{
-    SECTION("start level is not listed")
-    {
-        REQUIRE_THROWS_AS(
-            advanced_platformer::parseLevelCatalog(
-                R"({"startLevel": 2, "cameraDeadZone": [80, 45], "levels": [{"number": 1, "file": "one.json"}]})",
-                "test catalog"),
-            std::invalid_argument);
-    }
-
-    SECTION("level ID is duplicated")
-    {
-        REQUIRE_THROWS_AS(
-            advanced_platformer::parseLevelCatalog(
-                R"({
-                    "startLevel": 1,
-                    "cameraDeadZone": [80, 45],
-                    "levels": [
-                        {"number": 1, "file": "one.json"},
-                        {"number": 1, "file": "another.json"}
-                    ]
-                })",
-                "test catalog"),
-            std::invalid_argument);
-    }
-
-    SECTION("file escapes the level directory")
-    {
-        REQUIRE_THROWS_AS(
-            advanced_platformer::parseLevelCatalog(
-                R"({"startLevel": 1, "cameraDeadZone": [80, 45], "levels": [{"number": 1, "file": "../one.json"}]})",
-                "test catalog"),
-            std::invalid_argument);
-    }
-}
-
-TEST_CASE("A level catalog rejects a generated entry it cannot build", "[app][content][json]")
+TEST_CASE("A level catalog rejects entries it cannot build", "[app][content][json]")
 {
     auto levelCatalogJson = tests::parseJson(
-        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"generate":{"pieces":"rooms.json","rooms":4}}]})");
+        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"pieces":"rooms.json","rooms":4}]})");
     auto& entry = levelCatalogJson["levels"][0];
     std::string message;
-    SECTION("Both a file and a generation")
+    SECTION("A start level that is not listed")
     {
-        entry["file"] = "one.json";
-        message = "levels[0]: expected exactly one of file and generate";
+        levelCatalogJson["startLevel"] = 2;
+        message = "startLevel: level is not listed in the catalog";
     }
-    SECTION("Neither a file nor a generation")
+    SECTION("A repeated level number")
     {
-        tests::eraseKey(entry, "generate");
-        message = "levels[0]: expected exactly one of file and generate";
+        levelCatalogJson["levels"].get_array().push_back(entry);
+        message = "levels[1].number: level number is already listed";
+    }
+    SECTION("No pieces")
+    {
+        tests::eraseKey(entry, "pieces");
+        message = "levels.json:";
     }
     SECTION("Too few rooms")
     {
-        entry["generate"]["rooms"] = 1;
-        message = "levels[0].generate.rooms: expected at least 2 rooms";
+        entry["rooms"] = 1;
+        message = "levels[0].rooms: expected at least 2 rooms";
     }
     SECTION("More rooms than the grid holds")
     {
-        entry["generate"]["grid"] = tests::numbers({2, 2});
-        entry["generate"]["rooms"] = 5;
+        entry["grid"] = tests::numbers({2, 2});
+        entry["rooms"] = 5;
         message = "no more than the grid's 4 slots";
     }
     SECTION("A piece file outside the level directory")
     {
-        entry["generate"]["pieces"] = "../rooms.json";
-        message = "levels[0].generate.pieces: file must stay inside the level directory";
+        entry["pieces"] = "../rooms.json";
+        message = "levels[0].pieces: expected a path inside the level directory";
     }
     REQUIRE_THROWS_WITH(
         advanced_platformer::parseLevelCatalog(tests::dumpJson(levelCatalogJson), "levels.json"),
@@ -149,7 +98,7 @@ TEST_CASE(
     "[app][content][json]")
 {
     auto levelCatalogJson = tests::parseJson(
-        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"one.json"}]})");
+        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"pieces":"one.json","rooms":2,"grid":[2,1]}]})");
     SECTION("Missing")
     {
         tests::eraseKey(levelCatalogJson, "cameraDeadZone");
@@ -174,7 +123,7 @@ TEST_CASE(
 TEST_CASE("Level catalog numbers reject narrowing and fields reject typos", "[app][content][json]")
 {
     auto levelCatalogJson = tests::parseJson(
-        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"one.json"}]})");
+        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"pieces":"one.json","rooms":2,"grid":[2,1]}]})");
     SECTION("Above int range")
     {
         levelCatalogJson["startLevel"] = 4294967297LL;
@@ -189,7 +138,7 @@ TEST_CASE("Level catalog numbers reject narrowing and fields reject typos", "[ap
     }
     SECTION("Entry typo")
     {
-        levelCatalogJson["levels"][0]["fille"] = "two.json";
+        levelCatalogJson["levels"][0]["piecess"] = "two.json";
     }
     REQUIRE_THROWS_WITH(
         advanced_platformer::parseLevelCatalog(tests::dumpJson(levelCatalogJson), "levels.json"),

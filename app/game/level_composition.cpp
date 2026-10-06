@@ -96,13 +96,7 @@ namespace advanced_platformer
         int levelNumber,
         std::optional<std::uint32_t> seed)
     {
-        const LevelCatalogEntry& entry = levelEntry(catalog, levelNumber);
-        if (!entry.generation.has_value())
-        {
-            const auto path = levelPath(catalog, levelNumber);
-            return {loadLevelData(path), path.string(), std::nullopt};
-        }
-        LevelGeneration generation = *entry.generation;
+        LevelGeneration generation = levelEntry(catalog, levelNumber).generation;
         generation.seed = seed.value_or(generation.seed);
         const auto piecesPath = catalog.levelDirectory / generation.relativePieces;
         std::string sourceName = std::format(

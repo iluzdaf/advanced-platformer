@@ -3,6 +3,7 @@
 #include "content_diagnostics.hpp"
 #include "content_glaze.hpp"
 #include "content_validation.hpp"
+#include "item_catalog.hpp"
 
 #include <algorithm>
 #include <array>
@@ -59,6 +60,19 @@ namespace advanced_platformer
         std::optional<std::map<std::string, std::string>> pickups;
     };
 
+    struct RoomExitRequirementJson
+    {
+        std::string item;
+        int quantity = 1;
+    };
+
+    struct RoomExitJson
+    {
+        std::string definition;
+        std::optional<RoomExitRequirementJson> requirement;
+        std::optional<bool> consumeItem;
+    };
+
     struct RoomPieceJson
     {
         std::string name;
@@ -75,7 +89,7 @@ namespace advanced_platformer
         std::string wall;
         std::string open;
         RoomMarkersJson markers;
-        std::string exit;
+        RoomExitJson exit;
         std::vector<RoomPieceJson> pieces;
     };
 
@@ -243,20 +257,6 @@ namespace advanced_platformer
             return "unknown";
         }
 
-        std::string doorNames(RoomDoors doors)
-        {
-            std::string result;
-            for (const RoomSide side : AllSides)
-            {
-                if (hasDoor(doors, side))
-                {
-                    result += result.empty() ? "" : ", ";
-                    result += nameOf(side);
-                }
-            }
-            return result;
-        }
-
         bool onDoor(GridSize roomSize, RoomDoors doors, Cell cell)
         {
             return std::ranges::any_of(
@@ -365,61 +365,6 @@ namespace advanced_platformer
                         exits,
                         counts.starts,
                         counts.exits));
-            }
-        }
-
-        bool someFits(
-            const std::vector<RoomPiece>& pieces,
-            RoomDoors doors,
-            bool (*roleFits)(RoomRole))
-        {
-            return std::ranges::any_of(
-                pieces,
-                [&](const RoomPiece& piece)
-                {
-                    return roleFits(piece.role) &&
-                           (coversDoors(piece.doors, doors) ||
-                            (piece.mirror && coversDoors(mirroredDoors(piece.doors), doors)));
-                });
-        }
-
-        void validateCoverage(const RoomPieceCatalog& catalog, std::string_view sourceName)
-        {
-            for (std::uint8_t bits = 1; bits < 16; ++bits)
-            {
-                const RoomDoors doors{bits};
-                if (!someFits(
-                        catalog.pieces,
-                        doors,
-                        [](RoomRole role) { return role == RoomRole::Start; }))
-                {
-                    failJson(
-                        sourceName,
-                        "pieces",
-                        std::format("no start room has doors {}", doorNames(doors)));
-                }
-                if (!someFits(
-                        catalog.pieces,
-                        doors,
-                        [](RoomRole role)
-                        { return role != RoomRole::Start && role != RoomRole::Exit; }))
-                {
-                    failJson(
-                        sourceName,
-                        "pieces",
-                        std::format("no corridor, shaft or arena has doors {}", doorNames(doors)));
-                }
-                if (doorCount(doors) == 1 &&
-                    !someFits(
-                        catalog.pieces,
-                        doors,
-                        [](RoomRole role) { return role == RoomRole::Exit; }))
-                {
-                    failJson(
-                        sourceName,
-                        "pieces",
-                        std::format("no exit room has a door {}", doorNames(doors)));
-                }
             }
         }
 
@@ -540,11 +485,17 @@ namespace advanced_platformer
         result.actorMarkers = markerMap(file.markers.actors, used, sourceName, "markers.actors");
         result.pickupMarkers = markerMap(file.markers.pickups, used, sourceName, "markers.pickups");
 
-        if (file.exit.empty())
+        if (file.exit.definition.empty())
         {
-            failJson(sourceName, "exit", "exit definition name cannot be empty");
+            failJson(sourceName, "exit.definition", "exit definition name cannot be empty");
         }
-        result.exitDefinition = file.exit;
+        result.exitDefinition = file.exit.definition;
+        if (file.exit.requirement.has_value())
+        {
+            result.exitRequirement =
+                NamedItemStack{file.exit.requirement->item, file.exit.requirement->quantity};
+        }
+        result.consumeExitItem = file.exit.consumeItem.value_or(false);
 
         std::set<std::string> names;
         for (std::size_t index = 0; index < file.pieces.size(); ++index)
@@ -563,7 +514,6 @@ namespace advanced_platformer
             validateRoleMarkers(piece, counts, sourceName, path);
             result.pieces.push_back(std::move(piece));
         }
-        validateCoverage(result, sourceName);
         return result;
     }
 

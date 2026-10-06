@@ -70,7 +70,7 @@ TEST_CASE(
     const auto initialInventory = game.playerInventory();
     const int initialLevel = game.levelNumber();
     advanced_platformer::InputIntentions intentions;
-    intentions.direction.x = 1.0F;
+    intentions.direction.x = -1.0F;
     bool changedLevel = false;
 
     for (int tick = 0; tick < MaximumSimulationTicks && !game.complete(); ++tick)
@@ -115,12 +115,12 @@ TEST_CASE(
         tests::FixedStepSeconds);
     REQUIRE_FALSE(game.lockedExitHintIcon().has_value());
 
-    advanced_platformer::InputIntentions walkRight;
-    walkRight.direction.x = 1.0F;
+    advanced_platformer::InputIntentions walkLeft;
+    walkLeft.direction.x = -1.0F;
     int ticks = 0;
     while (!game.lockedExitHintIcon().has_value() && ticks < MaximumSimulationTicks)
     {
-        game.update(walkRight, tests::FixedStepSeconds);
+        game.update(walkLeft, tests::FixedStepSeconds);
         ++ticks;
     }
     const advanced_platformer::Sprite icon =
@@ -136,17 +136,17 @@ TEST_CASE(
 
     for (int tick = 0; tick < 120; ++tick)
     {
-        game.update(walkRight, tests::FixedStepSeconds);
+        game.update(walkLeft, tests::FixedStepSeconds);
     }
     REQUIRE_FALSE(game.lockedExitHintIcon().has_value());
     REQUIRE(game.playerInventory().count(1) == 1);
 
-    advanced_platformer::InputIntentions walkLeft;
-    walkLeft.direction.x = -1.0F;
+    advanced_platformer::InputIntentions walkRight;
+    walkRight.direction.x = 1.0F;
     const int lockedLevel = game.levelNumber();
     for (ticks = 0; ticks < MaximumSimulationTicks && game.levelNumber() == lockedLevel; ++ticks)
     {
-        game.update(walkLeft, tests::FixedStepSeconds);
+        game.update(walkRight, tests::FixedStepSeconds);
     }
     REQUIRE(game.levelNumber() == 25);
 }

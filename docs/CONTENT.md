@@ -1,6 +1,6 @@
-# Content and Level Format
+# Content Format
 
-The authoring reference for the files under `assets`. Levels place named definitions;
+The authoring reference for the files under `assets`. Room pieces place named definitions;
 definitions configure engine components; machines and Lua activities decide what NPCs
 do. Movement, combat and pathfinding stay in C++.
 
@@ -8,42 +8,38 @@ do. Movement, combat and pathfinding stay in C++.
 - Errors name the file and either a field path (`items.herb.maximumStack`, `map[2][7]`)
   or a line and column (`items.json: line 5, column 7: unknown field 'maximimStack'`).
 - Every shared definition is validated, even when no level uses it.
-- Shared catalogs and Lua scripts load at startup, and a level file when the level
-  starts. Debug builds also reload them while the game runs; see [Hot reload](#hot-reload).
+- Shared catalogs and Lua scripts load at startup, and a level's room pieces when the
+  level starts. Debug builds also reload them while the game runs; see [Hot reload](#hot-reload).
 - Units are pixels, seconds and pixels per second. Sprite regions are atlas pixels.
 
 ## Hot reload
 
 Builds other than Release read `assets/` from the source tree, not the copy beside the
 executable, and check it four times a second. Once a change has settled, the game loads
-every catalog, script, the atlas and the current level's file again. If anything fails,
+every catalog, script, the atlas and the current level's room pieces again, and builds
+the level again from the same seed. If anything fails,
 the console shows the error and the game keeps running what it had. Otherwise the game
 applies the new content without restarting:
 
-- Actors and pickups are matched to their placements by `id`. A kept one stays where it
+- Actors and pickups are matched to their placements by `id`, which names the room, the
+  definition and a count, such as `room3_zombie_1`. A kept one stays where it
   is, keeps what it was doing, and takes its new definition, spawn and patrol. Health is
   kept but capped at the new maximum.
-- A new `id` spawns. An `id` gone from the file removes its actor or pickup. An actor
+- A new `id` spawns. An `id` gone from the level removes its actor or pickup. An actor
   killed or a pickup collected stays gone while its `id` remains.
 - The player keeps their position, health and items, matched to items by name.
 - Tiles broken in play stay broken. Machines resume in the state with the same name, or
   the first state, and every activity starts again under the new scripts.
 
-The console reports what was kept, spawned and removed. F5 restarts the current level,
-keeping the player's health and items. A generated level reloads and restarts from the
-same seed.
-
-F6 writes the current level, as it was when it started, to `level_N.json` in the working
-directory, or `level_N_seed_S.json` for a generated level, so a generated level can be
-kept and edited by hand. F7 generates the current level again from the next seed,
-keeping the player's health and items.
+The console reports what was kept, spawned and removed. F5 restarts the current level
+from the same seed, keeping the player's health and items. F7 builds the current level
+again from the next seed, also keeping health and items.
 
 ## Files
 
 | File                                                             | Holds                                               | Loader                                                                                                                       |
 | ---------------------------------------------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | [`levels/levels.json`](../assets/levels/levels.json)             | Start level, camera dead zone, and each level       | [`level_catalog.cpp`](../app/content/level_catalog.cpp)                                                                      |
-| A level file, such as an F6 dump                                 | A level's map, legends and placements               | [`level_data.cpp`](../app/content/level_data.cpp)                                                                            |
 | [`levels/rooms.json`](../assets/levels/rooms.json)               | Room pieces that generated levels are stitched from | [`room_pieces.cpp`](../app/content/room_pieces.cpp), [`level_generator.cpp`](../app/content/level_generator.cpp)             |
 | [`catalogs/tiles.json`](../assets/catalogs/tiles.json)           | Tile size and tiles                                 | [`tile_catalog.cpp`](../app/content/tile_catalog.cpp)                                                                        |
 | [`catalogs/actors.json`](../assets/catalogs/actors.json)         | The player and every actor definition               | [`actor_catalog.cpp`](../app/content/actor_catalog.cpp), [`actor_definition.cpp`](../app/content/actor_definition.cpp)       |
@@ -66,25 +62,21 @@ inside the atlas.
   "startLevel": 1,
   "cameraDeadZone": [80, 45],
   "levels": [
-    { "number": 1, "generate": { "pieces": "rooms.json", "rooms": 6, "nextLevel": 2 } },
-    { "number": 2, "file": "level_2_seed_7.json" }
+    { "number": 1, "pieces": "rooms.json", "rooms": 6, "nextLevel": 2 },
+    { "number": 2, "pieces": "rooms.json", "rooms": 9, "grid": [9, 7], "seed": 40 }
   ]
 }
 ```
 
-| Field            | Meaning                                                                              |
-| ---------------- | ------------------------------------------------------------------------------------ |
-| `startLevel`     | The `number` of the first level.                                                     |
-| `cameraDeadZone` | The part of the 320 by 180 view the player moves in before the camera follows.       |
-| `levels`         | `number`, a positive unique ID that exits refer to, and either `generate` or `file`. |
-
-The shipped levels are all generated. A `file` entry names a level file relative to this
-file instead, such as a generated level kept from an F6 dump; tests use small ones.
-
-`generate` builds the level from room pieces:
+| Field            | Meaning                                                                        |
+| ---------------- | ------------------------------------------------------------------------------ |
+| `startLevel`     | The `number` of the first level.                                               |
+| `cameraDeadZone` | The part of the 320 by 180 view the player moves in before the camera follows. |
+| `levels`         | Each level, generated from room pieces.                                        |
 
 | Field       | Required | Meaning                                                                   |
 | ----------- | -------- | ------------------------------------------------------------------------- |
+| `number`    | Yes      | A positive unique ID that exits refer to.                                 |
 | `pieces`    | Yes      | The room piece file, relative to this file.                               |
 | `rooms`     | Yes      | How many rooms, from 2 up to the number of grid slots.                    |
 | `grid`      | No       | The grid of room slots, `[columns, rows]`. Defaults to `[9, 7]`.          |
@@ -96,8 +88,10 @@ already placed and touching no other, so they form branching corridors without l
 The start is the centre room, and the exit is the room the most doors away from it.
 Each room takes a random piece of its role whose doors include the room's. The pieces
 are laid out on one map with neighbours sharing the wall between them, unused doors are
-walled up, and empty slots are filled with wall. The result is read back as a level
-file, so it passes every check a level file does.
+walled up, and empty slots are filled with wall. Markers become the player's spawn, the
+exit, and actor and pickup placements. Coordinates start at the top-left, with Y
+pointing down. A pickup falls until it rests on a tile, and falls again if that tile
+breaks.
 
 ## Room pieces
 
@@ -113,7 +107,7 @@ file, so it passes every check a level file does.
     "actors": { "z": "zombie" },
     "pickups": { "c": "coin_pile" }
   },
-  "exit": "bunker_door",
+  "exit": { "definition": "bunker_door" },
   "pieces": [
     {
       "name": "hall",
@@ -125,15 +119,15 @@ file, so it passes every check a level file does.
 }
 ```
 
-| Field        | Meaning                                                                                           |
-| ------------ | ------------------------------------------------------------------------------------------------- |
-| `roomSize`   | Every piece's size in cells: an even width of at least 8 and a height of at least 6.              |
-| `tileLegend` | Map symbols to tile names, as in a level file.                                                    |
-| `wall`       | The tile symbol that seals unused doors and fills empty slots.                                    |
-| `open`       | The tile symbol of every door opening, and what a marker leaves behind.                           |
-| `markers`    | Symbols for the player's start, the exit, and actor and pickup definitions.                       |
-| `exit`       | The exit definition from `exits.json`.                                                            |
-| `pieces`     | `name`, unique; `role`; `doors`; optional `mirror` (default `true`); and `map`, the piece's rows. |
+| Field        | Meaning                                                                                                                   |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `roomSize`   | Every piece's size in cells: an even width of at least 8 and a height of at least 6.                                      |
+| `tileLegend` | One-character map symbols to tile names in `tiles.json`.                                                                  |
+| `wall`       | The tile symbol that seals unused doors and fills empty slots.                                                            |
+| `open`       | The tile symbol of every door opening, and what a marker leaves behind.                                                   |
+| `markers`    | Symbols for the player's start, the exit, and actor and pickup definitions.                                               |
+| `exit`       | `definition` from `exits.json`; optional `requirement` (`item`, positive `quantity`) and `consumeItem` (default `false`). |
+| `pieces`     | `name`, unique; `role`; `doors`; optional `mirror` (default `true`); and `map`, the piece's rows.                         |
 
 A piece's `role` is `start`, with one start marker; `exit`, with one exit marker; or
 `corridor`, `shaft` or `arena`, with neither. Its `doors` list some of `left`, `right`,
@@ -142,53 +136,9 @@ above and below are four cells wide and centred. A piece's edges are `open` on i
 doors and `wall` everywhere else. With `mirror`, the generator may also flip the piece
 left to right.
 
-Every set of doors a room can have must fit some start piece and some corridor, shaft
-or arena, and every single door some exit piece. Tests check that the player can walk
-and jump through every shipped piece from each of its doors to each other.
-
-## Level files
-
-Generated levels are read back in this format, and F6 writes it.
-
-```json
-{
-  "tileLegend": { ".": "empty", "#": "stone" },
-  "map": ["........", "########"],
-  "playerSpawn": { "cell": [1, 0] },
-  "actors": [{ "id": "zombie_1", "definition": "zombie", "spawn": { "cell": [2, 0] } }],
-  "pickups": [{ "id": "medicine_1", "definition": "medicine_box", "spawn": { "cell": [4, 0] } }],
-  "exit": { "definition": "bunker_door", "spawn": { "cell": [6, 0] }, "nextLevel": 2 }
-}
-```
-
-| Field         | Required | Meaning                                                         |
-| ------------- | -------- | --------------------------------------------------------------- |
-| `tileLegend`  | Yes      | One-character map symbols to tile names in `tiles.json`.        |
-| `map`         | Yes      | Rows of equal, nonzero length. Every symbol is in `tileLegend`. |
-| `playerSpawn` | Yes      | Where the player starts.                                        |
-| `actors`      | No       | Actor placements.                                               |
-| `pickups`     | No       | Pickup placements.                                              |
-| `exit`        | Yes      | The exit placement. Without `nextLevel`, it completes the game. |
-
-### Positions
-
-Coordinates start at the top-left, with Y pointing down. A cell is `[column, row]`.
-A position is an object with one key: `cell`, which puts an object's feet at the bottom
-centre of that cell, or `feet`, that point in world pixels.
-
-### Placements
-
-| Placement | Fields                                                                                                                                       |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Actor     | `id`; `definition` from `actors.json`; `spawn`; optional `patrol` with `first` and `second`, absolute positions.                             |
-| Pickup    | `id`; `definition` from `pickups.json`; `spawn`.                                                                                             |
-| Exit      | `definition` from `exits.json`; `spawn`; optional `requirement` (`item`, positive `quantity`), `consumeItem` (default `false`), `nextLevel`. |
-
-An `id` names one actor or pickup placement. It is nonempty and unique among the
-level's actors and pickups.
-
-Bodies come from definitions, never placements. A pickup falls until it rests on a
-tile, and falls again if that tile breaks.
+Each room needs a piece of its role whose doors include the room's; a level that has a
+room no piece fits fails to build and names the doors. Tests check that the player can
+walk and jump through every shipped piece from each of its doors to each other.
 
 ## Tiles
 
@@ -465,8 +415,9 @@ Saves, if added, should store item names: item IDs are assigned at load and can 
 "bunker_door": { "bodySize": [16, 32], "sprite": { "position": [48, 216], "size": [16, 32] } }
 ```
 
-`bodySize` and `sprite` are required. The requirement, consumption and next level belong
-to each [placement](#placements), so doors that look alike can lead to different levels.
+`bodySize` and `sprite` are required. The requirement and consumption belong to a room
+piece file's [`exit`](#room-pieces), and the next level to the
+[level catalog](#level-catalog), so doors that look alike can lead to different levels.
 
 ## HUD icons
 

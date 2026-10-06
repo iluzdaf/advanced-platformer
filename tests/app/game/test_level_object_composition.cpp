@@ -13,7 +13,7 @@
 TEST_CASE("Pickups and exit requirements resolve through level composition", "[app][pickups]")
 {
     const auto levelCatalog = advanced_platformer::parseLevelCatalog(
-        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"pickup_placement.json"}]})",
+        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"pieces":"pickup_placement.json","rooms":2,"grid":[2,1]}]})",
         "fixture",
         "tests/fixtures/levels");
     const auto gameCatalogs =
@@ -34,36 +34,6 @@ TEST_CASE("Pickups and exit requirements resolve through level composition", "[a
         throw std::logic_error("Missing fixture exit requirement");
     }
     REQUIRE(exit->requirement->item == advanced_platformer::itemDefinition(itemCatalog, "key").id);
-}
-
-TEST_CASE("Exit item references resolve through the item catalog", "[app][pickups]")
-{
-    const auto levelCatalog = advanced_platformer::parseLevelCatalog(
-        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"unknown_item.json"}]})",
-        "fixture",
-        "tests/fixtures/levels");
-    const auto gameCatalogs =
-        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::composeGameLevel(levelCatalog, 1, 0, gameCatalogs),
-        Catch::Matchers::ContainsSubstring("unknown_item.json:"));
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::composeGameLevel(levelCatalog, 1, 0, gameCatalogs),
-        Catch::Matchers::ContainsSubstring("requirement.item: unknown item 'missing'"));
-}
-
-TEST_CASE("Unknown pickup definitions identify their placement", "[app][pickups]")
-{
-    const auto levelCatalog = advanced_platformer::parseLevelCatalog(
-        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"unknown_pickup.json"}]})",
-        "fixture",
-        "tests/fixtures/levels");
-    const auto gameCatalogs =
-        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::composeGameLevel(levelCatalog, 1, 0, gameCatalogs),
-        Catch::Matchers::ContainsSubstring(
-            "unknown_pickup.json: pickups[0].definition: unknown pickup definition 'missing'"));
 }
 
 TEST_CASE("Level composition reuses the supplied session item catalog", "[app][pickups]")
@@ -90,6 +60,21 @@ TEST_CASE("Level composition reuses the supplied session item catalog", "[app][p
     REQUIRE(secondLevel.world.itemDefinition(keyId).name == "Session key");
 }
 
+TEST_CASE("Unknown pickup definitions identify their placement", "[app][pickups]")
+{
+    const auto levelCatalog = advanced_platformer::parseLevelCatalog(
+        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"pieces":"unknown_pickup.json","rooms":2,"grid":[2,1]}]})",
+        "fixture",
+        "tests/fixtures/levels");
+    const auto gameCatalogs =
+        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::composeGameLevel(levelCatalog, 1, 0, gameCatalogs),
+        Catch::Matchers::ContainsSubstring(
+            "unknown_pickup.json (level 1, seed 1): pickups[0].definition: unknown pickup "
+            "definition 'missing'"));
+}
+
 TEST_CASE("Level exit placement combines a definition with completion settings", "[app][exits]")
 {
     const auto levelCatalog =
@@ -108,10 +93,26 @@ TEST_CASE("Level exit placement combines a definition with completion settings",
     REQUIRE(exit->requirement.has_value());
 }
 
+TEST_CASE("Exit item references resolve through the item catalog", "[app][pickups]")
+{
+    const auto levelCatalog = advanced_platformer::parseLevelCatalog(
+        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"pieces":"unknown_item.json","rooms":2,"grid":[2,1]}]})",
+        "fixture",
+        "tests/fixtures/levels");
+    const auto gameCatalogs =
+        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::composeGameLevel(levelCatalog, 1, 0, gameCatalogs),
+        Catch::Matchers::ContainsSubstring("unknown_item.json (level 1, seed 1):"));
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::composeGameLevel(levelCatalog, 1, 0, gameCatalogs),
+        Catch::Matchers::ContainsSubstring("requirement.item: unknown item 'missing'"));
+}
+
 TEST_CASE("Unknown exit definitions identify their placement", "[app][exits]")
 {
     const auto levelCatalog = advanced_platformer::parseLevelCatalog(
-        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"unknown_exit.json"}]})",
+        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"pieces":"unknown_exit.json","rooms":2,"grid":[2,1]}]})",
         "fixture",
         "tests/fixtures/levels");
     const auto gameCatalogs =
@@ -119,5 +120,6 @@ TEST_CASE("Unknown exit definitions identify their placement", "[app][exits]")
     REQUIRE_THROWS_WITH(
         advanced_platformer::composeGameLevel(levelCatalog, 1, 0, gameCatalogs),
         Catch::Matchers::ContainsSubstring(
-            "unknown_exit.json: exit.definition: unknown exit definition 'missing'"));
+            "unknown_exit.json (level 1, seed 1): exit.definition: unknown exit definition "
+            "'missing'"));
 }

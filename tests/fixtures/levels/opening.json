@@ -1,31 +1,39 @@
 {
+  "roomSize": [8, 6],
   "tileLegend": {
     ".": "empty",
     "#": "stone"
   },
-  "map": ["............", "............", "............", "############"],
-  "playerSpawn": {
-    "cell": [1, 2]
-  },
-  "actors": [],
-  "pickups": [
-    {
-      "id": "key",
-      "definition": "door_key",
-      "spawn": {
-        "cell": [2, 2]
-      }
+  "wall": "#",
+  "open": ".",
+  "markers": {
+    "start": "S",
+    "exit": "E",
+    "pickups": {
+      "k": "door_key"
     }
-  ],
+  },
   "exit": {
     "definition": "test_door",
-    "spawn": {
-      "cell": [5, 2]
-    },
     "requirement": {
       "item": "key",
       "quantity": 1
+    }
+  },
+  "pieces": [
+    {
+      "name": "start",
+      "role": "start",
+      "doors": ["left"],
+      "mirror": false,
+      "map": ["########", "#......#", ".......#", ".......#", "...k.S.#", "########"]
     },
-    "nextLevel": 25
-  }
+    {
+      "name": "exit",
+      "role": "exit",
+      "doors": ["right"],
+      "mirror": false,
+      "map": ["########", "#......#", "#.......", "#.......", "#.E.....", "########"]
+    }
+  ]
 }

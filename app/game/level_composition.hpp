@@ -29,14 +29,14 @@ namespace advanced_platformer
         std::unordered_map<std::uint32_t, std::string> actorPlacementIds;
         std::vector<std::string> pickupPlacementIds;
         std::set<std::string> placedIds;
-        std::optional<std::uint32_t> seed;
+        std::uint32_t seed = 0;
     };
 
     struct CatalogLevel
     {
         LevelData data;
         std::string sourceName;
-        std::optional<std::uint32_t> seed;
+        std::uint32_t seed = 0;
     };
 
     CatalogLevel loadCatalogLevel(

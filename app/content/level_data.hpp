@@ -1,6 +1,5 @@
 #pragma once
 
-#include <filesystem>
 #include <map>
 #include <optional>
 #include <string>
@@ -63,6 +62,5 @@ namespace advanced_platformer
     };
 
     LevelData parseLevelData(std::string_view text, std::string_view sourceName);
-    LevelData loadLevelData(const std::filesystem::path& path);
     std::string formatLevelData(const LevelData& level);
 }
