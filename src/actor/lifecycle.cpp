@@ -82,7 +82,7 @@ namespace advanced_platformer
 
             if (id == world.playerId())
             {
-                world.respawnPlayer();
+                world.defeatPlayer();
             }
             else
             {

@@ -89,7 +89,6 @@ namespace advanced_platformer
         PositionJson spawn;
         std::optional<RequirementJson> requirement;
         std::optional<bool> consumeItem;
-        std::optional<int> nextLevel;
     };
 
     struct LevelJson
@@ -183,7 +182,6 @@ namespace advanced_platformer
                     json.requirement->quantity};
             }
             result.consumeItem = json.consumeItem.value_or(false);
-            result.nextLevel = json.nextLevel;
             validateExitSettings(result, path, sourceName);
             return result;
         }
@@ -267,10 +265,6 @@ namespace advanced_platformer
             if (exit.consumeItem)
             {
                 result += ",\n    \"consumeItem\": true";
-            }
-            if (exit.nextLevel.has_value())
-            {
-                result += std::format(",\n    \"nextLevel\": {}", *exit.nextLevel);
             }
             return result + "\n  }";
         }

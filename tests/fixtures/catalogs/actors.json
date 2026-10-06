@@ -21,6 +21,14 @@
       "surfaceClimb": { "speed": 40 },
       "senses": {},
       "machine": "test_machine"
+    },
+    "test_spikes": {
+      "bodySize": [8, 8],
+      "team": "enemy",
+      "movement": { "platformer": {} },
+      "senses": {},
+      "machine": "test_spikes",
+      "primaryAttack": { "contact": { "damage": 3 } }
     }
   }
 }

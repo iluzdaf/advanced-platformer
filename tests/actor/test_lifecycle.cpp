@@ -9,7 +9,6 @@
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/actor/lifecycle.hpp"
 #include "advanced_platformer/input/input_state.hpp"
-#include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
 #include "advanced_platformer/world/world.hpp"
 #include "advanced_platformer/world/world_requests.hpp"
@@ -139,38 +138,21 @@ TEST_CASE("An NPC is removed after its death timer", "[actor][lifecycle]")
     REQUIRE(world.findActor(npc) == nullptr);
 }
 
-TEST_CASE("The player respawns with restored runtime state", "[actor][lifecycle]")
+TEST_CASE("The player is defeated, not removed, after its death timer", "[actor][lifecycle]")
 {
     advanced_platformer::World world;
-    advanced_platformer::Actor actor = makeActor(1);
-    actor.health = advanced_platformer::Health{1, 3};
-    actor.body.velocity = {20.0F, 30.0F};
-    tests::component<advanced_platformer::PlatformerMovement>(actor).grounded = true;
-    tests::component<advanced_platformer::PlatformerMovement>(actor).coyoteRemaining = 0.1F;
-    tests::component<advanced_platformer::PlatformerMovement>(actor).jumpBufferRemaining = 0.1F;
-    const advanced_platformer::ActorId player = world.addActor(actor);
+    const advanced_platformer::ActorId player = world.addActor(makeActor(1));
     world.setPlayer(player, {40.0F, 48.0F});
     advanced_platformer::WorldRequests requests;
     requests.damage(player, 1);
     advanced_platformer::updateLifeState(world, requests, 0.1F);
+    REQUIRE_FALSE(world.playerDefeated());
 
     advanced_platformer::updateLifeState(world, requests, 0.4F);
+    advanced_platformer::applyWorldRequests(world, requests);
 
-    advanced_platformer::Actor& respawned = tests::actor(world, player);
-    REQUIRE(respawned.life == advanced_platformer::LifeState::Alive);
-    REQUIRE_FALSE(respawned.lastDamageTimeSeconds.has_value());
-    REQUIRE(tests::component<advanced_platformer::Health>(respawned).current == 3);
-    REQUIRE(advanced_platformer::feetOf(respawned.body.bounds).x == 40.0F);
-    REQUIRE(advanced_platformer::feetOf(respawned.body.bounds).y == 48.0F);
-    REQUIRE(respawned.body.velocity.x == 0.0F);
-    REQUIRE(respawned.body.velocity.y == 0.0F);
-    REQUIRE_FALSE(tests::component<advanced_platformer::PlatformerMovement>(respawned).grounded);
-    REQUIRE(
-        tests::component<advanced_platformer::PlatformerMovement>(respawned).coyoteRemaining ==
-        0.0F);
-    REQUIRE(
-        tests::component<advanced_platformer::PlatformerMovement>(respawned).jumpBufferRemaining ==
-        0.0F);
+    REQUIRE(world.playerDefeated());
+    REQUIRE(world.findActor(player) != nullptr);
 }
 
 TEST_CASE("Explicit removals are deferred until world requests are applied", "[world][requests]")

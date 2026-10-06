@@ -7,7 +7,7 @@
 #include <glm/vec2.hpp>
 
 #include "content/game_catalogs.hpp"
-#include "content/level_catalog.hpp"
+#include "content/run_settings.hpp"
 #include "game/game.hpp"
 #include "lua_npc_scripts.hpp"
 #include "lua_presentation_script.hpp"
@@ -27,11 +27,12 @@ namespace
         presentation.loadScriptText(presentationSource, "fx.lua");
         return {
             0,
-            advanced_platformer::loadLevelCatalog("tests/fixtures/levels/levels.json"),
+            advanced_platformer::loadRunSettings("tests/fixtures/levels/finish_run.json"),
             advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
             advanced_platformer::LuaNpcScripts{},
             std::move(presentation),
-            tests::FixedStepSeconds};
+            tests::FixedStepSeconds,
+            1};
     }
 
     bool shaking(const advanced_platformer::Game& game)

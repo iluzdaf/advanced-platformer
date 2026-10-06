@@ -10,6 +10,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/app/content/actor_definition.cpp
         ${PROJECT_SOURCE_DIR}/app/content/animation_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/asset_watcher.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/camera_settings.cpp
         ${PROJECT_SOURCE_DIR}/app/content/content_diagnostics.cpp
         ${PROJECT_SOURCE_DIR}/app/content/content_glaze.cpp
         ${PROJECT_SOURCE_DIR}/app/content/content_validation.cpp
@@ -18,13 +19,13 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/app/content/game_content.cpp
         ${PROJECT_SOURCE_DIR}/app/content/hud_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/item_catalog.cpp
-        ${PROJECT_SOURCE_DIR}/app/content/level_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/level_data.cpp
         ${PROJECT_SOURCE_DIR}/app/content/level_generator.cpp
         ${PROJECT_SOURCE_DIR}/app/content/machine_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/npc_script_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/pickup_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/room_pieces.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/run_settings.cpp
         ${PROJECT_SOURCE_DIR}/app/content/tile_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/game/game.cpp
         ${PROJECT_SOURCE_DIR}/app/game/level_composition.cpp
@@ -42,13 +43,13 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_animation_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_asset_watcher.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_atlas_regions.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/content/test_camera_settings.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_content_integrity.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_content_glaze.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_content_validation.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_exit_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_hud_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_item_catalog.cpp
-        ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_data.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_data_diagnostics.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_data_placement_validation.cpp
@@ -59,6 +60,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_pickup_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_room_piece_routes.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_room_pieces.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/content/test_run_settings.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_tile_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_console_log.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_debug_overlay.cpp

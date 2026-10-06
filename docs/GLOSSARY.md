@@ -91,3 +91,6 @@ belong to.
 | Room piece          | A hand-drawn room with doors on its edges and a role, which the generator stitches into levels. See `rooms.json`.        |
 | Room layout         | The grid slots a generated level's rooms fill, the doors between them, and which room is the exit.                       |
 | Seed                | The number a generated level is built from. The same seed always builds the same level.                                  |
+| Run                 | Generated levels played one after another from level 1, each with more rooms, until the player dies. See `run.json`.     |
+| Run seed            | The number a run's level seeds follow from. Each defeat starts a new run with the next run seed.                         |
+| Defeat              | The player's death timer running out. It stops the world, and the game starts a new run.                                 |

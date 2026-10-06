@@ -5,13 +5,12 @@
 #include <cstdint>
 #include <fstream>
 #include <ios>
-#include <stdexcept>
 #include <vector>
 
 #include <glm/vec2.hpp>
 
 #include "content/game_catalogs.hpp"
-#include "content/level_catalog.hpp"
+#include "content/run_settings.hpp"
 #include "content/npc_script_catalog.hpp"
 #include "game/level_composition.hpp"
 #include "advanced_platformer/actor/actor.hpp"
@@ -22,10 +21,10 @@
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "lua_npc_scripts.hpp"
 #include "lua_presentation_script.hpp"
-#include "advanced_platformer/world/level_exit.hpp"
 #include "advanced_platformer/world/level_validation.hpp"
 #include "support/add_player.hpp"
 #include "support/fixed_step.hpp"
+#include "support/run_levels.hpp"
 
 namespace
 {
@@ -49,65 +48,57 @@ namespace
     }
 }
 
-TEST_CASE("Every catalog level can be composed", "[app][content]")
+TEST_CASE("Every run level can be composed until the rooms stop growing", "[app][content]")
 {
-    const auto catalog = advanced_platformer::loadLevelCatalog("assets/levels/levels.json");
+    const auto run = advanced_platformer::loadRunSettings("assets/levels/run.json");
     const auto catalogs =
         advanced_platformer::loadGameCatalogs("assets/catalogs", pngSize(ShippedAtlas));
-
-    REQUIRE_FALSE(catalog.levels.empty());
-    for (const advanced_platformer::LevelCatalogEntry& entry : catalog.levels)
+    for (int number = 1; number <= tests::levelsUntilCap(run); ++number)
     {
-        const auto content =
-            advanced_platformer::composeGameLevel(catalog, entry.number, 0, catalogs);
-        REQUIRE(content.number == entry.number);
-
-        const auto& levelExit = content.world.exit();
-        if (!levelExit.has_value())
-        {
-            throw std::logic_error("A composed level must have an exit");
-        }
-        const advanced_platformer::LevelExit& exit = levelExit.value();
-        if (exit.nextLevel.has_value())
-        {
-            REQUIRE_NOTHROW(advanced_platformer::levelEntry(catalog, exit.nextLevel.value()));
-        }
+        const auto content = advanced_platformer::composeGameLevel(
+            run, number, advanced_platformer::runLevelSeed(1, number), 0, catalogs);
+        INFO("Level " << number);
+        REQUIRE(content.number == number);
+        REQUIRE(content.world.exit().has_value());
     }
 }
 
-TEST_CASE("Every catalog level has valid actor placement", "[app][content]")
+TEST_CASE("Every run level has valid actor placement", "[app][content]")
 {
-    const auto catalog = advanced_platformer::loadLevelCatalog("assets/levels/levels.json");
+    const auto run = advanced_platformer::loadRunSettings("assets/levels/run.json");
     const auto catalogs =
         advanced_platformer::loadGameCatalogs("assets/catalogs", pngSize(ShippedAtlas));
-    for (const advanced_platformer::LevelCatalogEntry& entry : catalog.levels)
+    for (int number = 1; number <= tests::levelsUntilCap(run); ++number)
     {
-        auto content = advanced_platformer::composeGameLevel(catalog, entry.number, 0, catalogs);
+        auto content = advanced_platformer::composeGameLevel(
+            run, number, advanced_platformer::runLevelSeed(1, number), 0, catalogs);
         advanced_platformer::Actor player = advanced_platformer::composePlayer(catalogs, 0);
         advanced_platformer::moveFeetTo(player.body.bounds, content.playerSpawnFeet);
         tests::addPlayer(content.world, player);
 
+        INFO("Level " << number);
         REQUIRE_NOTHROW(
             advanced_platformer::validateLevelActors(content.map, content.world, content.number));
     }
 }
 
-TEST_CASE("Every catalog level starts with a route from the respawn to the exit", "[app][content]")
+TEST_CASE("Every run level starts with a route from the spawn to the exit", "[app][content]")
 {
-    const auto catalog = advanced_platformer::loadLevelCatalog("assets/levels/levels.json");
+    const auto run = advanced_platformer::loadRunSettings("assets/levels/run.json");
     const auto catalogs =
         advanced_platformer::loadGameCatalogs("assets/catalogs", pngSize(ShippedAtlas));
-    for (const advanced_platformer::LevelCatalogEntry& entry : catalog.levels)
+    for (int number = 1; number <= tests::levelsUntilCap(run); ++number)
     {
         const advanced_platformer::GameLevel level = advanced_platformer::composeStartedLevel(
-            catalog,
-            entry.number,
+            run,
+            number,
+            advanced_platformer::runLevelSeed(1, number),
             0,
             catalogs,
             advanced_platformer::composePlayer(catalogs, 0),
             tests::FixedStepSeconds);
 
-        INFO("Level " << entry.number);
+        INFO("Level " << number);
         REQUIRE(
             advanced_platformer::playerCanReachExit(
                 level.map, level.world, tests::FixedStepSeconds));

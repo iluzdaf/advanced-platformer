@@ -2,18 +2,23 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <optional>
 #include <string_view>
 #include <vector>
 
 #include "advanced_platformer/math/coordinates.hpp"
 
-#include "level_catalog.hpp"
 #include "level_data.hpp"
 #include "room_pieces.hpp"
 
 namespace advanced_platformer
 {
+    struct LevelGeneration
+    {
+        GridSize grid;
+        int roomCount = 0;
+        std::uint32_t seed = 0;
+    };
+
     struct LevelRandom
     {
         std::uint64_t state = 0;
@@ -53,7 +58,6 @@ namespace advanced_platformer
         const RoomPieceCatalog& catalog,
         const RoomLayout& layout,
         const std::vector<RoomChoice>& choices,
-        std::optional<int> nextLevel,
         std::string_view sourceName);
 
     LevelData generateLevel(

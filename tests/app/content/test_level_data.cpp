@@ -65,7 +65,6 @@ TEST_CASE("Explicit pickups and exits retain item requirements", "[app][content]
         advanced_platformer::LevelPosition{advanced_platformer::Cell{1, 0}});
     REQUIRE(data.exit.spawn == advanced_platformer::LevelPosition{advanced_platformer::Cell{2, 0}});
     REQUIRE(data.exit.requirement.has_value());
-    REQUIRE_FALSE(data.exit.nextLevel.has_value());
 }
 
 TEST_CASE("Pickup placements can reference a definition", "[app][content][json]")
@@ -113,7 +112,7 @@ TEST_CASE("A formatted level reads back as the same level", "[app][content][json
                         "patrol": {"first": {"cell": [1, 0]}, "second": {"feet": [72, 16]}}}],
             "pickups": [{"id": "key", "definition": "door_key", "spawn": {"cell": [3, 0]}}],
             "exit": {"definition": "test_door", "spawn": {"cell": [5, 0]},
-                     "requirement": {"item": "key", "quantity": 2}, "consumeItem": true, "nextLevel": 4}
+                     "requirement": {"item": "key", "quantity": 2}, "consumeItem": true}
          })",
           R"({
             "tileLegend": {".": "empty", "\"": "stone"},
@@ -134,7 +133,6 @@ TEST_CASE("A formatted level reads back as the same level", "[app][content][json
         REQUIRE(again.mapRows == level.mapRows);
         REQUIRE(again.actors.size() == level.actors.size());
         REQUIRE(again.pickups.size() == level.pickups.size());
-        REQUIRE(again.exit.nextLevel == level.exit.nextLevel);
         REQUIRE(again.exit.consumeItem == level.exit.consumeItem);
     }
 }

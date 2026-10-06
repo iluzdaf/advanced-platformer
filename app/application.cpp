@@ -7,6 +7,7 @@
 #include <format>
 #include <iostream>
 #include <optional>
+#include <random>
 #include <string>
 #include <utility>
 
@@ -63,7 +64,6 @@ namespace advanced_platformer
             bool simulationPaused = false;
             bool stepRequested = false;
             bool playInterrupted = false;
-            bool restartRequested = false;
             bool restartLevelRequested = false;
             bool rerollLevelRequested = false;
         };
@@ -97,11 +97,6 @@ namespace advanced_platformer
             {
                 context->inventoryOpen = !context->inventoryOpen;
                 context->playInterrupted = true;
-                return;
-            }
-            if (key == GLFW_KEY_R && action == GLFW_PRESS)
-            {
-                context->restartRequested = true;
                 return;
             }
             if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
@@ -295,11 +290,12 @@ namespace advanced_platformer
             loadGameContent(assetDirectory, {atlasTexture.width, atlasTexture.height});
         Game game(
             atlas,
-            std::move(content.levelCatalog),
+            std::move(content.run),
             std::move(content.gameCatalogs),
             std::move(content.npcScripts),
             std::move(content.presentation),
-            static_cast<float>(fixedStep.stepSeconds()));
+            static_cast<float>(fixedStep.stepSeconds()),
+            std::random_device{}());
         DebugTools debugTools;
         Stopwatch frameClock;
         std::optional<AssetWatcher> assetWatcher;
@@ -314,17 +310,6 @@ namespace advanced_platformer
             glfwPollEvents();
             imgui.beginFrame();
 
-            if (context.restartRequested)
-            {
-                if (game.complete())
-                {
-                    game.restart();
-                    context.inventoryOpen = false;
-                    context.aimDirection = {1.0F, 0.0F};
-                    context.playInterrupted = true;
-                }
-                context.restartRequested = false;
-            }
             if (context.restartLevelRequested)
             {
                 try
@@ -344,21 +329,14 @@ namespace advanced_platformer
             {
                 try
                 {
-                    if (game.rerollLevel())
-                    {
-                        context.playInterrupted = true;
-                        console.write(
-                            ConsoleLevel::Info,
-                            std::format(
-                                "Generated level {} from seed {}",
-                                game.levelNumber(),
-                                game.levelSeed()));
-                    }
-                    else
-                    {
-                        console.write(
-                            ConsoleLevel::Info, "A completed game has no level to reroll");
-                    }
+                    game.rerollLevel();
+                    context.playInterrupted = true;
+                    console.write(
+                        ConsoleLevel::Info,
+                        std::format(
+                            "Generated level {} from seed {}",
+                            game.levelNumber(),
+                            game.levelSeed()));
                 }
                 catch (const std::exception& error)
                 {
@@ -436,8 +414,7 @@ namespace advanced_platformer
                 gameCursor.reset();
             }
 
-            const bool paused =
-                context.inventoryOpen || game.complete() || context.simulationPaused;
+            const bool paused = context.inventoryOpen || context.simulationPaused;
             if (paused || context.playInterrupted || ImGui::GetIO().WantCaptureKeyboard)
             {
                 context.input = {};
@@ -457,7 +434,7 @@ namespace advanced_platformer
             {
                 fixedStep.reset();
                 context.playInterrupted = false;
-                if (context.stepRequested && !context.inventoryOpen && !game.complete())
+                if (context.stepRequested && !context.inventoryOpen)
                 {
                     const Stopwatch simulationWatch;
                     step(static_cast<float>(fixedStep.stepSeconds()));

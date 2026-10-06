@@ -81,7 +81,8 @@ namespace advanced_platformer
         void setPlayer(ActorId id, glm::vec2 spawnFeet);
         ActorId playerId() const;
         glm::vec2 playerSpawnFeet() const;
-        void respawnPlayer();
+        void defeatPlayer();
+        bool playerDefeated() const;
 
         PlatformerConnectionCache& platformerConnections();
         const PlatformerConnectionCache& platformerConnections() const;
@@ -94,6 +95,7 @@ namespace advanced_platformer
         std::vector<Pickup> pickupStorage;
         std::optional<LevelExit> levelExit;
         bool completed = false;
+        bool defeated = false;
         double elapsedSimulationTimeSeconds = 0.0;
         std::vector<Actor> actorStorage;
         std::vector<WorldEvent> pendingNoises;

@@ -36,7 +36,6 @@ TEST_CASE("Exit definitions compose independent bounds and sprites", "[app][exit
     REQUIRE(exit.sprite->region.size == glm::vec2{16, 24});
     REQUIRE(exit.sprite->anchor == advanced_platformer::SpriteAnchor::BodyCenter);
     REQUIRE_FALSE(exit.requirement.has_value());
-    REQUIRE_FALSE(exit.nextLevel.has_value());
     REQUIRE_FALSE(exit.consumeItem);
 }
 
@@ -73,12 +72,6 @@ TEST_CASE(
         definition["bodySize"] = tests::numbers({12});
         start = "exits.json: line 1, column ";
         end = "expected two numbers, [x, y]";
-    }
-    SECTION("Destination belongs to placement")
-    {
-        definition["nextLevel"] = 2;
-        start = "exits.json: line 1, column ";
-        end = "unknown field 'nextLevel'";
     }
     SECTION("Requirement belongs to placement")
     {

@@ -1,6 +1,5 @@
 #include "level_generator.hpp"
 
-#include "level_catalog.hpp"
 #include "level_data.hpp"
 #include "room_pieces.hpp"
 
@@ -233,7 +232,6 @@ namespace advanced_platformer
         const RoomPieceCatalog& catalog,
         const RoomLayout& layout,
         const std::vector<RoomChoice>& choices,
-        std::optional<int> nextLevel,
         std::string_view sourceName)
     {
         if (choices.size() != layout.rooms.size())
@@ -260,7 +258,6 @@ namespace advanced_platformer
         level.exit.definitionName = catalog.exitDefinition;
         level.exit.requirement = catalog.exitRequirement;
         level.exit.consumeItem = catalog.consumeExitItem;
-        level.exit.nextLevel = nextLevel;
 
         for (std::size_t room = 0; room < layout.rooms.size(); ++room)
         {
@@ -355,6 +352,6 @@ namespace advanced_platformer
         {
             throw std::invalid_argument(std::format("{}: {}", sourceName, error.what()));
         }
-        return stitchRooms(catalog, layout, choices, generation.nextLevel, sourceName);
+        return stitchRooms(catalog, layout, choices, sourceName);
     }
 }
