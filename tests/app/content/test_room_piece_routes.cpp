@@ -107,7 +107,7 @@ TEST_CASE(
         const advanced_platformer::RoomPieceCatalog pieces =
             advanced_platformer::loadRoomPieceCatalog(
                 catalog.levelDirectory / shipped.relativePieces);
-        for (std::uint32_t seed = 1; seed <= 12; ++seed)
+        for (std::uint32_t seed = 1; seed <= 20; ++seed)
         {
             advanced_platformer::LevelGeneration generation = shipped;
             generation.seed = seed;
