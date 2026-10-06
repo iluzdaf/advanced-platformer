@@ -25,6 +25,7 @@
 #include "advanced_platformer/navigation/navigation_path.hpp"
 #include "advanced_platformer/navigation/route_search.hpp"
 #include "advanced_platformer/navigation/platformer_cells.hpp"
+#include "advanced_platformer/navigation/platformer_connections.hpp"
 #include "advanced_platformer/navigation/platformer_traversal_profile.hpp"
 #include "advanced_platformer/navigation/traversal.hpp"
 #include "advanced_platformer/timing/frame_profile.hpp"
@@ -237,13 +238,21 @@ namespace advanced_platformer
             }
         }
 
+        // How a search treats a cell the cache does not hold yet.
+        enum class MissingCells
+        {
+            Defer,
+            Fill
+        };
+
         std::optional<NavigationPathResult> findPlatformerPath(
             const TileMap& map,
             const Aabb& body,
             glm::vec2 goalFeet,
             const PlatformerTraversalProfile& profile,
             PlatformerConnectionCache& cache,
-            FrameProfile* frameProfile)
+            FrameProfile* frameProfile,
+            MissingCells missingCells)
         {
             requireValid(goalFeet, profile);
 
@@ -265,7 +274,7 @@ namespace advanced_platformer
 
             int cellsExpanded = 0;
             const ConnectionFunction connections =
-                [&profile, &cache, frameProfile, &cellsExpanded](
+                [&map, &profile, &cache, frameProfile, missingCells, &cellsExpanded](
                     RouteLocation location) -> std::optional<std::span<const RouteConnection>>
             {
                 const PhaseScope connectionPhase(
@@ -273,6 +282,11 @@ namespace advanced_platformer
 
                 const std::vector<RouteConnection>* cellConnections =
                     cache.cachedConnections(location.cell, profile);
+                if (cellConnections == nullptr && missingCells == MissingCells::Fill)
+                {
+                    cachePlatformerConnections(map, cache, location.cell, profile);
+                    cellConnections = cache.cachedConnections(location.cell, profile);
+                }
                 if (cellConnections == nullptr)
                 {
                     return std::nullopt;
@@ -353,6 +367,32 @@ namespace advanced_platformer
             goalFeet,
             platformerTraversalProfileFor(actor, stepSeconds),
             cache,
-            frameProfile);
+            frameProfile,
+            MissingCells::Defer);
+    }
+
+    std::optional<NavigationPathResult> findActorPathFillingCache(
+        const TileMap& map,
+        const Actor& actor,
+        glm::vec2 goalFeet,
+        float stepSeconds,
+        PlatformerConnectionCache& cache)
+    {
+        if (actor.flyingMovement.has_value())
+        {
+            return findFlyingPath(map, actor.body.bounds, goalFeet, nullptr);
+        }
+        if (!actor.platformerMovement.has_value())
+        {
+            return std::nullopt;
+        }
+        return findPlatformerPath(
+            map,
+            actor.body.bounds,
+            goalFeet,
+            platformerTraversalProfileFor(actor, stepSeconds),
+            cache,
+            nullptr,
+            MissingCells::Fill);
     }
 }

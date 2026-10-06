@@ -439,6 +439,33 @@ TEST_CASE(
     REQUIRE(followsToTheEnd(map, pathOf(result), climber, 1000));
 }
 
+TEST_CASE(
+    "A search that fills the cache settles where a deferring search waits",
+    "[navigation][cache]")
+{
+    const TileMap map = tests::TileMapBuilder({"........", "........", "......##", "########"});
+    const Actor actor = platformerAt({{0, 2}});
+
+    PlatformerConnectionCache cache;
+    REQUIRE(
+        resultOf(findActorPath(map, actor, feetIn({7, 1}), tests::FixedStepSeconds, cache))
+            .status == NavigationPathStatus::Deferred);
+
+    PlatformerConnectionCache filling;
+    const NavigationPathResult filled = resultOf(
+        advanced_platformer::findActorPathFillingCache(
+            map, actor, feetIn({7, 1}), tests::FixedStepSeconds, filling));
+    REQUIRE(filled.status == NavigationPathStatus::Found);
+    const auto profile = platformerTraversalProfileFor(actor, tests::FixedStepSeconds);
+    REQUIRE(filling.cellsPending(profile) == 0);
+    REQUIRE(filling.cachedCellCount(profile) > 0);
+
+    const NavigationPathResult afterFill = findPath(map, actor, feetIn({7, 1}));
+    REQUIRE(afterFill.status == NavigationPathStatus::Found);
+    REQUIRE(endOf(pathOf(filled)) == endOf(pathOf(afterFill)));
+    REQUIRE(pathOf(filled).waypoints.size() == pathOf(afterFill).waypoints.size());
+}
+
 TEST_CASE("A search never simulates or writes to the cache", "[navigation][cache]")
 {
     const TileMap map =
