@@ -8,31 +8,6 @@
 #include "content/level_catalog.hpp"
 #include "support/json_document.hpp"
 
-TEST_CASE("Level catalog numbers reject narrowing and fields reject typos", "[app][content][json]")
-{
-    auto levelCatalogJson = tests::parseJson(
-        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"one.json"}]})");
-    SECTION("Above int range")
-    {
-        levelCatalogJson["startLevel"] = 4294967297LL;
-    }
-    SECTION("Below int range")
-    {
-        levelCatalogJson["levels"][0]["number"] = -4294967295LL;
-    }
-    SECTION("Top-level field typo")
-    {
-        levelCatalogJson["startLevell"] = 1;
-    }
-    SECTION("Entry typo")
-    {
-        levelCatalogJson["levels"][0]["fille"] = "two.json";
-    }
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::parseLevelCatalog(tests::dumpJson(levelCatalogJson), "levels.json"),
-        Catch::Matchers::ContainsSubstring("levels.json:"));
-}
-
 TEST_CASE("A level catalog maps stable IDs to arbitrary file names", "[app][content][json]")
 {
     const auto catalog = advanced_platformer::parseLevelCatalog(
@@ -54,77 +29,6 @@ TEST_CASE("A level catalog maps stable IDs to arbitrary file names", "[app][cont
         advanced_platformer::levelPath(catalog, 25) ==
         std::filesystem::path("levels/areas/final_room.json"));
     REQUIRE_THROWS_AS(advanced_platformer::levelPath(catalog, 1), std::invalid_argument);
-}
-
-TEST_CASE("A level catalog rejects ambiguous or unsafe entries", "[app][content][json]")
-{
-    SECTION("start level is not listed")
-    {
-        REQUIRE_THROWS_AS(
-            advanced_platformer::parseLevelCatalog(
-                R"({"startLevel": 2, "cameraDeadZone": [80, 45], "levels": [{"number": 1, "file": "one.json"}]})",
-                "test catalog"),
-            std::invalid_argument);
-    }
-
-    SECTION("level ID is duplicated")
-    {
-        REQUIRE_THROWS_AS(
-            advanced_platformer::parseLevelCatalog(
-                R"({
-                    "startLevel": 1,
-                    "cameraDeadZone": [80, 45],
-                    "levels": [
-                        {"number": 1, "file": "one.json"},
-                        {"number": 1, "file": "another.json"}
-                    ]
-                })",
-                "test catalog"),
-            std::invalid_argument);
-    }
-
-    SECTION("file escapes the level directory")
-    {
-        REQUIRE_THROWS_AS(
-            advanced_platformer::parseLevelCatalog(
-                R"({"startLevel": 1, "cameraDeadZone": [80, 45], "levels": [{"number": 1, "file": "../one.json"}]})",
-                "test catalog"),
-            std::invalid_argument);
-    }
-}
-
-TEST_CASE("A missing level catalog is rejected at the file boundary", "[app][content][json]")
-{
-    REQUIRE_THROWS_AS(
-        advanced_platformer::loadLevelCatalog("tests/fixtures/levels/does_not_exist.json"),
-        std::invalid_argument);
-}
-
-TEST_CASE(
-    "A level catalog's camera dead zone is positive and fits in the view",
-    "[app][content][json]")
-{
-    auto levelCatalogJson = tests::parseJson(
-        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"one.json"}]})");
-    SECTION("Missing")
-    {
-        tests::eraseKey(levelCatalogJson, "cameraDeadZone");
-    }
-    SECTION("Empty")
-    {
-        levelCatalogJson["cameraDeadZone"] = tests::numbers({0, 45});
-    }
-    SECTION("Wider than the view")
-    {
-        levelCatalogJson["cameraDeadZone"] = tests::numbers({321, 45});
-    }
-    SECTION("Taller than the view")
-    {
-        levelCatalogJson["cameraDeadZone"] = tests::numbers({80, 181});
-    }
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::parseLevelCatalog(tests::dumpJson(levelCatalogJson), "levels.json"),
-        Catch::Matchers::ContainsSubstring("cameraDeadZone"));
 }
 
 TEST_CASE("A level catalog entry can generate its level from room pieces", "[app][content][json]")
@@ -166,6 +70,43 @@ TEST_CASE("A level catalog entry can generate its level from room pieces", "[app
         Catch::Matchers::ContainsSubstring("Level 1 is generated"));
 }
 
+TEST_CASE("A level catalog rejects ambiguous or unsafe entries", "[app][content][json]")
+{
+    SECTION("start level is not listed")
+    {
+        REQUIRE_THROWS_AS(
+            advanced_platformer::parseLevelCatalog(
+                R"({"startLevel": 2, "cameraDeadZone": [80, 45], "levels": [{"number": 1, "file": "one.json"}]})",
+                "test catalog"),
+            std::invalid_argument);
+    }
+
+    SECTION("level ID is duplicated")
+    {
+        REQUIRE_THROWS_AS(
+            advanced_platformer::parseLevelCatalog(
+                R"({
+                    "startLevel": 1,
+                    "cameraDeadZone": [80, 45],
+                    "levels": [
+                        {"number": 1, "file": "one.json"},
+                        {"number": 1, "file": "another.json"}
+                    ]
+                })",
+                "test catalog"),
+            std::invalid_argument);
+    }
+
+    SECTION("file escapes the level directory")
+    {
+        REQUIRE_THROWS_AS(
+            advanced_platformer::parseLevelCatalog(
+                R"({"startLevel": 1, "cameraDeadZone": [80, 45], "levels": [{"number": 1, "file": "../one.json"}]})",
+                "test catalog"),
+            std::invalid_argument);
+    }
+}
+
 TEST_CASE("A level catalog rejects a generated entry it cannot build", "[app][content][json]")
 {
     auto levelCatalogJson = tests::parseJson(
@@ -201,4 +142,63 @@ TEST_CASE("A level catalog rejects a generated entry it cannot build", "[app][co
     REQUIRE_THROWS_WITH(
         advanced_platformer::parseLevelCatalog(tests::dumpJson(levelCatalogJson), "levels.json"),
         Catch::Matchers::ContainsSubstring(message));
+}
+
+TEST_CASE(
+    "A level catalog's camera dead zone is positive and fits in the view",
+    "[app][content][json]")
+{
+    auto levelCatalogJson = tests::parseJson(
+        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"one.json"}]})");
+    SECTION("Missing")
+    {
+        tests::eraseKey(levelCatalogJson, "cameraDeadZone");
+    }
+    SECTION("Empty")
+    {
+        levelCatalogJson["cameraDeadZone"] = tests::numbers({0, 45});
+    }
+    SECTION("Wider than the view")
+    {
+        levelCatalogJson["cameraDeadZone"] = tests::numbers({321, 45});
+    }
+    SECTION("Taller than the view")
+    {
+        levelCatalogJson["cameraDeadZone"] = tests::numbers({80, 181});
+    }
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::parseLevelCatalog(tests::dumpJson(levelCatalogJson), "levels.json"),
+        Catch::Matchers::ContainsSubstring("cameraDeadZone"));
+}
+
+TEST_CASE("Level catalog numbers reject narrowing and fields reject typos", "[app][content][json]")
+{
+    auto levelCatalogJson = tests::parseJson(
+        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"one.json"}]})");
+    SECTION("Above int range")
+    {
+        levelCatalogJson["startLevel"] = 4294967297LL;
+    }
+    SECTION("Below int range")
+    {
+        levelCatalogJson["levels"][0]["number"] = -4294967295LL;
+    }
+    SECTION("Top-level field typo")
+    {
+        levelCatalogJson["startLevell"] = 1;
+    }
+    SECTION("Entry typo")
+    {
+        levelCatalogJson["levels"][0]["fille"] = "two.json";
+    }
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::parseLevelCatalog(tests::dumpJson(levelCatalogJson), "levels.json"),
+        Catch::Matchers::ContainsSubstring("levels.json:"));
+}
+
+TEST_CASE("A missing level catalog is rejected at the file boundary", "[app][content][json]")
+{
+    REQUIRE_THROWS_AS(
+        advanced_platformer::loadLevelCatalog("tests/fixtures/levels/does_not_exist.json"),
+        std::invalid_argument);
 }

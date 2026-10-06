@@ -29,10 +29,6 @@ namespace advanced_platformer
             RoomSide::Right,
             RoomSide::Up,
             RoomSide::Down};
-        // Growth can wander into a corner it cannot leave, so it starts over a bounded number
-        // of times before giving up.
-        constexpr int LayoutAttempts = 200;
-        constexpr int GrowthTriesPerRoom = 64;
 
         std::optional<std::size_t> roomAt(const std::vector<RoomSlot>& rooms, Cell grid)
         {
@@ -44,6 +40,43 @@ namespace advanced_platformer
             }
             return static_cast<std::size_t>(found - rooms.begin());
         }
+
+        std::string roomName(std::size_t room)
+        {
+            return std::format("room{}", room);
+        }
+    }
+
+    std::uint64_t nextRandom(LevelRandom& random)
+    {
+        random.state += 0x9E3779B97F4A7C15ULL;
+        std::uint64_t mixed = random.state;
+        mixed = (mixed ^ (mixed >> 30U)) * 0xBF58476D1CE4E5B9ULL;
+        mixed = (mixed ^ (mixed >> 27U)) * 0x94D049BB133111EBULL;
+        return mixed ^ (mixed >> 31U);
+    }
+
+    std::size_t randomBelow(LevelRandom& random, std::size_t count)
+    {
+        if (count == 0)
+        {
+            throw std::invalid_argument("A random choice needs at least one option");
+        }
+        constexpr std::uint64_t Largest = std::numeric_limits<std::uint64_t>::max();
+        const auto range = static_cast<std::uint64_t>(count);
+        const std::uint64_t limit = Largest - (Largest % range);
+        std::uint64_t value = nextRandom(random);
+        while (value >= limit)
+        {
+            value = nextRandom(random);
+        }
+        return static_cast<std::size_t>(value % range);
+    }
+
+    namespace
+    {
+        constexpr int LayoutAttempts = 200;
+        constexpr int GrowthTriesPerRoom = 64;
 
         int placedNeighbours(const std::vector<RoomSlot>& rooms, Cell grid)
         {
@@ -81,51 +114,6 @@ namespace advanced_platformer
             }
             return rooms;
         }
-
-        bool roleFits(RoomRole role, std::size_t room, const RoomLayout& layout)
-        {
-            if (room == 0)
-            {
-                return role == RoomRole::Start;
-            }
-            if (room == layout.exit)
-            {
-                return role == RoomRole::Exit;
-            }
-            return role != RoomRole::Start && role != RoomRole::Exit;
-        }
-
-        std::string roomName(std::size_t room)
-        {
-            return std::format("room{}", room);
-        }
-    }
-
-    std::uint64_t nextRandom(LevelRandom& random)
-    {
-        random.state += 0x9E3779B97F4A7C15ULL;
-        std::uint64_t mixed = random.state;
-        mixed = (mixed ^ (mixed >> 30U)) * 0xBF58476D1CE4E5B9ULL;
-        mixed = (mixed ^ (mixed >> 27U)) * 0x94D049BB133111EBULL;
-        return mixed ^ (mixed >> 31U);
-    }
-
-    std::size_t randomBelow(LevelRandom& random, std::size_t count)
-    {
-        if (count == 0)
-        {
-            throw std::invalid_argument("A random choice needs at least one option");
-        }
-        // Drop the uneven tail so every answer is equally likely.
-        constexpr std::uint64_t Largest = std::numeric_limits<std::uint64_t>::max();
-        const auto range = static_cast<std::uint64_t>(count);
-        const std::uint64_t limit = Largest - (Largest % range);
-        std::uint64_t value = nextRandom(random);
-        while (value >= limit)
-        {
-            value = nextRandom(random);
-        }
-        return static_cast<std::size_t>(value % range);
     }
 
     RoomLayout layoutRooms(GridSize grid, int roomCount, LevelRandom& random)
@@ -146,8 +134,6 @@ namespace advanced_platformer
                 continue;
             }
             RoomLayout layout{.grid = grid, .rooms = std::move(*rooms)};
-            // The deepest room has no room beyond it, so it is a dead end; the first found
-            // wins ties.
             for (std::size_t room = 1; room < layout.rooms.size(); ++room)
             {
                 if (layout.rooms[room].depth > layout.rooms[layout.exit].depth)
@@ -160,6 +146,22 @@ namespace advanced_platformer
         throw std::invalid_argument(
             std::format(
                 "Could not grow {} rooms in a {} by {} grid", roomCount, grid.width, grid.height));
+    }
+
+    namespace
+    {
+        bool roleFits(RoomRole role, std::size_t room, const RoomLayout& layout)
+        {
+            if (room == 0)
+            {
+                return role == RoomRole::Start;
+            }
+            if (room == layout.exit)
+            {
+                return role == RoomRole::Exit;
+            }
+            return role != RoomRole::Start && role != RoomRole::Exit;
+        }
     }
 
     std::vector<RoomChoice> chooseRooms(
@@ -216,7 +218,6 @@ namespace advanced_platformer
             least = {std::min(least.x, room.grid.x), std::min(least.y, room.grid.y)};
             most = {std::max(most.x, room.grid.x), std::max(most.y, room.grid.y)};
         }
-        // Neighbouring rooms share the wall between them, so a door is one cell deep.
         const GridSize size = catalog.roomSize;
         const GridSize stride{size.width - 1, size.height - 1};
         const int width = ((most.x - least.x) * stride.width) + size.width;

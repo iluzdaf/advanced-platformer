@@ -14,58 +14,7 @@ namespace
     using advanced_platformer::Cell;
     using advanced_platformer::RoomDoors;
     using advanced_platformer::RoomSide;
-
     constexpr const char* FixturePieces = "tests/fixtures/levels/rooms.json";
-
-    tests::Json fixturePieces()
-    {
-        return tests::parseJson(advanced_platformer::loadContentText(FixturePieces));
-    }
-
-    void requireRejected(const tests::Json& document, const std::string& message)
-    {
-        REQUIRE_THROWS_WITH(
-            advanced_platformer::parseRoomPieceCatalog(tests::dumpJson(document), "rooms.json"),
-            Catch::Matchers::ContainsSubstring(message));
-    }
-}
-
-TEST_CASE("Room doors are sets of sides that flip left to right", "[app][content][generation]")
-{
-    const RoomDoors leftAndUp = advanced_platformer::withDoor(
-        advanced_platformer::withDoor({}, RoomSide::Left), RoomSide::Up);
-
-    REQUIRE(advanced_platformer::hasDoor(leftAndUp, RoomSide::Left));
-    REQUIRE_FALSE(advanced_platformer::hasDoor(leftAndUp, RoomSide::Right));
-    REQUIRE(advanced_platformer::doorCount(leftAndUp) == 2);
-    REQUIRE(
-        advanced_platformer::mirroredDoors(leftAndUp) ==
-        advanced_platformer::withDoor(
-            advanced_platformer::withDoor({}, RoomSide::Right), RoomSide::Up));
-    REQUIRE(
-        advanced_platformer::coversDoors(
-            leftAndUp, advanced_platformer::withDoor({}, RoomSide::Up)));
-    REQUIRE_FALSE(
-        advanced_platformer::coversDoors(
-            leftAndUp, advanced_platformer::withDoor({}, RoomSide::Down)));
-}
-
-TEST_CASE("Doors sit at the same cells on every room's edges", "[app][content][generation]")
-{
-    const advanced_platformer::GridSize size{8, 6};
-
-    REQUIRE(
-        advanced_platformer::doorCells(size, RoomSide::Left) ==
-        std::vector<Cell>{{0, 2}, {0, 3}, {0, 4}});
-    REQUIRE(
-        advanced_platformer::doorCells(size, RoomSide::Right) ==
-        std::vector<Cell>{{7, 2}, {7, 3}, {7, 4}});
-    REQUIRE(
-        advanced_platformer::doorCells(size, RoomSide::Up) ==
-        std::vector<Cell>{{2, 0}, {3, 0}, {4, 0}, {5, 0}});
-    REQUIRE(
-        advanced_platformer::doorCells(size, RoomSide::Down) ==
-        std::vector<Cell>{{2, 5}, {3, 5}, {4, 5}, {5, 5}});
 }
 
 TEST_CASE(
@@ -91,6 +40,21 @@ TEST_CASE(
     REQUIRE(store.doors == advanced_platformer::withDoor({}, RoomSide::Left));
     REQUIRE_FALSE(store.mirror);
     REQUIRE(catalog.pieces[1].mirror);
+}
+
+namespace
+{
+    tests::Json fixturePieces()
+    {
+        return tests::parseJson(advanced_platformer::loadContentText(FixturePieces));
+    }
+
+    void requireRejected(const tests::Json& document, const std::string& message)
+    {
+        REQUIRE_THROWS_WITH(
+            advanced_platformer::parseRoomPieceCatalog(tests::dumpJson(document), "rooms.json"),
+            Catch::Matchers::ContainsSubstring(message));
+    }
 }
 
 TEST_CASE("A room piece file rejects pieces that cannot be stitched", "[app][content][generation]")
@@ -154,4 +118,42 @@ TEST_CASE("A room piece file rejects pieces that cannot be stitched", "[app][con
         document["roomSize"] = tests::numbers({9, 6});
         requireRejected(document, "roomSize: expected an even width");
     }
+}
+
+TEST_CASE("Doors sit at the same cells on every room's edges", "[app][content][generation]")
+{
+    const advanced_platformer::GridSize size{8, 6};
+
+    REQUIRE(
+        advanced_platformer::doorCells(size, RoomSide::Left) ==
+        std::vector<Cell>{{0, 2}, {0, 3}, {0, 4}});
+    REQUIRE(
+        advanced_platformer::doorCells(size, RoomSide::Right) ==
+        std::vector<Cell>{{7, 2}, {7, 3}, {7, 4}});
+    REQUIRE(
+        advanced_platformer::doorCells(size, RoomSide::Up) ==
+        std::vector<Cell>{{2, 0}, {3, 0}, {4, 0}, {5, 0}});
+    REQUIRE(
+        advanced_platformer::doorCells(size, RoomSide::Down) ==
+        std::vector<Cell>{{2, 5}, {3, 5}, {4, 5}, {5, 5}});
+}
+
+TEST_CASE("Room doors are sets of sides that flip left to right", "[app][content][generation]")
+{
+    const RoomDoors leftAndUp = advanced_platformer::withDoor(
+        advanced_platformer::withDoor({}, RoomSide::Left), RoomSide::Up);
+
+    REQUIRE(advanced_platformer::hasDoor(leftAndUp, RoomSide::Left));
+    REQUIRE_FALSE(advanced_platformer::hasDoor(leftAndUp, RoomSide::Right));
+    REQUIRE(advanced_platformer::doorCount(leftAndUp) == 2);
+    REQUIRE(
+        advanced_platformer::mirroredDoors(leftAndUp) ==
+        advanced_platformer::withDoor(
+            advanced_platformer::withDoor({}, RoomSide::Right), RoomSide::Up));
+    REQUIRE(
+        advanced_platformer::coversDoors(
+            leftAndUp, advanced_platformer::withDoor({}, RoomSide::Up)));
+    REQUIRE_FALSE(
+        advanced_platformer::coversDoors(
+            leftAndUp, advanced_platformer::withDoor({}, RoomSide::Down)));
 }

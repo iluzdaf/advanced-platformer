@@ -51,8 +51,6 @@ template <> struct glz::meta<advanced_platformer::RoomRole>
 
 namespace advanced_platformer
 {
-    // The room piece file as written. Glaze reflects only types with linkage, so these
-    // cannot go in an anonymous namespace.
     struct RoomMarkersJson
     {
         std::string start;
@@ -83,20 +81,140 @@ namespace advanced_platformer
 
     namespace
     {
-        constexpr int MinimumRoomWidth = 8;
-        constexpr int MinimumRoomHeight = 6;
+        std::uint8_t bitOf(RoomSide side)
+        {
+            return static_cast<std::uint8_t>(1U << static_cast<unsigned>(side));
+        }
+    }
+
+    bool hasDoor(RoomDoors doors, RoomSide side)
+    {
+        return (doors.bits & bitOf(side)) != 0U;
+    }
+
+    RoomDoors withDoor(RoomDoors doors, RoomSide side)
+    {
+        return {static_cast<std::uint8_t>(doors.bits | bitOf(side))};
+    }
+
+    bool coversDoors(RoomDoors doors, RoomDoors other)
+    {
+        return (doors.bits & other.bits) == other.bits;
+    }
+
+    int doorCount(RoomDoors doors)
+    {
+        return std::popcount(doors.bits);
+    }
+
+    RoomDoors mirroredDoors(RoomDoors doors)
+    {
+        RoomDoors result{static_cast<std::uint8_t>(
+            doors.bits & static_cast<std::uint8_t>(bitOf(RoomSide::Up) | bitOf(RoomSide::Down)))};
+        if (hasDoor(doors, RoomSide::Left))
+        {
+            result = withDoor(result, RoomSide::Right);
+        }
+        if (hasDoor(doors, RoomSide::Right))
+        {
+            result = withDoor(result, RoomSide::Left);
+        }
+        return result;
+    }
+
+    RoomSide oppositeOf(RoomSide side)
+    {
+        switch (side)
+        {
+        case RoomSide::Left:
+            return RoomSide::Right;
+        case RoomSide::Right:
+            return RoomSide::Left;
+        case RoomSide::Up:
+            return RoomSide::Down;
+        case RoomSide::Down:
+            return RoomSide::Up;
+        }
+        throw std::invalid_argument("Unknown room side");
+    }
+
+    Cell stepTowards(Cell cell, RoomSide side)
+    {
+        switch (side)
+        {
+        case RoomSide::Left:
+            return {cell.x - 1, cell.y};
+        case RoomSide::Right:
+            return {cell.x + 1, cell.y};
+        case RoomSide::Up:
+            return {cell.x, cell.y - 1};
+        case RoomSide::Down:
+            return {cell.x, cell.y + 1};
+        }
+        throw std::invalid_argument("Unknown room side");
+    }
+
+    std::string_view nameOf(RoomSide side)
+    {
+        switch (side)
+        {
+        case RoomSide::Left:
+            return "left";
+        case RoomSide::Right:
+            return "right";
+        case RoomSide::Up:
+            return "up";
+        case RoomSide::Down:
+            return "down";
+        }
+        return "unknown";
+    }
+
+    namespace
+    {
         constexpr int SideDoorHeight = 3;
         constexpr int VerticalDoorWidth = 4;
+    }
+
+    std::vector<Cell> doorCells(GridSize roomSize, RoomSide side)
+    {
+        std::vector<Cell> cells;
+        const int floor = roomSize.height - 1;
+        const int firstColumn = (roomSize.width / 2) - (VerticalDoorWidth / 2);
+        switch (side)
+        {
+        case RoomSide::Left:
+        case RoomSide::Right: {
+            const int column = side == RoomSide::Left ? 0 : roomSize.width - 1;
+            for (int row = floor - SideDoorHeight; row < floor; ++row)
+            {
+                cells.push_back({column, row});
+            }
+            break;
+        }
+        case RoomSide::Up:
+        case RoomSide::Down: {
+            const int row = side == RoomSide::Up ? 0 : floor;
+            for (int column = firstColumn; column < firstColumn + VerticalDoorWidth; ++column)
+            {
+                cells.push_back({column, row});
+            }
+            break;
+        }
+        }
+        return cells;
+    }
+
+    namespace
+    {
+        constexpr int MinimumRoomWidth = 8;
+        constexpr int MinimumRoomHeight = 6;
+
         constexpr std::array AllSides{
             RoomSide::Left,
             RoomSide::Right,
             RoomSide::Up,
             RoomSide::Down};
-
-        std::uint8_t bitOf(RoomSide side)
-        {
-            return static_cast<std::uint8_t>(1U << static_cast<unsigned>(side));
-        }
 
         char symbolFrom(std::string_view text, std::string_view sourceName, std::string_view path)
         {
@@ -265,8 +383,6 @@ namespace advanced_platformer
                 });
         }
 
-        // The generator can ask for any set of doors in an ordinary room or the start, and
-        // any one door in the exit, so the pieces must cover them all.
         void validateCoverage(const RoomPieceCatalog& catalog, std::string_view sourceName)
         {
             for (std::uint8_t bits = 1; bits < 16; ++bits)
@@ -363,118 +479,6 @@ namespace advanced_platformer
             piece.rows = json.map;
             return piece;
         }
-    }
-
-    bool hasDoor(RoomDoors doors, RoomSide side)
-    {
-        return (doors.bits & bitOf(side)) != 0U;
-    }
-
-    RoomDoors withDoor(RoomDoors doors, RoomSide side)
-    {
-        return {static_cast<std::uint8_t>(doors.bits | bitOf(side))};
-    }
-
-    bool coversDoors(RoomDoors doors, RoomDoors other)
-    {
-        return (doors.bits & other.bits) == other.bits;
-    }
-
-    int doorCount(RoomDoors doors)
-    {
-        return std::popcount(doors.bits);
-    }
-
-    RoomDoors mirroredDoors(RoomDoors doors)
-    {
-        RoomDoors result{static_cast<std::uint8_t>(
-            doors.bits & static_cast<std::uint8_t>(bitOf(RoomSide::Up) | bitOf(RoomSide::Down)))};
-        if (hasDoor(doors, RoomSide::Left))
-        {
-            result = withDoor(result, RoomSide::Right);
-        }
-        if (hasDoor(doors, RoomSide::Right))
-        {
-            result = withDoor(result, RoomSide::Left);
-        }
-        return result;
-    }
-
-    RoomSide oppositeOf(RoomSide side)
-    {
-        switch (side)
-        {
-        case RoomSide::Left:
-            return RoomSide::Right;
-        case RoomSide::Right:
-            return RoomSide::Left;
-        case RoomSide::Up:
-            return RoomSide::Down;
-        case RoomSide::Down:
-            return RoomSide::Up;
-        }
-        throw std::invalid_argument("Unknown room side");
-    }
-
-    Cell stepTowards(Cell cell, RoomSide side)
-    {
-        switch (side)
-        {
-        case RoomSide::Left:
-            return {cell.x - 1, cell.y};
-        case RoomSide::Right:
-            return {cell.x + 1, cell.y};
-        case RoomSide::Up:
-            return {cell.x, cell.y - 1};
-        case RoomSide::Down:
-            return {cell.x, cell.y + 1};
-        }
-        throw std::invalid_argument("Unknown room side");
-    }
-
-    std::string_view nameOf(RoomSide side)
-    {
-        switch (side)
-        {
-        case RoomSide::Left:
-            return "left";
-        case RoomSide::Right:
-            return "right";
-        case RoomSide::Up:
-            return "up";
-        case RoomSide::Down:
-            return "down";
-        }
-        return "unknown";
-    }
-
-    std::vector<Cell> doorCells(GridSize roomSize, RoomSide side)
-    {
-        std::vector<Cell> cells;
-        const int floor = roomSize.height - 1;
-        const int firstColumn = (roomSize.width / 2) - (VerticalDoorWidth / 2);
-        switch (side)
-        {
-        case RoomSide::Left:
-        case RoomSide::Right: {
-            const int column = side == RoomSide::Left ? 0 : roomSize.width - 1;
-            for (int row = floor - SideDoorHeight; row < floor; ++row)
-            {
-                cells.push_back({column, row});
-            }
-            break;
-        }
-        case RoomSide::Up:
-        case RoomSide::Down: {
-            const int row = side == RoomSide::Up ? 0 : floor;
-            for (int column = firstColumn; column < firstColumn + VerticalDoorWidth; ++column)
-            {
-                cells.push_back({column, row});
-            }
-            break;
-        }
-        }
-        return cells;
     }
 
     RoomPieceCatalog parseRoomPieceCatalog(std::string_view text, std::string_view sourceName)

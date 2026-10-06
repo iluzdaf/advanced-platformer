@@ -2,11 +2,13 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
 
 #include "content/game_catalogs.hpp"
+#include "content/level_catalog.hpp"
 #include "content/level_data.hpp"
 #include "content/level_generator.hpp"
 #include "content/room_pieces.hpp"
@@ -24,7 +26,6 @@ namespace
     using advanced_platformer::RoomRole;
     using advanced_platformer::RoomSide;
     using advanced_platformer::RoomSlot;
-
     constexpr std::array AllSides{RoomSide::Left, RoomSide::Right, RoomSide::Up, RoomSide::Down};
     constexpr Cell Centre{1, 1};
 
@@ -52,8 +53,6 @@ namespace
         return result;
     }
 
-    // The first start or exit piece with the door, so a failure points at the piece under
-    // test rather than at whichever start or exit happened to be picked.
     RoomChoice firstWithDoor(const RoomPieceCatalog& catalog, RoomRole role, RoomSide side)
     {
         for (const RoomChoice choice : orientations(catalog, role))
@@ -87,6 +86,37 @@ namespace
     std::string describe(const RoomPieceCatalog& catalog, RoomChoice choice)
     {
         return catalog.pieces[choice.piece].name + (choice.mirrored ? " (mirrored)" : "");
+    }
+}
+
+TEST_CASE(
+    "Every shipped generated level reaches its exit across seeds",
+    "[app][content][generation]")
+{
+    const advanced_platformer::LevelCatalog catalog =
+        advanced_platformer::loadLevelCatalog("assets/levels/levels.json");
+    const advanced_platformer::GameCatalogs catalogs =
+        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
+    for (const advanced_platformer::LevelCatalogEntry& entry : catalog.levels)
+    {
+        if (!entry.generation.has_value())
+        {
+            continue;
+        }
+        const advanced_platformer::LevelGeneration shipped = *entry.generation;
+        const advanced_platformer::RoomPieceCatalog pieces =
+            advanced_platformer::loadRoomPieceCatalog(
+                catalog.levelDirectory / shipped.relativePieces);
+        for (std::uint32_t seed = 1; seed <= 12; ++seed)
+        {
+            advanced_platformer::LevelGeneration generation = shipped;
+            generation.seed = seed;
+            INFO("level " << entry.number << " seed " << seed);
+            REQUIRE(
+                tests::playerReachesExit(
+                    advanced_platformer::generateLevel(pieces, generation, "rooms.json"),
+                    catalogs));
+        }
     }
 }
 

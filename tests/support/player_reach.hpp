@@ -32,8 +32,6 @@ namespace tests
         return std::get<glm::vec2>(position);
     }
 
-    // Whether the player, standing at the level's spawn, can walk and jump to its exit,
-    // by the route search NPCs use, over every cell of the map.
     inline bool playerReachesExit(
         const advanced_platformer::LevelData& level,
         const advanced_platformer::GameCatalogs& catalogs)

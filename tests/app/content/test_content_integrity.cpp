@@ -49,12 +49,6 @@ namespace
     }
 }
 
-TEST_CASE("Every catalog region lies inside the shipped atlas", "[app][content][atlas]")
-{
-    const glm::ivec2 atlas = pngSize(ShippedAtlas);
-    REQUIRE_NOTHROW(advanced_platformer::loadGameCatalogs("assets/catalogs", atlas));
-}
-
 TEST_CASE("Every catalog level can be composed", "[app][content]")
 {
     const auto catalog = advanced_platformer::loadLevelCatalog("assets/levels/levels.json");
@@ -117,6 +111,12 @@ TEST_CASE("Every catalog level has a route from the respawn to the exit", "[app]
     }
 }
 
+TEST_CASE("Every catalog region lies inside the shipped atlas", "[app][content][atlas]")
+{
+    const glm::ivec2 atlas = pngSize(ShippedAtlas);
+    REQUIRE_NOTHROW(advanced_platformer::loadGameCatalogs("assets/catalogs", atlas));
+}
+
 TEST_CASE("Every shipped Lua activity resolves", "[app][content][lua]")
 {
     const advanced_platformer::GameCatalogs catalogs =
@@ -125,14 +125,6 @@ TEST_CASE("Every shipped Lua activity resolves", "[app][content][lua]")
 
     REQUIRE_NOTHROW(
         advanced_platformer::loadNpcActivityScripts(scripts, catalogs.machines, "assets/scripts"));
-}
-
-TEST_CASE("The shipped presentation script loads", "[app][content][lua]")
-{
-    advanced_platformer::LuaPresentationScript presentation;
-
-    REQUIRE_NOTHROW(presentation.loadScript("assets/scripts/presentation.lua"));
-    REQUIRE(presentation.loaded());
 }
 
 TEST_CASE("Every shipped Lua activity runs without errors", "[app][content][lua]")
@@ -175,4 +167,12 @@ TEST_CASE("Every shipped Lua activity runs without errors", "[app][content][lua]
             REQUIRE(scripts.diagnostics().empty());
         }
     }
+}
+
+TEST_CASE("The shipped presentation script loads", "[app][content][lua]")
+{
+    advanced_platformer::LuaPresentationScript presentation;
+
+    REQUIRE_NOTHROW(presentation.loadScript("assets/scripts/presentation.lua"));
+    REQUIRE(presentation.loaded());
 }
