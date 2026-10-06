@@ -31,7 +31,6 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/app/content/game_content.cpp
         ${PROJECT_SOURCE_DIR}/app/content/hud_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/item_catalog.cpp
-        ${PROJECT_SOURCE_DIR}/app/content/level_data.cpp
         ${PROJECT_SOURCE_DIR}/app/content/level_generator.cpp
         ${PROJECT_SOURCE_DIR}/app/content/machine_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/npc_script_catalog.cpp

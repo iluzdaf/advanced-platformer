@@ -110,60 +110,11 @@ namespace advanced_platformer
         const GeneratedLevel source = generateRunLevel(pieces, levelNumber, seed);
         const LevelData& data = source.data;
         const std::string& path = source.sourceName;
-        const auto& tiles = catalogs.tiles;
         const auto& actors = catalogs.actors;
         const auto& exits = catalogs.exits;
         const auto& items = catalogs.items;
         const auto& pickups = catalogs.pickups;
-        for (const auto& reference : data.exitReferences)
-        {
-            try
-            {
-                exitDefinition(exits, reference.second);
-            }
-            catch (const std::invalid_argument& error)
-            {
-                throw std::invalid_argument(
-                    std::format("{}: {}: {}", path, reference.first, error.what()));
-            }
-        }
-        for (const auto& reference : data.itemReferences)
-        {
-            try
-            {
-                itemDefinition(items, reference.second);
-            }
-            catch (const std::invalid_argument& error)
-            {
-                throw std::invalid_argument(
-                    std::format("{}: {}: {}", path, reference.first, error.what()));
-            }
-        }
-        for (const auto& reference : data.pickupReferences)
-        {
-            try
-            {
-                pickupDefinition(pickups, reference.second);
-            }
-            catch (const std::invalid_argument& error)
-            {
-                throw std::invalid_argument(
-                    std::format("{}: {}: {}", path, reference.first, error.what()));
-            }
-        }
-        for (const auto& reference : data.actorReferences)
-        {
-            try
-            {
-                actorDefinition(actors, reference.second);
-            }
-            catch (const std::invalid_argument& error)
-            {
-                throw std::invalid_argument(
-                    std::format("{}: {}: {}", path, reference.first, error.what()));
-            }
-        }
-        TileMap map = composeTileMap(data.mapRows, data.tileLegend, tiles);
+        TileMap map = composeTileMap(data.mapRows, data.tileLegend, catalogs.tiles);
         World world(composeItems(items, textureId));
         std::unordered_map<std::uint32_t, std::string> actorDefinitionNames;
         std::unordered_map<std::uint32_t, std::string> actorPlacementIds;
@@ -186,23 +137,37 @@ namespace advanced_platformer
             catch (const std::invalid_argument& error)
             {
                 throw std::invalid_argument(
-                    std::format(
-                        "{}: actor '{}': {}", path, placement.definitionName, error.what()));
+                    std::format("{}: actor '{}': {}", path, placement.id, error.what()));
             }
         }
         for (const auto& placement : data.pickups)
         {
-            Pickup pickup = makePickup(map, placement, pickups, items, textureId);
-            pickup.placement = pickupPlacementIds.size();
-            pickupPlacementIds.push_back(placement.id);
-            world.addPickup(pickup);
+            try
+            {
+                Pickup pickup = makePickup(map, placement, pickups, items, textureId);
+                pickup.placement = pickupPlacementIds.size();
+                pickupPlacementIds.push_back(placement.id);
+                world.addPickup(pickup);
+            }
+            catch (const std::invalid_argument& error)
+            {
+                throw std::invalid_argument(
+                    std::format("{}: pickup '{}': {}", path, placement.id, error.what()));
+            }
         }
         for (const auto& [actor, id] : actorPlacementIds)
         {
             placedIds.insert(id);
         }
         placedIds.insert(pickupPlacementIds.begin(), pickupPlacementIds.end());
-        world.setExit(makeExit(map, textureId, data.exit, items, exits));
+        try
+        {
+            world.setExit(makeExit(map, textureId, data.exit, items, exits));
+        }
+        catch (const std::invalid_argument& error)
+        {
+            throw std::invalid_argument(std::format("{}: exit: {}", path, error.what()));
+        }
         const glm::vec2 playerSpawnFeet = feetOf(map, data.playerSpawn);
         return {
             levelNumber,

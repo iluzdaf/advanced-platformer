@@ -21,7 +21,6 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/app/content/game_content.cpp
         ${PROJECT_SOURCE_DIR}/app/content/hud_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/item_catalog.cpp
-        ${PROJECT_SOURCE_DIR}/app/content/level_data.cpp
         ${PROJECT_SOURCE_DIR}/app/content/level_generator.cpp
         ${PROJECT_SOURCE_DIR}/app/content/machine_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/npc_script_catalog.cpp
@@ -54,10 +53,6 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_exit_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_hud_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_item_catalog.cpp
-        ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_data.cpp
-        ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_data_diagnostics.cpp
-        ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_data_placement_validation.cpp
-        ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_data_validation.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_generator.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_machine_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_npc_script_catalog.cpp

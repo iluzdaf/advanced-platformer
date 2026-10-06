@@ -57,8 +57,7 @@ namespace advanced_platformer
     LevelData stitchRooms(
         const RoomPieceCatalog& catalog,
         const RoomLayout& layout,
-        const std::vector<RoomChoice>& choices,
-        std::string_view sourceName);
+        const std::vector<RoomChoice>& choices);
 
     LevelData generateLevel(
         const RoomPieceCatalog& catalog,

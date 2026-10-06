@@ -72,9 +72,8 @@ TEST_CASE("Unknown pickup definitions identify their placement", "[app][pickups]
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
     REQUIRE_THROWS_WITH(
         advanced_platformer::composeGameLevel(pieces, 1, 1, 0, gameCatalogs),
-        Catch::Matchers::ContainsSubstring(
-            "Level 1 (seed 1): pickups[0].definition: unknown pickup "
-            "definition 'missing'"));
+        Catch::Matchers::ContainsSubstring("Level 1 (seed 1): pickup '") &&
+            Catch::Matchers::ContainsSubstring("unknown pickup definition 'missing'"));
 }
 
 TEST_CASE("Level exit placement combines a definition with its requirement", "[app][exits]")
@@ -105,7 +104,7 @@ TEST_CASE("Exit item references resolve through the item catalog", "[app][pickup
         Catch::Matchers::ContainsSubstring("Level 1 (seed 1):"));
     REQUIRE_THROWS_WITH(
         advanced_platformer::composeGameLevel(pieces, 1, 1, 0, gameCatalogs),
-        Catch::Matchers::ContainsSubstring("requirement.item: unknown item 'missing'"));
+        Catch::Matchers::ContainsSubstring("exit: unknown item 'missing'"));
 }
 
 TEST_CASE("Unknown exit definitions identify their placement", "[app][exits]")
@@ -117,6 +116,5 @@ TEST_CASE("Unknown exit definitions identify their placement", "[app][exits]")
     REQUIRE_THROWS_WITH(
         advanced_platformer::composeGameLevel(pieces, 1, 1, 0, gameCatalogs),
         Catch::Matchers::ContainsSubstring(
-            "Level 1 (seed 1): exit.definition: unknown exit definition "
-            "'missing'"));
+            "Level 1 (seed 1): exit: unknown exit definition 'missing'"));
 }

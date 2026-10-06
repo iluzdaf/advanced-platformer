@@ -62,6 +62,6 @@ TEST_CASE("Level composition reports unknown actor definitions", "[app][actors]"
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
     REQUIRE_THROWS_WITH(
         advanced_platformer::composeGameLevel(pieces, 1, 1, 0, gameCatalogs),
-        Catch::Matchers::ContainsSubstring(
-            "actors[0].definition: unknown actor definition 'missing'"));
+        Catch::Matchers::ContainsSubstring("Level 1 (seed 1): actor '") &&
+            Catch::Matchers::ContainsSubstring("unknown actor definition 'missing'"));
 }

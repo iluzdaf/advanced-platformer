@@ -231,8 +231,7 @@ namespace advanced_platformer
     LevelData stitchRooms(
         const RoomPieceCatalog& catalog,
         const RoomLayout& layout,
-        const std::vector<RoomChoice>& choices,
-        std::string_view sourceName)
+        const std::vector<RoomChoice>& choices)
     {
         if (choices.size() != layout.rooms.size())
         {
@@ -333,7 +332,7 @@ namespace advanced_platformer
                 }
             }
         }
-        return parseLevelData(formatLevelData(level), sourceName);
+        return level;
     }
 
     LevelData generateLevel(
@@ -352,7 +351,7 @@ namespace advanced_platformer
         {
             throw std::invalid_argument(std::format("{}: {}", sourceName, error.what()));
         }
-        return stitchRooms(catalog, layout, choices, sourceName);
+        return stitchRooms(catalog, layout, choices);
     }
 
     int roomsForLevel(const RunSettings& run, int levelNumber)

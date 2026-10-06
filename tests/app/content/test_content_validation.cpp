@@ -114,22 +114,3 @@ TEST_CASE("Tile legend symbols are unambiguous independently of JSON", "[app][co
     REQUIRE_THROWS_AS(
         advanced_platformer::validateLegendSymbols({".", "."}), std::invalid_argument);
 }
-
-TEST_CASE(
-    "Map authoring validation reports useful paths without JSON",
-    "[app][content][validation]")
-{
-    REQUIRE_NOTHROW(advanced_platformer::validateMapRows({"..", ".."}, {{'.', "empty"}}));
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::validateMapRows({}, {{'.', "empty"}}),
-        "map: expected at least one row");
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::validateMapRows({""}, {{'.', "empty"}}),
-        "map[0]: row cannot be empty");
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::validateMapRows({"..", "."}, {{'.', "empty"}}),
-        "map[1]: expected 2 columns, got 1");
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::validateMapRows({".?"}, {{'.', "empty"}}),
-        "map[0][1]: unknown symbol '?'; define it in tileLegend");
-}

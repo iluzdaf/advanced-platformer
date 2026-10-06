@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdlib>
+#include <format>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -126,8 +127,8 @@ TEST_CASE("Stitched rooms share walls and seal unused doors", "[app][content][ge
               1},
              {{2, 0}, advanced_platformer::withDoor({}, RoomSide::Left), 2}},
         .exit = 2};
-    const advanced_platformer::LevelData level = advanced_platformer::stitchRooms(
-        catalog, layout, {{0, false}, {1, false}, {3, false}}, "rooms.json");
+    const advanced_platformer::LevelData level =
+        advanced_platformer::stitchRooms(catalog, layout, {{0, false}, {1, false}, {3, false}});
 
     REQUIRE(level.mapRows.size() == 6);
     REQUIRE(level.mapRows.front().size() == 3 * 7 + 1);
@@ -147,22 +148,52 @@ TEST_CASE("Stitched rooms share walls and seal unused doors", "[app][content][ge
     REQUIRE(level.actors.front().definitionName == "test_guard");
 }
 
-TEST_CASE("The same seed generates the same level file", "[app][content][generation]")
+namespace
+{
+    std::string placementText(
+        const std::string& id,
+        const advanced_platformer::LevelPosition& spawn)
+    {
+        const Cell cell = std::get<Cell>(spawn);
+        return std::format("{}@{},{};", id, cell.x, cell.y);
+    }
+
+    std::string levelText(const advanced_platformer::LevelData& level)
+    {
+        std::string text;
+        for (const std::string& row : level.mapRows)
+        {
+            text += row + '\n';
+        }
+        text += placementText("player", level.playerSpawn);
+        text += placementText("exit", level.exit.spawn);
+        for (const advanced_platformer::ActorPlacement& actor : level.actors)
+        {
+            text += placementText(actor.id, actor.spawn);
+        }
+        for (const advanced_platformer::PickupPlacement& pickup : level.pickups)
+        {
+            text += placementText(pickup.id, pickup.spawn);
+        }
+        return text;
+    }
+}
+
+TEST_CASE("The same seed generates the same level", "[app][content][generation]")
 {
     const advanced_platformer::RoomPieceCatalog catalog =
         advanced_platformer::loadRoomPieceCatalog(FixturePieces);
-    const std::string first = advanced_platformer::formatLevelData(
-        advanced_platformer::generateLevel(catalog, generation(7), "rooms.json"));
+    const std::string first =
+        levelText(advanced_platformer::generateLevel(catalog, generation(7), "rooms.json"));
 
     REQUIRE(
-        advanced_platformer::formatLevelData(
-            advanced_platformer::generateLevel(catalog, generation(7), "rooms.json")) == first);
+        levelText(advanced_platformer::generateLevel(catalog, generation(7), "rooms.json")) ==
+        first);
     std::set<std::string> levels;
     for (std::uint32_t seed = 1; seed <= 10; ++seed)
     {
         levels.insert(
-            advanced_platformer::formatLevelData(
-                advanced_platformer::generateLevel(catalog, generation(seed), "rooms.json")));
+            levelText(advanced_platformer::generateLevel(catalog, generation(seed), "rooms.json")));
     }
     REQUIRE(levels.size() > 1);
 }

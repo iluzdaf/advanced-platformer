@@ -79,7 +79,7 @@ namespace
         const RoomLayout layout{
             .grid = {3, 3}, .rooms = route.rooms, .exit = route.rooms.size() - 1};
         const advanced_platformer::LevelData level =
-            advanced_platformer::stitchRooms(catalog, layout, route.choices, "rooms.json");
+            advanced_platformer::stitchRooms(catalog, layout, route.choices);
         return tests::playerReachesExit(level, shippedCatalogs);
     }
 

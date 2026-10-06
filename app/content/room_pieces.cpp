@@ -543,6 +543,13 @@ namespace advanced_platformer
                 NamedItemStack{file.exit.requirement->item, file.exit.requirement->quantity};
         }
         result.consumeExitItem = file.exit.consumeItem.value_or(false);
+        validateExitSettings(
+            {.definitionName = result.exitDefinition,
+             .spawn = {},
+             .requirement = result.exitRequirement,
+             .consumeItem = result.consumeExitItem},
+            "exit",
+            sourceName);
 
         std::set<std::string> names;
         for (std::size_t index = 0; index < file.pieces.size(); ++index)

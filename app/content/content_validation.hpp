@@ -30,8 +30,4 @@ namespace advanced_platformer
     void validateLegendSymbols(
         const std::vector<std::string>& tileSymbols,
         std::string_view sourceName = {});
-    void validateMapRows(
-        const std::vector<std::string>& rows,
-        const std::map<char, std::string>& legend,
-        std::string_view sourceName = {});
 }

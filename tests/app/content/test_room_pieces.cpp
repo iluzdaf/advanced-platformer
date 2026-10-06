@@ -197,6 +197,11 @@ TEST_CASE("A room piece file rejects pieces that cannot be stitched", "[app][con
         document["exit"]["definition"] = "";
         requireRejected(document, "exit.definition: exit definition name cannot be empty");
     }
+    SECTION("An exit that asks for nothing of an item")
+    {
+        document["exit"]["requirement"] = tests::parseJson(R"({"item": "key", "quantity": 0})");
+        requireRejected(document, "exit.requirement.quantity: expected a positive integer, got 0");
+    }
     SECTION("An odd room width")
     {
         document["roomSize"] = tests::numbers({9, 6});

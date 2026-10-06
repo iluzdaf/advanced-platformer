@@ -3,7 +3,6 @@
 #include <map>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <variant>
 #include <vector>
 
@@ -52,14 +51,7 @@ namespace advanced_platformer
         std::vector<std::string> mapRows;
         LevelPosition playerSpawn;
         std::vector<ActorPlacement> actors;
-        std::map<std::string, std::string> actorReferences;
-        std::map<std::string, std::string> pickupReferences;
-        std::map<std::string, std::string> exitReferences;
-        std::map<std::string, std::string> itemReferences;
         std::vector<PickupPlacement> pickups;
         ExitPlacement exit;
     };
-
-    LevelData parseLevelData(std::string_view text, std::string_view sourceName);
-    std::string formatLevelData(const LevelData& level);
 }
