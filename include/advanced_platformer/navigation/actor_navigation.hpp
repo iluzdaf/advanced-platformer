@@ -36,16 +36,6 @@ namespace advanced_platformer
         PlatformerConnectionCache& cache,
         FrameProfile* frameProfile = nullptr);
 
-    // The same search, for checks made outside play such as whether a level can be
-    // finished. Each cell it needs and the cache lacks is cached on the spot, so it is
-    // never Deferred and builds only the cells it visits rather than the whole map.
-    std::optional<NavigationPathResult> findActorPathFillingCache(
-        const TileMap& map,
-        const Actor& actor,
-        glm::vec2 goalFeet,
-        float stepSeconds,
-        PlatformerConnectionCache& cache);
-
     // Everything a platformer actor's connections depend on: its body size, movement,
     // climbing and the step. The navigation fill uses it to build the same cache entries
     // a search reads.

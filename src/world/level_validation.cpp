@@ -14,6 +14,7 @@
 #include "advanced_platformer/math/coordinates.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/navigation/actor_navigation.hpp"
+#include "advanced_platformer/navigation/navigation_fill.hpp"
 #include "advanced_platformer/navigation/navigation_path.hpp"
 #include "advanced_platformer/navigation/platformer_connection_cache.hpp"
 #include "advanced_platformer/npc/npc.hpp"
@@ -145,9 +146,17 @@ namespace advanced_platformer
         }
         Actor atRespawn = *player;
         moveFeetTo(atRespawn.body.bounds, world.playerSpawnFeet());
+        const glm::vec2 goal = feetOf(exit->bounds);
         PlatformerConnectionCache cache;
-        const std::optional<NavigationPathResult> result =
-            findActorPathFillingCache(map, atRespawn, feetOf(exit->bounds), stepSeconds, cache);
+        std::optional<NavigationPathResult> result =
+            findActorPath(map, atRespawn, goal, stepSeconds, cache);
+        // A deferred search has put the cell it needs at the front of the fill, and the
+        // fill builds only that cell before the search runs again.
+        while (result.has_value() && result->status == NavigationPathStatus::Deferred)
+        {
+            advanceNavigationFill(map, cache, 1);
+            result = findActorPath(map, atRespawn, goal, stepSeconds, cache);
+        }
         return result.has_value() && result->status == NavigationPathStatus::Found;
     }
 }

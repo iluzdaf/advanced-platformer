@@ -228,6 +228,10 @@ team, and life state, plus optional components.
   endpoint for body clearance. Platformers also need ground support, except a climber's
   patrol endpoints, which may be on a wall or ceiling. Errors name the level, actor, and
   location.
+- `playerCanReachExit` finds a path for the player from its respawn to the exit, in a
+  cache of its own. Each time the search defers, the fill builds just the cell it asked
+  for, so only the cells the search reaches are simulated. It ignores the exit's
+  requirement and breakable tiles.
 
 ## NPC behaviour
 
@@ -543,7 +547,7 @@ to the traversal profile. The search itself does not change.
 | Glaze loaders                      | Types, required and unknown fields, and rules a struct cannot state, by path   |
 | Content validators and composition | Authoring rules and cross-file references, including unused catalog entries    |
 | Core validators                    | Runtime values and component combinations, regardless of how they were created |
-| Level validation                   | Body clearance and support against the composed map                            |
+| Level validation                   | Body clearance and support against the composed map, and a route to the exit   |
 
 - Domain checks run without parsing JSON; loaders add the source name and field path to
   their errors.
