@@ -52,6 +52,13 @@ namespace advanced_platformer
         const GameCatalogs& catalogs,
         std::optional<std::uint32_t> seed = std::nullopt);
     Actor composePlayer(const GameCatalogs& catalogs, int textureId);
+    GameLevel composeLevelAtSeed(
+        const LevelCatalog& catalog,
+        int levelNumber,
+        int textureId,
+        const GameCatalogs& catalogs,
+        const Actor& player,
+        std::optional<std::uint32_t> seed = std::nullopt);
     GameLevel composeStartedLevel(
         const LevelCatalog& catalog,
         int levelNumber,

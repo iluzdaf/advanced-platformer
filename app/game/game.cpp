@@ -321,13 +321,12 @@ namespace advanced_platformer
 
     LevelReload Game::reload(GameContent content)
     {
-        GameLevel fresh = composeStartedLevel(
+        GameLevel fresh = composeLevelAtSeed(
             content.levelCatalog,
             level.number,
             atlasTextureId,
             content.gameCatalogs,
             composePlayer(content.gameCatalogs, atlasTextureId),
-            simulationStepSeconds,
             level.seed);
         GameLevel next = level;
         LevelReload result = reloadLevel(

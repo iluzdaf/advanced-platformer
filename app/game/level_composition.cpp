@@ -227,25 +227,22 @@ namespace advanced_platformer
         return composeActor(actorDefinition(actors, actors.player), catalogs.animations, textureId);
     }
 
-    namespace
+    GameLevel composeLevelAtSeed(
+        const LevelCatalog& catalog,
+        int levelNumber,
+        int textureId,
+        const GameCatalogs& catalogs,
+        const Actor& player,
+        std::optional<std::uint32_t> seed)
     {
-        GameLevel composeWithPlayer(
-            const LevelCatalog& catalog,
-            int levelNumber,
-            int textureId,
-            const GameCatalogs& catalogs,
-            const Actor& player,
-            std::optional<std::uint32_t> seed)
-        {
-            GameLevel level = composeGameLevel(catalog, levelNumber, textureId, catalogs, seed);
-            Actor placed = player;
-            moveFeetTo(placed.body.bounds, level.playerSpawnFeet);
-            const ActorId playerId = level.world.addActor(std::move(placed));
-            level.actorDefinitionNames.emplace(playerId.value, catalogs.actors.player);
-            level.world.setPlayer(playerId, level.playerSpawnFeet);
-            validateLevelActors(level.map, level.world, level.number);
-            return level;
-        }
+        GameLevel level = composeGameLevel(catalog, levelNumber, textureId, catalogs, seed);
+        Actor placed = player;
+        moveFeetTo(placed.body.bounds, level.playerSpawnFeet);
+        const ActorId playerId = level.world.addActor(std::move(placed));
+        level.actorDefinitionNames.emplace(playerId.value, catalogs.actors.player);
+        level.world.setPlayer(playerId, level.playerSpawnFeet);
+        validateLevelActors(level.map, level.world, level.number);
+        return level;
     }
 
     GameLevel composeStartedLevel(
@@ -258,7 +255,7 @@ namespace advanced_platformer
         std::optional<std::uint32_t> seed)
     {
         GameLevel level =
-            composeWithPlayer(catalog, levelNumber, textureId, catalogs, player, seed);
+            composeLevelAtSeed(catalog, levelNumber, textureId, catalogs, player, seed);
         const std::uint32_t firstSeed = level.seed;
         for (std::uint32_t nextSeed = firstSeed + 1U;
              !playerCanReachExit(level.map, level.world, stepSeconds);
@@ -274,7 +271,7 @@ namespace advanced_platformer
                         firstSeed,
                         nextSeed - 1U));
             }
-            level = composeWithPlayer(catalog, levelNumber, textureId, catalogs, player, nextSeed);
+            level = composeLevelAtSeed(catalog, levelNumber, textureId, catalogs, player, nextSeed);
         }
         return level;
     }

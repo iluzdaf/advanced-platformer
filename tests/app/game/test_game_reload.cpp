@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include <cstdint>
 #include <stdexcept>
 #include <utility>
 
@@ -67,4 +68,25 @@ TEST_CASE("A failed reload leaves the game as it was", "[app][reload]")
     REQUIRE(running.playerHealth().maximum == 3);
     running.update({}, tests::FixedStepSeconds);
     REQUIRE(running.reload(content()).kept == 1);
+}
+
+TEST_CASE("A reload keeps the level's seed even when its exit is shut off", "[app][reload]")
+{
+    advanced_platformer::Game running = {
+        0,
+        advanced_platformer::loadLevelCatalog("tests/fixtures/levels/shut_exit_levels.json"),
+        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
+        advanced_platformer::LuaNpcScripts{},
+        advanced_platformer::LuaPresentationScript{},
+        tests::FixedStepSeconds};
+    const std::uint32_t seed = running.levelSeed();
+    advanced_platformer::GameContent shut = content();
+    shut.levelCatalog = advanced_platformer::parseLevelCatalog(
+        R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"pieces":"rooms_all_shut.json","rooms":3,"grid":[5,1]}]})",
+        "fixture",
+        "tests/fixtures/levels");
+
+    running.reload(std::move(shut));
+
+    REQUIRE(running.levelSeed() == seed);
 }
