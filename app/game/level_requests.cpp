@@ -2,6 +2,8 @@
 
 #include <exception>
 #include <format>
+#include <functional>
+#include <utility>
 
 #include "debug/console_log.hpp"
 #include "game/game.hpp"
@@ -11,67 +13,28 @@ namespace advanced_platformer
 {
     namespace
     {
-        void restartGame(Game& game, PlayControl& play, ConsoleLog& console)
+        void attempt(
+            Game& game,
+            ConsoleLog& console,
+            bool (Game::*change)(),
+            const char* action,
+            const char* refusal,
+            const std::function<void()>& follow)
         {
             try
             {
-                if (!game.restart())
+                if (!(game.*change)())
                 {
-                    console.write(ConsoleLevel::Info, "Only a completed game restarts");
+                    console.write(ConsoleLevel::Info, refusal);
                     return;
                 }
 
-                play.restart();
+                follow();
             }
             catch (const std::exception& error)
             {
                 console.write(
-                    ConsoleLevel::Error,
-                    std::format("Could not restart the game: {}", error.what()));
-            }
-        }
-
-        void restartLevel(Game& game, PlayControl& play, ConsoleLog& console)
-        {
-            try
-            {
-                if (!game.restartLevel())
-                {
-                    console.write(ConsoleLevel::Info, "A completed game has no level to restart");
-                    return;
-                }
-
-                play.interrupt();
-            }
-            catch (const std::exception& error)
-            {
-                console.write(
-                    ConsoleLevel::Error,
-                    std::format("Could not restart the level: {}", error.what()));
-            }
-        }
-
-        void rerollLevel(Game& game, PlayControl& play, ConsoleLog& console)
-        {
-            try
-            {
-                if (!game.rerollLevel())
-                {
-                    console.write(ConsoleLevel::Info, "A completed game has no level to reroll");
-                    return;
-                }
-
-                play.interrupt();
-                console.write(
-                    ConsoleLevel::Info,
-                    std::format(
-                        "Generated level {} from seed {}", game.levelNumber(), game.levelSeed()));
-            }
-            catch (const std::exception& error)
-            {
-                console.write(
-                    ConsoleLevel::Error,
-                    std::format("Could not reroll the level: {}", error.what()));
+                    ConsoleLevel::Error, std::format("Could not {}: {}", action, error.what()));
             }
         }
     }
@@ -82,20 +45,44 @@ namespace advanced_platformer
         PlayControl& play,
         ConsoleLog& console)
     {
-        if (requests.restartGame)
+        if (std::exchange(requests.restartGame, false))
         {
-            restartGame(game, play, console);
-            requests.restartGame = false;
+            attempt(
+                game,
+                console,
+                &Game::restart,
+                "restart the game",
+                "Only a completed game restarts",
+                [&play] { play.restart(); });
         }
-        if (requests.restartLevel)
+        if (std::exchange(requests.restartLevel, false))
         {
-            restartLevel(game, play, console);
-            requests.restartLevel = false;
+            attempt(
+                game,
+                console,
+                &Game::restartLevel,
+                "restart the level",
+                "A completed game has no level to restart",
+                [&play] { play.interrupt(); });
         }
-        if (requests.rerollLevel)
+        if (std::exchange(requests.rerollLevel, false))
         {
-            rerollLevel(game, play, console);
-            requests.rerollLevel = false;
+            attempt(
+                game,
+                console,
+                &Game::rerollLevel,
+                "reroll the level",
+                "A completed game has no level to reroll",
+                [&]
+                {
+                    play.interrupt();
+                    console.write(
+                        ConsoleLevel::Info,
+                        std::format(
+                            "Generated level {} from seed {}",
+                            game.levelNumber(),
+                            game.levelSeed()));
+                });
         }
     }
 }
