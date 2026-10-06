@@ -159,11 +159,6 @@ namespace advanced_platformer
         return {static_cast<std::uint8_t>(doors.bits | bitOf(side))};
     }
 
-    bool coversDoors(RoomDoors doors, RoomDoors other)
-    {
-        return (doors.bits & other.bits) == other.bits;
-    }
-
     int doorCount(RoomDoors doors)
     {
         return std::popcount(doors.bits);

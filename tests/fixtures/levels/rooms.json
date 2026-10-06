@@ -1,10 +1,10 @@
 {
   "roomSize": [8, 6],
   "run": {
-    "grid": [5, 5],
-    "firstRooms": 6,
+    "grid": [3, 1],
+    "firstRooms": 3,
     "roomsPerLevel": 0,
-    "maxRooms": 6
+    "maxRooms": 3
   },
   "tileLegend": {
     ".": "empty",
@@ -15,15 +15,16 @@
     {
       "name": "start",
       "role": "start",
-      "doors": ["left", "right", "up", "down"],
-      "map": ["##....##", "#......#", "........", "........", "........", "##....##"],
+      "doors": ["left", "right"],
+      "map": ["########", "#......#", "........", "........", "........", "########"],
       "playerSpawn": [1, 4]
     },
     {
       "name": "hall",
       "role": "corridor",
-      "doors": ["left", "right", "up", "down"],
-      "map": ["##....##", "#......#", "........", "........", "........", "##....##"],
+      "doors": ["left", "right"],
+      "mirror": false,
+      "map": ["########", "#......#", "........", "........", "........", "########"],
       "actors": [
         {
           "id": "test_guard_1",
@@ -36,7 +37,6 @@
       "name": "store",
       "role": "arena",
       "doors": ["left"],
-      "mirror": false,
       "map": ["########", "#......#", ".......#", ".......#", ".......#", "########"],
       "pickups": [
         {
@@ -49,12 +49,19 @@
     {
       "name": "exit",
       "role": "exit",
-      "doors": ["left", "right", "up", "down"],
-      "map": ["##....##", "#......#", "........", "........", "........", "##....##"],
+      "doors": ["left"],
+      "map": ["########", "#......#", ".......#", ".......#", ".......#", "########"],
       "exit": {
         "definition": "test_door",
         "spawn": [6, 4]
       }
+    },
+    {
+      "name": "start end",
+      "role": "start",
+      "doors": ["right"],
+      "map": ["########", "#......#", "#.......", "#.......", "#.......", "########"],
+      "playerSpawn": [1, 4]
     }
   ]
 }

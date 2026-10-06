@@ -31,7 +31,6 @@ namespace advanced_platformer
 
     bool hasDoor(RoomDoors doors, RoomSide side);
     RoomDoors withDoor(RoomDoors doors, RoomSide side);
-    bool coversDoors(RoomDoors doors, RoomDoors other);
     int doorCount(RoomDoors doors);
     RoomDoors mirroredDoors(RoomDoors doors);
 

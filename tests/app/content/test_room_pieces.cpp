@@ -29,10 +29,10 @@ TEST_CASE(
     REQUIRE(catalog.roomSize.height == 6);
     REQUIRE(catalog.wall == '#');
     REQUIRE(catalog.open == '.');
-    REQUIRE(catalog.pieces.size() == 4);
+    REQUIRE(catalog.pieces.size() == 5);
     REQUIRE(catalog.pieces[0].playerSpawn == Cell{1, 4});
     const advanced_platformer::RoomPiece& hall = catalog.pieces[1];
-    REQUIRE(hall.mirror);
+    REQUIRE_FALSE(hall.mirror);
     REQUIRE(hall.actors.size() == 1);
     REQUIRE(hall.actors[0].id == "test_guard_1");
     REQUIRE(hall.actors[0].definitionName == "test_guard");
@@ -42,7 +42,7 @@ TEST_CASE(
     REQUIRE(store.name == "store");
     REQUIRE(store.role == advanced_platformer::RoomRole::Arena);
     REQUIRE(store.doors == advanced_platformer::withDoor({}, RoomSide::Left));
-    REQUIRE_FALSE(store.mirror);
+    REQUIRE(store.mirror);
     REQUIRE(store.pickups.size() == 1);
     REQUIRE(store.pickups[0].id == "medicine_box_1");
     REQUIRE(store.pickups[0].definitionName == "medicine_box");
@@ -333,10 +333,4 @@ TEST_CASE("Room doors are sets of sides that flip left to right", "[app][content
         advanced_platformer::mirroredDoors(leftAndUp) ==
         advanced_platformer::withDoor(
             advanced_platformer::withDoor({}, RoomSide::Right), RoomSide::Up));
-    REQUIRE(
-        advanced_platformer::coversDoors(
-            leftAndUp, advanced_platformer::withDoor({}, RoomSide::Up)));
-    REQUIRE_FALSE(
-        advanced_platformer::coversDoors(
-            leftAndUp, advanced_platformer::withDoor({}, RoomSide::Down)));
 }

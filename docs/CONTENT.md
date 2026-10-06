@@ -80,9 +80,9 @@ The start is the centre room, and the exit is the room the most doors away from 
 seed whose exit the player cannot reach is skipped for the next one, up to 100 seeds,
 and the level keeps the seed it settled on. A hot reload keeps that seed, and an edit
 that cuts off its exit is rejected like any other failed reload.
-Each room takes a random piece of its role whose doors include the room's. The pieces
-are laid out on one map with neighbours sharing the wall between them, unused doors are
-walled up, and empty slots are filled with wall. Each piece's placements move with it,
+Each room takes a random piece of its role whose doors are exactly the room's, flipped
+if the piece allows it. The pieces are copied onto one map with neighbours sharing the
+wall between them, and empty slots are filled with `wall`. Each piece's placements move with it,
 so the level has the start piece's player spawn, the exit piece's exit, and every
 piece's actors and pickups. Coordinates start at the top-left, with Y pointing down. A
 pickup falls until it rests on a tile, and falls again if that tile breaks.
@@ -120,7 +120,7 @@ pickup falls until it rests on a tile, and falls again if that tile breaks.
 | `roomSize`   | Every piece's size in cells: an even width of at least 8 and a height of at least 6.                                    |
 | `run`        | How many rooms each level of a [run](#run) has.                                                                         |
 | `tileLegend` | One-character map symbols to tile names in `tiles.json`, with a symbol for `empty`.                                     |
-| `wall`       | The tile symbol that seals unused doors and fills empty slots.                                                          |
+| `wall`       | The tile symbol that fills grid slots with no room.                                                                     |
 | `pieces`     | `name`, unique; `role`; `doors`; optional `mirror` (default `true`); `map`, the piece's rows; and the placements below. |
 
 A piece's `role` is `start`, `exit`, `corridor`, `shaft` or `arena`. Its `doors` list
@@ -140,8 +140,9 @@ Every cell is `[column, row]` inside the piece, counted from its top-left. An `i
 nonempty and unique among the piece's actors and pickups; the generator prefixes it with
 the room, as in `room3_zombie_1`.
 
-Each room needs a piece of its role whose doors include the room's; a level that has a
-room no piece fits fails to build and names the doors. Tests check that the player can
+Each room needs a piece of its role with exactly its doors, so the shipped catalog
+covers every door set a room can have; a level that has a room no piece fits fails to
+build and names the doors. Tests check that the player can
 walk and jump through every shipped piece from each of its doors to each other.
 
 ## Tiles

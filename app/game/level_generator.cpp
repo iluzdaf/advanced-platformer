@@ -208,11 +208,11 @@ namespace advanced_platformer
                 {
                     continue;
                 }
-                if (coversDoors(candidate.doors, doors))
+                if (candidate.doors == doors)
                 {
                     candidates.push_back({piece, false});
                 }
-                if (candidate.mirror && coversDoors(mirroredDoors(candidate.doors), doors))
+                if (candidate.mirror && mirroredDoors(candidate.doors) == doors)
                 {
                     candidates.push_back({piece, true});
                 }
@@ -261,20 +261,15 @@ namespace advanced_platformer
             const RoomChoice choice = choices[room];
             const RoomPiece& piece = catalog.pieces.at(choice.piece);
             const RoomDoors pieceDoors = choice.mirrored ? mirroredDoors(piece.doors) : piece.doors;
-            if (!coversDoors(pieceDoors, slot.doors))
+            if (pieceDoors != slot.doors)
             {
                 throw std::invalid_argument(
                     std::format(
-                        "Room piece '{}' lacks a door that {} needs", piece.name, roomName(room)));
-            }
-            std::vector<Cell> sealed;
-            for (const RoomSide side : AllSides)
-            {
-                if (hasDoor(pieceDoors, side) && !hasDoor(slot.doors, side))
-                {
-                    const std::vector<Cell> cells = doorCells(size, side);
-                    sealed.insert(sealed.end(), cells.begin(), cells.end());
-                }
+                        "Room piece '{}' has doors {}, not the {} that {} needs",
+                        piece.name,
+                        doorNames(pieceDoors),
+                        doorNames(slot.doors),
+                        roomName(room)));
             }
 
             const Cell origin{
@@ -289,10 +284,8 @@ namespace advanced_platformer
                 for (int column = 0; column < size.width; ++column)
                 {
                     const int source = choice.mirrored ? size.width - 1 - column : column;
-                    const char symbol = std::ranges::contains(sealed, Cell{column, row})
-                                            ? catalog.wall
-                                            : piece.rows[static_cast<std::size_t>(row)]
-                                                        [static_cast<std::size_t>(source)];
+                    const char symbol =
+                        piece.rows[static_cast<std::size_t>(row)][static_cast<std::size_t>(source)];
                     const Cell cell{origin.x + column, origin.y + row};
                     level.mapRows[static_cast<std::size_t>(cell.y)]
                                  [static_cast<std::size_t>(cell.x)] = symbol;

@@ -52,16 +52,16 @@ namespace
         return result;
     }
 
-    RoomChoice firstWithDoor(const RoomPieceCatalog& catalog, RoomRole role, RoomSide side)
+    RoomChoice firstWithOnlyDoor(const RoomPieceCatalog& catalog, RoomRole role, RoomSide side)
     {
         for (const RoomChoice choice : orientations(catalog, role))
         {
-            if (hasDoor(doorsOf(catalog, choice), side))
+            if (doorsOf(catalog, choice) == withDoor(RoomDoors{}, side))
             {
                 return choice;
             }
         }
-        FAIL("No piece of the role has the door");
+        FAIL("No piece of the role has only the door");
         return {};
     }
 
@@ -133,13 +133,13 @@ TEST_CASE("Every shipped room piece joins each pair of its doors", "[app][conten
                         {{advanced_platformer::stepTowards(Centre, from),
                           withDoor(RoomDoors{}, startDoor),
                           0},
-                         {Centre, withDoor(withDoor(RoomDoors{}, from), to), 1},
+                         {Centre, doors, 1},
                          {advanced_platformer::stepTowards(Centre, to),
                           withDoor(RoomDoors{}, exitDoor),
                           2}},
-                        {firstWithDoor(catalog, RoomRole::Start, startDoor),
+                        {firstWithOnlyDoor(catalog, RoomRole::Start, startDoor),
                          piece,
-                         firstWithDoor(catalog, RoomRole::Exit, exitDoor)}};
+                         firstWithOnlyDoor(catalog, RoomRole::Exit, exitDoor)}};
                     INFO(
                         describe(catalog, piece) << " from " << advanced_platformer::nameOf(from)
                                                  << " to " << advanced_platformer::nameOf(to));
@@ -167,7 +167,7 @@ TEST_CASE(
                     continue;
                 }
                 const RoomSide other = advanced_platformer::oppositeOf(side);
-                const RoomSlot here{Centre, withDoor(RoomDoors{}, side), 0};
+                const RoomSlot here{Centre, doorsOf(catalog, piece), 0};
                 const RoomSlot there{
                     advanced_platformer::stepTowards(Centre, side),
                     withDoor(RoomDoors{}, other),
@@ -175,13 +175,14 @@ TEST_CASE(
                 Route route;
                 if (role == RoomRole::Start)
                 {
-                    route = {{here, there}, {piece, firstWithDoor(catalog, RoomRole::Exit, other)}};
+                    route = {
+                        {here, there}, {piece, firstWithOnlyDoor(catalog, RoomRole::Exit, other)}};
                 }
                 else
                 {
                     route = {
                         {{there.grid, there.doors, 0}, {here.grid, here.doors, 1}},
-                        {firstWithDoor(catalog, RoomRole::Start, other), piece}};
+                        {firstWithOnlyDoor(catalog, RoomRole::Start, other), piece}};
                 }
                 INFO(describe(catalog, piece) << " through " << advanced_platformer::nameOf(side));
                 CHECK(routeWorks(catalog, route));
