@@ -47,7 +47,10 @@ TEST_CASE(
     REQUIRE(game.levelSeed() == 13U);
     REQUIRE(game.playerHealth().current == health.current);
 
-    game.restartLevel();
+    REQUIRE(game.restartLevel());
+    REQUIRE(game.levelSeed() == 13U);
+
+    REQUIRE_FALSE(game.restart());
     REQUIRE(game.levelSeed() == 13U);
 }
 

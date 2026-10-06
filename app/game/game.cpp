@@ -296,18 +296,25 @@ namespace advanced_platformer
         return level.map.breakTile(cellAt(level.map.tileSize(), world));
     }
 
-    void Game::restart()
-    {
-        replaceLevel(levelCatalog.startLevel, composePlayer(gameCatalogs, atlasTextureId));
-        gameComplete = false;
-    }
-
-    void Game::restartLevel()
+    bool Game::restart()
     {
         if (!gameComplete)
         {
-            loadLevel(level.number, level.seed);
+            return false;
         }
+        replaceLevel(levelCatalog.startLevel, composePlayer(gameCatalogs, atlasTextureId));
+        gameComplete = false;
+        return true;
+    }
+
+    bool Game::restartLevel()
+    {
+        if (gameComplete)
+        {
+            return false;
+        }
+        loadLevel(level.number, level.seed);
+        return true;
     }
 
     bool Game::rerollLevel()

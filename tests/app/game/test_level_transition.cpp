@@ -94,8 +94,11 @@ TEST_CASE(
     REQUIRE(game.complete());
     REQUIRE(sameHealth(game.playerHealth(), health));
     REQUIRE(game.levelExitScreenPosition().has_value());
+    REQUIRE_FALSE(game.restartLevel());
+    REQUIRE_FALSE(game.rerollLevel());
+    REQUIRE(game.complete());
 
-    game.restart();
+    REQUIRE(game.restart());
     REQUIRE_FALSE(game.complete());
     REQUIRE(game.levelNumber() == initialLevel);
     REQUIRE(sameHealth(game.playerHealth(), initialHealth));

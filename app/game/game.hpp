@@ -60,8 +60,8 @@ namespace advanced_platformer
         const ItemDefinition& itemDefinition(int id) const;
         void useInventoryItem(std::size_t slot);
         bool breakTileAt(glm::vec2 internalPosition);
-        void restart();
-        void restartLevel();
+        bool restart();
+        bool restartLevel();
         bool rerollLevel();
         LevelReload reload(GameContent content);
         int levelNumber() const;

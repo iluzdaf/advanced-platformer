@@ -11,22 +11,36 @@ namespace advanced_platformer
 {
     namespace
     {
-        void restartCompletedGame(Game& game, PlayControl& play)
+        void restartGame(Game& game, PlayControl& play, ConsoleLog& console)
         {
-            if (!game.complete())
+            try
             {
-                return;
-            }
+                if (!game.restart())
+                {
+                    console.write(ConsoleLevel::Info, "Only a completed game restarts");
+                    return;
+                }
 
-            game.restart();
-            play.restart();
+                play.restart();
+            }
+            catch (const std::exception& error)
+            {
+                console.write(
+                    ConsoleLevel::Error,
+                    std::format("Could not restart the game: {}", error.what()));
+            }
         }
 
         void restartLevel(Game& game, PlayControl& play, ConsoleLog& console)
         {
             try
             {
-                game.restartLevel();
+                if (!game.restartLevel())
+                {
+                    console.write(ConsoleLevel::Info, "A completed game has no level to restart");
+                    return;
+                }
+
                 play.interrupt();
             }
             catch (const std::exception& error)
@@ -70,7 +84,7 @@ namespace advanced_platformer
     {
         if (requests.restartGame)
         {
-            restartCompletedGame(game, play);
+            restartGame(game, play, console);
             requests.restartGame = false;
         }
         if (requests.restartLevel)

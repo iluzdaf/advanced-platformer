@@ -65,7 +65,7 @@ TEST_CASE("A reroll generates the next seed and reports it", "[app][level-reques
     REQUIRE(playInterrupted(play, game));
 }
 
-TEST_CASE("A game restart leaves a running game alone", "[app][level-requests]")
+TEST_CASE("A game restart is refused while the game is running", "[app][level-requests]")
 {
     advanced_platformer::Game game = tests::fixtureGame();
     advanced_platformer::PlayControl play;
@@ -81,7 +81,9 @@ TEST_CASE("A game restart leaves a running game alone", "[app][level-requests]")
     REQUIRE(game.levelSeed() == seed);
     REQUIRE(play.inventoryOpen());
     REQUIRE_FALSE(requests.restartGame);
-    REQUIRE(console.written() == 0);
+    REQUIRE(console.entries().size() == 1);
+    REQUIRE(console.entries().back().level == advanced_platformer::ConsoleLevel::Info);
+    REQUIRE(console.entries().back().text == "Only a completed game restarts");
 }
 
 TEST_CASE("An applied request does not repeat on the next frame", "[app][level-requests]")
