@@ -33,7 +33,7 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 | `app/game`            | Session flow: `Game` owns the current level, catalogs, scripts, and camera; level composition and reload |
 | `app/content`         | Content definitions, Glaze loaders, catalogs, validators, and the asset watcher                          |
 | `app/graphics`        | Window and OpenGL context, ImGui session, viewport conversion, and sprite submission                     |
-| `app/ui`              | HUD, inventory, exit hint, and level number                                                              |
+| `app/ui`              | HUD, inventory, exit hint, and pause notice                                                              |
 | `app/debug`           | Debug snapshots and their ImGui presentation, the console, and the frame profile UI                      |
 | `scripting`           | Lua VM, sandbox, `vec2` binding, and the activity adapter                                                |
 | `assets`              | Levels, catalogs, Lua scripts, and the atlas                                                             |
