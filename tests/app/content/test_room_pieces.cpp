@@ -27,7 +27,6 @@ TEST_CASE(
 
     REQUIRE(catalog.roomSize.width == 8);
     REQUIRE(catalog.roomSize.height == 6);
-    REQUIRE(catalog.wall == '#');
     REQUIRE(catalog.open == '.');
     REQUIRE(catalog.pieces.size() == 5);
     REQUIRE(catalog.pieces[0].playerSpawn == Cell{1, 4});
@@ -274,7 +273,9 @@ TEST_CASE("A room piece file rejects pieces that cannot be stitched", "[app][con
     SECTION("An opening in an edge away from the doors")
     {
         hall["map"][1] = ".......#";
-        requireRejected(document, "pieces[1].map[1][0]: expected '#': an edge is wall");
+        requireRejected(
+            document,
+            "pieces[1].map[1][0]: expected a tile, not '.': an edge is solid away from the doors");
     }
     SECTION("A repeated piece name")
     {
@@ -285,11 +286,6 @@ TEST_CASE("A room piece file rejects pieces that cannot be stitched", "[app][con
     {
         hall["doors"] = tests::parseJson(R"(["left", "left"])");
         requireRejected(document, "pieces[1].doors: door left is listed twice");
-    }
-    SECTION("A wall symbol that is not a tile")
-    {
-        document["wall"] = "W";
-        requireRejected(document, "wall: symbol is not in tileLegend");
     }
     SECTION("A legend without empty")
     {

@@ -137,7 +137,6 @@ namespace advanced_platformer
         std::array<int, 2> roomSize{};
         RunJson run;
         std::map<std::string, std::string> tileLegend;
-        std::string wall;
         std::vector<RoomPieceJson> pieces;
     };
 
@@ -273,15 +272,6 @@ namespace advanced_platformer
             RoomSide::Up,
             RoomSide::Down};
 
-        char symbolFrom(std::string_view text, std::string_view sourceName, std::string_view path)
-        {
-            if (text.size() != 1)
-            {
-                failJson(sourceName, path, "expected one character");
-            }
-            return text.front();
-        }
-
         std::string roleName(RoomRole role)
         {
             switch (role)
@@ -358,16 +348,23 @@ namespace advanced_platformer
                     if (onEdge(size, cell))
                     {
                         const bool door = onDoor(size, piece.doors, cell);
-                        const char expected = door ? catalog.open : catalog.wall;
-                        if (symbol != expected)
+                        if (door && symbol != catalog.open)
                         {
                             failJson(
                                 sourceName,
                                 cellPath,
                                 std::format(
-                                    "expected '{}': an edge is {}",
-                                    expected,
-                                    door ? "open on a door" : "wall away from the doors"));
+                                    "expected '{}': an edge is open on a door", catalog.open));
+                        }
+                        if (!door && symbol == catalog.open)
+                        {
+                            failJson(
+                                sourceName,
+                                cellPath,
+                                std::format(
+                                    "expected a tile, not '{}': an edge is solid away from the "
+                                    "doors",
+                                    catalog.open));
                         }
                     }
                 }
@@ -641,11 +638,6 @@ namespace advanced_platformer
         for (const auto& [symbol, tile] : file.tileLegend)
         {
             result.tileLegend.emplace(symbol.front(), tile);
-        }
-        result.wall = symbolFrom(file.wall, sourceName, "wall");
-        if (!result.tileLegend.contains(result.wall))
-        {
-            failJson(sourceName, "wall", "symbol is not in tileLegend");
         }
         const auto open = std::ranges::find_if(
             result.tileLegend, [](const auto& entry) { return entry.second == "empty"; });

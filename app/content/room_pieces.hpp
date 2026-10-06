@@ -73,7 +73,6 @@ namespace advanced_platformer
         GridSize roomSize;
         RunSettings run;
         std::map<char, std::string> tileLegend;
-        char wall = '#';
         char open = '.';
         std::vector<RoomPiece> pieces;
     };

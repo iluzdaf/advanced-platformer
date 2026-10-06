@@ -249,11 +249,11 @@ namespace advanced_platformer
         const int width = ((most.x - least.x) * stride.width) + size.width;
         const int height = ((most.y - least.y) * stride.height) + size.height;
 
+        const char solid = catalog.pieces.at(choices.front().piece).rows.front().front();
         LevelData level;
         level.tileLegend = catalog.tileLegend;
         level.mapRows.assign(
-            static_cast<std::size_t>(height),
-            std::string(static_cast<std::size_t>(width), catalog.wall));
+            static_cast<std::size_t>(height), std::string(static_cast<std::size_t>(width), solid));
 
         for (std::size_t room = 0; room < layout.rooms.size(); ++room)
         {

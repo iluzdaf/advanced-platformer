@@ -82,7 +82,7 @@ and the level keeps the seed it settled on. A hot reload keeps that seed, and an
 that cuts off its exit is rejected like any other failed reload.
 Each room takes a random piece of its role whose doors are exactly the room's, flipped
 if the piece allows it. The pieces are copied onto one map with neighbours sharing the
-wall between them, and empty slots are filled with `wall`. Each piece's placements move with it,
+wall between them, and empty slots are filled with the start piece's corner tile. Each piece's placements move with it,
 so the level has the start piece's player spawn, the exit piece's exit, and every
 piece's actors and pickups. Coordinates start at the top-left, with Y pointing down. A
 pickup falls until it rests on a tile, and falls again if that tile breaks.
@@ -94,7 +94,6 @@ pickup falls until it rests on a tile, and falls again if that tile breaks.
   "roomSize": [20, 12],
   "run": { "firstRooms": 6, "roomsPerLevel": 3, "maxRooms": 18 },
   "tileLegend": { ".": "empty", "#": "stone" },
-  "wall": "#",
   "pieces": [
     {
       "name": "hall",
@@ -120,13 +119,12 @@ pickup falls until it rests on a tile, and falls again if that tile breaks.
 | `roomSize`   | Every piece's size in cells: an even width of at least 8 and a height of at least 6.                                    |
 | `run`        | How many rooms each level of a [run](#run) has.                                                                         |
 | `tileLegend` | One-character map symbols to tile names in `tiles.json`, with a symbol for `empty`.                                     |
-| `wall`       | The tile symbol that fills grid slots with no room.                                                                     |
 | `pieces`     | `name`, unique; `role`; `doors`; optional `mirror` (default `true`); `map`, the piece's rows; and the placements below. |
 
 A piece's `role` is `start`, `exit`, `corridor`, `shaft` or `arena`. Its `doors` list
 some of `left`, `right`, `up` and `down`. Side doors are three cells tall and stand on
 the bottom row; doors above and below are four cells wide and centred. A piece's edges
-are the `empty` symbol on its doors and `wall` everywhere else. With `mirror`, the
+are the `empty` symbol on its doors and solid everywhere else. With `mirror`, the
 generator may also flip the piece left to right, placements included.
 
 | Placement     | Fields                                                                                                                                                                               |
