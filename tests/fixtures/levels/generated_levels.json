@@ -1,0 +1,14 @@
+{
+  "startLevel": 1,
+  "cameraDeadZone": [80, 45],
+  "levels": [
+    {
+      "number": 1,
+      "generate": { "pieces": "rooms.json", "rooms": 6, "grid": [5, 5], "seed": 7, "nextLevel": 2 }
+    },
+    {
+      "number": 2,
+      "file": "finish.json"
+    }
+  ]
+}

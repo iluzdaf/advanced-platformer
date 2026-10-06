@@ -4,9 +4,12 @@
 #include "content_glaze.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <format>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -23,10 +26,20 @@ namespace advanced_platformer
 {
     // levels.json as written: its member names are the file's keys. Glaze reflects only types
     // with linkage, so these cannot go in an anonymous namespace.
+    struct LevelGenerationJson
+    {
+        std::string pieces;
+        int rooms = 0;
+        std::optional<std::array<int, 2>> grid;
+        std::optional<std::uint32_t> seed;
+        std::optional<int> nextLevel;
+    };
+
     struct LevelEntryJson
     {
         int number = 0;
-        std::string file;
+        std::optional<std::string> file;
+        std::optional<LevelGenerationJson> generate;
     };
 
     struct LevelCatalogJson
@@ -38,6 +51,8 @@ namespace advanced_platformer
 
     namespace
     {
+        constexpr std::array<int, 2> DefaultGenerationGrid = {9, 7};
+
         void requirePositiveLevel(int number, std::string_view sourceName, std::string_view path)
         {
             if (number <= 0)
@@ -64,6 +79,40 @@ namespace advanced_platformer
                 }
             }
             return file;
+        }
+
+        LevelGeneration generationFrom(
+            const LevelGenerationJson& json,
+            int number,
+            std::string_view sourceName,
+            std::string_view path)
+        {
+            LevelGeneration result;
+            result.relativePieces =
+                relativeFileFrom(json.pieces, sourceName, fieldPath(path, "pieces"));
+            const std::array<int, 2> grid = json.grid.value_or(DefaultGenerationGrid);
+            result.grid = {grid[0], grid[1]};
+            if (result.grid.width <= 0 || result.grid.height <= 0)
+            {
+                failJson(sourceName, fieldPath(path, "grid"), "expected a positive size");
+            }
+            result.roomCount = json.rooms;
+            if (result.roomCount < 2 || result.roomCount > result.grid.width * result.grid.height)
+            {
+                failJson(
+                    sourceName,
+                    fieldPath(path, "rooms"),
+                    std::format(
+                        "expected at least 2 rooms and no more than the grid's {} slots",
+                        result.grid.width * result.grid.height));
+            }
+            result.seed = json.seed.value_or(static_cast<std::uint32_t>(number));
+            if (json.nextLevel.has_value())
+            {
+                requirePositiveLevel(*json.nextLevel, sourceName, fieldPath(path, "nextLevel"));
+            }
+            result.nextLevel = json.nextLevel;
+            return result;
         }
     }
 
@@ -103,7 +152,20 @@ namespace advanced_platformer
             requirePositiveLevel(json.number, sourceName, fieldPath(path, "number"));
             LevelCatalogEntry entry;
             entry.number = json.number;
-            entry.relativeFile = relativeFileFrom(json.file, sourceName, fieldPath(path, "file"));
+            if (json.file.has_value() == json.generate.has_value())
+            {
+                failJson(sourceName, path, "expected exactly one of file and generate");
+            }
+            if (json.file.has_value())
+            {
+                entry.relativeFile =
+                    relativeFileFrom(*json.file, sourceName, fieldPath(path, "file"));
+            }
+            else
+            {
+                entry.generation = generationFrom(
+                    *json.generate, json.number, sourceName, fieldPath(path, "generate"));
+            }
 
             const auto duplicateNumber = std::ranges::find_if(
                 result.levels,
@@ -132,7 +194,7 @@ namespace advanced_platformer
         return parseLevelCatalog(loadContentText(path), path.string(), path.parent_path());
     }
 
-    std::filesystem::path levelPath(const LevelCatalog& catalog, int levelNumber)
+    const LevelCatalogEntry& levelEntry(const LevelCatalog& catalog, int levelNumber)
     {
         const auto found = std::ranges::find_if(
             catalog.levels,
@@ -141,6 +203,17 @@ namespace advanced_platformer
         {
             throw std::invalid_argument(std::format("Level {} is not in the catalog", levelNumber));
         }
-        return catalog.levelDirectory / found->relativeFile;
+        return *found;
+    }
+
+    std::filesystem::path levelPath(const LevelCatalog& catalog, int levelNumber)
+    {
+        const LevelCatalogEntry& entry = levelEntry(catalog, levelNumber);
+        if (entry.generation.has_value())
+        {
+            throw std::invalid_argument(
+                std::format("Level {} is generated, not read from a file", levelNumber));
+        }
+        return catalog.levelDirectory / entry.relativeFile;
     }
 }

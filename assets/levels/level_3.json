@@ -185,6 +185,7 @@
     "spawn": {
       "cell": [4, 26]
     },
+    "nextLevel": 4,
     "requirement": {
       "item": "key",
       "quantity": 1

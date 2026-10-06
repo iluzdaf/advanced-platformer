@@ -96,6 +96,8 @@ ctest --preset mac-debug -R "Pickup" --output-on-failure
 | Drink a health potion                               | Click it in the open inventory            |
 | Restart from the starting level                     | R, at the completion message              |
 | Restart the current level, keeping health and items | F5                                        |
+| Write the current level to a level file             | F6                                        |
+| Generate the current level again from the next seed | F7, on a generated level                  |
 | Pause or resume the simulation                      | P                                         |
 | Run one simulation step while paused                | . (full stop)                             |
 | Toggle the debug overlay                            | F1                                        |
@@ -104,7 +106,8 @@ ctest --preset mac-debug -R "Pickup" --output-on-failure
 The hearts at the top-left show the player's current and maximum health.
 
 Find each level's key and reach its bunker door to unlock the exit. Each door consumes
-one key; the third exit completes the example campaign.
+one key; the third exit leads to a fourth level generated from room pieces, whose exit
+completes the example campaign.
 
 ## Debug overlay
 

@@ -20,9 +20,11 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/app/content/item_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/level_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/level_data.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/level_generator.cpp
         ${PROJECT_SOURCE_DIR}/app/content/machine_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/npc_script_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/pickup_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/room_pieces.cpp
         ${PROJECT_SOURCE_DIR}/app/content/tile_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/game/game.cpp
         ${PROJECT_SOURCE_DIR}/app/game/level_composition.cpp
@@ -51,9 +53,12 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_data_diagnostics.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_data_placement_validation.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_data_validation.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_generator.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_machine_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_npc_script_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_pickup_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/content/test_room_piece_routes.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/content/test_room_pieces.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_tile_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_console_log.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_debug_overlay.cpp
@@ -64,6 +69,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_game_debug.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_navigation_debug.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/game/test_game_presentation.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/game/test_generated_level.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/game/test_game_reload.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/game/test_level_composition.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/game/test_level_object_composition.cpp

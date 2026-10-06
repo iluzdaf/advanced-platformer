@@ -64,4 +64,6 @@ namespace advanced_platformer
 
     LevelData parseLevelData(std::string_view text, std::string_view sourceName);
     LevelData loadLevelData(const std::filesystem::path& path);
+    // The level as a level file, which parseLevelData reads back as the same level.
+    std::string formatLevelData(const LevelData& level);
 }

@@ -40,7 +40,8 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 
 - `GameLevel` keeps the level number, map, world, player spawn, actor definition names,
   and the placement id of each actor and pickup together. Replacing it starts a fresh
-  world.
+  world. A generated level also keeps its seed, so a restart or reload builds the same
+  level.
 
 ### Headers, not modules
 
