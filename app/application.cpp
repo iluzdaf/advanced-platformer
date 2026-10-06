@@ -1,6 +1,6 @@
 #include "application.hpp"
+#include "application_context.hpp"
 
-#include <cstddef>
 #include <cstdlib>
 #include <exception>
 #include <format>
@@ -49,89 +49,49 @@ namespace advanced_platformer
         constexpr bool WatchAssets = false;
 #endif
 
-        struct ApplicationContext
-        {
-            PlayControl play;
-            bool showDebugOverlay = false;
-            DebugToolVisibility debugToolVisibility;
-            std::size_t debugBodyIndex = 0;
-            bool breakTileRequested = false;
-            bool restartRequested = false;
-            bool restartLevelRequested = false;
-            bool rerollLevelRequested = false;
-        };
-
         ApplicationContext& contextOf(GLFWwindow* window)
         {
             return *static_cast<ApplicationContext*>(glfwGetWindowUserPointer(window));
         }
 
-        bool DebugToolVisibility::* debugToolForKey(int key)
-        {
-            switch (key)
-            {
-            case GLFW_KEY_1:
-                return &DebugToolVisibility::frameProfileDetails;
-            case GLFW_KEY_2:
-                return &DebugToolVisibility::worldAndCameraOverlay;
-            case GLFW_KEY_3:
-                return &DebugToolVisibility::actorText;
-            case GLFW_KEY_4:
-                return &DebugToolVisibility::navigationCacheText;
-            case GLFW_KEY_5:
-                return &DebugToolVisibility::stateMachine;
-            case GLFW_KEY_6:
-                return &DebugToolVisibility::console;
-            default:
-                return nullptr;
-            }
-        }
-
-        void pressCommandKey(GLFWwindow* window, ApplicationContext& context, int key)
+        std::optional<ApplicationCommand> commandForKey(int key)
         {
             switch (key)
             {
             case GLFW_KEY_ESCAPE:
-                glfwSetWindowShouldClose(window, GLFW_TRUE);
-                return;
+                return ApplicationCommand::Quit;
             case GLFW_KEY_Q:
-                context.play.toggleInventory();
-                return;
+                return ApplicationCommand::ToggleInventory;
             case GLFW_KEY_P:
-                context.play.togglePause();
-                return;
+                return ApplicationCommand::TogglePause;
             case GLFW_KEY_PERIOD:
-                context.play.requestStep();
-                return;
+                return ApplicationCommand::StepSimulation;
             case GLFW_KEY_R:
-                context.restartRequested = true;
-                return;
+                return ApplicationCommand::RestartGame;
             case GLFW_KEY_F5:
-                context.restartLevelRequested = true;
-                return;
+                return ApplicationCommand::RestartLevel;
             case GLFW_KEY_F7:
-                context.rerollLevelRequested = true;
-                return;
+                return ApplicationCommand::RerollLevel;
             case GLFW_KEY_F1:
-                context.showDebugOverlay = !context.showDebugOverlay;
-                return;
+                return ApplicationCommand::ToggleDebugOverlay;
             case GLFW_KEY_N:
-                ++context.debugBodyIndex;
-                return;
+                return ApplicationCommand::NextDebugBody;
             case GLFW_KEY_B:
-                if (context.showDebugOverlay)
-                {
-                    context.breakTileRequested = true;
-                }
-                return;
+                return ApplicationCommand::BreakTile;
+            case GLFW_KEY_1:
+                return ApplicationCommand::ToggleFrameProfileDetails;
+            case GLFW_KEY_2:
+                return ApplicationCommand::ToggleWorldAndCameraOverlay;
+            case GLFW_KEY_3:
+                return ApplicationCommand::ToggleActorText;
+            case GLFW_KEY_4:
+                return ApplicationCommand::ToggleNavigationCacheText;
+            case GLFW_KEY_5:
+                return ApplicationCommand::ToggleStateMachine;
+            case GLFW_KEY_6:
+                return ApplicationCommand::ToggleConsole;
             default:
-                break;
-            }
-
-            bool DebugToolVisibility::* tool = debugToolForKey(key);
-            if (tool != nullptr && context.showDebugOverlay)
-            {
-                context.debugToolVisibility.*tool = !(context.debugToolVisibility.*tool);
+                return std::nullopt;
             }
         }
 
@@ -161,7 +121,11 @@ namespace advanced_platformer
             ApplicationContext& context = contextOf(window);
             if (action == GLFW_PRESS)
             {
-                pressCommandKey(window, context, key);
+                const std::optional<ApplicationCommand> command = commandForKey(key);
+                if (command.has_value())
+                {
+                    applyCommand(context, *command);
+                }
             }
             if (action != GLFW_PRESS && action != GLFW_RELEASE)
             {
@@ -393,7 +357,7 @@ namespace advanced_platformer
         DebugTools debugTools;
         Stopwatch frameClock;
 
-        while (!window.shouldClose())
+        while (!window.shouldClose() && !context.quitRequested)
         {
             glfwPollEvents();
             imgui.beginFrame();

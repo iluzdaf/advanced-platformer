@@ -3,6 +3,7 @@
 #include <optional>
 
 #include "debug/console_ui.hpp"
+#include "debug/debug_tool_visibility.hpp"
 #include "debug/frame_axes.hpp"
 #include "debug/frame_profile_ui.hpp"
 #include "debug/frame_selection.hpp"
@@ -15,16 +16,6 @@ namespace advanced_platformer
     class ConsoleLog;
     struct DebugOverlay;
     struct WindowViewport;
-
-    struct DebugToolVisibility
-    {
-        bool frameProfileDetails = false;
-        bool worldAndCameraOverlay = false;
-        bool actorText = false;
-        bool navigationCacheText = false;
-        bool stateMachine = false;
-        bool console = false;
-    };
 
     struct DebugTools
     {

@@ -1,6 +1,7 @@
 target_sources(
     advanced_platformer_tests
     PRIVATE
+        ${PROJECT_SOURCE_DIR}/app/application_context.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/console_log.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/debug_overlay.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/frame_axes.cpp
@@ -38,6 +39,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/combat/test_contact_damage.cpp
         ${PROJECT_SOURCE_DIR}/tests/combat/test_projectile_system.cpp
         ${PROJECT_SOURCE_DIR}/tests/combat/test_ranged_attack.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/test_application_context.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_actor_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_actor_definition.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_animation_catalog.cpp
