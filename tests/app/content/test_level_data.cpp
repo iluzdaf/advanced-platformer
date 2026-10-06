@@ -1,26 +1,11 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include <string>
+
 #include <glm/vec2.hpp>
 
 #include "content/level_data.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
-
-TEST_CASE("Level JSON accepts a custom tile legend", "[app][content][json]")
-{
-    const auto data = advanced_platformer::parseLevelData(
-        R"({
-            "tileLegend": {".": "empty", "G": "grass", "X": "glass"},
-            "map": [".GX"],
-            "playerSpawn": {"cell": [0, 0]},
-            "actors": [],
-            "pickups": [],
-            "exit": {"definition": "test_door", "spawn": {"cell": [2, 0]}}
-        })",
-        "custom level");
-
-    REQUIRE(data.tileLegend.at('G') == "grass");
-    REQUIRE(data.mapRows.front() == ".GX");
-}
 
 TEST_CASE(
     "Actor placements retain ids, definition references and patrol coordinates",
@@ -98,4 +83,45 @@ TEST_CASE("Pickup placements can reference a definition", "[app][content][json]"
 
     REQUIRE(data.pickups[0].definitionName == "treasure");
     REQUIRE(data.pickupReferences.at("pickups[0].definition") == "treasure");
+}
+
+TEST_CASE("Level JSON accepts a custom tile legend", "[app][content][json]")
+{
+    const auto data = advanced_platformer::parseLevelData(
+        R"({
+            "tileLegend": {".": "empty", "G": "grass", "X": "glass"},
+            "map": [".GX"],
+            "playerSpawn": {"cell": [0, 0]},
+            "actors": [],
+            "pickups": [],
+            "exit": {"definition": "test_door", "spawn": {"cell": [2, 0]}}
+        })",
+        "custom level");
+
+    REQUIRE(data.tileLegend.at('G') == "grass");
+    REQUIRE(data.mapRows.front() == ".GX");
+}
+
+TEST_CASE("A formatted level reads back as the same level", "[app][content][json]")
+{
+    for (const char* path :
+         {"tests/fixtures/levels/opening.json",
+          "tests/fixtures/levels/actor_placement.json",
+          "tests/fixtures/levels/pickup_placement.json",
+          "tests/fixtures/levels/locked_door.json",
+          "tests/fixtures/levels/climber_placement.json"})
+    {
+        const advanced_platformer::LevelData level = advanced_platformer::loadLevelData(path);
+        const std::string text = advanced_platformer::formatLevelData(level);
+        INFO(path);
+        REQUIRE(
+            advanced_platformer::formatLevelData(
+                advanced_platformer::parseLevelData(text, "formatted")) == text);
+        const advanced_platformer::LevelData again =
+            advanced_platformer::parseLevelData(text, "formatted");
+        REQUIRE(again.mapRows == level.mapRows);
+        REQUIRE(again.actors.size() == level.actors.size());
+        REQUIRE(again.pickups.size() == level.pickups.size());
+        REQUIRE(again.exit.nextLevel == level.exit.nextLevel);
+    }
 }

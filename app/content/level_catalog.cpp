@@ -24,8 +24,6 @@
 
 namespace advanced_platformer
 {
-    // levels.json as written: its member names are the file's keys. Glaze reflects only types
-    // with linkage, so these cannot go in an anonymous namespace.
     struct LevelGenerationJson
     {
         std::string pieces;

@@ -257,8 +257,6 @@ namespace advanced_platformer
             }
         }
 
-        // Writes the current level as a level file in the working directory, so a generated
-        // level can be looked at, fixed by hand or kept.
         void dumpLevel(const Game& game, ConsoleLog& console)
         {
             try
