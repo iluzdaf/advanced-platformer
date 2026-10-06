@@ -5,7 +5,7 @@
 #include "content/item_catalog.hpp"
 #include "content/pickup_catalog.hpp"
 #include "content/exit_catalog.hpp"
-#include "level_data.hpp"
+#include "content/placements.hpp"
 #include "level_generator.hpp"
 #include "content/room_pieces.hpp"
 #include "content/tile_catalog.hpp"
@@ -17,7 +17,6 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
-#include <variant>
 #include <vector>
 
 #include <glm/vec2.hpp>
@@ -35,15 +34,6 @@ namespace advanced_platformer
 {
     namespace
     {
-        glm::vec2 feetOf(const TileMap& map, const LevelPosition& position)
-        {
-            if (const auto* cell = std::get_if<Cell>(&position))
-            {
-                return feetInCell(map.tileSize(), *cell);
-            }
-            return std::get<glm::vec2>(position);
-        }
-
         Pickup makePickup(
             const TileMap& map,
             const PickupPlacement& placement,
@@ -55,7 +45,7 @@ namespace advanced_platformer
                 pickupDefinition(pickups, placement.definitionName),
                 items,
                 textureId,
-                feetOf(map, placement.spawn));
+                feetInCell(map.tileSize(), placement.spawn));
         }
 
         std::optional<Patrol> makePatrol(
@@ -66,7 +56,10 @@ namespace advanced_platformer
             {
                 return std::nullopt;
             }
-            return Patrol{feetOf(map, placement->first), feetOf(map, placement->second), true};
+            return Patrol{
+                feetInCell(map.tileSize(), placement->first),
+                feetInCell(map.tileSize(), placement->second),
+                true};
         }
 
         LevelExit makeExit(
@@ -79,7 +72,7 @@ namespace advanced_platformer
             LevelExit exit = composeExit(
                 exitDefinition(exits, placement.definitionName),
                 textureId,
-                feetOf(map, placement.spawn));
+                feetInCell(map.tileSize(), placement.spawn));
             if (placement.requirement)
             {
                 exit.requirement = composeItemStack(items, *placement.requirement);
@@ -128,7 +121,7 @@ namespace advanced_platformer
                     actorDefinition(actors, placement.definitionName),
                     catalogs.animations,
                     textureId,
-                    feetOf(map, placement.spawn),
+                    feetInCell(map.tileSize(), placement.spawn),
                     makePatrol(map, placement.patrol),
                     catalogs.machines));
                 actorDefinitionNames.emplace(id.value, placement.definitionName);
@@ -168,7 +161,7 @@ namespace advanced_platformer
         {
             throw std::invalid_argument(std::format("{}: exit: {}", path, error.what()));
         }
-        const glm::vec2 playerSpawnFeet = feetOf(map, data.playerSpawn);
+        const glm::vec2 playerSpawnFeet = feetInCell(map.tileSize(), data.playerSpawn);
         return {
             levelNumber,
             std::move(map),

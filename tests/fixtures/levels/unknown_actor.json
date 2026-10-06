@@ -11,31 +11,32 @@
     "#": "stone"
   },
   "wall": "#",
-  "open": ".",
-  "markers": {
-    "start": "S",
-    "exit": "E",
-    "actors": {
-      "x": "missing"
-    }
-  },
-  "exit": {
-    "definition": "test_door"
-  },
   "pieces": [
     {
       "name": "start",
       "role": "start",
       "doors": ["left"],
       "mirror": false,
-      "map": ["########", "#......#", ".......#", ".......#", "...x..S#", "########"]
+      "map": ["########", "#......#", ".......#", ".......#", ".......#", "########"],
+      "playerSpawn": [6, 4],
+      "actors": [
+        {
+          "id": "missing_1",
+          "definition": "missing",
+          "spawn": [3, 4]
+        }
+      ]
     },
     {
       "name": "exit",
       "role": "exit",
       "doors": ["right"],
       "mirror": false,
-      "map": ["########", "#......#", "#.......", "#.......", "#.E.....", "########"]
+      "map": ["########", "#......#", "#.......", "#.......", "#.......", "########"],
+      "exit": {
+        "definition": "test_door",
+        "spawn": [2, 4]
+      }
     }
   ]
 }

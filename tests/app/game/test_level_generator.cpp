@@ -10,11 +10,10 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
-#include <variant>
 #include <vector>
 
-#include "game/level_data.hpp"
 #include "game/level_generator.hpp"
+#include "content/placements.hpp"
 #include "content/room_pieces.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 
@@ -142,19 +141,45 @@ TEST_CASE("Stitched rooms share walls and seal unused doors", "[app][content][ge
     }
     REQUIRE(level.mapRows.front() == std::string(22, '#'));
     REQUIRE(level.mapRows.back() == std::string(22, '#'));
-    REQUIRE(std::holds_alternative<Cell>(level.playerSpawn));
+    REQUIRE(level.playerSpawn == Cell{1, 4});
     REQUIRE(level.exit.definitionName == "test_door");
+    REQUIRE(level.exit.spawn == Cell{14 + 6, 4});
     REQUIRE(level.actors.size() == 1);
+    REQUIRE(level.actors.front().id == "room1_test_guard_1");
     REQUIRE(level.actors.front().definitionName == "test_guard");
+    REQUIRE(level.actors.front().spawn == Cell{7 + 6, 4});
+}
+
+TEST_CASE("A mirrored piece flips its placements with its map", "[app][content][generation]")
+{
+    advanced_platformer::RoomPieceCatalog catalog =
+        advanced_platformer::loadRoomPieceCatalog(FixturePieces);
+    catalog.pieces[1].actors[0].patrol = advanced_platformer::PatrolPlacement{{1, 4}, {6, 4}};
+    catalog.pieces[1].pickups.push_back(
+        {.id = "box", .definitionName = "medicine_box", .spawn = {2, 3}});
+    const RoomLayout layout{
+        .grid = {2, 1},
+        .rooms =
+            {{{0, 0}, advanced_platformer::withDoor({}, RoomSide::Right), 0},
+             {{1, 0}, advanced_platformer::withDoor({}, RoomSide::Left), 1}},
+        .exit = 1};
+    const advanced_platformer::LevelData level =
+        advanced_platformer::stitchRooms(catalog, layout, {{1, true}, {3, false}});
+
+    REQUIRE(level.actors.front().spawn == Cell{1, 4});
+    const advanced_platformer::PatrolPlacement patrol =
+        level.actors.front().patrol.value_or(advanced_platformer::PatrolPlacement{});
+    REQUIRE(patrol.first == Cell{6, 4});
+    REQUIRE(patrol.second == Cell{1, 4});
+    REQUIRE(level.pickups.front().id == "room0_box");
+    REQUIRE(level.pickups.front().spawn == Cell{5, 3});
+    REQUIRE(level.exit.spawn == Cell{7 + 6, 4});
 }
 
 namespace
 {
-    std::string placementText(
-        const std::string& id,
-        const advanced_platformer::LevelPosition& spawn)
+    std::string placementText(const std::string& id, Cell cell)
     {
-        const Cell cell = std::get<Cell>(spawn);
         return std::format("{}@{},{};", id, cell.x, cell.y);
     }
 

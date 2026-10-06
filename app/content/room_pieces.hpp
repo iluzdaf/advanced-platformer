@@ -10,7 +10,7 @@
 
 #include "advanced_platformer/math/coordinates.hpp"
 
-#include "item_catalog.hpp"
+#include "placements.hpp"
 
 namespace advanced_platformer
 {
@@ -55,6 +55,10 @@ namespace advanced_platformer
         RoomDoors doors;
         std::vector<std::string> rows;
         bool mirror = true;
+        std::optional<Cell> playerSpawn;
+        std::optional<ExitPlacement> exit;
+        std::vector<ActorPlacement> actors;
+        std::vector<PickupPlacement> pickups;
     };
 
     struct RunSettings
@@ -72,13 +76,6 @@ namespace advanced_platformer
         std::map<char, std::string> tileLegend;
         char wall = '#';
         char open = '.';
-        char startMarker = 'S';
-        char exitMarker = 'E';
-        std::map<char, std::string> actorMarkers;
-        std::map<char, std::string> pickupMarkers;
-        std::string exitDefinition;
-        std::optional<NamedItemStack> exitRequirement;
-        bool consumeExitItem = false;
         std::vector<RoomPiece> pieces;
     };
 

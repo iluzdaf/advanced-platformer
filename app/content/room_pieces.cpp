@@ -4,6 +4,7 @@
 #include "content_glaze.hpp"
 #include "content_validation.hpp"
 #include "item_catalog.hpp"
+#include "placements.hpp"
 
 #include <algorithm>
 #include <array>
@@ -24,6 +25,29 @@
 #include <glaze/glaze.hpp>
 
 #include "advanced_platformer/math/coordinates.hpp"
+
+template <> struct glz::from<glz::JSON, advanced_platformer::Cell>
+{
+    template <auto Options>
+    static void op(advanced_platformer::Cell& value, auto&& context, auto&& it, auto&& end)
+    {
+        const auto start = it;
+        std::vector<int> numbers;
+        parse<JSON>::op<Options>(numbers, context, it, end);
+        if (bool(context.error))
+        {
+            return;
+        }
+        if (numbers.size() != 2)
+        {
+            it = start;
+            context.error = error_code::syntax_error;
+            context.custom_error_message = "expected two whole numbers, [column, row]";
+            return;
+        }
+        value = {numbers[0], numbers[1]};
+    }
+};
 
 template <> struct glz::meta<advanced_platformer::RoomSide>
 {
@@ -52,24 +76,38 @@ template <> struct glz::meta<advanced_platformer::RoomRole>
 
 namespace advanced_platformer
 {
-    struct RoomMarkersJson
+    struct PatrolJson
     {
-        std::string start;
-        std::string exit;
-        std::optional<std::map<std::string, std::string>> actors;
-        std::optional<std::map<std::string, std::string>> pickups;
+        Cell first;
+        Cell second;
     };
 
-    struct RoomExitRequirementJson
+    struct RequirementJson
     {
         std::string item;
         int quantity = 1;
     };
 
-    struct RoomExitJson
+    struct ActorPlacementJson
+    {
+        std::string id;
+        std::string definition;
+        Cell spawn;
+        std::optional<PatrolJson> patrol;
+    };
+
+    struct PickupPlacementJson
+    {
+        std::string id;
+        std::string definition;
+        Cell spawn;
+    };
+
+    struct ExitPlacementJson
     {
         std::string definition;
-        std::optional<RoomExitRequirementJson> requirement;
+        Cell spawn;
+        std::optional<RequirementJson> requirement;
         std::optional<bool> consumeItem;
     };
 
@@ -80,6 +118,10 @@ namespace advanced_platformer
         std::vector<RoomSide> doors;
         std::optional<bool> mirror;
         std::vector<std::string> map;
+        std::optional<Cell> playerSpawn;
+        std::optional<ExitPlacementJson> exit;
+        std::optional<std::vector<ActorPlacementJson>> actors;
+        std::optional<std::vector<PickupPlacementJson>> pickups;
     };
 
     struct RunJson
@@ -96,9 +138,6 @@ namespace advanced_platformer
         RunJson run;
         std::map<std::string, std::string> tileLegend;
         std::string wall;
-        std::string open;
-        RoomMarkersJson markers;
-        RoomExitJson exit;
         std::vector<RoomPieceJson> pieces;
     };
 
@@ -283,13 +322,7 @@ namespace advanced_platformer
                    cell.y == roomSize.height - 1;
         }
 
-        struct MarkerCounts
-        {
-            int starts = 0;
-            int exits = 0;
-        };
-
-        MarkerCounts validatePieceMap(
+        void validatePieceMap(
             const RoomPiece& piece,
             const RoomPieceCatalog& catalog,
             std::string_view sourceName,
@@ -303,7 +336,6 @@ namespace advanced_platformer
                     path,
                     std::format("expected {} rows, got {}", size.height, piece.rows.size()));
             }
-            MarkerCounts counts;
             for (int row = 0; row < size.height; ++row)
             {
                 const std::string& text = piece.rows[static_cast<std::size_t>(row)];
@@ -321,16 +353,12 @@ namespace advanced_platformer
                     const Cell cell{column, row};
                     const std::string cellPath =
                         indexPath(rowPath, static_cast<std::size_t>(column));
-                    const bool tile = catalog.tileLegend.contains(symbol);
-                    if (!tile && symbol != catalog.startMarker && symbol != catalog.exitMarker &&
-                        !catalog.actorMarkers.contains(symbol) &&
-                        !catalog.pickupMarkers.contains(symbol))
+                    if (!catalog.tileLegend.contains(symbol))
                     {
                         failJson(
                             sourceName,
                             cellPath,
-                            std::format(
-                                "unknown symbol '{}'; define it in tileLegend or markers", symbol));
+                            std::format("unknown symbol '{}'; define it in tileLegend", symbol));
                     }
                     if (onEdge(size, cell))
                     {
@@ -347,63 +375,176 @@ namespace advanced_platformer
                                     door ? "open on a door" : "wall away from the doors"));
                         }
                     }
-                    counts.starts += symbol == catalog.startMarker ? 1 : 0;
-                    counts.exits += symbol == catalog.exitMarker ? 1 : 0;
                 }
             }
-            return counts;
         }
 
-        void validateRoleMarkers(
-            const RoomPiece& piece,
-            MarkerCounts counts,
+        Cell cellFrom(
+            Cell cell,
+            GridSize size,
             std::string_view sourceName,
             const std::string& path)
         {
-            const int starts = piece.role == RoomRole::Start ? 1 : 0;
-            const int exits = piece.role == RoomRole::Exit ? 1 : 0;
-            if (counts.starts != starts || counts.exits != exits)
+            if (cell.x < 0 || cell.y < 0 || cell.x >= size.width || cell.y >= size.height)
             {
                 failJson(
                     sourceName,
                     path,
                     std::format(
-                        "a {} room has {} start and {} exit markers, not {} and {}",
-                        roleName(piece.role),
-                        starts,
-                        exits,
-                        counts.starts,
-                        counts.exits));
+                        "expected a cell inside the {} by {} piece", size.width, size.height));
             }
+            return cell;
         }
 
-        std::map<char, std::string> markerMap(
-            const std::optional<std::map<std::string, std::string>>& json,
-            std::set<char>& used,
+        std::string nameFrom(
+            const std::string& name,
+            std::string_view description,
             std::string_view sourceName,
             const std::string& path)
         {
-            std::map<char, std::string> result;
-            for (const auto& [symbol, definition] :
-                 json.value_or(std::map<std::string, std::string>{}))
+            if (name.empty())
             {
-                const std::string symbolPath = fieldPath(path, symbol);
-                const char marker = symbolFrom(symbol, sourceName, symbolPath);
-                if (!used.insert(marker).second)
-                {
-                    failJson(sourceName, symbolPath, "symbol is already a tile or marker");
-                }
-                if (definition.empty())
-                {
-                    failJson(sourceName, symbolPath, "definition name cannot be empty");
-                }
-                result.emplace(marker, definition);
+                failJson(sourceName, path, std::format("{} cannot be empty", description));
             }
-            return result;
+            return name;
+        }
+
+        void requireUniqueId(
+            std::map<std::string, std::string>& seen,
+            const std::string& id,
+            std::string_view sourceName,
+            const std::string& path)
+        {
+            const auto [existing, inserted] = seen.emplace(id, path);
+            if (!inserted)
+            {
+                failJson(
+                    sourceName,
+                    fieldPath(path, "id"),
+                    std::format("id '{}' is already used by {}", id, existing->second));
+            }
+        }
+
+        ExitPlacement exitFrom(
+            const ExitPlacementJson& json,
+            GridSize size,
+            std::string_view sourceName,
+            const std::string& path)
+        {
+            ExitPlacement exit;
+            exit.definitionName = nameFrom(
+                json.definition, "exit definition name", sourceName, fieldPath(path, "definition"));
+            exit.spawn = cellFrom(json.spawn, size, sourceName, fieldPath(path, "spawn"));
+            if (json.requirement.has_value())
+            {
+                const std::string requirementPath = fieldPath(path, "requirement");
+                if (json.requirement->quantity <= 0)
+                {
+                    failJson(
+                        sourceName,
+                        fieldPath(requirementPath, "quantity"),
+                        std::format(
+                            "expected a positive integer, got {}", json.requirement->quantity));
+                }
+                exit.requirement = NamedItemStack{
+                    nameFrom(
+                        json.requirement->item,
+                        "item name",
+                        sourceName,
+                        fieldPath(requirementPath, "item")),
+                    json.requirement->quantity};
+            }
+            exit.consumeItem = json.consumeItem.value_or(false);
+            return exit;
+        }
+
+        void placementsFrom(
+            const RoomPieceJson& json,
+            RoomPiece& piece,
+            GridSize size,
+            std::string_view sourceName,
+            const std::string& path)
+        {
+            if (json.playerSpawn.has_value() != (piece.role == RoomRole::Start))
+            {
+                failJson(
+                    sourceName,
+                    fieldPath(path, "playerSpawn"),
+                    std::format(
+                        "{} rooms {} a player spawn",
+                        roleName(piece.role),
+                        piece.role == RoomRole::Start ? "need" : "cannot have"));
+            }
+            if (json.exit.has_value() != (piece.role == RoomRole::Exit))
+            {
+                failJson(
+                    sourceName,
+                    fieldPath(path, "exit"),
+                    std::format(
+                        "{} rooms {} an exit",
+                        roleName(piece.role),
+                        piece.role == RoomRole::Exit ? "need" : "cannot have"));
+            }
+            if (json.playerSpawn.has_value())
+            {
+                piece.playerSpawn =
+                    cellFrom(*json.playerSpawn, size, sourceName, fieldPath(path, "playerSpawn"));
+            }
+            if (json.exit.has_value())
+            {
+                piece.exit = exitFrom(*json.exit, size, sourceName, fieldPath(path, "exit"));
+            }
+            std::map<std::string, std::string> ids;
+            const std::vector<ActorPlacementJson> actors =
+                json.actors.value_or(std::vector<ActorPlacementJson>{});
+            for (std::size_t index = 0; index < actors.size(); ++index)
+            {
+                const std::string origin = indexPath(fieldPath(path, "actors"), index);
+                const ActorPlacementJson& placement = actors[index];
+                ActorPlacement actor;
+                actor.id =
+                    nameFrom(placement.id, "placement id", sourceName, fieldPath(origin, "id"));
+                actor.definitionName = nameFrom(
+                    placement.definition,
+                    "actor definition name",
+                    sourceName,
+                    fieldPath(origin, "definition"));
+                actor.spawn =
+                    cellFrom(placement.spawn, size, sourceName, fieldPath(origin, "spawn"));
+                if (placement.patrol.has_value())
+                {
+                    const std::string patrolPath = fieldPath(origin, "patrol");
+                    const PatrolJson patrol = placement.patrol.value_or(PatrolJson{});
+                    actor.patrol = PatrolPlacement{
+                        cellFrom(patrol.first, size, sourceName, fieldPath(patrolPath, "first")),
+                        cellFrom(patrol.second, size, sourceName, fieldPath(patrolPath, "second"))};
+                }
+                requireUniqueId(ids, actor.id, sourceName, origin);
+                piece.actors.push_back(std::move(actor));
+            }
+            const std::vector<PickupPlacementJson> pickups =
+                json.pickups.value_or(std::vector<PickupPlacementJson>{});
+            for (std::size_t index = 0; index < pickups.size(); ++index)
+            {
+                const std::string origin = indexPath(fieldPath(path, "pickups"), index);
+                PickupPlacement pickup;
+                pickup.id = nameFrom(
+                    pickups[index].id, "placement id", sourceName, fieldPath(origin, "id"));
+                pickup.definitionName = nameFrom(
+                    pickups[index].definition,
+                    "pickup definition name",
+                    sourceName,
+                    fieldPath(origin, "definition"));
+                pickup.spawn =
+                    cellFrom(pickups[index].spawn, size, sourceName, fieldPath(origin, "spawn"));
+                requireUniqueId(ids, pickup.id, sourceName, origin);
+                piece.pickups.push_back(std::move(pickup));
+            }
         }
 
         RoomPiece pieceFrom(
             const RoomPieceJson& json,
+            GridSize size,
             std::string_view sourceName,
             const std::string& path)
         {
@@ -431,6 +572,7 @@ namespace advanced_platformer
             }
             piece.mirror = json.mirror.value_or(true);
             piece.rows = json.map;
+            placementsFrom(json, piece, size, sourceName, path);
             return piece;
         }
 
@@ -501,62 +643,28 @@ namespace advanced_platformer
             tileSymbols.push_back(symbol);
         }
         validateLegendSymbols(tileSymbols, sourceName);
-        std::set<char> used;
         for (const auto& [symbol, tile] : file.tileLegend)
         {
             result.tileLegend.emplace(symbol.front(), tile);
-            used.insert(symbol.front());
         }
         result.wall = symbolFrom(file.wall, sourceName, "wall");
-        result.open = symbolFrom(file.open, sourceName, "open");
-        for (const auto& [symbol, path] :
-             {std::pair{result.wall, "wall"}, std::pair{result.open, "open"}})
+        if (!result.tileLegend.contains(result.wall))
         {
-            if (!result.tileLegend.contains(symbol))
-            {
-                failJson(sourceName, path, "symbol is not in tileLegend");
-            }
+            failJson(sourceName, "wall", "symbol is not in tileLegend");
         }
-
-        result.startMarker = symbolFrom(file.markers.start, sourceName, "markers.start");
-        result.exitMarker = symbolFrom(file.markers.exit, sourceName, "markers.exit");
-        for (const auto& [symbol, path] :
-             {std::pair{result.startMarker, "markers.start"},
-              std::pair{result.exitMarker, "markers.exit"}})
+        const auto open = std::ranges::find_if(
+            result.tileLegend, [](const auto& entry) { return entry.second == "empty"; });
+        if (open == result.tileLegend.end())
         {
-            if (!used.insert(symbol).second)
-            {
-                failJson(sourceName, path, "symbol is already a tile or marker");
-            }
+            failJson(sourceName, "tileLegend", "expected a symbol for empty");
         }
-        result.actorMarkers = markerMap(file.markers.actors, used, sourceName, "markers.actors");
-        result.pickupMarkers = markerMap(file.markers.pickups, used, sourceName, "markers.pickups");
-
-        if (file.exit.definition.empty())
-        {
-            failJson(sourceName, "exit.definition", "exit definition name cannot be empty");
-        }
-        result.exitDefinition = file.exit.definition;
-        if (file.exit.requirement.has_value())
-        {
-            if (file.exit.requirement->quantity <= 0)
-            {
-                failJson(
-                    sourceName,
-                    "exit.requirement.quantity",
-                    std::format(
-                        "expected a positive integer, got {}", file.exit.requirement->quantity));
-            }
-            result.exitRequirement =
-                NamedItemStack{file.exit.requirement->item, file.exit.requirement->quantity};
-        }
-        result.consumeExitItem = file.exit.consumeItem.value_or(false);
+        result.open = open->first;
 
         std::set<std::string> names;
         for (std::size_t index = 0; index < file.pieces.size(); ++index)
         {
             const std::string path = indexPath("pieces", index);
-            RoomPiece piece = pieceFrom(file.pieces[index], sourceName, path);
+            RoomPiece piece = pieceFrom(file.pieces[index], result.roomSize, sourceName, path);
             if (!names.insert(piece.name).second)
             {
                 failJson(
@@ -564,9 +672,7 @@ namespace advanced_platformer
                     fieldPath(path, "name"),
                     std::format("piece name '{}' is already used", piece.name));
             }
-            const MarkerCounts counts =
-                validatePieceMap(piece, result, sourceName, fieldPath(path, "map"));
-            validateRoleMarkers(piece, counts, sourceName, path);
+            validatePieceMap(piece, result, sourceName, fieldPath(path, "map"));
             result.pieces.push_back(std::move(piece));
         }
         return result;

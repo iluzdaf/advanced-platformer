@@ -1,12 +1,11 @@
 #pragma once
 
 #include <optional>
-#include <variant>
 
 #include <glm/vec2.hpp>
 
 #include "content/game_catalogs.hpp"
-#include "game/level_data.hpp"
+#include "game/level_generator.hpp"
 #include "content/tile_catalog.hpp"
 #include "game/level_composition.hpp"
 #include "advanced_platformer/actor/actor.hpp"
@@ -21,17 +20,6 @@
 
 namespace tests
 {
-    inline glm::vec2 cellFeet(
-        const advanced_platformer::TileMap& map,
-        const advanced_platformer::LevelPosition& position)
-    {
-        if (const auto* cell = std::get_if<advanced_platformer::Cell>(&position))
-        {
-            return advanced_platformer::feetInCell(map.tileSize(), *cell);
-        }
-        return std::get<glm::vec2>(position);
-    }
-
     inline bool playerReachesExit(
         const advanced_platformer::LevelData& level,
         const advanced_platformer::GameCatalogs& catalogs)
@@ -39,7 +27,8 @@ namespace tests
         const advanced_platformer::TileMap map =
             advanced_platformer::composeTileMap(level.mapRows, level.tileLegend, catalogs.tiles);
         advanced_platformer::Actor player = advanced_platformer::composePlayer(catalogs, 0);
-        advanced_platformer::moveFeetTo(player.body.bounds, cellFeet(map, level.playerSpawn));
+        advanced_platformer::moveFeetTo(
+            player.body.bounds, advanced_platformer::feetInCell(map.tileSize(), level.playerSpawn));
         advanced_platformer::PlatformerConnectionCache cache;
         fillConnections(
             map,
@@ -47,7 +36,11 @@ namespace tests
             advanced_platformer::platformerTraversalProfileFor(player, FixedStepSeconds));
         const std::optional<advanced_platformer::NavigationPathResult> result =
             advanced_platformer::findActorPath(
-                map, player, cellFeet(map, level.exit.spawn), FixedStepSeconds, cache);
+                map,
+                player,
+                advanced_platformer::feetInCell(map.tileSize(), level.exit.spawn),
+                FixedStepSeconds,
+                cache);
         return result.has_value() &&
                result->status == advanced_platformer::NavigationPathStatus::Found;
     }

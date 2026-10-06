@@ -1,6 +1,6 @@
 #include "level_generator.hpp"
 
-#include "level_data.hpp"
+#include "content/placements.hpp"
 #include "content/room_pieces.hpp"
 
 #include <algorithm>
@@ -254,9 +254,6 @@ namespace advanced_platformer
         level.mapRows.assign(
             static_cast<std::size_t>(height),
             std::string(static_cast<std::size_t>(width), catalog.wall));
-        level.exit.definitionName = catalog.exitDefinition;
-        level.exit.requirement = catalog.exitRequirement;
-        level.exit.consumeItem = catalog.consumeExitItem;
 
         for (std::size_t room = 0; room < layout.rooms.size(); ++room)
         {
@@ -282,54 +279,50 @@ namespace advanced_platformer
 
             const Cell origin{
                 (slot.grid.x - least.x) * stride.width, (slot.grid.y - least.y) * stride.height};
-            std::map<std::string, int> counts;
+            const auto placed = [&](Cell cell)
+            {
+                const int column = choice.mirrored ? size.width - 1 - cell.x : cell.x;
+                return Cell{origin.x + column, origin.y + cell.y};
+            };
             for (int row = 0; row < size.height; ++row)
             {
                 for (int column = 0; column < size.width; ++column)
                 {
                     const int source = choice.mirrored ? size.width - 1 - column : column;
-                    char symbol =
-                        piece.rows[static_cast<std::size_t>(row)][static_cast<std::size_t>(source)];
+                    const char symbol = std::ranges::contains(sealed, Cell{column, row})
+                                            ? catalog.wall
+                                            : piece.rows[static_cast<std::size_t>(row)]
+                                                        [static_cast<std::size_t>(source)];
                     const Cell cell{origin.x + column, origin.y + row};
-                    if (std::ranges::contains(sealed, Cell{column, row}))
-                    {
-                        symbol = catalog.wall;
-                    }
-                    else if (symbol == catalog.startMarker)
-                    {
-                        level.playerSpawn = cell;
-                        symbol = catalog.open;
-                    }
-                    else if (symbol == catalog.exitMarker)
-                    {
-                        level.exit.spawn = cell;
-                        symbol = catalog.open;
-                    }
-                    else if (
-                        const auto actor = catalog.actorMarkers.find(symbol);
-                        actor != catalog.actorMarkers.end())
-                    {
-                        const int count = ++counts[actor->second];
-                        level.actors.push_back(
-                            {.id = std::format("{}_{}_{}", roomName(room), actor->second, count),
-                             .definitionName = actor->second,
-                             .spawn = cell});
-                        symbol = catalog.open;
-                    }
-                    else if (
-                        const auto pickup = catalog.pickupMarkers.find(symbol);
-                        pickup != catalog.pickupMarkers.end())
-                    {
-                        const int count = ++counts[pickup->second];
-                        level.pickups.push_back(
-                            {.id = std::format("{}_{}_{}", roomName(room), pickup->second, count),
-                             .definitionName = pickup->second,
-                             .spawn = cell});
-                        symbol = catalog.open;
-                    }
                     level.mapRows[static_cast<std::size_t>(cell.y)]
                                  [static_cast<std::size_t>(cell.x)] = symbol;
                 }
+            }
+            if (piece.playerSpawn.has_value())
+            {
+                level.playerSpawn = placed(*piece.playerSpawn);
+            }
+            if (piece.exit.has_value())
+            {
+                level.exit = *piece.exit;
+                level.exit.spawn = placed(piece.exit->spawn);
+            }
+            for (ActorPlacement actor : piece.actors)
+            {
+                actor.id = std::format("{}_{}", roomName(room), actor.id);
+                actor.spawn = placed(actor.spawn);
+                if (actor.patrol.has_value())
+                {
+                    actor.patrol =
+                        PatrolPlacement{placed(actor.patrol->first), placed(actor.patrol->second)};
+                }
+                level.actors.push_back(std::move(actor));
+            }
+            for (PickupPlacement pickup : piece.pickups)
+            {
+                pickup.id = std::format("{}_{}", roomName(room), pickup.id);
+                pickup.spawn = placed(pickup.spawn);
+                level.pickups.push_back(std::move(pickup));
             }
         }
         return level;

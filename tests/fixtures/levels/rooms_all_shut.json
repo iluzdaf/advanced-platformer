@@ -11,45 +11,50 @@
     "#": "stone"
   },
   "wall": "#",
-  "open": ".",
-  "markers": {
-    "start": "S",
-    "exit": "E",
-    "actors": {
-      "g": "test_guard"
-    },
-    "pickups": {
-      "m": "medicine_box"
-    }
-  },
-  "exit": {
-    "definition": "test_door"
-  },
   "pieces": [
     {
       "name": "start",
       "role": "start",
       "doors": ["left", "right", "up", "down"],
-      "map": ["##....##", "#......#", "........", "........", ".S......", "##....##"]
+      "map": ["##....##", "#......#", "........", "........", "........", "##....##"],
+      "playerSpawn": [1, 4]
     },
     {
       "name": "hall",
       "role": "corridor",
       "doors": ["left", "right", "up", "down"],
-      "map": ["##....##", "#......#", "........", "........", "......g.", "##....##"]
+      "map": ["##....##", "#......#", "........", "........", "........", "##....##"],
+      "actors": [
+        {
+          "id": "test_guard_1",
+          "definition": "test_guard",
+          "spawn": [6, 4]
+        }
+      ]
     },
     {
       "name": "store",
       "role": "arena",
       "doors": ["left"],
       "mirror": false,
-      "map": ["########", "#......#", ".......#", ".......#", "..m....#", "########"]
+      "map": ["########", "#......#", ".......#", ".......#", ".......#", "########"],
+      "pickups": [
+        {
+          "id": "medicine_box_1",
+          "definition": "medicine_box",
+          "spawn": [2, 4]
+        }
+      ]
     },
     {
       "name": "shut exit",
       "role": "exit",
       "doors": ["left", "right", "up", "down"],
-      "map": ["##....##", "#......#", "...###..", "...#E#..", "...###..", "##....##"]
+      "map": ["##....##", "#......#", "...###..", "...#.#..", "...###..", "##....##"],
+      "exit": {
+        "definition": "test_door",
+        "spawn": [4, 3]
+      }
     }
   ]
 }

@@ -82,10 +82,10 @@ and the level keeps the seed it settled on. A hot reload keeps that seed, and an
 that cuts off its exit is rejected like any other failed reload.
 Each room takes a random piece of its role whose doors include the room's. The pieces
 are laid out on one map with neighbours sharing the wall between them, unused doors are
-walled up, and empty slots are filled with wall. Markers become the player's spawn, the
-exit, and actor and pickup placements. Coordinates start at the top-left, with Y
-pointing down. A pickup falls until it rests on a tile, and falls again if that tile
-breaks.
+walled up, and empty slots are filled with wall. Each piece's placements move with it,
+so the level has the start piece's player spawn, the exit piece's exit, and every
+piece's actors and pickups. Coordinates start at the top-left, with Y pointing down. A
+pickup falls until it rests on a tile, and falls again if that tile breaks.
 
 ## Room pieces
 
@@ -95,42 +95,50 @@ breaks.
   "run": { "firstRooms": 6, "roomsPerLevel": 3, "maxRooms": 18 },
   "tileLegend": { ".": "empty", "#": "stone" },
   "wall": "#",
-  "open": ".",
-  "markers": {
-    "start": "S",
-    "exit": "E",
-    "actors": { "z": "zombie" },
-    "pickups": { "c": "coin_pile" }
-  },
-  "exit": { "definition": "bunker_door" },
   "pieces": [
     {
       "name": "hall",
       "role": "corridor",
       "doors": ["left", "right"],
-      "map": ["####################", "#..................#", "..."]
+      "map": ["####################", "#..................#", "..."],
+      "actors": [
+        {
+          "id": "zombie_1",
+          "definition": "zombie",
+          "spawn": [4, 10],
+          "patrol": { "first": [2, 10], "second": [9, 10] }
+        }
+      ],
+      "pickups": [{ "id": "coin_pile_1", "definition": "coin_pile", "spawn": [12, 10] }]
     }
   ]
 }
 ```
 
-| Field        | Meaning                                                                                                                   |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| `roomSize`   | Every piece's size in cells: an even width of at least 8 and a height of at least 6.                                      |
-| `run`        | How many rooms each level of a [run](#run) has.                                                                           |
-| `tileLegend` | One-character map symbols to tile names in `tiles.json`.                                                                  |
-| `wall`       | The tile symbol that seals unused doors and fills empty slots.                                                            |
-| `open`       | The tile symbol of every door opening, and what a marker leaves behind.                                                   |
-| `markers`    | Symbols for the player's start, the exit, and actor and pickup definitions.                                               |
-| `exit`       | `definition` from `exits.json`; optional `requirement` (`item`, positive `quantity`) and `consumeItem` (default `false`). |
-| `pieces`     | `name`, unique; `role`; `doors`; optional `mirror` (default `true`); and `map`, the piece's rows.                         |
+| Field        | Meaning                                                                                                                 |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `roomSize`   | Every piece's size in cells: an even width of at least 8 and a height of at least 6.                                    |
+| `run`        | How many rooms each level of a [run](#run) has.                                                                         |
+| `tileLegend` | One-character map symbols to tile names in `tiles.json`, with a symbol for `empty`.                                     |
+| `wall`       | The tile symbol that seals unused doors and fills empty slots.                                                          |
+| `pieces`     | `name`, unique; `role`; `doors`; optional `mirror` (default `true`); `map`, the piece's rows; and the placements below. |
 
-A piece's `role` is `start`, with one start marker; `exit`, with one exit marker; or
-`corridor`, `shaft` or `arena`, with neither. Its `doors` list some of `left`, `right`,
-`up` and `down`. Side doors are three cells tall and stand on the bottom row; doors
-above and below are four cells wide and centred. A piece's edges are `open` on its
-doors and `wall` everywhere else. With `mirror`, the generator may also flip the piece
-left to right.
+A piece's `role` is `start`, `exit`, `corridor`, `shaft` or `arena`. Its `doors` list
+some of `left`, `right`, `up` and `down`. Side doors are three cells tall and stand on
+the bottom row; doors above and below are four cells wide and centred. A piece's edges
+are the `empty` symbol on its doors and `wall` everywhere else. With `mirror`, the
+generator may also flip the piece left to right, placements included.
+
+| Placement     | Fields                                                                                                                                                                               |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `playerSpawn` | A cell. Required on a `start` piece, allowed on no other.                                                                                                                            |
+| `exit`        | `definition` from `exits.json`; `spawn`; optional `requirement` (`item`, positive `quantity`) and `consumeItem` (default `false`). Required on an `exit` piece, allowed on no other. |
+| `actors`      | `id`; `definition` from `actors.json`; `spawn`; optional `patrol` with `first` and `second`.                                                                                         |
+| `pickups`     | `id`; `definition` from `pickups.json`; `spawn`.                                                                                                                                     |
+
+Every cell is `[column, row]` inside the piece, counted from its top-left. An `id` is
+nonempty and unique among the piece's actors and pickups; the generator prefixes it with
+the room, as in `room3_zombie_1`.
 
 Each room needs a piece of its role whose doors include the room's; a level that has a
 room no piece fits fails to build and names the doors. Tests check that the player can

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "content/content_glaze.hpp"
+#include "content/placements.hpp"
 #include "content/room_pieces.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "support/json_document.hpp"
@@ -18,7 +19,7 @@ namespace
 }
 
 TEST_CASE(
-    "A room piece file names its pieces, doors, roles and markers",
+    "A room piece file names its pieces, doors, roles and placements",
     "[app][content][generation]")
 {
     const advanced_platformer::RoomPieceCatalog catalog =
@@ -28,18 +29,28 @@ TEST_CASE(
     REQUIRE(catalog.roomSize.height == 6);
     REQUIRE(catalog.wall == '#');
     REQUIRE(catalog.open == '.');
-    REQUIRE(catalog.startMarker == 'S');
-    REQUIRE(catalog.exitMarker == 'E');
-    REQUIRE(catalog.actorMarkers.at('g') == "test_guard");
-    REQUIRE(catalog.pickupMarkers.at('m') == "medicine_box");
-    REQUIRE(catalog.exitDefinition == "test_door");
     REQUIRE(catalog.pieces.size() == 4);
+    REQUIRE(catalog.pieces[0].playerSpawn == Cell{1, 4});
+    const advanced_platformer::RoomPiece& hall = catalog.pieces[1];
+    REQUIRE(hall.mirror);
+    REQUIRE(hall.actors.size() == 1);
+    REQUIRE(hall.actors[0].id == "test_guard_1");
+    REQUIRE(hall.actors[0].definitionName == "test_guard");
+    REQUIRE(hall.actors[0].spawn == Cell{6, 4});
+    REQUIRE_FALSE(hall.actors[0].patrol.has_value());
     const advanced_platformer::RoomPiece& store = catalog.pieces[2];
     REQUIRE(store.name == "store");
     REQUIRE(store.role == advanced_platformer::RoomRole::Arena);
     REQUIRE(store.doors == advanced_platformer::withDoor({}, RoomSide::Left));
     REQUIRE_FALSE(store.mirror);
-    REQUIRE(catalog.pieces[1].mirror);
+    REQUIRE(store.pickups.size() == 1);
+    REQUIRE(store.pickups[0].id == "medicine_box_1");
+    REQUIRE(store.pickups[0].definitionName == "medicine_box");
+    REQUIRE(store.pickups[0].spawn == Cell{2, 4});
+    const advanced_platformer::ExitPlacement exit =
+        catalog.pieces[3].exit.value_or(advanced_platformer::ExitPlacement{});
+    REQUIRE(exit.definitionName == "test_door");
+    REQUIRE(exit.spawn == Cell{6, 4});
 }
 
 namespace
@@ -57,19 +68,112 @@ namespace
     }
 }
 
-TEST_CASE("A room piece file can lock its exit behind an item", "[app][content][generation]")
+TEST_CASE(
+    "A room piece places actors with patrols and locks its exit",
+    "[app][content][generation]")
 {
     tests::Json document = fixturePieces();
-    document["exit"] = tests::parseJson(
-        R"({"definition": "test_door", "requirement": {"item": "key", "quantity": 2}, "consumeItem": true})");
+    document["pieces"][1]["actors"][0]["patrol"] =
+        tests::parseJson(R"({"first": [1, 4], "second": [6, 4]})");
+    document["pieces"][3]["exit"] = tests::parseJson(
+        R"({"definition": "test_door", "spawn": [6, 4], "requirement": {"item": "key", "quantity": 2}, "consumeItem": true})");
 
     const advanced_platformer::RoomPieceCatalog catalog =
         advanced_platformer::parseRoomPieceCatalog(tests::dumpJson(document), "rooms.json");
 
-    REQUIRE(catalog.exitRequirement.has_value());
-    REQUIRE(catalog.exitRequirement.value_or(advanced_platformer::NamedItemStack{}).item == "key");
-    REQUIRE(catalog.exitRequirement.value_or(advanced_platformer::NamedItemStack{}).quantity == 2);
-    REQUIRE(catalog.consumeExitItem);
+    const advanced_platformer::ActorPlacement& guard = catalog.pieces[1].actors[0];
+    const advanced_platformer::PatrolPlacement patrol =
+        guard.patrol.value_or(advanced_platformer::PatrolPlacement{});
+    REQUIRE(patrol.first == Cell{1, 4});
+    REQUIRE(patrol.second == Cell{6, 4});
+    const advanced_platformer::ExitPlacement exit =
+        catalog.pieces[3].exit.value_or(advanced_platformer::ExitPlacement{});
+    REQUIRE(exit.requirement.has_value());
+    REQUIRE(exit.requirement.value_or(advanced_platformer::NamedItemStack{}).item == "key");
+    REQUIRE(exit.requirement.value_or(advanced_platformer::NamedItemStack{}).quantity == 2);
+    REQUIRE(exit.consumeItem);
+}
+
+TEST_CASE("A room piece file rejects placements it cannot build", "[app][content][generation]")
+{
+    tests::Json document = fixturePieces();
+    auto& pieces = document["pieces"];
+
+    SECTION("A start room without a player spawn")
+    {
+        tests::eraseKey(pieces[0], "playerSpawn");
+        requireRejected(document, "pieces[0].playerSpawn: start rooms need a player spawn");
+    }
+    SECTION("A player spawn outside a start room")
+    {
+        pieces[1]["playerSpawn"] = tests::numbers({1, 4});
+        requireRejected(
+            document, "pieces[1].playerSpawn: corridor rooms cannot have a player spawn");
+    }
+    SECTION("An exit room without an exit")
+    {
+        tests::eraseKey(pieces[3], "exit");
+        requireRejected(document, "pieces[3].exit: exit rooms need an exit");
+    }
+    SECTION("An exit outside an exit room")
+    {
+        pieces[2]["exit"] = tests::parseJson(R"({"definition": "test_door", "spawn": [2, 4]})");
+        requireRejected(document, "pieces[2].exit: arena rooms cannot have an exit");
+    }
+    SECTION("A spawn outside the piece")
+    {
+        pieces[1]["actors"][0]["spawn"] = tests::numbers({8, 4});
+        requireRejected(
+            document, "pieces[1].actors[0].spawn: expected a cell inside the 8 by 6 piece");
+    }
+    SECTION("A patrol point outside the piece")
+    {
+        pieces[1]["actors"][0]["patrol"] =
+            tests::parseJson(R"({"first": [1, 4], "second": [1, -1]})");
+        requireRejected(
+            document, "pieces[1].actors[0].patrol.second: expected a cell inside the 8 by 6 piece");
+    }
+    SECTION("A spawn that is not a cell")
+    {
+        pieces[1]["actors"][0]["spawn"] = tests::numbers({6});
+        requireRejected(document, "expected two whole numbers, [column, row]");
+    }
+    SECTION("An empty placement id")
+    {
+        pieces[1]["actors"][0]["id"] = "";
+        requireRejected(document, "pieces[1].actors[0].id: placement id cannot be empty");
+    }
+    SECTION("A repeated placement id")
+    {
+        pieces[1]["pickups"] = tests::parseJson(
+            R"([{"id": "test_guard_1", "definition": "medicine_box", "spawn": [2, 4]}])");
+        requireRejected(
+            document,
+            "pieces[1].pickups[0].id: id 'test_guard_1' is already used by pieces[1].actors[0]");
+    }
+    SECTION("An empty definition")
+    {
+        pieces[2]["pickups"][0]["definition"] = "";
+        requireRejected(
+            document, "pieces[2].pickups[0].definition: pickup definition name cannot be empty");
+    }
+    SECTION("An exit with no definition")
+    {
+        pieces[3]["exit"]["definition"] = "";
+        requireRejected(
+            document, "pieces[3].exit.definition: exit definition name cannot be empty");
+    }
+    SECTION("An exit that asks for nothing of an item")
+    {
+        pieces[3]["exit"]["requirement"] = tests::parseJson(R"({"item": "key", "quantity": 0})");
+        requireRejected(
+            document, "pieces[3].exit.requirement.quantity: expected a positive integer, got 0");
+    }
+    SECTION("A placement field typo")
+    {
+        pieces[1]["actors"][0]["patroll"] = tests::emptyObject();
+        requireRejected(document, "unknown field 'patroll'");
+    }
 }
 
 TEST_CASE("A room piece file says how a run's levels grow", "[app][content][generation]")
@@ -172,11 +276,6 @@ TEST_CASE("A room piece file rejects pieces that cannot be stitched", "[app][con
         hall["map"][1] = ".......#";
         requireRejected(document, "pieces[1].map[1][0]: expected '#': an edge is wall");
     }
-    SECTION("A start marker outside a start room")
-    {
-        hall["map"][1] = "#..S...#";
-        requireRejected(document, "a corridor room has 0 start and 0 exit markers, not 1 and 0");
-    }
     SECTION("A repeated piece name")
     {
         hall["name"] = "start";
@@ -187,20 +286,15 @@ TEST_CASE("A room piece file rejects pieces that cannot be stitched", "[app][con
         hall["doors"] = tests::parseJson(R"(["left", "left"])");
         requireRejected(document, "pieces[1].doors: door left is listed twice");
     }
-    SECTION("A marker that is also a tile")
+    SECTION("A wall symbol that is not a tile")
     {
-        document["markers"]["actors"] = tests::parseJson(R"({"#": "test_guard"})");
-        requireRejected(document, "markers.actors.#: symbol is already a tile or marker");
+        document["wall"] = "W";
+        requireRejected(document, "wall: symbol is not in tileLegend");
     }
-    SECTION("An exit with no definition")
+    SECTION("A legend without empty")
     {
-        document["exit"]["definition"] = "";
-        requireRejected(document, "exit.definition: exit definition name cannot be empty");
-    }
-    SECTION("An exit that asks for nothing of an item")
-    {
-        document["exit"]["requirement"] = tests::parseJson(R"({"item": "key", "quantity": 0})");
-        requireRejected(document, "exit.requirement.quantity: expected a positive integer, got 0");
+        document["tileLegend"] = tests::parseJson(R"({".": "stone", "#": "stone"})");
+        requireRejected(document, "tileLegend: expected a symbol for empty");
     }
     SECTION("An odd room width")
     {
