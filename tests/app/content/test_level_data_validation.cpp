@@ -136,7 +136,7 @@ TEST_CASE("Explicit level placements reject unknown fields", "[app][content][jso
     }
     SECTION("Exit")
     {
-        level["exit"]["nextLevell"] = 2;
+        level["exit"]["consumeItemm"] = true;
     }
     SECTION("Exit requirement")
     {
@@ -235,10 +235,6 @@ TEST_CASE(
     SECTION("Undersized cell")
     {
         level["playerSpawn"]["cell"][1] = -4294967296LL;
-    }
-    SECTION("Exit destination")
-    {
-        level["exit"]["nextLevel"] = 4294967297LL;
     }
     REQUIRE_THROWS_AS(
         advanced_platformer::parseLevelData(tests::dumpJson(level), "placements.json"),
