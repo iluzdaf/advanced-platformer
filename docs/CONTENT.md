@@ -87,8 +87,8 @@ The rooms grow from the centre slot of the grid, each new room opening off one r
 already placed and touching no other, so they form branching corridors without loops.
 The start is the centre room, and the exit is the room the most doors away from it. A
 seed whose exit the player cannot reach is skipped for the next one, up to 100 seeds,
-and the level keeps the seed it settled on. A hot reload keeps that seed even if an edit
-cuts off the exit.
+and the level keeps the seed it settled on. A hot reload keeps that seed, and an edit
+that cuts off its exit is rejected like any other failed reload.
 Each room takes a random piece of its role whose doors include the room's. The pieces
 are laid out on one map with neighbours sharing the wall between them, unused doors are
 walled up, and empty slots are filled with wall. Markers become the player's spawn, the

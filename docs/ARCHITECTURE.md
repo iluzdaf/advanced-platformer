@@ -234,8 +234,8 @@ team, and life state, plus optional components.
   for, so only the cells the search reaches are simulated. It ignores the exit's
   requirement and breakable tiles.
 - Starting a level runs it on each seed in turn until one passes, so a restart rebuilds a
-  level the player can finish. A hot reload skips the check and keeps the seed, so the
-  layout never jumps while a piece is being edited.
+  level the player can finish. A hot reload keeps the seed and runs the check once; a
+  reload that cuts off the exit fails, so the layout never jumps while a piece is edited.
 
 ## NPC behaviour
 
@@ -456,10 +456,10 @@ to the traversal profile. The search itself does not change.
 - Builds other than Release define `ADVANCED_PLATFORMER_SOURCE_ASSETS`. The application
   reads content from there and polls an `AssetWatcher`, which reports a change once two
   polls in a row see the same files.
-- `Game::reload` is all or nothing. It loads everything and composes the level at its
-  current seed with `composeLevelAtSeed`, with no route check, merges the result
-  into a copy of the live level with `reloadLevel`, then swaps in the level, catalogs,
-  and scripts; the atlas is uploaded after. An error changes nothing and is reported to
+- `Game::reload` is all or nothing. It loads everything, composes the level at its
+  current seed with `composeLevelAtSeed`, checks the exit can still be reached, merges
+  the result into a copy of the live level with `reloadLevel`, then swaps in the level,
+  catalogs, and scripts; the atlas is uploaded after. An error changes nothing and is reported to
   the console.
 - The merge keeps the live `World`. What it keeps and replaces is in
   [CONTENT.md](CONTENT.md#hot-reload).

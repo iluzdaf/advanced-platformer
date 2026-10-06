@@ -12,6 +12,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <format>
 #include <iterator>
 #include <cmath>
 #include <optional>
@@ -328,6 +329,14 @@ namespace advanced_platformer
             content.gameCatalogs,
             composePlayer(content.gameCatalogs, atlasTextureId),
             level.seed);
+        if (!playerCanReachExit(fresh.map, fresh.world, simulationStepSeconds))
+        {
+            throw std::invalid_argument(
+                std::format(
+                    "Level {}: seed {} has no route from the spawn to the exit",
+                    level.number,
+                    level.seed));
+        }
         GameLevel next = level;
         LevelReload result = reloadLevel(
             next, std::move(fresh), matchItemIds(gameCatalogs.items, content.gameCatalogs.items));

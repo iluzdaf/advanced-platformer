@@ -1,6 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_string.hpp>
 
 #include <cstdint>
+#include <format>
 #include <stdexcept>
 #include <utility>
 
@@ -70,7 +72,7 @@ TEST_CASE("A failed reload leaves the game as it was", "[app][reload]")
     REQUIRE(running.reload(content()).kept == 1);
 }
 
-TEST_CASE("A reload keeps the level's seed even when its exit is shut off", "[app][reload]")
+TEST_CASE("A reload that shuts off the exit leaves the game as it was", "[app][reload]")
 {
     advanced_platformer::Game running = {
         0,
@@ -86,7 +88,10 @@ TEST_CASE("A reload keeps the level's seed even when its exit is shut off", "[ap
         "fixture",
         "tests/fixtures/levels");
 
-    running.reload(std::move(shut));
+    REQUIRE_THROWS_WITH(
+        running.reload(std::move(shut)),
+        std::format("Level 1: seed {} has no route from the spawn to the exit", seed));
 
     REQUIRE(running.levelSeed() == seed);
+    REQUIRE(running.levelNumber() == 1);
 }
