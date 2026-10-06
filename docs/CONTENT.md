@@ -29,9 +29,9 @@ applies the new content without restarting:
 - Tiles broken in play stay broken. Machines resume in the state with the same name, or
   the first state, and every activity starts again under the new scripts.
 
-The console reports what was kept, spawned and removed. F5 restarts the current level
-from its file, keeping the player's health and items. A generated level reloads and
-restarts from the same seed.
+The console reports what was kept, spawned and removed. F5 restarts the current level,
+keeping the player's health and items. A generated level reloads and restarts from the
+same seed.
 
 F6 writes the current level, as it was when it started, to `level_N.json` in the working
 directory, or `level_N_seed_S.json` for a generated level, so a generated level can be
@@ -40,21 +40,21 @@ keeping the player's health and items.
 
 ## Files
 
-| File                                                             | Holds                                                 | Loader                                                                                                                       |
-| ---------------------------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| [`levels/levels.json`](../assets/levels/levels.json)             | Start level, camera dead zone, level numbers to files | [`level_catalog.cpp`](../app/content/level_catalog.cpp)                                                                      |
-| `levels/level_N.json`                                            | A level's map, legends and placements                 | [`level_data.cpp`](../app/content/level_data.cpp)                                                                            |
-| [`levels/rooms.json`](../assets/levels/rooms.json)               | Room pieces that generated levels are stitched from   | [`room_pieces.cpp`](../app/content/room_pieces.cpp), [`level_generator.cpp`](../app/content/level_generator.cpp)             |
-| [`catalogs/tiles.json`](../assets/catalogs/tiles.json)           | Tile size and tiles                                   | [`tile_catalog.cpp`](../app/content/tile_catalog.cpp)                                                                        |
-| [`catalogs/actors.json`](../assets/catalogs/actors.json)         | The player and every actor definition                 | [`actor_catalog.cpp`](../app/content/actor_catalog.cpp), [`actor_definition.cpp`](../app/content/actor_definition.cpp)       |
-| [`catalogs/animations.json`](../assets/catalogs/animations.json) | Animation sets                                        | [`animation_catalog.cpp`](../app/content/animation_catalog.cpp)                                                              |
-| [`catalogs/machines.json`](../assets/catalogs/machines.json)     | NPC state machines                                    | [`machine_catalog.cpp`](../app/content/machine_catalog.cpp)                                                                  |
-| [`scripts/*.lua`](../assets/scripts)                             | Lua activities                                        | [`npc_script_catalog.cpp`](../app/content/npc_script_catalog.cpp), [`lua_npc_scripts.cpp`](../scripting/lua_npc_scripts.cpp) |
-| [`scripts/presentation.lua`](../assets/scripts/presentation.lua) | Effects that answer world events                      | [`lua_presentation_script.cpp`](../scripting/lua_presentation_script.cpp)                                                    |
-| [`catalogs/items.json`](../assets/catalogs/items.json)           | Inventory items                                       | [`item_catalog.cpp`](../app/content/item_catalog.cpp)                                                                        |
-| [`catalogs/pickups.json`](../assets/catalogs/pickups.json)       | World pickups                                         | [`pickup_catalog.cpp`](../app/content/pickup_catalog.cpp)                                                                    |
-| [`catalogs/exits.json`](../assets/catalogs/exits.json)           | Exit bodies and sprites                               | [`exit_catalog.cpp`](../app/content/exit_catalog.cpp)                                                                        |
-| [`catalogs/hud.json`](../assets/catalogs/hud.json)               | HUD icon regions                                      | [`hud_catalog.cpp`](../app/content/hud_catalog.cpp)                                                                          |
+| File                                                             | Holds                                               | Loader                                                                                                                       |
+| ---------------------------------------------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| [`levels/levels.json`](../assets/levels/levels.json)             | Start level, camera dead zone, and each level       | [`level_catalog.cpp`](../app/content/level_catalog.cpp)                                                                      |
+| A level file, such as an F6 dump                                 | A level's map, legends and placements               | [`level_data.cpp`](../app/content/level_data.cpp)                                                                            |
+| [`levels/rooms.json`](../assets/levels/rooms.json)               | Room pieces that generated levels are stitched from | [`room_pieces.cpp`](../app/content/room_pieces.cpp), [`level_generator.cpp`](../app/content/level_generator.cpp)             |
+| [`catalogs/tiles.json`](../assets/catalogs/tiles.json)           | Tile size and tiles                                 | [`tile_catalog.cpp`](../app/content/tile_catalog.cpp)                                                                        |
+| [`catalogs/actors.json`](../assets/catalogs/actors.json)         | The player and every actor definition               | [`actor_catalog.cpp`](../app/content/actor_catalog.cpp), [`actor_definition.cpp`](../app/content/actor_definition.cpp)       |
+| [`catalogs/animations.json`](../assets/catalogs/animations.json) | Animation sets                                      | [`animation_catalog.cpp`](../app/content/animation_catalog.cpp)                                                              |
+| [`catalogs/machines.json`](../assets/catalogs/machines.json)     | NPC state machines                                  | [`machine_catalog.cpp`](../app/content/machine_catalog.cpp)                                                                  |
+| [`scripts/*.lua`](../assets/scripts)                             | Lua activities                                      | [`npc_script_catalog.cpp`](../app/content/npc_script_catalog.cpp), [`lua_npc_scripts.cpp`](../scripting/lua_npc_scripts.cpp) |
+| [`scripts/presentation.lua`](../assets/scripts/presentation.lua) | Effects that answer world events                    | [`lua_presentation_script.cpp`](../scripting/lua_presentation_script.cpp)                                                    |
+| [`catalogs/items.json`](../assets/catalogs/items.json)           | Inventory items                                     | [`item_catalog.cpp`](../app/content/item_catalog.cpp)                                                                        |
+| [`catalogs/pickups.json`](../assets/catalogs/pickups.json)       | World pickups                                       | [`pickup_catalog.cpp`](../app/content/pickup_catalog.cpp)                                                                    |
+| [`catalogs/exits.json`](../assets/catalogs/exits.json)           | Exit bodies and sprites                             | [`exit_catalog.cpp`](../app/content/exit_catalog.cpp)                                                                        |
+| [`catalogs/hud.json`](../assets/catalogs/hud.json)               | HUD icon regions                                    | [`hud_catalog.cpp`](../app/content/hud_catalog.cpp)                                                                          |
 
 Every catalog is required, even when empty. Every sprite region, frame and icon must lie
 inside the atlas.
@@ -65,21 +65,23 @@ inside the atlas.
 {
   "startLevel": 1,
   "cameraDeadZone": [80, 45],
-  "levels": [{ "number": 1, "file": "level_1.json" }]
+  "levels": [
+    { "number": 1, "generate": { "pieces": "rooms.json", "rooms": 6, "nextLevel": 2 } },
+    { "number": 2, "file": "level_2_seed_7.json" }
+  ]
 }
 ```
 
-| Field            | Meaning                                                                                |
-| ---------------- | -------------------------------------------------------------------------------------- |
-| `startLevel`     | The `number` of the first level.                                                       |
-| `cameraDeadZone` | The part of the 320 by 180 view the player moves in before the camera follows.         |
-| `levels`         | `number`, a positive unique ID that exits refer to, and `file`, relative to this file. |
+| Field            | Meaning                                                                              |
+| ---------------- | ------------------------------------------------------------------------------------ |
+| `startLevel`     | The `number` of the first level.                                                     |
+| `cameraDeadZone` | The part of the 320 by 180 view the player moves in before the camera follows.       |
+| `levels`         | `number`, a positive unique ID that exits refer to, and either `generate` or `file`. |
 
-An entry may `generate` its level from room pieces instead of naming a `file`:
+The shipped levels are all generated. A `file` entry names a level file relative to this
+file instead, such as a generated level kept from an F6 dump; tests use small ones.
 
-```json
-{ "number": 4, "generate": { "pieces": "rooms.json", "rooms": 8, "grid": [9, 7], "seed": 4 } }
-```
+`generate` builds the level from room pieces:
 
 | Field       | Required | Meaning                                                                   |
 | ----------- | -------- | ------------------------------------------------------------------------- |
@@ -145,6 +147,8 @@ or arena, and every single door some exit piece. Tests check that the player can
 and jump through every shipped piece from each of its doors to each other.
 
 ## Level files
+
+Generated levels are read back in this format, and F6 writes it.
 
 ```json
 {

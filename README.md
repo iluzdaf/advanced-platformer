@@ -105,9 +105,9 @@ ctest --preset mac-debug -R "Pickup" --output-on-failure
 
 The hearts at the top-left show the player's current and maximum health.
 
-Find each level's key and reach its bunker door to unlock the exit. Each door consumes
-one key; the third exit leads to a fourth level generated from room pieces, whose exit
-completes the example campaign.
+Every level is generated from room pieces, starting in the centre room. Reach the bunker
+door in the farthest room to move on; the third level's door completes the example
+campaign.
 
 ## Debug overlay
 

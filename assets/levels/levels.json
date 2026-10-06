@@ -4,19 +4,15 @@
   "levels": [
     {
       "number": 1,
-      "file": "level_1.json"
+      "generate": { "pieces": "rooms.json", "rooms": 6, "nextLevel": 2 }
     },
     {
       "number": 2,
-      "file": "level_2.json"
+      "generate": { "pieces": "rooms.json", "rooms": 9, "nextLevel": 3 }
     },
     {
       "number": 3,
-      "file": "level_3.json"
-    },
-    {
-      "number": 4,
-      "generate": { "pieces": "rooms.json", "rooms": 8 }
+      "generate": { "pieces": "rooms.json", "rooms": 12 }
     }
   ]
 }
