@@ -25,7 +25,8 @@ end
 local skills = {}
 
 skills.goToExit = {
-    description = "Route to the level exit, asking for a fresh route when the route ends short of it or the bot has stood still for a second.",
+    description = "Route to the level exit, asking for a fresh route when the route ends short "
+        .. "of it or the bot has stood still for a second.",
     run = function(self, snapshot, step)
         local exit = snapshot.exitFeet
         if exit == nil then
@@ -36,8 +37,9 @@ skills.goToExit = {
 }
 
 skills.fightNearest = {
-    description = "Aim at the visible opponent and fire the primary attack whenever it is ready, on top of the command of whatever skill is moving the bot.",
-    run = function(self, snapshot, step, command)
+    description = "Aim at the visible opponent and fire the primary attack whenever it is "
+        .. "ready, on top of the command of whatever skill is moving the bot.",
+    run = function(self, snapshot, _, command)
         local target = snapshot.targetCenter
         if target ~= nil and snapshot.facts.targetVisible then
             command.aimAt = target
@@ -48,7 +50,8 @@ skills.fightNearest = {
 }
 
 skills.collect = {
-    description = "Route to the nearest pickup of the named item, or return nil when the level has none left.",
+    description = "Route to the nearest pickup of the named item, or return nil when the level "
+        .. "has none left.",
     run = function(self, snapshot, step, item)
         local nearest, nearestDistance
         for _, pickup in ipairs(snapshot.pickups) do
