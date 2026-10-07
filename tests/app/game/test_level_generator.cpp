@@ -19,14 +19,15 @@ namespace
 {
     using advanced_platformer::Cell;
     using advanced_platformer::GeneratedLevel;
-    using advanced_platformer::LevelSettings;
     using advanced_platformer::RoomPieceCatalog;
 
     constexpr const char* FixturePieces = "tests/fixtures/rooms/rooms/pieces.json";
 
-    LevelSettings settings(std::uint32_t seed)
+    RoomPieceCatalog fixtureCatalog(advanced_platformer::GridSize grid, int rooms)
     {
-        return {.grid = {5, 1}, .roomCount = 5, .seed = seed};
+        RoomPieceCatalog catalog = advanced_platformer::loadRoomPieceCatalog(FixturePieces);
+        catalog.run = {.grid = grid, .firstRooms = rooms, .roomsPerLevel = 0, .maxRooms = rooms};
+        return catalog;
     }
 }
 
@@ -60,29 +61,27 @@ namespace
 
 TEST_CASE("The same seed generates the same level", "[app][content][generation]")
 {
-    const RoomPieceCatalog catalog = advanced_platformer::loadRoomPieceCatalog(FixturePieces);
+    const RoomPieceCatalog catalog = fixtureCatalog({5, 1}, 5);
     const std::string first =
-        levelText(advanced_platformer::generateLevel(catalog, settings(7), "pieces.json"));
+        levelText(advanced_platformer::generateLevel(catalog, 1, 7, "pieces.json"));
 
-    REQUIRE(
-        levelText(advanced_platformer::generateLevel(catalog, settings(7), "pieces.json")) ==
-        first);
+    REQUIRE(levelText(advanced_platformer::generateLevel(catalog, 1, 7, "pieces.json")) == first);
     std::set<std::string> levels;
     for (std::uint32_t seed = 1; seed <= 10; ++seed)
     {
         levels.insert(
-            levelText(advanced_platformer::generateLevel(catalog, settings(seed), "pieces.json")));
+            levelText(advanced_platformer::generateLevel(catalog, 1, seed, "pieces.json")));
     }
     REQUIRE(levels.size() > 1);
 }
 
 TEST_CASE("Stitched rooms share the wall between them", "[app][content][generation]")
 {
-    const RoomPieceCatalog catalog = advanced_platformer::loadRoomPieceCatalog(FixturePieces);
+    const RoomPieceCatalog catalog = fixtureCatalog({5, 1}, 5);
     for (std::uint32_t seed = 1; seed <= 10; ++seed)
     {
         const GeneratedLevel level =
-            advanced_platformer::generateLevel(catalog, settings(seed), "pieces.json");
+            advanced_platformer::generateLevel(catalog, 1, seed, "pieces.json");
         INFO("seed " << seed);
 
         REQUIRE(level.mapRows.size() == 6);
@@ -128,14 +127,13 @@ TEST_CASE("Stitched rooms share the wall between them", "[app][content][generati
 
 TEST_CASE("A mirrored piece flips its placements with its map", "[app][content][generation]")
 {
-    RoomPieceCatalog catalog = advanced_platformer::loadRoomPieceCatalog(FixturePieces);
+    RoomPieceCatalog catalog = fixtureCatalog({2, 1}, 2);
     catalog.pieces[3].actors.push_back(
         {.id = "guard",
          .definitionName = "test_guard",
          .spawn = {1, 4},
          .patrol = advanced_platformer::PatrolPlacement{{1, 4}, {6, 4}}});
-    const GeneratedLevel level = advanced_platformer::generateLevel(
-        catalog, {.grid = {2, 1}, .roomCount = 2, .seed = 1}, "pieces.json");
+    const GeneratedLevel level = advanced_platformer::generateLevel(catalog, 1, 1, "pieces.json");
 
     REQUIRE(level.mapRows[3] == "#.............#");
     REQUIRE(level.playerSpawn == Cell{13, 4});
@@ -153,7 +151,7 @@ TEST_CASE(
     "A level fails to generate when no piece fits a room's doors",
     "[app][content][generation]")
 {
-    RoomPieceCatalog catalog = advanced_platformer::loadRoomPieceCatalog(FixturePieces);
+    RoomPieceCatalog catalog = fixtureCatalog({5, 1}, 5);
     std::erase_if(
         catalog.pieces,
         [](const advanced_platformer::RoomPiece& piece)
@@ -163,25 +161,28 @@ TEST_CASE(
         });
 
     REQUIRE_THROWS_WITH(
-        advanced_platformer::generateLevel(catalog, settings(7), "pieces.json"),
+        advanced_platformer::generateLevel(catalog, 1, 7, "pieces.json"),
         Catch::Matchers::StartsWith("pieces.json: no corridor, shaft or arena piece has doors "));
 }
 
 TEST_CASE("Each level adds rooms until the run's cap", "[app][content][generation]")
 {
-    const advanced_platformer::RunSettings run{
-        .grid = {9, 7}, .firstRooms = 4, .roomsPerLevel = 2, .maxRooms = 9};
+    RoomPieceCatalog catalog = advanced_platformer::loadRoomPieceCatalog(FixturePieces);
+    catalog.run = {.grid = {9, 1}, .firstRooms = 3, .roomsPerLevel = 2, .maxRooms = 7};
+    const auto roomsIn = [&](int levelNumber)
+    {
+        const GeneratedLevel level =
+            advanced_platformer::generateLevel(catalog, levelNumber, 17, "pieces.json");
+        return (static_cast<int>(level.mapRows.front().size()) - 1) / 7;
+    };
 
-    REQUIRE(advanced_platformer::levelSettings(run, 1, 17).roomCount == 4);
-    REQUIRE(advanced_platformer::levelSettings(run, 2, 17).roomCount == 6);
-    REQUIRE(advanced_platformer::levelSettings(run, 3, 17).roomCount == 8);
-    REQUIRE(advanced_platformer::levelSettings(run, 4, 17).roomCount == 9);
-    REQUIRE(advanced_platformer::levelSettings(run, 1000000, 17).roomCount == 9);
-    REQUIRE_THROWS_AS(advanced_platformer::levelSettings(run, 0, 17), std::invalid_argument);
-    const LevelSettings settings = advanced_platformer::levelSettings(run, 2, 17);
-    REQUIRE(settings.seed == 17);
-    REQUIRE(settings.grid.width == 9);
-    REQUIRE(settings.grid.height == 7);
+    REQUIRE(roomsIn(1) == 3);
+    REQUIRE(roomsIn(2) == 5);
+    REQUIRE(roomsIn(3) == 7);
+    REQUIRE(roomsIn(4) == 7);
+    REQUIRE(roomsIn(1000000) == 7);
+    REQUIRE_THROWS_AS(
+        advanced_platformer::generateLevel(catalog, 0, 17, "pieces.json"), std::invalid_argument);
 }
 
 TEST_CASE("Level seeds follow from the run seed", "[app][content][generation]")

@@ -110,17 +110,17 @@ namespace
             (route.testedSlot.y - least.y) * (catalog.roomSize.height - 1)};
     }
 
-    std::optional<GeneratedLevel> generateRoute(const Route& route)
+    std::optional<GeneratedLevel> generateRoute(Route route)
     {
+        const int rooms = static_cast<int>(route.slots.size());
+        route.catalog.run = {
+            .grid = Grid, .firstRooms = rooms, .roomsPerLevel = 0, .maxRooms = rooms};
         for (std::uint32_t seed = 1; seed <= SeedsToTry; ++seed)
         {
             GeneratedLevel level;
             try
             {
-                level = advanced_platformer::generateLevel(
-                    route.catalog,
-                    {.grid = Grid, .roomCount = static_cast<int>(route.slots.size()), .seed = seed},
-                    "route");
+                level = advanced_platformer::generateLevel(route.catalog, 1, seed, "route");
             }
             catch (const std::invalid_argument&)
             {
@@ -199,10 +199,7 @@ TEST_CASE("Every shipped run level reaches its exit across seeds", "[app][conten
             INFO("level " << number << " seed " << seed);
             REQUIRE(
                 tests::playerReachesExit(
-                    advanced_platformer::generateLevel(
-                        pieces,
-                        advanced_platformer::levelSettings(pieces.run, number, seed),
-                        "pieces.json"),
+                    advanced_platformer::generateLevel(pieces, number, seed, "pieces.json"),
                     catalogs));
         }
     }

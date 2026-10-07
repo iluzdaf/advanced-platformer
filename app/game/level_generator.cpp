@@ -321,29 +321,7 @@ namespace advanced_platformer
             }
             return level;
         }
-    }
 
-    GeneratedLevel generateLevel(
-        const RoomPieceCatalog& catalog,
-        const LevelSettings& settings,
-        std::string_view levelName)
-    {
-        LevelRandom random{settings.seed};
-        const RoomLayout layout = layoutRooms(settings.grid, settings.roomCount, random);
-        std::vector<RoomChoice> choices;
-        try
-        {
-            choices = chooseRooms(catalog, layout, random);
-        }
-        catch (const std::invalid_argument& error)
-        {
-            throw std::invalid_argument(std::format("{}: {}", levelName, error.what()));
-        }
-        return stitchRooms(catalog, layout, choices);
-    }
-
-    namespace
-    {
         int roomsForLevel(const RunSettings& run, int levelNumber)
         {
             if (levelNumber <= 0)
@@ -357,9 +335,25 @@ namespace advanced_platformer
         }
     }
 
-    LevelSettings levelSettings(const RunSettings& run, int levelNumber, std::uint32_t seed)
+    GeneratedLevel generateLevel(
+        const RoomPieceCatalog& catalog,
+        int levelNumber,
+        std::uint32_t seed,
+        std::string_view levelName)
     {
-        return {.grid = run.grid, .roomCount = roomsForLevel(run, levelNumber), .seed = seed};
+        LevelRandom random{seed};
+        const RoomLayout layout =
+            layoutRooms(catalog.run.grid, roomsForLevel(catalog.run, levelNumber), random);
+        std::vector<RoomChoice> choices;
+        try
+        {
+            choices = chooseRooms(catalog, layout, random);
+        }
+        catch (const std::invalid_argument& error)
+        {
+            throw std::invalid_argument(std::format("{}: {}", levelName, error.what()));
+        }
+        return stitchRooms(catalog, layout, choices);
     }
 
     std::uint32_t runLevelSeed(std::uint32_t runSeed, int levelNumber)

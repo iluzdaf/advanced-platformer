@@ -1,17 +1,16 @@
 #pragma once
 
 #include "content/room_pieces.hpp"
-#include "game/level_generator.hpp"
 
 namespace tests
 {
     inline int levelsUntilCap(const advanced_platformer::RunSettings& run)
     {
-        int number = 1;
-        while (advanced_platformer::levelSettings(run, number, 0).roomCount < run.maxRooms)
+        if (run.roomsPerLevel <= 0 || run.firstRooms >= run.maxRooms)
         {
-            ++number;
+            return 1;
         }
-        return number;
+        const int growth = run.maxRooms - run.firstRooms;
+        return 1 + ((growth + run.roomsPerLevel - 1) / run.roomsPerLevel);
     }
 }

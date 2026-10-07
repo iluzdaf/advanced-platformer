@@ -23,19 +23,12 @@ namespace advanced_platformer
         ExitPlacement exit;
     };
 
-    struct LevelSettings
-    {
-        GridSize grid;
-        int roomCount = 0;
-        std::uint32_t seed = 0;
-    };
-
     GeneratedLevel generateLevel(
         const RoomPieceCatalog& catalog,
-        const LevelSettings& settings,
+        int levelNumber,
+        std::uint32_t seed,
         std::string_view levelName);
 
-    LevelSettings levelSettings(const RunSettings& run, int levelNumber, std::uint32_t seed);
     std::uint32_t runLevelSeed(std::uint32_t runSeed, int levelNumber);
     std::uint32_t nextRunSeed(std::uint32_t runSeed);
 }

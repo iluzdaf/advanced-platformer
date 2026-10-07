@@ -176,8 +176,7 @@ namespace advanced_platformer
         const Actor& player)
     {
         const std::string levelName = std::format("Level {} (seed {})", levelNumber, seed);
-        const GeneratedLevel generated =
-            generateLevel(pieces, levelSettings(pieces.run, levelNumber, seed), levelName);
+        const GeneratedLevel generated = generateLevel(pieces, levelNumber, seed, levelName);
         GameLevel level =
             composeGeneratedLevel(generated, levelName, levelNumber, seed, textureId, catalogs);
         Actor placed = player;
