@@ -120,7 +120,7 @@ TEST_CASE("Debug overlay data supports actors without presentation components", 
 
 TEST_CASE("Game debug data retains actor definition names", "[app][debug]")
 {
-    advanced_platformer::Game game = tests::fixtureGame("tests/fixtures/catalogs/rooms.json");
+    advanced_platformer::Game game = tests::fixtureGame("tests/fixtures/catalogs/pieces.json");
 
     const advanced_platformer::DebugOverlay debug = game.debugOverlay(128.0F, std::nullopt, 0);
     const auto npc = std::ranges::find_if(
@@ -141,7 +141,7 @@ TEST_CASE("Game debug data retains actor definition names", "[app][debug]")
 TEST_CASE("Debug overlay data names a climbing NPC's navigation profile", "[app][debug]")
 {
     advanced_platformer::Game game =
-        tests::fixtureGame("tests/fixtures/rooms/climber_placement/rooms.json");
+        tests::fixtureGame("tests/fixtures/rooms/climber_placement/pieces.json");
 
     const advanced_platformer::DebugOverlay debug = game.debugOverlay(128.0F, std::nullopt, 0);
     REQUIRE(debug.navigationCache.has_value());

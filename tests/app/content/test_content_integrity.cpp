@@ -48,12 +48,12 @@ namespace
 
 TEST_CASE("Every run level can be composed until the rooms stop growing", "[app][content]")
 {
-    const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/catalogs/rooms.json");
+    const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/catalogs/pieces.json");
     const auto catalogs =
         advanced_platformer::loadGameCatalogs("assets/catalogs", pngSize(ShippedAtlas));
     for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
     {
-        const auto content = advanced_platformer::composeLevelAtSeed(
+        const auto content = advanced_platformer::composeLevel(
             pieces,
             number,
             advanced_platformer::runLevelSeed(1, number),
@@ -68,12 +68,12 @@ TEST_CASE("Every run level can be composed until the rooms stop growing", "[app]
 
 TEST_CASE("Every run level starts with a route from the spawn to the exit", "[app][content]")
 {
-    const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/catalogs/rooms.json");
+    const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/catalogs/pieces.json");
     const auto catalogs =
         advanced_platformer::loadGameCatalogs("assets/catalogs", pngSize(ShippedAtlas));
     for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
     {
-        const advanced_platformer::GameLevel level = advanced_platformer::composeStartedLevel(
+        const advanced_platformer::GameLevel level = advanced_platformer::startLevel(
             pieces,
             number,
             advanced_platformer::runLevelSeed(1, number),

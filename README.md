@@ -3,8 +3,8 @@
 Advanced Platformer is a C++26 engine and example game built from independently
 testable systems. The current implementation includes platformer movement, tile collision,
 scrolling, composed actors, NPC state machines with Lua activities, flying and platformer
-pathfinding, projectiles, animation, inventory, automatic pickups, a three-level game
-loop, and ImGui debugging tools.
+pathfinding, projectiles, animation, inventory, automatic pickups, an endless run of
+generated levels, and ImGui debugging tools.
 
 ## Documentation
 
@@ -95,7 +95,7 @@ ctest --preset mac-debug -R "Pickup" --output-on-failure
 | Open or close the inventory (pauses the game)       | Q, or click the bag at the bottom-left    |
 | Drink a health potion                               | Click it in the open inventory            |
 | Restart the current level, keeping health and items | F5                                        |
-| Generate the current level again from the next seed | F7, on a generated level                  |
+| Generate the current level again from the next seed | F7                                        |
 | Pause or resume the simulation                      | P                                         |
 | Run one simulation step while paused                | . (full stop)                             |
 | Toggle the debug overlay                            | F1                                        |

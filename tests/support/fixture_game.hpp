@@ -14,7 +14,7 @@
 
 namespace tests
 {
-    constexpr const char* FixturePieces = "tests/fixtures/catalogs/rooms.json";
+    constexpr const char* FixturePieces = "tests/fixtures/catalogs/pieces.json";
 
     inline advanced_platformer::GameContent fixtureContent(const char* pieces = FixturePieces)
     {

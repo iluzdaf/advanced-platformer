@@ -189,7 +189,7 @@ namespace
 TEST_CASE("Every shipped run level reaches its exit across seeds", "[app][content][generation]")
 {
     const RoomPieceCatalog pieces =
-        advanced_platformer::loadRoomPieceCatalog("assets/catalogs/rooms.json");
+        advanced_platformer::loadRoomPieceCatalog("assets/catalogs/pieces.json");
     const advanced_platformer::GameCatalogs catalogs =
         advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
     for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
@@ -201,8 +201,8 @@ TEST_CASE("Every shipped run level reaches its exit across seeds", "[app][conten
                 tests::playerReachesExit(
                     advanced_platformer::generateLevel(
                         pieces,
-                        advanced_platformer::levelGeneration(pieces.run, number, seed),
-                        "rooms.json"),
+                        advanced_platformer::levelSettings(pieces.run, number, seed),
+                        "pieces.json"),
                     catalogs));
         }
     }
@@ -211,7 +211,7 @@ TEST_CASE("Every shipped run level reaches its exit across seeds", "[app][conten
 TEST_CASE("Every shipped room piece joins each pair of its doors", "[app][content][generation]")
 {
     const RoomPieceCatalog shipped =
-        advanced_platformer::loadRoomPieceCatalog("assets/catalogs/rooms.json");
+        advanced_platformer::loadRoomPieceCatalog("assets/catalogs/pieces.json");
     for (const RoomRole role : {RoomRole::Corridor, RoomRole::Shaft, RoomRole::Arena})
     {
         for (const Orientation& piece : orientations(shipped, role))
@@ -266,7 +266,7 @@ TEST_CASE(
     "[app][content][generation]")
 {
     const RoomPieceCatalog shipped =
-        advanced_platformer::loadRoomPieceCatalog("assets/catalogs/rooms.json");
+        advanced_platformer::loadRoomPieceCatalog("assets/catalogs/pieces.json");
     for (const Orientation& piece : orientations(shipped, RoomRole::Start))
     {
         const RoomDoors doors = doorsOf(piece);
@@ -308,7 +308,7 @@ TEST_CASE(
 TEST_CASE("Every shipped exit room is reached through its door", "[app][content][generation]")
 {
     const RoomPieceCatalog shipped =
-        advanced_platformer::loadRoomPieceCatalog("assets/catalogs/rooms.json");
+        advanced_platformer::loadRoomPieceCatalog("assets/catalogs/pieces.json");
     for (const Orientation& piece : orientations(shipped, RoomRole::Exit))
     {
         const RoomDoors doors = doorsOf(piece);

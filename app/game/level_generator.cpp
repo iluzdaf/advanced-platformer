@@ -325,11 +325,11 @@ namespace advanced_platformer
 
     LevelData generateLevel(
         const RoomPieceCatalog& catalog,
-        const LevelGeneration& generation,
-        std::string_view sourceName)
+        const LevelSettings& settings,
+        std::string_view levelName)
     {
-        LevelRandom random{generation.seed};
-        const RoomLayout layout = layoutRooms(generation.grid, generation.roomCount, random);
+        LevelRandom random{settings.seed};
+        const RoomLayout layout = layoutRooms(settings.grid, settings.roomCount, random);
         std::vector<RoomChoice> choices;
         try
         {
@@ -337,7 +337,7 @@ namespace advanced_platformer
         }
         catch (const std::invalid_argument& error)
         {
-            throw std::invalid_argument(std::format("{}: {}", sourceName, error.what()));
+            throw std::invalid_argument(std::format("{}: {}", levelName, error.what()));
         }
         return stitchRooms(catalog, layout, choices);
     }
@@ -357,7 +357,7 @@ namespace advanced_platformer
         }
     }
 
-    LevelGeneration levelGeneration(const RunSettings& run, int levelNumber, std::uint32_t seed)
+    LevelSettings levelSettings(const RunSettings& run, int levelNumber, std::uint32_t seed)
     {
         return {.grid = run.grid, .roomCount = roomsForLevel(run, levelNumber), .seed = seed};
     }

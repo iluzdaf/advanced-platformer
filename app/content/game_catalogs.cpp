@@ -32,7 +32,7 @@ namespace advanced_platformer
         catalogs.exits = loadExitCatalog(catalogDirectory / "exits.json");
         catalogs.hudIcons = loadHudIcons(catalogDirectory / "hud.json");
         catalogs.camera = loadCameraSettings(catalogDirectory / "camera.json");
-        catalogs.pieces = loadRoomPieceCatalog(catalogDirectory / "rooms.json");
+        catalogs.pieces = loadRoomPieceCatalog(catalogDirectory / "pieces.json");
         validateAtlasRegions(catalogs, atlasSize, catalogDirectory);
         return catalogs;
     }

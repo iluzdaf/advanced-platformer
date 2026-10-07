@@ -75,7 +75,7 @@ namespace advanced_platformer
 
     private:
         void startRun(std::uint32_t seed);
-        void loadLevel(int levelNumber, std::uint32_t seed);
+        void enterLevel(int levelNumber, std::uint32_t seed);
         void replaceLevel(int levelNumber, const Actor& player, std::uint32_t seed);
         void startCamera();
         CameraController& cameraControllerValue();

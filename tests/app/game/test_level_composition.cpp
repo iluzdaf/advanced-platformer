@@ -19,10 +19,10 @@
 TEST_CASE("A level's cells become the feet of those cells on its map", "[app][content]")
 {
     const auto pieces =
-        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/rooms/opening/rooms.json");
+        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/rooms/opening/pieces.json");
     const auto gameCatalogs =
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
-    const auto gameLevel = advanced_platformer::composeLevelAtSeed(
+    const auto gameLevel = advanced_platformer::composeLevel(
         pieces, 1, 1, 0, gameCatalogs, advanced_platformer::composePlayer(gameCatalogs, 0));
     const int tileSize = gameLevel.map.tileSize();
 
@@ -44,10 +44,10 @@ TEST_CASE("A level's cells become the feet of those cells on its map", "[app][co
 TEST_CASE("A level composes an actor from its catalog definition", "[app][actors]")
 {
     const auto pieces =
-        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/catalogs/rooms.json");
+        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/catalogs/pieces.json");
     const auto gameCatalogs =
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
-    auto gameLevel = advanced_platformer::composeLevelAtSeed(
+    auto gameLevel = advanced_platformer::composeLevel(
         pieces, 1, 1, 0, gameCatalogs, advanced_platformer::composePlayer(gameCatalogs, 0));
     REQUIRE(gameLevel.world.actors().size() == 2);
     auto& actor = gameLevel.world.actors().front();
@@ -59,11 +59,11 @@ TEST_CASE("A level composes an actor from its catalog definition", "[app][actors
 TEST_CASE("Level composition reports unknown actor definitions", "[app][actors]")
 {
     const auto pieces =
-        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/rooms/unknown_actor/rooms.json");
+        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/rooms/unknown_actor/pieces.json");
     const auto gameCatalogs =
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
     REQUIRE_THROWS_WITH(
-        advanced_platformer::composeLevelAtSeed(
+        advanced_platformer::composeLevel(
             pieces, 1, 1, 0, gameCatalogs, advanced_platformer::composePlayer(gameCatalogs, 0)),
         Catch::Matchers::ContainsSubstring("Level 1 (seed 1): actor '") &&
             Catch::Matchers::ContainsSubstring("unknown actor definition 'missing'"));

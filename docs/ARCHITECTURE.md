@@ -36,12 +36,11 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 | `app/ui`              | HUD, inventory, exit hint, and pause notice                                                                          |
 | `app/debug`           | Debug snapshots and their ImGui presentation, the console, and the frame profile UI                                  |
 | `scripting`           | Lua VM, sandbox, `vec2` binding, and the activity adapter                                                            |
-| `assets`              | Levels, catalogs, Lua scripts, and the atlas                                                                         |
+| `assets`              | Catalogs, room pieces, Lua scripts, and the atlas                                                                    |
 
 - `GameLevel` keeps the level number, map, world, player spawn, actor definition names,
   and the placement id of each actor and pickup together. Replacing it starts a fresh
-  world. A generated level also keeps its seed, so a restart or reload builds the same
-  level. `Game` keeps the run seed that each level's seed follows from.
+  world. It keeps its seed, so a restart or reload builds the same level. `Game` keeps the run seed that each level's seed follows from.
 
 ### Headers, not modules
 
@@ -430,13 +429,13 @@ to the traversal profile. The search itself does not change.
 
 ### Data-driven level boundary
 
-| Step                 | Owner                                | Result                                                                                |
-| -------------------- | ------------------------------------ | ------------------------------------------------------------------------------------- |
-| Load shared catalogs | `app/content/game_catalogs.cpp`      | Definitions checked against the atlas size, and the room pieces, kept for the session |
-| Load scripts         | `app/content/npc_script_catalog.cpp` | Each script a machine names, with every named activity present                        |
-| Generate a level     | `app/game/level_generator.cpp`       | Room pieces laid out from the seed and stitched into a `LevelData` of placements      |
-| Compose the level    | `app/game/level_composition.cpp`     | Names resolved into a map, world, and placed objects                                  |
-| Start the level      | `composeStartedLevel`, then `Game`   | Player inserted, placements validated, camera made, and the navigation fill queued    |
+| Step                 | Owner                                 | Result                                                                                                                              |
+| -------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Load shared catalogs | `app/content/game_catalogs.cpp`       | Definitions checked against the atlas size, and the room pieces, kept for the session                                               |
+| Load scripts         | `app/content/npc_script_catalog.cpp`  | Each script a machine names, with every named activity present                                                                      |
+| Generate a level     | `app/game/level_generator.cpp`        | Room pieces laid out from the seed and stitched into a `LevelData` of placements                                                    |
+| Compose the level    | `composeLevel`                        | Names resolved into a map, world, and placed objects, with the player at its spawn                                                  |
+| Start the level      | `startLevel`, then `Game::enterLevel` | Composed again from each following seed until the player can reach the exit; then the camera is made and the navigation fill queued |
 
 - JSON stays in `app/content`; the core receives C++ values. Each file is read with
   Glaze through `content_glaze` into structs that mirror it, so unknown keys, missing
@@ -458,7 +457,7 @@ to the traversal profile. The search itself does not change.
   reads content from there and polls an `AssetWatcher`, which reports a change once two
   polls in a row see the same files.
 - `Game::reload` is all or nothing. It loads everything, composes the level at its
-  current seed with `composeLevelAtSeed`, checks the exit can still be reached, merges
+  current seed with `composeLevel`, checks the exit can still be reached, merges
   the result into a copy of the live level with `reloadLevel`, then swaps in the level,
   catalogs, and scripts; the atlas is uploaded after. An error changes nothing and is reported to
   the console.

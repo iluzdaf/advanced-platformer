@@ -60,7 +60,7 @@ TEST_CASE(
     "The exit leads to the next level and keeps the player's progress",
     "[app][level-transition]")
 {
-    advanced_platformer::Game game = tests::fixtureGame("tests/fixtures/rooms/finish/rooms.json");
+    advanced_platformer::Game game = tests::fixtureGame("tests/fixtures/rooms/finish/pieces.json");
     advanced_platformer::InputIntentions intentions;
     intentions.direction.x = -1.0F;
 
@@ -89,7 +89,7 @@ TEST_CASE(
     "[app][level-transition]")
 {
     advanced_platformer::GameContent content =
-        tests::fixtureContent("tests/fixtures/rooms/contact_enemy/rooms.json");
+        tests::fixtureContent("tests/fixtures/rooms/contact_enemy/pieces.json");
     content.npcScripts.loadScript("contact_enemy", "tests/fixtures/scripts/contact_enemy.lua");
     advanced_platformer::Game game = tests::fixtureGame(std::move(content));
     const auto initialHealth = game.playerHealth();
@@ -118,7 +118,7 @@ TEST_CASE(
     "[app][level-transition][exit]")
 {
     advanced_platformer::Game game =
-        tests::fixtureGame("tests/fixtures/rooms/locked_door/rooms.json");
+        tests::fixtureGame("tests/fixtures/rooms/locked_door/pieces.json");
     REQUIRE_FALSE(game.lockedExitHintIcon().has_value());
 
     advanced_platformer::InputIntentions walkLeft;

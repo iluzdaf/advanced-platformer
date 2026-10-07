@@ -34,7 +34,7 @@ namespace advanced_platformer
 {
     namespace
     {
-        Pickup makePickup(
+        Pickup composePlacedPickup(
             const TileMap& map,
             const PickupPlacement& placement,
             const PickupCatalog& pickups,
@@ -48,7 +48,7 @@ namespace advanced_platformer
                 feetInCell(map.tileSize(), placement.spawn));
         }
 
-        std::optional<Patrol> makePatrol(
+        std::optional<Patrol> composePatrol(
             const TileMap& map,
             const std::optional<PatrolPlacement>& placement)
         {
@@ -62,7 +62,7 @@ namespace advanced_platformer
                 true};
         }
 
-        LevelExit makeExit(
+        LevelExit composePlacedExit(
             const TileMap& map,
             int textureId,
             const ExitPlacement& placement,
@@ -81,33 +81,14 @@ namespace advanced_platformer
             return exit;
         }
 
-        struct GeneratedLevel
-        {
-            LevelData data;
-            std::string sourceName;
-        };
-
-        GeneratedLevel generateRunLevel(
-            const RoomPieceCatalog& pieces,
-            int levelNumber,
-            std::uint32_t seed)
-        {
-            const LevelGeneration generation = levelGeneration(pieces.run, levelNumber, seed);
-            std::string sourceName = std::format("Level {} (seed {})", levelNumber, seed);
-            LevelData data = generateLevel(pieces, generation, sourceName);
-            return {std::move(data), std::move(sourceName)};
-        }
-
-        GameLevel composeGameLevel(
-            const RoomPieceCatalog& pieces,
+        GameLevel composeLevelData(
+            const LevelData& data,
+            const std::string& levelName,
             int levelNumber,
             std::uint32_t seed,
             int textureId,
             const GameCatalogs& catalogs)
         {
-            const GeneratedLevel source = generateRunLevel(pieces, levelNumber, seed);
-            const LevelData& data = source.data;
-            const std::string& path = source.sourceName;
             const auto& actors = catalogs.actors;
             const auto& exits = catalogs.exits;
             const auto& items = catalogs.items;
@@ -127,7 +108,7 @@ namespace advanced_platformer
                         catalogs.animations,
                         textureId,
                         feetInCell(map.tileSize(), placement.spawn),
-                        makePatrol(map, placement.patrol),
+                        composePatrol(map, placement.patrol),
                         catalogs.machines));
                     actorDefinitionNames.emplace(id.value, placement.definitionName);
                     actorPlacementIds.emplace(id.value, placement.id);
@@ -135,14 +116,14 @@ namespace advanced_platformer
                 catch (const std::invalid_argument& error)
                 {
                     throw std::invalid_argument(
-                        std::format("{}: actor '{}': {}", path, placement.id, error.what()));
+                        std::format("{}: actor '{}': {}", levelName, placement.id, error.what()));
                 }
             }
             for (const auto& placement : data.pickups)
             {
                 try
                 {
-                    Pickup pickup = makePickup(map, placement, pickups, items, textureId);
+                    Pickup pickup = composePlacedPickup(map, placement, pickups, items, textureId);
                     pickup.placement = pickupPlacementIds.size();
                     pickupPlacementIds.push_back(placement.id);
                     world.addPickup(pickup);
@@ -150,7 +131,7 @@ namespace advanced_platformer
                 catch (const std::invalid_argument& error)
                 {
                     throw std::invalid_argument(
-                        std::format("{}: pickup '{}': {}", path, placement.id, error.what()));
+                        std::format("{}: pickup '{}': {}", levelName, placement.id, error.what()));
                 }
             }
             for (const auto& [actor, id] : actorPlacementIds)
@@ -160,11 +141,11 @@ namespace advanced_platformer
             placedIds.insert(pickupPlacementIds.begin(), pickupPlacementIds.end());
             try
             {
-                world.setExit(makeExit(map, textureId, data.exit, items, exits));
+                world.setExit(composePlacedExit(map, textureId, data.exit, items, exits));
             }
             catch (const std::invalid_argument& error)
             {
-                throw std::invalid_argument(std::format("{}: exit: {}", path, error.what()));
+                throw std::invalid_argument(std::format("{}: exit: {}", levelName, error.what()));
             }
             const glm::vec2 playerSpawnFeet = feetInCell(map.tileSize(), data.playerSpawn);
             return {
@@ -186,7 +167,7 @@ namespace advanced_platformer
         return composeActor(actorDefinition(actors, actors.player), catalogs.animations, textureId);
     }
 
-    GameLevel composeLevelAtSeed(
+    GameLevel composeLevel(
         const RoomPieceCatalog& pieces,
         int levelNumber,
         std::uint32_t seed,
@@ -194,7 +175,10 @@ namespace advanced_platformer
         const GameCatalogs& catalogs,
         const Actor& player)
     {
-        GameLevel level = composeGameLevel(pieces, levelNumber, seed, textureId, catalogs);
+        const std::string levelName = std::format("Level {} (seed {})", levelNumber, seed);
+        const LevelData data =
+            generateLevel(pieces, levelSettings(pieces.run, levelNumber, seed), levelName);
+        GameLevel level = composeLevelData(data, levelName, levelNumber, seed, textureId, catalogs);
         Actor placed = player;
         moveFeetTo(placed.body.bounds, level.playerSpawnFeet);
         const ActorId playerId = level.world.addActor(std::move(placed));
@@ -206,10 +190,10 @@ namespace advanced_platformer
 
     namespace
     {
-        constexpr std::uint32_t GenerationAttempts = 100;
+        constexpr std::uint32_t SeedAttempts = 100;
     }
 
-    GameLevel composeStartedLevel(
+    GameLevel startLevel(
         const RoomPieceCatalog& pieces,
         int levelNumber,
         std::uint32_t seed,
@@ -218,14 +202,13 @@ namespace advanced_platformer
         const Actor& player,
         float stepSeconds)
     {
-        GameLevel level =
-            composeLevelAtSeed(pieces, levelNumber, seed, textureId, catalogs, player);
+        GameLevel level = composeLevel(pieces, levelNumber, seed, textureId, catalogs, player);
         const std::uint32_t firstSeed = seed;
         for (std::uint32_t nextSeed = firstSeed + 1U;
              !playerCanReachExit(level.map, level.world, stepSeconds);
              ++nextSeed)
         {
-            if (nextSeed - firstSeed == GenerationAttempts)
+            if (nextSeed - firstSeed == SeedAttempts)
             {
                 throw std::invalid_argument(
                     std::format(
@@ -235,7 +218,7 @@ namespace advanced_platformer
                         firstSeed,
                         nextSeed - 1U));
             }
-            level = composeLevelAtSeed(pieces, levelNumber, nextSeed, textureId, catalogs, player);
+            level = composeLevel(pieces, levelNumber, nextSeed, textureId, catalogs, player);
         }
         return level;
     }

@@ -39,7 +39,7 @@ again from the next seed, also keeping health and items.
 
 | File                                                             | Holds                                          | Loader                                                                                                                       |
 | ---------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| [`catalogs/rooms.json`](../assets/catalogs/rooms.json)           | Room size, legend, and how a run's levels grow | [`room_pieces.cpp`](../app/content/room_pieces.cpp), [`level_generator.cpp`](../app/game/level_generator.cpp)                |
+| [`catalogs/pieces.json`](../assets/catalogs/pieces.json)         | Room size, legend, and how a run's levels grow | [`room_pieces.cpp`](../app/content/room_pieces.cpp), [`level_generator.cpp`](../app/game/level_generator.cpp)                |
 | [`catalogs/pieces/*.json`](../assets/catalogs/pieces)            | One room piece each                            | [`room_pieces.cpp`](../app/content/room_pieces.cpp)                                                                          |
 | [`catalogs/tiles.json`](../assets/catalogs/tiles.json)           | Tile size and tiles                            | [`tile_catalog.cpp`](../app/content/tile_catalog.cpp)                                                                        |
 | [`catalogs/actors.json`](../assets/catalogs/actors.json)         | The player and every actor definition          | [`actor_catalog.cpp`](../app/content/actor_catalog.cpp), [`actor_definition.cpp`](../app/content/actor_definition.cpp)       |
@@ -61,7 +61,7 @@ inside the atlas.
 A run is endless. It starts at level 1, and each exit leads to the next level. When the
 player dies, the run starts again at level 1 with full health, no items and a new run
 seed. Each level's seed follows from the run seed and the level number, so a run seed
-always gives the same levels. The `run` block of [`rooms.json`](#room-pieces) says how
+always gives the same levels. The `run` block of [`pieces.json`](#room-pieces) says how
 the levels grow:
 
 ```json
@@ -90,7 +90,7 @@ pickup falls until it rests on a tile, and falls again if that tile breaks.
 
 ## Room pieces
 
-`catalogs/rooms.json` describes every piece, and each piece is its own file in
+`catalogs/pieces.json` describes every piece, and each piece is its own file in
 `catalogs/pieces/`, named after the file: `pieces/hall.json` is the piece `hall`. The
 loader reads the folder in file-name order.
 

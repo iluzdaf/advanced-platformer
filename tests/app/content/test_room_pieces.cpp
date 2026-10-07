@@ -19,7 +19,7 @@ namespace
     using advanced_platformer::RoomDoors;
     using advanced_platformer::RoomSide;
     constexpr const char* FixtureFolder = "tests/fixtures/rooms/rooms";
-    constexpr const char* FixturePieces = "tests/fixtures/rooms/rooms/rooms.json";
+    constexpr const char* FixturePieces = "tests/fixtures/rooms/rooms/pieces.json";
 
     struct FixtureDocument
     {
@@ -63,7 +63,7 @@ namespace
             pieces.push_back({name, tests::dumpJson(json), std::format("pieces/{}.json", name)});
         }
         return advanced_platformer::parseRoomPieceCatalog(
-            tests::dumpJson(document.catalog), "rooms.json", pieces);
+            tests::dumpJson(document.catalog), "pieces.json", pieces);
     }
 
     void requireRejected(const FixtureDocument& document, const std::string& message)
@@ -252,7 +252,7 @@ TEST_CASE("A room piece file rejects runs it cannot build", "[app][content][gene
     SECTION("No run")
     {
         tests::eraseKey(document.catalog, "run");
-        requireRejected(document, "rooms.json:");
+        requireRejected(document, "pieces.json:");
     }
     SECTION("Too few first rooms")
     {
@@ -286,7 +286,7 @@ TEST_CASE("A room piece file rejects runs it cannot build", "[app][content][gene
     SECTION("A field typo")
     {
         run["maxRoom"] = 6;
-        requireRejected(document, "rooms.json:");
+        requireRejected(document, "pieces.json:");
     }
 }
 
@@ -349,9 +349,9 @@ TEST_CASE(
     SECTION("A folder without pieces")
     {
         REQUIRE_THROWS_WITH(
-            advanced_platformer::loadRoomPieceCatalog("tests/fixtures/rooms/rooms.json"),
+            advanced_platformer::loadRoomPieceCatalog("tests/fixtures/rooms/pieces.json"),
             Catch::Matchers::ContainsSubstring(
-                "tests/fixtures/rooms/rooms.json: expected piece files in "
+                "tests/fixtures/rooms/pieces.json: expected piece files in "
                 "tests/fixtures/rooms/pieces"));
     }
 }

@@ -56,7 +56,7 @@ namespace advanced_platformer
         : gameCatalogs(std::move(gameCatalogs)),
           npcScripts(std::move(npcScripts)),
           presentation(std::move(presentation)),
-          level(composeStartedLevel(
+          level(startLevel(
               this->gameCatalogs.pieces,
               1,
               runLevelSeed(runSeed, 1),
@@ -81,7 +81,7 @@ namespace advanced_platformer
         replaceLevel(1, composePlayer(gameCatalogs, atlasTextureId), runLevelSeed(seed, 1));
     }
 
-    void Game::loadLevel(int levelNumber, std::uint32_t seed)
+    void Game::enterLevel(int levelNumber, std::uint32_t seed)
     {
         Actor nextPlayer = composePlayer(gameCatalogs, atlasTextureId);
         if (const Actor* previousPlayer = level.world.findActor(level.world.playerId()))
@@ -94,7 +94,7 @@ namespace advanced_platformer
 
     void Game::replaceLevel(int levelNumber, const Actor& player, std::uint32_t seed)
     {
-        GameLevel next = composeStartedLevel(
+        GameLevel next = startLevel(
             gameCatalogs.pieces,
             levelNumber,
             seed,
@@ -136,7 +136,7 @@ namespace advanced_platformer
         if (level.world.levelComplete())
         {
             const int nextLevel = level.number + 1;
-            loadLevel(nextLevel, runLevelSeed(currentRunSeed, nextLevel));
+            enterLevel(nextLevel, runLevelSeed(currentRunSeed, nextLevel));
             return;
         }
         if (level.world.playerDefeated())
@@ -290,17 +290,17 @@ namespace advanced_platformer
 
     void Game::restartLevel()
     {
-        loadLevel(level.number, level.seed);
+        enterLevel(level.number, level.seed);
     }
 
     void Game::rerollLevel()
     {
-        loadLevel(level.number, level.seed + 1U);
+        enterLevel(level.number, level.seed + 1U);
     }
 
     LevelReload Game::reload(GameContent content)
     {
-        GameLevel fresh = composeLevelAtSeed(
+        GameLevel fresh = composeLevel(
             content.gameCatalogs.pieces,
             level.number,
             level.seed,
