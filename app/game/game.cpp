@@ -75,24 +75,39 @@ namespace advanced_platformer
         startCamera();
     }
 
-    void Game::startRun(std::uint32_t seed)
+    void Game::changeLevel(LevelChange change)
     {
-        currentRunSeed = seed;
-        replaceLevel(1, composePlayer(gameCatalogs, atlasTextureId), runLevelSeed(seed, 1));
-    }
-
-    void Game::enterLevel(int levelNumber, std::uint32_t seed)
-    {
-        Actor nextPlayer = composePlayer(gameCatalogs, atlasTextureId);
-        if (const Actor* previousPlayer = level.world.findActor(level.world.playerId()))
+        switch (change)
         {
-            nextPlayer.health = previousPlayer->health;
-            nextPlayer.inventory = previousPlayer->inventory;
+        case LevelChange::NewRun:
+            enterLevel(
+                1, runLevelSeed(currentRunSeed, 1), composePlayer(gameCatalogs, atlasTextureId));
+            return;
+        case LevelChange::NextLevel:
+            enterLevel(
+                level.number + 1, runLevelSeed(currentRunSeed, level.number + 1), carriedPlayer());
+            return;
+        case LevelChange::Restart:
+            enterLevel(level.number, level.seed, carriedPlayer());
+            return;
+        case LevelChange::Reroll:
+            enterLevel(level.number, level.seed + 1U, carriedPlayer());
+            return;
         }
-        replaceLevel(levelNumber, nextPlayer, seed);
     }
 
-    void Game::replaceLevel(int levelNumber, const Actor& player, std::uint32_t seed)
+    Actor Game::carriedPlayer() const
+    {
+        Actor next = composePlayer(gameCatalogs, atlasTextureId);
+        if (const Actor* live = level.world.findActor(level.world.playerId()))
+        {
+            next.health = live->health;
+            next.inventory = live->inventory;
+        }
+        return next;
+    }
+
+    void Game::enterLevel(int levelNumber, std::uint32_t seed, const Actor& player)
     {
         GameLevel next = startLevel(
             gameCatalogs.pieces,
@@ -135,13 +150,13 @@ namespace advanced_platformer
 
         if (level.world.levelComplete())
         {
-            const int nextLevel = level.number + 1;
-            enterLevel(nextLevel, runLevelSeed(currentRunSeed, nextLevel));
+            changeLevel(LevelChange::NextLevel);
             return;
         }
         if (level.world.playerDefeated())
         {
-            startRun(nextRunSeed(currentRunSeed));
+            currentRunSeed = nextRunSeed(currentRunSeed);
+            changeLevel(LevelChange::NewRun);
             return;
         }
 
@@ -286,16 +301,6 @@ namespace advanced_platformer
             return false;
         }
         return level.map.breakTile(cellAt(level.map.tileSize(), world));
-    }
-
-    void Game::restartLevel()
-    {
-        enterLevel(level.number, level.seed);
-    }
-
-    void Game::rerollLevel()
-    {
-        enterLevel(level.number, level.seed + 1U);
     }
 
     LevelReload Game::reload(GameContent content)

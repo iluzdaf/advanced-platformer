@@ -33,12 +33,12 @@ TEST_CASE(
     const std::uint32_t seed = game.levelSeed();
     const advanced_platformer::Health health = game.playerHealth();
 
-    game.rerollLevel();
+    game.changeLevel(advanced_platformer::LevelChange::Reroll);
     REQUIRE(game.levelNumber() == 1);
     REQUIRE(game.levelSeed() == seed + 1U);
     REQUIRE(game.playerHealth().current == health.current);
 
-    game.restartLevel();
+    game.changeLevel(advanced_platformer::LevelChange::Restart);
     REQUIRE(game.levelSeed() == seed + 1U);
     REQUIRE(game.runSeed() == 5U);
 }

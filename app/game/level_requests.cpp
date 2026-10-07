@@ -15,7 +15,7 @@ namespace advanced_platformer
         {
             try
             {
-                game.restartLevel();
+                game.changeLevel(LevelChange::Restart);
                 play.interrupt();
             }
             catch (const std::exception& error)
@@ -30,7 +30,7 @@ namespace advanced_platformer
         {
             try
             {
-                game.rerollLevel();
+                game.changeLevel(LevelChange::Reroll);
                 play.interrupt();
                 console.write(
                     ConsoleLevel::Info,

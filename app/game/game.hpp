@@ -23,6 +23,14 @@ namespace advanced_platformer
 {
     constexpr float LockedExitHintSeconds = 1.0F;
 
+    enum class LevelChange : std::uint8_t
+    {
+        NewRun,
+        NextLevel,
+        Restart,
+        Reroll
+    };
+
     struct FrameProfile;
     struct GameContent;
     struct Health;
@@ -59,8 +67,7 @@ namespace advanced_platformer
         const ItemDefinition& itemDefinition(int id) const;
         void useInventoryItem(std::size_t slot);
         bool breakTileAt(glm::vec2 internalPosition);
-        void restartLevel();
-        void rerollLevel();
+        void changeLevel(LevelChange change);
         LevelReload reload(GameContent content);
         int levelNumber() const;
         std::uint32_t levelSeed() const;
@@ -74,9 +81,8 @@ namespace advanced_platformer
         Camera renderCamera() const;
 
     private:
-        void startRun(std::uint32_t seed);
-        void enterLevel(int levelNumber, std::uint32_t seed);
-        void replaceLevel(int levelNumber, const Actor& player, std::uint32_t seed);
+        Actor carriedPlayer() const;
+        void enterLevel(int levelNumber, std::uint32_t seed, const Actor& player);
         void startCamera();
         CameraController& cameraControllerValue();
         const CameraController& cameraControllerValue() const;
