@@ -91,8 +91,8 @@ belong to.
 | Room                | One grid slot of a generated level, with the doors the layout gave it. The generator fills it with a matching piece.               |
 | Room piece          | A hand-drawn room with a role and doors on its edges, one file in `pieces/`. A room gets one whose doors match exactly.            |
 | Room layout         | The grid slots a generated level's rooms fill, the doors between them, and which room is the exit.                                 |
-| Stitched level      | What the generator hands over: the pieces' map rows stitched into one, the legend, and the placements in cells (`GeneratedLevel`). |
-| Level               | A stitched level composed into a map and world with the player in it, ready to play (`GameLevel`).                                 |
+| Generated level     | What the generator hands over: the pieces' map rows stitched into one, the legend, and the placements in cells (`GeneratedLevel`). |
+| Level               | A generated level composed into a map and world with the player in it, ready to play (`GameLevel`).                                |
 | Seed                | The number a generated level is built from. The same seed always builds the same level.                                            |
 | Run                 | Generated levels played one after another from level 1, each with more rooms, until the player dies. See `pieces.json`.            |
 | Run seed            | The number a run's level seeds follow from. Each defeat starts a new run with the next run seed.                                   |
