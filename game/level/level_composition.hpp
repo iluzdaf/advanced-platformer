@@ -8,6 +8,7 @@
 
 #include <glm/vec2.hpp>
 
+#include "advanced_platformer/level/level_generator.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
 #include "advanced_platformer/world/world.hpp"
 
@@ -28,6 +29,7 @@ namespace advanced_platformer
         std::vector<std::string> pickupPlacementIds;
         std::set<std::string> placedIds;
         std::uint32_t seed = 0;
+        std::vector<GeneratedRoom> rooms;
     };
 
     Actor composePlayer(const GameCatalogs& catalogs, int textureId);

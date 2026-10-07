@@ -157,7 +157,8 @@ namespace advanced_platformer
                 std::move(actorPlacementIds),
                 std::move(pickupPlacementIds),
                 std::move(placedIds),
-                seed};
+                seed,
+                generated.rooms};
         }
     }
 

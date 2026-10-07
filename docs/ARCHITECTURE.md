@@ -579,7 +579,10 @@ to the traversal profile. The search itself does not change.
   time limit. After stuck or a timeout the run moves on to the next level.
 - Each line holds the run and level seeds, the outcome, seconds, damage counted against
   the nearest live NPC's definition, health left, the cell the player ended in, pickups
-  placed and collected, and Lua script errors.
+  placed and collected, Lua script errors, and the level's pacing: a sample every half
+  second, and one when the level ends, of the seconds, health, damage taken since the last
+  sample, live NPCs within the bot's notice distance, and the piece of the room the player
+  stands in.
 
 ## Error handling and validation
 

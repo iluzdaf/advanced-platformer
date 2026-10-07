@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
@@ -28,6 +29,7 @@
 #include "level/level_composition.hpp"
 #include "lua_script_diagnostic.hpp"
 #include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/level/level_generator.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "advanced_platformer/npc/npc.hpp"
@@ -51,6 +53,7 @@ namespace advanced_platformer
         int pickupsPlaced = 0;
         int pickupsCollected = 0;
         std::vector<std::string> scriptErrors;
+        std::vector<PacingSample> pacing;
     };
 
     namespace
@@ -88,6 +91,8 @@ namespace advanced_platformer
             int lastHealth = 0;
             float bestExitDistance = std::numeric_limits<float>::max();
             float secondsSinceProgress = 0.0F;
+            int steps = 0;
+            int damageSinceSample = 0;
         };
 
         const Actor& playerOf(const GameLevel& level)
@@ -140,6 +145,41 @@ namespace advanced_platformer
                 }
             }
             return nearest;
+        }
+
+        int npcsNear(const GameLevel& level, const Actor& player)
+        {
+            const glm::vec2 center = centerOf(player.body.bounds);
+            return static_cast<int>(std::ranges::count_if(
+                level.world.actors(),
+                [&](const Actor& actor)
+                {
+                    return actor.id != player.id && actor.life == LifeState::Alive &&
+                           level.actorDefinitionNames.contains(actor.id.value) &&
+                           glm::distance(center, centerOf(actor.body.bounds)) <= BotNoticeDistance;
+                }));
+        }
+
+        std::string pieceAt(const GameLevel& level, Cell cell)
+        {
+            for (const GeneratedRoom& room : level.rooms)
+            {
+                if (contains(room.size, {cell.x - room.origin.x, cell.y - room.origin.y}))
+                {
+                    return room.piece;
+                }
+            }
+            return "";
+        }
+
+        PacingSample pacingSample(const GameLevel& level, const Actor& player, float seconds)
+        {
+            return {
+                .seconds = seconds,
+                .health = healthOf(player),
+                .npcsNear = npcsNear(level, player),
+                .piece =
+                    pieceAt(level, cellAtFeet(level.map.tileSize(), feetOf(player.body.bounds)))};
         }
     }
 
@@ -199,6 +239,7 @@ namespace advanced_platformer
             {
                 result.damageByNearestNpc[nearestNpcName(level, player)] +=
                     watch.lastHealth - health;
+                watch.damageSinceSample += watch.lastHealth - health;
             }
             watch.lastHealth = health;
 
@@ -222,7 +263,29 @@ namespace advanced_platformer
 
     namespace
     {
+        float watchedSeconds(const PlaytestWatch& watch, float stepSeconds)
+        {
+            const double seconds = static_cast<double>(watch.steps) * stepSeconds;
+            return static_cast<float>(std::round(seconds * 1000.0) / 1000.0);
+        }
+
+        void recordPacing(
+            PlaytestWatch& watch,
+            const GameLevel& level,
+            float stepSeconds,
+            LevelPlaytest& result)
+        {
+            PacingSample sample =
+                pacingSample(level, playerOf(level), watchedSeconds(watch, stepSeconds));
+            sample.damage = std::exchange(watch.damageSinceSample, 0);
+            result.pacing.push_back(std::move(sample));
+        }
+    }
+
+    namespace
+    {
         constexpr float StuckSeconds = 15.0F;
+        constexpr float PacingSeconds = 0.5F;
 
         LevelPlaytest playtestLevel(Game& game, float secondsPerLevel, float stepSeconds)
         {
@@ -235,18 +298,23 @@ namespace advanced_platformer
                 .levelSeed = game.levelSeed(),
                 .pickupsPlaced = static_cast<int>(level.pickupPlacementIds.size())};
 
+            const int stepsPerSample =
+                std::max(1, static_cast<int>(std::lround(PacingSeconds / stepSeconds)));
             PlaytestWatch watch;
             watch.lastHealth = healthOf(playerOf(level));
             observeStep(watch, level, 0.0F, result);
+            recordPacing(watch, level, stepSeconds, result);
 
             while (result.seconds < secondsPerLevel)
             {
                 const Actor& player = playerOf(level);
                 const std::string nearest = nearestNpcName(level, player);
                 const int healthBefore = healthOf(player);
+                PacingSample last = pacingSample(level, player, 0.0F);
 
                 game.update({}, stepSeconds);
                 result.seconds += stepSeconds;
+                ++watch.steps;
                 recordScriptErrors(game, result);
 
                 if (game.runSeed() != runSeed)
@@ -254,18 +322,30 @@ namespace advanced_platformer
                     result.outcome = PlaytestOutcome::Defeated;
                     result.damageByNearestNpc[nearest] += healthBefore;
                     result.healthLeft = 0;
+                    last.seconds = watchedSeconds(watch, stepSeconds);
+                    last.health = 0;
+                    last.damage = watch.damageSinceSample + healthBefore;
+                    result.pacing.push_back(std::move(last));
                     return result;
                 }
                 if (game.levelNumber() != levelNumber)
                 {
                     result.outcome = PlaytestOutcome::Exit;
+                    last.seconds = watchedSeconds(watch, stepSeconds);
+                    last.damage = watch.damageSinceSample;
+                    result.pacing.push_back(std::move(last));
                     return result;
                 }
                 observeStep(watch, level, stepSeconds, result);
                 if (watch.secondsSinceProgress >= StuckSeconds)
                 {
                     result.outcome = PlaytestOutcome::Stuck;
+                    recordPacing(watch, level, stepSeconds, result);
                     return result;
+                }
+                if (watch.steps % stepsPerSample == 0)
+                {
+                    recordPacing(watch, level, stepSeconds, result);
                 }
             }
             result.outcome = PlaytestOutcome::Timeout;
@@ -328,7 +408,8 @@ namespace advanced_platformer
             .endCell = {level.endCell.x, level.endCell.y},
             .pickupsPlaced = level.pickupsPlaced,
             .pickupsCollected = level.pickupsCollected,
-            .scriptErrors = level.scriptErrors};
+            .scriptErrors = level.scriptErrors,
+            .pacing = level.pacing};
         std::string text;
         if (const auto error = glz::write_json(json, text))
         {
