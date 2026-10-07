@@ -1,14 +1,8 @@
 {
   "machines": {
     "bot": {
-      "states": [
-        { "name": "travel", "does": { "script": "bot", "activity": "travel" } },
-        { "name": "fight", "does": { "script": "bot", "activity": "fight" } }
-      ],
-      "transitions": [
-        { "from": "travel", "to": "fight", "when": { "targetVisible": true } },
-        { "from": "fight", "to": "travel", "when": { "targetVisible": false }, "after": 0.3 }
-      ]
+      "states": [{ "name": "play", "does": { "script": "bot", "activity": "play" } }],
+      "transitions": []
     }
   }
 }
