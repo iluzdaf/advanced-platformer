@@ -339,6 +339,11 @@ namespace advanced_platformer
         return result;
     }
 
+    const GameLevel& Game::currentLevel() const
+    {
+        return level;
+    }
+
     int Game::levelNumber() const
     {
         return level.number;
