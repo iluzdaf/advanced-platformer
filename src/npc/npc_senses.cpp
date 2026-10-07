@@ -67,20 +67,27 @@ namespace advanced_platformer
             brain.targetMemoryRemaining = senses.targetMemoryDuration;
         }
 
+        bool livingOpponent(const Actor& observer, const Actor* other)
+        {
+            return other != nullptr && other->id != observer.id &&
+                   other->life == LifeState::Alive && areOpponents(observer.team, other->team);
+        }
+
         bool hearNoises(
             const TileMap& map,
+            const World& world,
             SensingNpc& npc,
-            const Actor& target,
             const std::vector<WorldEvent>& noises)
         {
             bool heardNoise = false;
             for (const WorldEvent& noise : noises)
             {
-                if (noise.actor != target.id)
+                const Actor* source = world.findActor(noise.actor);
+                if (!livingOpponent(npc.actor, source))
                 {
                     continue;
                 }
-                const Aabb noiseBounds = boxStandingOn(noise.feet, target.body.bounds.size);
+                const Aabb noiseBounds = boxStandingOn(noise.feet, source->body.bounds.size);
                 if (!withinNoticeDistance(npc.actor.body.bounds, noiseBounds, npc.senses))
                 {
                     continue;
@@ -96,20 +103,46 @@ namespace advanced_platformer
                     npc.perception.heardLanding = true;
                 }
                 heardNoise = true;
-                rememberTarget(npc.brain, target, npc.senses);
+                rememberTarget(npc.brain, *source, npc.senses);
                 npc.brain.lastKnownTargetFeet = noise.feet;
             }
             return heardNoise;
         }
 
-        bool observeTarget(const TileMap& map, SensingNpc& npc, const Actor& target)
+        const Actor* nearestVisibleOpponent(
+            const TileMap& map,
+            const World& world,
+            const SensingNpc& npc)
         {
-            if (!canSeeTarget(map, npc.actor.body.bounds, target.body.bounds, npc.senses))
+            const glm::vec2 center = centerOf(npc.actor.body.bounds);
+            const Actor* nearest = nullptr;
+            float nearestDistance = 0.0F;
+            for (const Actor& other : world.actors())
+            {
+                if (!livingOpponent(npc.actor, &other) ||
+                    !canSeeTarget(map, npc.actor.body.bounds, other.body.bounds, npc.senses))
+                {
+                    continue;
+                }
+                const float distance = glm::distance(center, centerOf(other.body.bounds));
+                if (nearest == nullptr || distance < nearestDistance)
+                {
+                    nearest = &other;
+                    nearestDistance = distance;
+                }
+            }
+            return nearest;
+        }
+
+        bool observeOpponents(const TileMap& map, const World& world, SensingNpc& npc)
+        {
+            const Actor* target = nearestVisibleOpponent(map, world, npc);
+            if (target == nullptr)
             {
                 return false;
             }
 
-            rememberTarget(npc.brain, target, npc.senses);
+            rememberTarget(npc.brain, *target, npc.senses);
             npc.perception.targetVisible = true;
             return true;
         }
@@ -225,10 +258,11 @@ namespace advanced_platformer
     {
         requireSeconds(deltaTime, "NPC senses time step");
 
-        const Actor* player = world.findActor(world.playerId());
         const std::vector<WorldEvent> noises = world.takeNoises();
-        for (Actor& actor : world.actors())
+        std::vector<Actor>& actors = world.actors();
+        for (std::size_t index = 0; index < actors.size(); ++index)
         {
+            Actor& actor = actors[index];
             if (!actor.brain.has_value())
             {
                 continue;
@@ -242,15 +276,12 @@ namespace advanced_platformer
             NpcPerception& perception = *actor.perception;
             perception = {};
             SensingNpc npc{actor, brain, perception, *actor.senses};
-            const bool livingPlayer = player != nullptr && player->life == LifeState::Alive;
-            const bool sensesPlayer = actor.life == LifeState::Alive && livingPlayer &&
-                                      areOpponents(actor.team, player->team);
             bool heardNoise = false;
             bool sawTarget = false;
-            if (sensesPlayer)
+            if (actor.life == LifeState::Alive)
             {
-                heardNoise = hearNoises(map, npc, *player, noises);
-                sawTarget = observeTarget(map, npc, *player);
+                heardNoise = hearNoises(map, world, npc, noises);
+                sawTarget = observeOpponents(map, world, npc);
             }
             if (!heardNoise && !sawTarget)
             {

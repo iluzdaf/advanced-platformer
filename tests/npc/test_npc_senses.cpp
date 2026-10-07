@@ -80,6 +80,59 @@ TEST_CASE("NPC sight observes distance and solid tiles", "[npc][senses]")
     REQUIRE_FALSE(sees(clear, observer, target, {32.0F, 1.0F}));
 }
 
+TEST_CASE("An NPC sees the nearest living opponent, whichever actor it is", "[npc][senses]")
+{
+    const advanced_platformer::TileMap map =
+        tests::TileMapBuilder({"..........", "..........", "..........", "##########"});
+    advanced_platformer::World world;
+    const auto playerId = tests::addPlayer(world, makePlayer({72.0F, 47.0F}));
+    const auto allyId = world.addActor(makePlayer({40.0F, 47.0F}));
+    const auto npcId = world.addActor(makeNpc({8.0F, 47.0F}));
+
+    advanced_platformer::updateNpcSenses(map, world, tests::FixedStepSeconds);
+    REQUIRE(tests::component<advanced_platformer::NpcPerception>(world, npcId).targetVisible);
+    REQUIRE(tests::component<advanced_platformer::NpcBrain>(world, npcId).target == allyId);
+
+    actor(world, allyId).life = advanced_platformer::LifeState::Dying;
+    advanced_platformer::updateNpcSenses(map, world, tests::FixedStepSeconds);
+    REQUIRE(tests::component<advanced_platformer::NpcBrain>(world, npcId).target == playerId);
+}
+
+TEST_CASE("An NPC never targets its own team or a neutral actor", "[npc][senses]")
+{
+    const advanced_platformer::TileMap map =
+        tests::TileMapBuilder({"..........", "..........", "..........", "##########"});
+    advanced_platformer::World world;
+    tests::addPlayer(world, makePlayer({88.0F, 47.0F}));
+    world.addActor(makeNpc({40.0F, 47.0F}));
+    world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({24.0F, 47.0F})
+            .platforming()
+            .onTeam(advanced_platformer::Team::Neutral));
+    const auto npcId = world.addActor(makeNpc({8.0F, 47.0F}));
+
+    advanced_platformer::updateNpcSenses(map, world, tests::FixedStepSeconds);
+    REQUIRE_FALSE(tests::component<advanced_platformer::NpcPerception>(world, npcId).targetVisible);
+    REQUIRE_FALSE(tests::component<advanced_platformer::NpcBrain>(world, npcId).target.has_value());
+}
+
+TEST_CASE("An NPC hears an opponent that is not the player", "[npc][senses][noise]")
+{
+    const advanced_platformer::TileMap map =
+        tests::TileMapBuilder({"........", "..x.....", "..x.....", "########"})
+            .where('x', tests::Tile().blocksSight());
+    advanced_platformer::World world;
+    const auto allyId = world.addActor(makePlayer({56.0F, 47.0F}));
+    const auto npcId = world.addActor(makeNpc({8.0F, 47.0F}));
+    world.recordEvent(
+        {allyId, {56.0F, 47.0F}, advanced_platformer::WorldEventKind::Shot, {0.0F, 0.0F}});
+
+    advanced_platformer::updateNpcSenses(map, world, tests::FixedStepSeconds);
+    REQUIRE_FALSE(tests::component<advanced_platformer::NpcPerception>(world, npcId).targetVisible);
+    REQUIRE(tests::component<advanced_platformer::NpcBrain>(world, npcId).target == allyId);
+}
+
 TEST_CASE("A landing is heard once by a ground NPC on the same run", "[npc][senses][noise]")
 {
     const advanced_platformer::TileMap map =

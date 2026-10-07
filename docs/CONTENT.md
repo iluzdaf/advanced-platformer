@@ -274,7 +274,7 @@ fires.
 | `secondaryReady`               | As `primaryReady`, for the secondary attack.                       |                                                                                     |
 | `secondaryActive`              | As `primaryActive`, for the secondary attack.                      |                                                                                     |
 | `targetWithinStandoffDistance` | The remembered target is nearer than `standoffDistance`.           | Measured to its last known feet.                                                    |
-| `heardLanding`                 | The NPC heard the player land on its ground run.                   | For one update.                                                                     |
+| `heardLanding`                 | The NPC heard an opponent land on its ground run.                  | For one update.                                                                     |
 | `targetOnSameSurface`          | The NPC can reach its grounded target without leaving its surface. | A climber may use walls and ceilings. Ignores distance and sight.                   |
 | `targetWithinNoticeDistance`   | The remembered target is within `noticeDistance`.                  | Ignores ground and sight.                                                           |
 | `movementBlocked`              | The NPC hit a wall, or its ledge guard stopped it.                 | From the last movement update.                                                      |

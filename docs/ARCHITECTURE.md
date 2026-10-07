@@ -252,8 +252,8 @@ team, and life state, plus optional components.
 | `npc_fact_rows.cpp` | The names a machine's `when` may use, each answered from the facts                                      |
 | Lua activities      | What a state does; see [CONTENT.md](CONTENT.md#lua-activities)                                          |
 
-- Sight detects the living opponent player within notice distance with clear line of
-  sight, and stores the player's ID and feet.
+- Sight detects the nearest living actor of an opposing team within notice distance with
+  clear line of sight, and stores its ID and feet. Noises count from any living opponent.
 - Shots and landings record `WorldEvent` values with the actor's feet at the time. The
   next sensing update offers the batch to every NPC, then discards it. Shots are heard
   through walls; a landing needs a grounded observer on the same ground run. Both use
