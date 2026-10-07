@@ -83,6 +83,105 @@ namespace advanced_platformer
             return *actor;
         }
 
+        void carryAttack(std::optional<Attack>& rebuilt, const std::optional<Attack>& live)
+        {
+            if (!rebuilt.has_value() || !live.has_value() || rebuilt->index() != live->index())
+            {
+                return;
+            }
+            if (auto* bite = std::get_if<BiteAttack>(&*rebuilt))
+            {
+                const BiteAttack& was = std::get<BiteAttack>(*live);
+                bite->phase = was.phase;
+                bite->phaseTimeRemaining = was.phaseTimeRemaining;
+                bite->actorsHit = was.actorsHit;
+            }
+            else if (auto* weapon = std::get_if<RangedWeapon>(&*rebuilt))
+            {
+                const RangedWeapon& was = std::get<RangedWeapon>(*live);
+                weapon->phase = was.phase;
+                weapon->phaseTimeRemaining = was.phaseTimeRemaining;
+                weapon->lastFiredTimeSeconds = was.lastFiredTimeSeconds;
+            }
+            else if (auto* contact = std::get_if<ContactDamage>(&*rebuilt))
+            {
+                const ContactDamage& was = std::get<ContactDamage>(*live);
+                contact->active = was.active;
+                contact->actorsHit = was.actorsHit;
+            }
+            else if (auto* pounce = std::get_if<Pounce>(&*rebuilt))
+            {
+                const Pounce& was = std::get<Pounce>(*live);
+                pounce->phase = was.phase;
+                pounce->phaseTimeRemaining = was.phaseTimeRemaining;
+                pounce->launchedFrom = was.launchedFrom;
+                pounce->actorsHit = was.actorsHit;
+            }
+        }
+
+        Actor carryActorState(
+            Actor rebuilt,
+            const Actor& live,
+            const std::map<ItemId, ItemId>& itemIds,
+            const World& world)
+        {
+            rebuilt.id = live.id;
+            moveFeetTo(rebuilt.body.bounds, feetOf(live.body.bounds));
+            rebuilt.body.velocity = live.body.velocity;
+            rebuilt.intentions = live.intentions;
+            rebuilt.facing = live.facing;
+            rebuilt.life = live.life;
+            rebuilt.deathTimeRemaining = live.deathTimeRemaining;
+            rebuilt.lastDamageTimeSeconds = live.lastDamageTimeSeconds;
+            rebuilt.screenVisibility = live.screenVisibility;
+
+            if (rebuilt.platformerMovement.has_value() && live.platformerMovement.has_value())
+            {
+                const PlatformerMovementConfig config = rebuilt.platformerMovement->config;
+                rebuilt.platformerMovement = live.platformerMovement;
+                rebuilt.platformerMovement->config = config;
+            }
+            if (rebuilt.surfaceClimb.has_value() && live.surfaceClimb.has_value())
+            {
+                const SurfaceClimbConfig config = rebuilt.surfaceClimb->config;
+                rebuilt.surfaceClimb = live.surfaceClimb;
+                rebuilt.surfaceClimb->config = config;
+            }
+            carryAttack(rebuilt.primaryAttack, live.primaryAttack);
+            carryAttack(rebuilt.secondaryAttack, live.secondaryAttack);
+            if (rebuilt.animator.has_value() && live.animator.has_value())
+            {
+                rebuilt.animator->current = live.animator->current;
+                rebuilt.animator->elapsed = live.animator->elapsed;
+            }
+            if (rebuilt.health.has_value() && live.health.has_value())
+            {
+                rebuilt.health->current = std::min(live.health->current, rebuilt.health->maximum);
+            }
+            if (rebuilt.inventory.has_value() && live.inventory.has_value())
+            {
+                rebuilt.inventory = carryInventory(
+                    *live.inventory, rebuilt.inventory->slots().size(), itemIds, world);
+            }
+            if (rebuilt.brain.has_value() && live.brain.has_value())
+            {
+                rebuilt.brain = live.brain;
+            }
+            if (rebuilt.perception.has_value() && live.perception.has_value())
+            {
+                rebuilt.perception = live.perception;
+            }
+            if (rebuilt.machine.has_value() && live.machine.has_value())
+            {
+                resumeMachine(*rebuilt.machine, *live.machine);
+            }
+            if (rebuilt.patrol.has_value() && live.patrol.has_value())
+            {
+                rebuilt.patrol->headingToSecond = live.patrol->headingToSecond;
+            }
+            return rebuilt;
+        }
+
         void carryPlayer(
             GameLevel& live,
             const GameLevel& fresh,
@@ -285,108 +384,6 @@ namespace advanced_platformer
             }
         }
         return result;
-    }
-
-    namespace
-    {
-        void carryAttack(std::optional<Attack>& rebuilt, const std::optional<Attack>& live)
-        {
-            if (!rebuilt.has_value() || !live.has_value() || rebuilt->index() != live->index())
-            {
-                return;
-            }
-            if (auto* bite = std::get_if<BiteAttack>(&*rebuilt))
-            {
-                const BiteAttack& was = std::get<BiteAttack>(*live);
-                bite->phase = was.phase;
-                bite->phaseTimeRemaining = was.phaseTimeRemaining;
-                bite->actorsHit = was.actorsHit;
-            }
-            else if (auto* weapon = std::get_if<RangedWeapon>(&*rebuilt))
-            {
-                const RangedWeapon& was = std::get<RangedWeapon>(*live);
-                weapon->phase = was.phase;
-                weapon->phaseTimeRemaining = was.phaseTimeRemaining;
-                weapon->lastFiredTimeSeconds = was.lastFiredTimeSeconds;
-            }
-            else if (auto* contact = std::get_if<ContactDamage>(&*rebuilt))
-            {
-                const ContactDamage& was = std::get<ContactDamage>(*live);
-                contact->active = was.active;
-                contact->actorsHit = was.actorsHit;
-            }
-            else if (auto* pounce = std::get_if<Pounce>(&*rebuilt))
-            {
-                const Pounce& was = std::get<Pounce>(*live);
-                pounce->phase = was.phase;
-                pounce->phaseTimeRemaining = was.phaseTimeRemaining;
-                pounce->launchedFrom = was.launchedFrom;
-                pounce->actorsHit = was.actorsHit;
-            }
-        }
-    }
-
-    Actor carryActorState(
-        Actor rebuilt,
-        const Actor& live,
-        const std::map<ItemId, ItemId>& itemIds,
-        const World& world)
-    {
-        rebuilt.id = live.id;
-        moveFeetTo(rebuilt.body.bounds, feetOf(live.body.bounds));
-        rebuilt.body.velocity = live.body.velocity;
-        rebuilt.intentions = live.intentions;
-        rebuilt.facing = live.facing;
-        rebuilt.life = live.life;
-        rebuilt.deathTimeRemaining = live.deathTimeRemaining;
-        rebuilt.lastDamageTimeSeconds = live.lastDamageTimeSeconds;
-        rebuilt.screenVisibility = live.screenVisibility;
-
-        if (rebuilt.platformerMovement.has_value() && live.platformerMovement.has_value())
-        {
-            const PlatformerMovementConfig config = rebuilt.platformerMovement->config;
-            rebuilt.platformerMovement = live.platformerMovement;
-            rebuilt.platformerMovement->config = config;
-        }
-        if (rebuilt.surfaceClimb.has_value() && live.surfaceClimb.has_value())
-        {
-            const SurfaceClimbConfig config = rebuilt.surfaceClimb->config;
-            rebuilt.surfaceClimb = live.surfaceClimb;
-            rebuilt.surfaceClimb->config = config;
-        }
-        carryAttack(rebuilt.primaryAttack, live.primaryAttack);
-        carryAttack(rebuilt.secondaryAttack, live.secondaryAttack);
-        if (rebuilt.animator.has_value() && live.animator.has_value())
-        {
-            rebuilt.animator->current = live.animator->current;
-            rebuilt.animator->elapsed = live.animator->elapsed;
-        }
-        if (rebuilt.health.has_value() && live.health.has_value())
-        {
-            rebuilt.health->current = std::min(live.health->current, rebuilt.health->maximum);
-        }
-        if (rebuilt.inventory.has_value() && live.inventory.has_value())
-        {
-            rebuilt.inventory =
-                carryInventory(*live.inventory, rebuilt.inventory->slots().size(), itemIds, world);
-        }
-        if (rebuilt.brain.has_value() && live.brain.has_value())
-        {
-            rebuilt.brain = live.brain;
-        }
-        if (rebuilt.perception.has_value() && live.perception.has_value())
-        {
-            rebuilt.perception = live.perception;
-        }
-        if (rebuilt.machine.has_value() && live.machine.has_value())
-        {
-            resumeMachine(*rebuilt.machine, *live.machine);
-        }
-        if (rebuilt.patrol.has_value() && live.patrol.has_value())
-        {
-            rebuilt.patrol->headingToSecond = live.patrol->headingToSecond;
-        }
-        return rebuilt;
     }
 
     LevelReload reloadLevel(

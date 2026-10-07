@@ -8,11 +8,8 @@
 
 namespace advanced_platformer
 {
-    // Data-driven NPC state machines by name. Every NPC's actor definition names the one it
-    // runs.
     using MachineCatalog = std::map<std::string, NpcStateMachine>;
 
-    void validateMachineCatalog(const MachineCatalog& catalog);
     MachineCatalog parseMachineCatalog(std::string_view text, std::string_view sourceName);
     MachineCatalog loadMachineCatalog(const std::filesystem::path& path);
     const NpcStateMachine& npcStateMachine(const MachineCatalog& catalog, const std::string& name);

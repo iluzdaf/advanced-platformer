@@ -24,8 +24,6 @@ namespace advanced_platformer
         const AnimationCatalog& animations,
         const MachineCatalog& machines = {});
 
-    // Rejects the first projectile sprite that runs past an atlas of this size, naming its
-    // field. Actors' own sprites are animation frames, which the animation catalog checks.
     void validateActorAtlasRegions(
         const ActorCatalog& catalog,
         glm::ivec2 atlasSize,
@@ -33,11 +31,6 @@ namespace advanced_platformer
 
     ActorCatalog loadActorCatalog(
         const std::filesystem::path& path,
-        const AnimationCatalog& animations,
-        const MachineCatalog& machines = {});
-
-    void validateActorCatalog(
-        const ActorCatalog& catalog,
         const AnimationCatalog& animations,
         const MachineCatalog& machines = {});
 

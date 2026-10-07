@@ -15,8 +15,6 @@
 
 namespace advanced_platformer
 {
-    // hud.json as written: its member names are the file's keys. Glaze reflects only types
-    // with linkage, so these cannot go in an anonymous namespace.
     struct HudIconJson
     {
         glm::vec2 position{};
@@ -45,13 +43,13 @@ namespace advanced_platformer
         {
             return {json.position, json.size};
         }
-    }
 
-    void validateHudIcons(const HudIcons& icons)
-    {
-        validateHudIcon(icons.fullHeart, "fullHeart");
-        validateHudIcon(icons.emptyHeart, "emptyHeart");
-        validateHudIcon(icons.bag, "bag");
+        void validateHudIcons(const HudIcons& icons)
+        {
+            validateHudIcon(icons.fullHeart, "fullHeart");
+            validateHudIcon(icons.emptyHeart, "emptyHeart");
+            validateHudIcon(icons.bag, "bag");
+        }
     }
 
     HudIcons parseHudIcons(std::string_view text, std::string_view sourceName)

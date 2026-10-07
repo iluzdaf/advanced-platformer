@@ -25,7 +25,6 @@ namespace advanced_platformer
 
     void validateLevelExit(const LevelExit& exit);
 
-    bool exitUnlocked(const LevelExit& exit, const Actor& actor);
     bool exitOpening(const World& world);
     void updateLevelExit(World& world);
 }

@@ -364,6 +364,11 @@ namespace advanced_platformer
         return worldToScreen(renderCamera(), topCenterOf(levelExit.value().bounds));
     }
 
+    namespace
+    {
+        constexpr float LockedExitHintSeconds = 1.0F;
+    }
+
     std::optional<Sprite> Game::lockedExitHintIcon() const
     {
         const auto& levelExit = level.world.exit();

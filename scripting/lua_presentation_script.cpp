@@ -98,20 +98,20 @@ namespace advanced_platformer
             }
             return effects;
         }
-    }
 
-    std::string_view presentationHookName(WorldEventKind kind)
-    {
-        switch (kind)
+        std::string_view presentationHookName(WorldEventKind kind)
         {
-        case WorldEventKind::Landing:
-            return "onLanding";
-        case WorldEventKind::Shot:
-            return "onShot";
-        case WorldEventKind::Knockback:
-            return "onKnockback";
+            switch (kind)
+            {
+            case WorldEventKind::Landing:
+                return "onLanding";
+            case WorldEventKind::Shot:
+                return "onShot";
+            case WorldEventKind::Knockback:
+                return "onKnockback";
+            }
+            return "";
         }
-        return "";
     }
 
     struct LuaPresentationScript::Implementation

@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "level_composition.hpp"
-#include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/inventory/item.hpp"
 
 namespace advanced_platformer
@@ -22,12 +21,6 @@ namespace advanced_platformer
     };
 
     std::map<ItemId, ItemId> matchItemIds(const ItemCatalog& before, const ItemCatalog& after);
-
-    Actor carryActorState(
-        Actor rebuilt,
-        const Actor& live,
-        const std::map<ItemId, ItemId>& itemIds,
-        const World& world);
 
     LevelReload reloadLevel(
         GameLevel& live,

@@ -21,8 +21,6 @@
 
 namespace advanced_platformer
 {
-    constexpr float LockedExitHintSeconds = 1.0F;
-
     enum class LevelChange : std::uint8_t
     {
         NewRun,

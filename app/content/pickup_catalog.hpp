@@ -17,21 +17,17 @@ namespace advanced_platformer
     struct PickupDefinition
     {
         NamedItemStack stack;
-        // Content declares it; composition rejects a size left at zero.
         glm::vec2 bodySize = {0.0F, 0.0F};
-        // Absent means use the inventory item's icon in the world too.
         std::optional<Sprite> sprite;
     };
 
     using PickupCatalog = std::map<std::string, PickupDefinition>;
     void validatePickupDefinition(const PickupDefinition& definition, const ItemCatalog& items);
-    void validatePickupCatalog(const PickupCatalog& catalog, const ItemCatalog& items);
     PickupCatalog parsePickupCatalog(
         std::string_view text,
         std::string_view sourceName,
         const ItemCatalog& items);
     PickupCatalog loadPickupCatalog(const std::filesystem::path& path, const ItemCatalog& items);
-    // Rejects the first pickup sprite that runs past an atlas of this size, naming its field.
     void validatePickupAtlasRegions(
         const PickupCatalog& catalog,
         glm::ivec2 atlasSize,

@@ -21,8 +21,6 @@
 
 namespace advanced_platformer
 {
-    // pickups.json as written: its member names are the file's keys. Glaze reflects only
-    // types with linkage, so these cannot go in an anonymous namespace.
     struct PickupJson
     {
         std::string item;
@@ -49,21 +47,24 @@ namespace advanced_platformer
         }
     }
 
-    void validatePickupCatalog(const PickupCatalog& catalog, const ItemCatalog& items)
+    namespace
     {
-        for (const auto& entry : catalog)
+        void validatePickupCatalog(const PickupCatalog& catalog, const ItemCatalog& items)
         {
-            try
+            for (const auto& entry : catalog)
             {
-                if (entry.first.empty())
+                try
                 {
-                    throw std::invalid_argument("pickup name cannot be empty");
+                    if (entry.first.empty())
+                    {
+                        throw std::invalid_argument("pickup name cannot be empty");
+                    }
+                    validatePickupDefinition(entry.second, items);
                 }
-                validatePickupDefinition(entry.second, items);
-            }
-            catch (const std::invalid_argument& error)
-            {
-                failJson({}, fieldPath("pickups", entry.first), error.what());
+                catch (const std::invalid_argument& error)
+                {
+                    failJson({}, fieldPath("pickups", entry.first), error.what());
+                }
             }
         }
     }

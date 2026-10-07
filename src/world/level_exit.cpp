@@ -61,18 +61,21 @@ namespace advanced_platformer
         completed = true;
     }
 
-    bool exitUnlocked(const LevelExit& exit, const Actor& actor)
-    {
-        return !exit.requirement.has_value() ||
-               (actor.inventory.has_value() &&
-                actor.inventory->count(exit.requirement->item) >= exit.requirement->quantity);
-    }
-
     bool exitOpening(const World& world)
     {
         const auto& levelExit = world.exit();
         return levelExit.has_value() && levelExit->openedTimeSeconds.has_value() &&
                !world.levelComplete();
+    }
+
+    namespace
+    {
+        bool exitUnlocked(const LevelExit& exit, const Actor& actor)
+        {
+            return !exit.requirement.has_value() ||
+                   (actor.inventory.has_value() &&
+                    actor.inventory->count(exit.requirement->item) >= exit.requirement->quantity);
+        }
     }
 
     void updateLevelExit(World& world)
