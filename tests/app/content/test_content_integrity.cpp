@@ -15,14 +15,26 @@
 #include "lua_npc_scripts.hpp"
 #include "lua_presentation_script.hpp"
 #include "support/atlas_size.hpp"
-#include "support/run_levels.hpp"
+
+namespace
+{
+    int levelsUntilCap(const advanced_platformer::RunSettings& run)
+    {
+        if (run.roomsPerLevel <= 0 || run.firstRooms >= run.maxRooms)
+        {
+            return 1;
+        }
+        const int growth = run.maxRooms - run.firstRooms;
+        return 1 + ((growth + run.roomsPerLevel - 1) / run.roomsPerLevel);
+    }
+}
 
 TEST_CASE("Every run level can be composed until the rooms stop growing", "[app][content]")
 {
     const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/catalogs/pieces.json");
     const auto catalogs =
         advanced_platformer::loadGameCatalogs("assets/catalogs", tests::UncheckedAtlasSize);
-    for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
+    for (int number = 1; number <= levelsUntilCap(pieces.run); ++number)
     {
         const auto content = advanced_platformer::composeLevel(
             pieces,
