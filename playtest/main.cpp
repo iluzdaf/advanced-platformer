@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <exception>
+#include <filesystem>
 #include <iostream>
 #include <span>
 #include <stdexcept>
@@ -10,6 +11,7 @@
 #include <string_view>
 #include <system_error>
 #include <utility>
+#include <vector>
 
 #include "content/game_content.hpp"
 #include "game.hpp"
@@ -41,36 +43,67 @@ namespace
         return value;
     }
 
-    int runPlaytest(std::span<char*> arguments)
+    struct PlaytestArguments
     {
-        if (arguments.size() < 3 || arguments.size() > 4)
+        std::uint32_t runSeed = 0;
+        int levels = 0;
+        float secondsPerLevel = DefaultSecondsPerLevel;
+        std::filesystem::path botDirectory = PlaytestAssetDirectory;
+    };
+
+    PlaytestArguments parsedArguments(std::span<char*> arguments)
+    {
+        PlaytestArguments parsed;
+        std::vector<std::string_view> positional;
+        for (std::size_t index = 1; index < arguments.size(); ++index)
         {
-            std::cerr << "Usage: advanced_platformer_playtest <run seed> <levels> "
-                         "[seconds per level]\n";
-            return EXIT_FAILURE;
+            const std::string_view argument = arguments[index];
+            if (argument == "--bot")
+            {
+                if (index + 1 == arguments.size())
+                {
+                    throw std::invalid_argument("--bot needs a directory");
+                }
+                parsed.botDirectory = arguments[++index];
+            }
+            else
+            {
+                positional.push_back(argument);
+            }
         }
-        const auto runSeed = parsedArgument<std::uint32_t>(arguments[1], "The run seed");
-        const int levels = parsedArgument<int>(arguments[2], "The level count");
-        const float secondsPerLevel = arguments.size() == 4
-                                          ? parsedArgument<float>(arguments[3], "The seconds")
-                                          : DefaultSecondsPerLevel;
-        if (levels < 1 || !(secondsPerLevel > 0.0F))
+        if (positional.size() < 2 || positional.size() > 3)
+        {
+            throw std::invalid_argument(
+                "the arguments are <run seed> <levels> [seconds per level] [--bot <directory>]");
+        }
+        parsed.runSeed = parsedArgument<std::uint32_t>(positional[0], "The run seed");
+        parsed.levels = parsedArgument<int>(positional[1], "The level count");
+        if (positional.size() == 3)
+        {
+            parsed.secondsPerLevel = parsedArgument<float>(positional[2], "The seconds");
+        }
+        if (parsed.levels < 1 || !(parsed.secondsPerLevel > 0.0F))
         {
             throw std::invalid_argument("The level count and seconds must be positive");
         }
+        return parsed;
+    }
 
+    int runPlaytest(std::span<char*> arguments)
+    {
+        const PlaytestArguments parsed = parsedArguments(arguments);
         constexpr auto StepSeconds = static_cast<float>(advanced_platformer::FixedDeltaSeconds);
         advanced_platformer::GameContent content = advanced_platformer::playtestContent(
-            advanced_platformer::loadGameContent(AssetDirectory), PlaytestAssetDirectory);
+            advanced_platformer::loadGameContent(AssetDirectory), parsed.botDirectory);
         advanced_platformer::Game game{
             0,
             std::move(content.gameCatalogs),
             std::move(content.npcScripts),
             std::move(content.presentation),
             StepSeconds,
-            runSeed};
-        for (const advanced_platformer::LevelPlaytest& level :
-             advanced_platformer::playtestRun(game, levels, secondsPerLevel, StepSeconds))
+            parsed.runSeed};
+        for (const advanced_platformer::LevelPlaytest& level : advanced_platformer::playtestRun(
+                 game, parsed.levels, parsed.secondsPerLevel, StepSeconds))
         {
             std::cout << advanced_platformer::formatLevelPlaytest(level) << '\n';
         }
