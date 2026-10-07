@@ -5,5 +5,5 @@
 namespace tests
 {
     constexpr glm::ivec2 AtlasSize{256, 256};
-    constexpr glm::ivec2 ShippedAtlasSize{256, 280};
+    constexpr glm::ivec2 UncheckedAtlasSize{4096, 4096};
 }

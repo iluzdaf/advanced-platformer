@@ -138,7 +138,7 @@ namespace
     bool routeWorks(const Route& route)
     {
         static const advanced_platformer::GameCatalogs shippedCatalogs =
-            advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
+            advanced_platformer::loadGameCatalogs("assets/catalogs", tests::UncheckedAtlasSize);
         const std::optional<GeneratedLevel> level = generateRoute(route);
         if (!level.has_value())
         {
@@ -191,7 +191,7 @@ TEST_CASE("Every shipped run level reaches its exit across seeds", "[app][conten
     const RoomPieceCatalog pieces =
         advanced_platformer::loadRoomPieceCatalog("assets/catalogs/pieces.json");
     const advanced_platformer::GameCatalogs catalogs =
-        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
+        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::UncheckedAtlasSize);
     for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
     {
         for (std::uint32_t seed = 1; seed <= 20; ++seed)

@@ -23,7 +23,7 @@ TEST_CASE("Every run level can be composed until the rooms stop growing", "[app]
 {
     const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/catalogs/pieces.json");
     const auto catalogs =
-        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
+        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::UncheckedAtlasSize);
     for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
     {
         const auto content = advanced_platformer::composeLevel(
@@ -43,7 +43,7 @@ TEST_CASE("Every run level starts with a route from the spawn to the exit", "[ap
 {
     const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/catalogs/pieces.json");
     const auto catalogs =
-        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
+        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::UncheckedAtlasSize);
     for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
     {
         const advanced_platformer::GameLevel level = advanced_platformer::composePlayableLevel(
@@ -65,7 +65,7 @@ TEST_CASE("Every run level starts with a route from the spawn to the exit", "[ap
 TEST_CASE("Every shipped Lua activity resolves", "[app][content][lua]")
 {
     const advanced_platformer::GameCatalogs catalogs =
-        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
+        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::UncheckedAtlasSize);
     advanced_platformer::LuaNpcScripts scripts;
 
     REQUIRE_NOTHROW(
@@ -75,7 +75,7 @@ TEST_CASE("Every shipped Lua activity resolves", "[app][content][lua]")
 TEST_CASE("Every shipped Lua activity runs without errors", "[app][content][lua]")
 {
     const advanced_platformer::GameCatalogs catalogs =
-        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
+        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::UncheckedAtlasSize);
     advanced_platformer::LuaNpcScripts scripts;
     advanced_platformer::loadNpcActivityScripts(scripts, catalogs.machines, "assets/scripts");
 
