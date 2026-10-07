@@ -28,7 +28,6 @@ namespace advanced_platformer
             const std::string& script,
             std::string_view source,
             std::string sourceName = "Lua script");
-        bool hasScript(std::string_view script) const;
         bool hasActivity(const NpcActivity& activity) const;
 
         void enter(ActorId actor, const NpcActivity& activity, const NpcActivitySnapshot& snapshot)

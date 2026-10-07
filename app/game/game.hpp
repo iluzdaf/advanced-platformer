@@ -71,7 +71,6 @@ namespace advanced_platformer
         std::uint32_t levelSeed() const;
         std::uint32_t runSeed() const;
         std::optional<glm::vec2> levelExitScreenPosition() const;
-        bool exitReady() const;
         std::optional<Sprite> lockedExitHintIcon() const;
         const HudIcons& hudIcons() const;
         std::vector<LuaScriptDiagnostic> takeScriptDiagnostics();
