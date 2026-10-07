@@ -12,6 +12,13 @@
 
 namespace advanced_platformer
 {
+    struct GeneratedRoom
+    {
+        std::string piece;
+        Cell origin;
+        GridSize size;
+    };
+
     struct GeneratedLevel
     {
         std::map<char, std::string> tileLegend;
@@ -20,6 +27,7 @@ namespace advanced_platformer
         std::vector<ActorPlacement> actors;
         std::vector<PickupPlacement> pickups;
         ExitPlacement exit;
+        std::vector<GeneratedRoom> rooms;
     };
 
     GeneratedLevel generateLevel(

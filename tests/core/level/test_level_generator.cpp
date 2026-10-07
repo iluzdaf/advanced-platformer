@@ -126,6 +126,33 @@ TEST_CASE("Stitched rooms share the wall between them", "[app][content][generati
     }
 }
 
+TEST_CASE("A generated level names the piece in each room", "[app][content][generation]")
+{
+    const RoomPieces catalog = fixtureCatalog({5, 1}, 5);
+    for (std::uint32_t seed = 1; seed <= 10; ++seed)
+    {
+        const GeneratedLevel level =
+            advanced_platformer::generateLevel(catalog, 1, seed, "pieces.json");
+        INFO("seed " << seed);
+
+        REQUIRE(level.rooms.size() == 5);
+        REQUIRE(level.rooms.front().piece == "start");
+        REQUIRE(level.rooms.front().origin == Cell{14, 0});
+        std::multiset<std::string> pieces;
+        std::set<int> columns;
+        for (const advanced_platformer::GeneratedRoom& room : level.rooms)
+        {
+            REQUIRE(room.size.width == 8);
+            REQUIRE(room.size.height == 6);
+            REQUIRE(room.origin.y == 0);
+            pieces.insert(room.piece);
+            columns.insert(room.origin.x);
+        }
+        REQUIRE(pieces == std::multiset<std::string>{"exit", "hall", "hall", "start", "store"});
+        REQUIRE(columns == std::set<int>{0, 7, 14, 21, 28});
+    }
+}
+
 TEST_CASE("A mirrored piece flips its placements with its map", "[app][content][generation]")
 {
     RoomPieces catalog = fixtureCatalog({2, 1}, 2);

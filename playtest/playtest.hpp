@@ -21,6 +21,15 @@ namespace advanced_platformer
         Timeout
     };
 
+    struct PacingSample
+    {
+        float seconds = 0.0F;
+        int health = 0;
+        int damage = 0;
+        int npcsNear = 0;
+        std::string piece;
+    };
+
     struct LevelPlaytest
     {
         std::uint32_t runSeed = 0;
@@ -34,6 +43,7 @@ namespace advanced_platformer
         int pickupsPlaced = 0;
         int pickupsCollected = 0;
         std::vector<std::string> scriptErrors;
+        std::vector<PacingSample> pacing;
     };
 
     GameContent playtestContent(GameContent content, const std::filesystem::path& botDirectory);

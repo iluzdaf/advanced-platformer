@@ -274,6 +274,7 @@ namespace advanced_platformer
                 const Cell origin{
                     (slot.grid.x - least.x) * stride.width,
                     (slot.grid.y - least.y) * stride.height};
+                level.rooms.push_back({.piece = piece.name, .origin = origin, .size = size});
                 const auto placed = [&](Cell cell)
                 {
                     const int column = choice.mirrored ? size.width - 1 - cell.x : cell.x;
