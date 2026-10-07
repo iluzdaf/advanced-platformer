@@ -14,7 +14,6 @@
 #include "content/room_pieces.hpp"
 #include "game/level_generator.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
-#include "support/atlas_size.hpp"
 #include "support/player_reach.hpp"
 
 namespace
@@ -137,7 +136,7 @@ namespace
     bool routeWorks(const Route& route)
     {
         static const advanced_platformer::GameCatalogs shippedCatalogs =
-            advanced_platformer::loadGameCatalogs("assets/catalogs", tests::UncheckedAtlasSize);
+            advanced_platformer::loadGameCatalogs("assets/catalogs");
         const std::optional<GeneratedLevel> level = generateRoute(route);
         if (!level.has_value())
         {

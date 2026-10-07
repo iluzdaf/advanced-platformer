@@ -2,9 +2,12 @@
 
 #include <exception>
 #include <filesystem>
+
+#include <glm/vec2.hpp>
 #include <format>
 #include <utility>
 
+#include "content/atlas_regions.hpp"
 #include "content/game_content.hpp"
 #include "debug/console_log.hpp"
 #include "game/game.hpp"
@@ -20,6 +23,15 @@ namespace advanced_platformer
         Image loadAtlas(const std::filesystem::path& assetDirectory)
         {
             return loadImage((assetDirectory / "textures" / "sprites.png").string());
+        }
+
+        GameContent loadContentForAtlas(
+            const std::filesystem::path& assetDirectory,
+            glm::ivec2 atlasSize)
+        {
+            GameContent content = loadGameContent(assetDirectory);
+            validateAtlasRegions(content.gameCatalogs, atlasSize, assetDirectory / "catalogs");
+            return content;
         }
     }
 
@@ -40,7 +52,7 @@ namespace advanced_platformer
     GameContent ContentSession::load() const
     {
         const Texture texture = atlas();
-        return loadGameContent(assetDirectory, {texture.width, texture.height});
+        return loadContentForAtlas(assetDirectory, {texture.width, texture.height});
     }
 
     bool ContentSession::assetsChanged()
@@ -60,7 +72,7 @@ namespace advanced_platformer
         {
             const Image image = loadAtlas(assetDirectory);
             const LevelReload reload =
-                game.reload(loadGameContent(assetDirectory, {image.width, image.height}));
+                game.reload(loadContentForAtlas(assetDirectory, {image.width, image.height}));
             renderer.replaceTexture(textureId, image);
             console.write(ConsoleLevel::Info, describeReload(reload));
         }

@@ -5,14 +5,12 @@
 
 #include <filesystem>
 
-#include <glm/vec2.hpp>
-
 namespace advanced_platformer
 {
-    GameContent loadGameContent(const std::filesystem::path& assetDirectory, glm::ivec2 atlasSize)
+    GameContent loadGameContent(const std::filesystem::path& assetDirectory)
     {
         GameContent content;
-        content.gameCatalogs = loadGameCatalogs(assetDirectory / "catalogs", atlasSize);
+        content.gameCatalogs = loadGameCatalogs(assetDirectory / "catalogs");
         loadNpcActivityScripts(
             content.npcScripts, content.gameCatalogs.machines, assetDirectory / "scripts");
         content.presentation.loadScript(assetDirectory / "scripts" / "presentation.lua");

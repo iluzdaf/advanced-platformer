@@ -2,8 +2,6 @@
 
 #include <filesystem>
 
-#include <glm/vec2.hpp>
-
 #include "actor_catalog.hpp"
 #include "animation_catalog.hpp"
 #include "camera_settings.hpp"
@@ -31,12 +29,5 @@ namespace advanced_platformer
         RoomPieceCatalog pieces;
     };
 
-    GameCatalogs loadGameCatalogs(
-        const std::filesystem::path& catalogDirectory,
-        glm::ivec2 atlasSize);
-
-    void validateAtlasRegions(
-        const GameCatalogs& catalogs,
-        glm::ivec2 atlasSize,
-        const std::filesystem::path& catalogDirectory);
+    GameCatalogs loadGameCatalogs(const std::filesystem::path& catalogDirectory);
 }

@@ -6,10 +6,10 @@
 
 #include <glm/vec2.hpp>
 
+#include "content/atlas_regions.hpp"
 #include "content/game_catalogs.hpp"
 #include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/render/sprite.hpp"
-#include "support/atlas_size.hpp"
 
 namespace
 {
@@ -20,7 +20,7 @@ namespace
 TEST_CASE("Catalog regions inside the atlas pass", "[app][content][atlas]")
 {
     const advanced_platformer::GameCatalogs catalogs =
-        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
+        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs");
 
     REQUIRE_NOTHROW(
         advanced_platformer::validateAtlasRegions(catalogs, Atlas, "tests/fixtures/catalogs"));
@@ -29,7 +29,7 @@ TEST_CASE("Catalog regions inside the atlas pass", "[app][content][atlas]")
 TEST_CASE("A region past the atlas is reported by its file and field", "[app][content][atlas]")
 {
     advanced_platformer::GameCatalogs catalogs =
-        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
+        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs");
     std::string expected;
     SECTION("A tile sprite")
     {

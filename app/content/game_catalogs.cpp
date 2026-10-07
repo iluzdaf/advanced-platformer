@@ -13,13 +13,9 @@
 
 #include <filesystem>
 
-#include <glm/vec2.hpp>
-
 namespace advanced_platformer
 {
-    GameCatalogs loadGameCatalogs(
-        const std::filesystem::path& catalogDirectory,
-        glm::ivec2 atlasSize)
+    GameCatalogs loadGameCatalogs(const std::filesystem::path& catalogDirectory)
     {
         GameCatalogs catalogs;
         catalogs.tiles = loadTileCatalog(catalogDirectory / "tiles.json");
@@ -33,28 +29,6 @@ namespace advanced_platformer
         catalogs.hudIcons = loadHudIcons(catalogDirectory / "hud.json");
         catalogs.camera = loadCameraSettings(catalogDirectory / "camera.json");
         catalogs.pieces = loadRoomPieceCatalog(catalogDirectory / "pieces.json");
-        validateAtlasRegions(catalogs, atlasSize, catalogDirectory);
         return catalogs;
-    }
-
-    void validateAtlasRegions(
-        const GameCatalogs& catalogs,
-        glm::ivec2 atlasSize,
-        const std::filesystem::path& catalogDirectory)
-    {
-        validateTileAtlasRegions(
-            catalogs.tiles, atlasSize, (catalogDirectory / "tiles.json").string());
-        validateAnimationAtlasRegions(
-            catalogs.animations, atlasSize, (catalogDirectory / "animations.json").string());
-        validateActorAtlasRegions(
-            catalogs.actors, atlasSize, (catalogDirectory / "actors.json").string());
-        validateItemAtlasRegions(
-            catalogs.items, atlasSize, (catalogDirectory / "items.json").string());
-        validatePickupAtlasRegions(
-            catalogs.pickups, atlasSize, (catalogDirectory / "pickups.json").string());
-        validateExitAtlasRegions(
-            catalogs.exits, atlasSize, (catalogDirectory / "exits.json").string());
-        validateHudAtlasRegions(
-            catalogs.hudIcons, atlasSize, (catalogDirectory / "hud.json").string());
     }
 }
