@@ -1,6 +1,8 @@
 #include "advanced_platformer/npc/npc_activity_runner.hpp"
 
+#include <cstddef>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include <glm/vec2.hpp>
@@ -23,6 +25,7 @@
 #include "advanced_platformer/world/pickup.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
 #include "advanced_platformer/world/world.hpp"
+#include "advanced_platformer/world/world_requests.hpp"
 
 namespace advanced_platformer
 {
@@ -57,6 +60,7 @@ namespace advanced_platformer
             NpcActivitySnapshot snapshot;
             snapshot.feet = feetOf(actor.body.bounds);
             snapshot.center = centerOf(actor.body.bounds);
+            snapshot.health = actor.health;
             snapshot.patrol = actor.patrol;
             if (actor.platformerMovement.has_value())
             {
@@ -89,6 +93,27 @@ namespace advanced_platformer
             return snapshot;
         }
 
+        std::optional<std::size_t> slotHolding(
+            const World& world,
+            const Actor& actor,
+            const std::string& item)
+        {
+            if (!actor.inventory.has_value())
+            {
+                return std::nullopt;
+            }
+            const auto& slots = actor.inventory->slots();
+            for (std::size_t slot = 0; slot < slots.size(); ++slot)
+            {
+                const std::optional<ItemStack>& stack = slots[slot];
+                if (stack.has_value() && world.itemDefinition(stack->item).name == item)
+                {
+                    return slot;
+                }
+            }
+            return std::nullopt;
+        }
+
         void applyScriptCommand(
             const NpcUpdate& update,
             Actor& actor,
@@ -116,6 +141,15 @@ namespace advanced_platformer
             if (command.turnPatrol && actor.patrol.has_value())
             {
                 actor.patrol->headingToSecond = !actor.patrol->headingToSecond;
+            }
+            if (command.useItem.has_value())
+            {
+                if (const std::optional<std::size_t> slot =
+                        slotHolding(update.world, actor, *command.useItem);
+                    slot.has_value())
+                {
+                    update.requests.useItem(actor.id, *slot);
+                }
             }
         }
     }

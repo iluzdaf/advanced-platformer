@@ -6,6 +6,7 @@
 
 #include <glm/vec2.hpp>
 
+#include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/input/input_state.hpp"
 #include "advanced_platformer/navigation/navigation_path.hpp"
@@ -34,6 +35,7 @@ namespace advanced_platformer
     {
         glm::vec2 feet = {0.0F, 0.0F};
         glm::vec2 center = {0.0F, 0.0F};
+        std::optional<Health> health;
         std::optional<glm::vec2> targetFeet;
         glm::vec2 lastKnownTargetFeet = {0.0F, 0.0F};
         std::optional<glm::vec2> targetCenter;
@@ -53,6 +55,7 @@ namespace advanced_platformer
         std::optional<glm::vec2> aimAt;
         bool clearRoute = false;
         bool turnPatrol = false;
+        std::optional<std::string> useItem;
     };
 
     class NpcActivityScripts

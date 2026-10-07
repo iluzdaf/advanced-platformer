@@ -94,6 +94,20 @@ TEST_CASE("Lua movement and contact requests require booleans", "[lua][npc]")
     REQUIRE_THAT(scripts.diagnostics().back().message, Catch::Matchers::ContainsSubstring(field));
 }
 
+TEST_CASE("A Lua item use names an item", "[lua][npc]")
+{
+    advanced_platformer::LuaNpcScripts scripts;
+    scripts.loadScriptText(
+        "example", "return {activities={decide={update=function() return {useItem=2} end}}}");
+    const advanced_platformer::NpcActivitySnapshot snapshot;
+    scripts.enter(FirstActor, Activity, snapshot);
+    const auto command = scripts.update(FirstActor, Activity, snapshot, 0.1F);
+    REQUIRE_FALSE(command.useItem.has_value());
+    REQUIRE_THAT(
+        scripts.diagnostics().back().message,
+        Catch::Matchers::ContainsSubstring("command.useItem must be an item name"));
+}
+
 TEST_CASE("A Lua climb grip is named, and keeps the grip when left out", "[lua][npc]")
 {
     std::string value;

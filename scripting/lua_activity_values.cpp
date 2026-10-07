@@ -151,6 +151,15 @@ namespace advanced_platformer
         };
         result["feet"] = luaVector(lua, snapshot.feet);
         result["center"] = luaVector(lua, snapshot.center);
+        if (snapshot.health.has_value())
+        {
+            result["health"] = lua.create_table_with(
+                "current", snapshot.health->current, "maximum", snapshot.health->maximum);
+        }
+        else
+        {
+            result["health"] = sol::lua_nil;
+        }
         result["targetFeet"] = optionalVector(snapshot.targetFeet);
         result["lastKnownTargetFeet"] = luaVector(lua, snapshot.lastKnownTargetFeet);
         result["targetCenter"] = optionalVector(snapshot.targetCenter);
@@ -241,7 +250,8 @@ namespace advanced_platformer
              "routeTo",
              "aimAt",
              "clearRoute",
-             "turnPatrol"},
+             "turnPatrol",
+             "useItem"},
             "an activity command");
 
         const auto readVector = [&](std::string_view name, glm::vec2& destination)
@@ -290,6 +300,15 @@ namespace advanced_platformer
         readOptionalVector("aimAt", command.aimAt);
         readBoolean("clearRoute", command.clearRoute);
         readBoolean("turnPatrol", command.turnPatrol);
+        const sol::object useItem = table.get<sol::object>("useItem");
+        if (useItem.valid() && useItem.get_type() != sol::type::lua_nil)
+        {
+            if (useItem.get_type() != sol::type::string)
+            {
+                throw std::invalid_argument("command.useItem must be an item name");
+            }
+            command.useItem = useItem.as<std::string>();
+        }
         return command;
     }
 }

@@ -293,6 +293,7 @@ or `nil`. [`common.lua`](../game/assets/scripts/common.lua) has `idle`, `patrol`
 | Snapshot              | Meaning                                                                                                                                                                           |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `feet`, `center`      | The NPC's feet and body centre.                                                                                                                                                   |
+| `health`              | `current` and `maximum`, when the NPC has health.                                                                                                                                 |
 | `targetFeet`          | The target's known feet, while it is known.                                                                                                                                       |
 | `lastKnownTargetFeet` | Where the target was last seen or heard; `{0, 0}` before any.                                                                                                                     |
 | `targetCenter`        | The living target's body centre now, seen or not.                                                                                                                                 |
@@ -316,6 +317,7 @@ or `nil`. [`common.lua`](../game/assets/scripts/common.lua) has `idle`, `patrol`
 | `aimAt`                                          | Aim at a point.                                                                  |
 | `clearRoute`                                     | Drop the current route.                                                          |
 | `turnPatrol`                                     | Head for the patrol's other end.                                                 |
+| `useItem`                                        | Use an item from the bag by its name in `items.json`, as the player would.       |
 
 Positions are `vec2` values, made with `vec2(x, y)`. They have `x` and `y`, `+`, `-`,
 `*` and `/` by a number, `==`, `tostring`, and the methods `length()`, `distance(v)`,

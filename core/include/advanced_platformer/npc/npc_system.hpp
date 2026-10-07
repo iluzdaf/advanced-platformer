@@ -6,13 +6,12 @@ namespace advanced_platformer
     struct FrameProfile;
     class TileMap;
     class World;
+    class WorldRequests;
 
-    // Chooses each NPC's state and runs its activity through the scripts, searching the
-    // world's navigation for paths as needed. Optional profiling records search work
-    // directly.
     void updateNpcBehaviour(
         const TileMap& map,
         World& world,
+        WorldRequests& requests,
         float deltaTime,
         NpcActivityScripts& scripts,
         FrameProfile* profile = nullptr);

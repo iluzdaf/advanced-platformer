@@ -31,9 +31,6 @@ namespace advanced_platformer
 {
     namespace
     {
-        // Which state comes next is decided once, from the facts, before the state acts. A
-        // transition exits the old state's activity, then the new state's activity is
-        // entered and updated on the same tick, with facts gathered again for it.
         void updateNpcState(const NpcUpdate& update, Actor& actor)
         {
             if (!actor.brain.has_value() || !actor.perception.has_value() ||
@@ -75,12 +72,13 @@ namespace advanced_platformer
     void updateNpcBehaviour(
         const TileMap& map,
         World& world,
+        WorldRequests& requests,
         float deltaTime,
         NpcActivityScripts& scripts,
         FrameProfile* profile)
     {
         requireSeconds(deltaTime, "NPC behaviour time step");
-        const NpcUpdate update{map, world, deltaTime, scripts, profile};
+        const NpcUpdate update{map, world, requests, deltaTime, scripts, profile};
 
         for (Actor& actor : world.actors())
         {

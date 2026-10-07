@@ -45,14 +45,14 @@ namespace advanced_platformer
                 advanceNavigationFill(
                     map, world.platformerConnections(), NavigationFillTicksPerStep, profile);
             });
+        WorldRequests requests;
         phase("NPC", "NPC senses", [&] { updateNpcSenses(map, world, deltaTime); });
         phase(
             "NPC",
             "NPC behaviour",
-            [&] { updateNpcBehaviour(map, world, deltaTime, scripts, profile); });
+            [&] { updateNpcBehaviour(map, world, requests, deltaTime, scripts, profile); });
         phase("Movement", "Actor movement", [&] { updateActorMovement(map, world, deltaTime); });
         phase("Movement", "Pickup movement", [&] { updatePickupMovement(map, world, deltaTime); });
-        WorldRequests requests;
         phase("Combat", "Attacks", [&] { updateAttacks(world, requests, deltaTime); });
         phase("Combat", "Projectiles", [&] { updateProjectiles(map, world, requests, deltaTime); });
         phase(

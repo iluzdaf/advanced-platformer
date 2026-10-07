@@ -11,6 +11,7 @@
 #include "lua_npc_scripts.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
 #include "advanced_platformer/world/world.hpp"
+#include "advanced_platformer/world/world_requests.hpp"
 #include "advanced_platformer/world/world_simulation.hpp"
 #include "support/actor_builder.hpp"
 #include "support/actor_components.hpp"
@@ -37,7 +38,8 @@ TEST_CASE("An NPC machine invokes a loaded Lua activity", "[lua][npc][integratio
                 tests::NpcMachineBuilder::named("fixture").state(
                     "fleeing", advanced_platformer::NpcActivity{"fixture", "flee"})));
 
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
+    advanced_platformer::WorldRequests requests;
+    advanced_platformer::updateNpcBehaviour(map, world, requests, 0.1F, scripts);
 
     REQUIRE(tests::actor(world, npc).intentions.direction == glm::vec2{-1.0F, 0.0F});
     REQUIRE(tests::actor(world, npc).intentions.jumpHeld);
