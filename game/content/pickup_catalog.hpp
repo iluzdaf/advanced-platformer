@@ -7,6 +7,7 @@
 
 #include <glm/vec2.hpp>
 
+#include "advanced_platformer/level/placements.hpp"
 #include "advanced_platformer/render/sprite.hpp"
 #include "advanced_platformer/world/pickup.hpp"
 
