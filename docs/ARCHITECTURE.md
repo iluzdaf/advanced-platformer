@@ -560,14 +560,16 @@ to the traversal profile. The search itself does not change.
 
 ## Playtest
 
-- `advanced_platformer_playtest <run seed> <levels> [seconds per level]` plays a run
-  headless through `Game`, with the shipped content, and prints one JSON line per level.
-- The bot is the player actor with senses and the `bot` machine from
-  `playtest/assets/machines.json`, whose one activity is in `playtest/assets/bot.lua`. It senses,
-  thinks and moves exactly as an NPC does: `play` routes to the exit, asks for a fresh
-  route when it has stood still for a second, and aims and shoots at the opponent it
-  sees while it keeps going. `playtestContent` builds that content on top of the shipped
-  catalogs, so nothing of the bot ships with the game.
+- `advanced_platformer_playtest <run seed> <levels> [seconds per level] [--bot <directory>]`
+  plays a run headless through `Game`, with the shipped content, and prints one JSON line
+  per level.
+- The bot is the player actor with senses and the `bot` machine from the bot directory's
+  `machines.json`, whose one activity is in its `bot.lua`. The directory is
+  `playtest/assets` unless `--bot` names another, so a bot can be edited and replayed
+  without a rebuild. It senses, thinks and moves exactly as an NPC does: `play` routes to
+  the exit, asks for a fresh route when it has stood still for a second, and aims and
+  shoots at the opponent it sees while it keeps going. `playtestContent` builds that
+  content on top of the shipped catalogs, so nothing of the bot ships with the game.
 - A level ends at the exit, when the player is defeated (which ends the run, as in the
   game), when the player gets no closer to the exit for 15 seconds (stuck), or at the
   time limit. After stuck or a timeout the run moves on to the next level.

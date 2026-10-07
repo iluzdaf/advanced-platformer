@@ -86,7 +86,8 @@ ctest --preset mac-debug -R "Pickup" --output-on-failure
 
 The playtest runner plays a run without a window and prints one JSON line per level.
 Give it a run seed, the number of levels, and optionally a time limit per level in
-seconds (120 by default):
+seconds (120 by default). `--bot <directory>` plays with a bot from another directory
+than `playtest/assets`:
 
 ```sh
 cmake --build --preset mac-debug --target advanced_platformer_playtest
