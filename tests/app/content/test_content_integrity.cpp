@@ -1,13 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include <array>
-#include <cstddef>
 #include <cstdint>
-#include <fstream>
-#include <ios>
 #include <vector>
-
-#include <glm/vec2.hpp>
 
 #include "content/game_catalogs.hpp"
 #include "game/level_generator.hpp"
@@ -21,36 +15,15 @@
 #include "lua_npc_scripts.hpp"
 #include "lua_presentation_script.hpp"
 #include "advanced_platformer/world/level_validation.hpp"
+#include "support/atlas_size.hpp"
 #include "support/fixed_step.hpp"
 #include "support/run_levels.hpp"
-
-namespace
-{
-    constexpr const char* ShippedAtlas = "assets/textures/sprites.png";
-
-    glm::ivec2 pngSize(const char* path)
-    {
-        std::ifstream file(path, std::ios::binary);
-        std::array<unsigned char, 24> header{};
-        file.read(reinterpret_cast<char*>(header.data()), header.size());
-        REQUIRE(file.gcount() == static_cast<std::streamsize>(header.size()));
-        const auto word = [&header](std::size_t at)
-        {
-            return static_cast<int>(
-                (static_cast<std::uint32_t>(header[at]) << 24U) |
-                (static_cast<std::uint32_t>(header[at + 1]) << 16U) |
-                (static_cast<std::uint32_t>(header[at + 2]) << 8U) |
-                static_cast<std::uint32_t>(header[at + 3]));
-        };
-        return {word(16), word(20)};
-    }
-}
 
 TEST_CASE("Every run level can be composed until the rooms stop growing", "[app][content]")
 {
     const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/catalogs/pieces.json");
     const auto catalogs =
-        advanced_platformer::loadGameCatalogs("assets/catalogs", pngSize(ShippedAtlas));
+        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
     for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
     {
         const auto content = advanced_platformer::composeLevel(
@@ -70,7 +43,7 @@ TEST_CASE("Every run level starts with a route from the spawn to the exit", "[ap
 {
     const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/catalogs/pieces.json");
     const auto catalogs =
-        advanced_platformer::loadGameCatalogs("assets/catalogs", pngSize(ShippedAtlas));
+        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
     for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
     {
         const advanced_platformer::GameLevel level = advanced_platformer::composePlayableLevel(
@@ -89,16 +62,10 @@ TEST_CASE("Every run level starts with a route from the spawn to the exit", "[ap
     }
 }
 
-TEST_CASE("Every catalog region lies inside the shipped atlas", "[app][content][atlas]")
-{
-    const glm::ivec2 atlas = pngSize(ShippedAtlas);
-    REQUIRE_NOTHROW(advanced_platformer::loadGameCatalogs("assets/catalogs", atlas));
-}
-
 TEST_CASE("Every shipped Lua activity resolves", "[app][content][lua]")
 {
     const advanced_platformer::GameCatalogs catalogs =
-        advanced_platformer::loadGameCatalogs("assets/catalogs", pngSize(ShippedAtlas));
+        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
     advanced_platformer::LuaNpcScripts scripts;
 
     REQUIRE_NOTHROW(
@@ -108,7 +75,7 @@ TEST_CASE("Every shipped Lua activity resolves", "[app][content][lua]")
 TEST_CASE("Every shipped Lua activity runs without errors", "[app][content][lua]")
 {
     const advanced_platformer::GameCatalogs catalogs =
-        advanced_platformer::loadGameCatalogs("assets/catalogs", pngSize(ShippedAtlas));
+        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
     advanced_platformer::LuaNpcScripts scripts;
     advanced_platformer::loadNpcActivityScripts(scripts, catalogs.machines, "assets/scripts");
 
