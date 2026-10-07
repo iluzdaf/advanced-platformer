@@ -29,7 +29,7 @@ class FormatterSelectionTests(unittest.TestCase):
             "prettier",
             [
                 "assets/catalogs/pickups.json",
-                "tests/fixtures/levels/empty.json",
+                "tests/fixtures/rooms/locked_door/pieces/exit.json",
                 ".vscode/settings.json",
                 "CMakePresets.json",
                 ".luarc.json",
@@ -50,7 +50,8 @@ class FormatterSelectionTests(unittest.TestCase):
 
     def test_lua(self):
         self.assertFormatter(
-            "stylua", ["assets/scripts/rat.lua", "tests/fixtures/scripts/pursuer.lua"]
+            "stylua",
+            ["assets/scripts/rat.lua", "tests/fixtures/scripts/example_npc.lua"],
         )
 
     def test_files_the_format_targets_skip(self):
