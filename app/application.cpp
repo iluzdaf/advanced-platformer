@@ -68,7 +68,7 @@ namespace advanced_platformer
                 return ApplicationCommand::StepSimulation;
             case GLFW_KEY_F5:
                 return ApplicationCommand::RestartLevel;
-            case GLFW_KEY_F7:
+            case GLFW_KEY_F6:
                 return ApplicationCommand::RerollLevel;
             case GLFW_KEY_F1:
                 return ApplicationCommand::ToggleDebugOverlay;

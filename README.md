@@ -95,7 +95,7 @@ ctest --preset mac-debug -R "Pickup" --output-on-failure
 | Open or close the inventory (pauses the game)       | Q, or click the bag at the bottom-left    |
 | Drink a health potion                               | Click it in the open inventory            |
 | Restart the current level, keeping health and items | F5                                        |
-| Generate the current level again from the next seed | F7                                        |
+| Generate the current level again from the next seed | F6                                        |
 | Pause or resume the simulation                      | P                                         |
 | Run one simulation step while paused                | . (full stop)                             |
 | Toggle the debug overlay                            | F1                                        |

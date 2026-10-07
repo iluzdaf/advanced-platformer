@@ -32,7 +32,7 @@ applies the new content without restarting:
   the first state, and every activity starts again under the new scripts.
 
 The console reports what was kept, spawned and removed. F5 restarts the current level
-from the same seed, keeping the player's health and items. F7 builds the current level
+from the same seed, keeping the player's health and items. F6 builds the current level
 again from the next seed, also keeping health and items.
 
 ## Files
