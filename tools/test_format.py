@@ -28,7 +28,7 @@ class FormatterSelectionTests(unittest.TestCase):
         self.assertFormatter(
             "prettier",
             [
-                "assets/catalogs/pickups.json",
+                "game/assets/catalogs/pickups.json",
                 "tests/fixtures/rooms/locked_door/pieces/exit.json",
                 ".vscode/settings.json",
                 "CMakePresets.json",
@@ -51,7 +51,7 @@ class FormatterSelectionTests(unittest.TestCase):
     def test_lua(self):
         self.assertFormatter(
             "stylua",
-            ["assets/scripts/rat.lua", "tests/fixtures/scripts/example_npc.lua"],
+            ["game/assets/scripts/rat.lua", "tests/fixtures/scripts/example_npc.lua"],
         )
 
     def test_files_the_format_targets_skip(self):
@@ -65,7 +65,7 @@ class FormatterSelectionTests(unittest.TestCase):
                 "build/mac-debug/compile_commands.json",
                 "external/catch2/README.md",
                 "tests/README.md",
-                "assets/textures/sprites.png",
+                "game/assets/textures/sprites.png",
                 "tools/hooks/notes.md",
                 "LICENSE",
             ],

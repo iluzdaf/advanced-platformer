@@ -32,7 +32,7 @@ file(GLOB_RECURSE PROJECT_PYTHON_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/t
 file(
     GLOB_RECURSE PROJECT_LUA_FILES
     CONFIGURE_DEPENDS
-    ${PROJECT_SOURCE_DIR}/assets/*.lua
+    ${PROJECT_SOURCE_DIR}/game/assets/*.lua
     ${PROJECT_SOURCE_DIR}/playtest/assets/*.lua
     ${PROJECT_SOURCE_DIR}/tests/fixtures/*.lua
 )

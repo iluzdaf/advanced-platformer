@@ -11,7 +11,7 @@ generated levels, and ImGui debugging tools.
 | Document                                | What it covers                                                                    |
 | --------------------------------------- | --------------------------------------------------------------------------------- |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Design, ownership rules, runtime flow, and the reasons behind the main decisions. |
-| [CONTENT.md](docs/CONTENT.md)           | How to author levels, definitions, machines, and NPC scripts under `assets`.      |
+| [CONTENT.md](docs/CONTENT.md)           | How to author levels, definitions, machines, and NPC scripts under `game/assets`. |
 | [GLOSSARY.md](docs/GLOSSARY.md)         | The words the code and documents use, each with one meaning.                      |
 
 ## Requirements
@@ -53,7 +53,7 @@ cd build/mac-debug
 ./advanced_platformer
 ```
 
-Debug builds read `assets/` from the source tree and reload it while the game runs when a
+Debug builds read `game/assets/` from the source tree and reload it while the game runs when a
 file there changes. See [Hot reload](docs/CONTENT.md#hot-reload).
 
 Press F1 in the game to open the [debug overlay](#debug-overlay), which shows frame
@@ -296,17 +296,14 @@ cmake --build --preset mac-debug --target header_self_containment
 
 ```text
 app/           application shell, content session, graphics, UI, and debug tools
-assets/        runtime game content
-  catalogs/    shared JSON definitions, with room pieces in catalogs/pieces
-  scripts/     Lua NPC activities
-  textures/    runtime sprite atlas
 cmake/         dependencies, quality rules, and explicit target source manifests
 core/          the simulation and level generation library: include/ holds its public headers, src/ its implementations
 game/          the headless game library: content loaders and catalogs, level composition, Game, diagnostics
+  assets/      runtime game content: catalogs (room pieces in catalogs/pieces), Lua scripts, the atlas
 playtest/      headless playtest runner, with the bot's own content in assets/
 scripting/     Lua scripting target: the NPC activity runtime and its sol2 bindings
-tests/         Catch2 tests, grouped like the code they test (core subjects, app, game, playtest, scripting)
-  fixtures/    example content mirroring assets/catalogs and scripts, with room piece sets in rooms/
+tests/         Catch2 tests, grouped like the code they test (core, game, app, playtest, scripting)
+  fixtures/    example content mirroring game/assets catalogs and scripts, with room piece sets in rooms/
   support/     test-only builders and simulation helpers
 tools/         repository quality and maintenance scripts
 docs/          architecture, content format, and glossary

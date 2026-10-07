@@ -1,7 +1,7 @@
 # Architecture
 
 The main boundaries, ownership rules, and update order in Advanced Platformer. Use
-[CONTENT.md](CONTENT.md) for the files under `assets`, including Lua activities and hot
+[CONTENT.md](CONTENT.md) for the files under `game/assets`, including Lua activities and hot
 reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 [README.md](../README.md) for building, running, and the quality checks.
 
@@ -44,7 +44,7 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 | `app/ui`              | HUD, inventory, exit hint, and pause notice                                                                |
 | `app/debug`           | ImGui presentation of the diagnostics, the console, and the frame profile UI                               |
 | `playtest`            | The playtest runner; `playtest/assets` holds the bot's machine and Lua activities                          |
-| `assets`              | Catalogs, room pieces, Lua scripts, and the atlas                                                          |
+| `game/assets`         | Catalogs, room pieces, Lua scripts, and the atlas                                                          |
 
 - `GameLevel` keeps the level number, map, world, player spawn, actor definition names,
   and the placement id of each actor and pickup together. Replacing it starts a fresh

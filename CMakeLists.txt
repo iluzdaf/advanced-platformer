@@ -49,7 +49,7 @@ target_include_directories(advanced_platformer PRIVATE ${CMAKE_CURRENT_SOURCE_DI
 target_compile_definitions(
     advanced_platformer
     PRIVATE
-        $<$<NOT:$<CONFIG:Release>>:ADVANCED_PLATFORMER_SOURCE_ASSETS="${CMAKE_CURRENT_SOURCE_DIR}/assets">
+        $<$<NOT:$<CONFIG:Release>>:ADVANCED_PLATFORMER_SOURCE_ASSETS="${CMAKE_CURRENT_SOURCE_DIR}/game/assets">
 )
 target_link_libraries(
     advanced_platformer
@@ -66,7 +66,7 @@ enable_project_coverage(advanced_platformer)
 add_custom_target(
     game_assets
     COMMAND
-        ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/assets
+        ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/game/assets
         $<TARGET_FILE_DIR:advanced_platformer>/assets
     COMMENT "Copying game assets beside the executables"
     VERBATIM
@@ -83,7 +83,7 @@ target_include_directories(
 target_compile_definitions(
     advanced_platformer_playtest
     PRIVATE
-        $<$<NOT:$<CONFIG:Release>>:ADVANCED_PLATFORMER_SOURCE_ASSETS="${CMAKE_CURRENT_SOURCE_DIR}/assets">
+        $<$<NOT:$<CONFIG:Release>>:ADVANCED_PLATFORMER_SOURCE_ASSETS="${CMAKE_CURRENT_SOURCE_DIR}/game/assets">
         $<$<NOT:$<CONFIG:Release>>:ADVANCED_PLATFORMER_SOURCE_PLAYTEST_ASSETS="${CMAKE_CURRENT_SOURCE_DIR}/playtest/assets">
 )
 target_link_libraries(advanced_platformer_playtest PRIVATE advanced_platformer_game)

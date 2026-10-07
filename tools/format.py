@@ -11,10 +11,10 @@ LLVM_BIN_DIRECTORIES = ("/opt/homebrew/opt/llvm/bin", "/usr/lib/llvm-{major}/bin
 
 CPP_DIRECTORIES = ("app", "core", "game", "playtest", "scripting", "tests")
 HEADER_DIRECTORIES = ("app", "core", "game", "playtest", "scripting", "tests")
-JSON_DIRECTORIES = ("assets", "playtest/assets", "tests/fixtures", ".vscode")
+JSON_DIRECTORIES = ("game/assets", "playtest/assets", "tests/fixtures", ".vscode")
 JSON_ROOT_FILES = ("CMakePresets.json", ".luarc.json", ".prettierrc")
 YAML_ROOT_FILES = (".clang-format", ".clang-tidy", ".clangd", ".gersemirc")
-LUA_DIRECTORIES = ("assets", "playtest/assets", "tests/fixtures")
+LUA_DIRECTORIES = ("game/assets", "playtest/assets", "tests/fixtures")
 
 
 def is_under(path, directories):
