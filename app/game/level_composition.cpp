@@ -82,15 +82,24 @@ namespace advanced_platformer
         }
     }
 
-    GeneratedLevel generateRunLevel(
-        const RoomPieceCatalog& pieces,
-        int levelNumber,
-        std::uint32_t seed)
+    namespace
     {
-        const LevelGeneration generation = levelGeneration(pieces.run, levelNumber, seed);
-        std::string sourceName = std::format("Level {} (seed {})", levelNumber, seed);
-        LevelData data = generateLevel(pieces, generation, sourceName);
-        return {std::move(data), std::move(sourceName)};
+        struct GeneratedLevel
+        {
+            LevelData data;
+            std::string sourceName;
+        };
+
+        GeneratedLevel generateRunLevel(
+            const RoomPieceCatalog& pieces,
+            int levelNumber,
+            std::uint32_t seed)
+        {
+            const LevelGeneration generation = levelGeneration(pieces.run, levelNumber, seed);
+            std::string sourceName = std::format("Level {} (seed {})", levelNumber, seed);
+            LevelData data = generateLevel(pieces, generation, sourceName);
+            return {std::move(data), std::move(sourceName)};
+        }
     }
 
     GameLevel composeGameLevel(
@@ -196,6 +205,11 @@ namespace advanced_platformer
         level.world.setPlayer(playerId, level.playerSpawnFeet);
         validateLevelActors(level.map, level.world, level.number);
         return level;
+    }
+
+    namespace
+    {
+        constexpr std::uint32_t GenerationAttempts = 100;
     }
 
     GameLevel composeStartedLevel(

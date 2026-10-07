@@ -10,15 +10,12 @@
 
 #include "advanced_platformer/world/tile_map.hpp"
 #include "advanced_platformer/world/world.hpp"
-#include "level_generator.hpp"
 
 namespace advanced_platformer
 {
     struct Actor;
     struct RoomPieceCatalog;
     struct GameCatalogs;
-
-    constexpr std::uint32_t GenerationAttempts = 100;
 
     struct GameLevel
     {
@@ -33,16 +30,6 @@ namespace advanced_platformer
         std::uint32_t seed = 0;
     };
 
-    struct GeneratedLevel
-    {
-        LevelData data;
-        std::string sourceName;
-    };
-
-    GeneratedLevel generateRunLevel(
-        const RoomPieceCatalog& pieces,
-        int levelNumber,
-        std::uint32_t seed);
     GameLevel composeGameLevel(
         const RoomPieceCatalog& pieces,
         int levelNumber,
