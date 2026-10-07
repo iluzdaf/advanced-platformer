@@ -1,7 +1,7 @@
 #include "application_context.hpp"
 
 #include "debug/debug_tool_visibility.hpp"
-#include "game/level_requests.hpp"
+#include "session/level_requests.hpp"
 
 namespace advanced_platformer
 {

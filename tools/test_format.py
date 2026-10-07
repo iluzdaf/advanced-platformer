@@ -15,8 +15,8 @@ class FormatterSelectionTests(unittest.TestCase):
             [
                 "app/application.cpp",
                 "scripting/lua_npc_scripts.hpp",
-                "src/npc/npc_system.cpp",
-                "include/advanced_platformer/render/sprite.hpp",
+                "core/src/npc/npc_system.cpp",
+                "core/include/advanced_platformer/render/sprite.hpp",
                 "tests/support/cell_connections.hpp",
             ],
         )
@@ -59,8 +59,8 @@ class FormatterSelectionTests(unittest.TestCase):
             None,
             [
                 "external/glm/glm/glm.hpp",
-                "include/advanced_platformer/vendored.cpp",
-                "src/CMakeLists.txt",
+                "docs/vendored.cpp",
+                "core/src/CMakeLists.txt",
                 "tests/CMakeLists.txt",
                 "build/mac-debug/compile_commands.json",
                 "external/catch2/README.md",

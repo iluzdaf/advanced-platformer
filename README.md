@@ -186,7 +186,7 @@ cmake --build --preset mac-coverage --target coverage
 ```
 
 It runs the tests under instrumentation and prints line, function, region and branch
-coverage for `app/`, `src/`, `include/` and `scripting/`, leaving out `external/` and
+coverage for `app/`, `core/`, `game/`, `playtest/` and `scripting/`, leaving out `external/` and
 the tests themselves. The line-by-line report is at
 `build/mac-coverage/coverage/html/index.html`. Only code built into the test executable is
 counted, so the window, renderer and ImGui code does not appear. The table and the HTML report are `llvm-cov`'s own output; Clang's [Interpreting reports](https://clang.llvm.org/docs/SourceBasedCodeCoverage.html#interpreting-reports) explains their regions, functions, lines and branches.
@@ -273,8 +273,8 @@ changing only a manifest checks the whole tree. So do changes to the analysis ru
 the CI workflow, the global build configuration, the third-party libraries under
 `external/` (including a submodule moving to another commit), or
 `tools/tidy_targets.py`, which picks the files. Local `tidy` builds always check the
-whole tree. CMake configuration fails with a focused error if an `app/`, `src/`, or
-enabled `tests/` source is missing from its target's manifest.
+whole tree. CMake configuration fails with a focused error if an `app/`, `core/`, `game/`,
+`playtest/`, or enabled `tests/` source is missing from its target's manifest.
 
 To see which files CI will check for your branch, run the same script:
 
@@ -295,20 +295,17 @@ cmake --build --preset mac-debug --target header_self_containment
 ## Repository layout
 
 ```text
-app/           application shell, graphics, UI, and debug tools
-  game/        game flow, level transitions, and level composition
-  content/     JSON loaders, catalogs, and content validators
-  playtest/    headless playtest runner
+app/           application shell, content session, graphics, UI, and debug tools
 assets/        runtime game content
   catalogs/    shared JSON definitions, with room pieces in catalogs/pieces
   scripts/     Lua NPC activities
   textures/    runtime sprite atlas
 cmake/         dependencies, quality rules, and explicit target source manifests
-include/       public core headers
+core/          the simulation library: include/ holds its public headers, src/ its implementations
+game/          the headless game library: content loaders and catalogs, level generation, Game, diagnostics
+playtest/      headless playtest runner, with the bot's own content in assets/
 scripting/     Lua scripting target: the NPC activity runtime and its sol2 bindings
-src/           core implementations
-tests/         Catch2 tests for core systems and testable application code
-  app/         application tests grouped like app/ (content, debug, game, graphics, UI)
+tests/         Catch2 tests, grouped like the code they test (core subjects, app, game, playtest, scripting)
   fixtures/    example content mirroring assets/catalogs and scripts, with room piece sets in rooms/
   support/     test-only builders and simulation helpers
 tools/         repository quality and maintenance scripts

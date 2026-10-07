@@ -6,8 +6,10 @@ file(
     GLOB_RECURSE PROJECT_CPP_FILES
     CONFIGURE_DEPENDS
     ${PROJECT_SOURCE_DIR}/app/*.cpp
+    ${PROJECT_SOURCE_DIR}/core/src/*.cpp
+    ${PROJECT_SOURCE_DIR}/game/*.cpp
+    ${PROJECT_SOURCE_DIR}/playtest/*.cpp
     ${PROJECT_SOURCE_DIR}/scripting/*.cpp
-    ${PROJECT_SOURCE_DIR}/src/*.cpp
     ${PROJECT_SOURCE_DIR}/tests/*.cpp
 )
 
@@ -15,12 +17,14 @@ file(
     GLOB_RECURSE PROJECT_HEADERS
     CONFIGURE_DEPENDS
     ${PROJECT_SOURCE_DIR}/app/*.hpp
-    ${PROJECT_SOURCE_DIR}/include/*.hpp
+    ${PROJECT_SOURCE_DIR}/core/include/*.hpp
+    ${PROJECT_SOURCE_DIR}/game/*.hpp
+    ${PROJECT_SOURCE_DIR}/playtest/*.hpp
     ${PROJECT_SOURCE_DIR}/scripting/*.hpp
     ${PROJECT_SOURCE_DIR}/tests/*.hpp
 )
 
-file(GLOB_RECURSE PROJECT_PUBLIC_HEADERS CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/include/*.hpp)
+file(GLOB_RECURSE PROJECT_PUBLIC_HEADERS CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/core/include/*.hpp)
 list(APPEND PROJECT_PUBLIC_HEADERS ${PROJECT_SOURCE_DIR}/scripting/lua_npc_scripts.hpp)
 
 file(GLOB_RECURSE PROJECT_PYTHON_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/tools/*.py)
@@ -28,8 +32,8 @@ file(GLOB_RECURSE PROJECT_PYTHON_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/t
 file(
     GLOB_RECURSE PROJECT_LUA_FILES
     CONFIGURE_DEPENDS
-    ${PROJECT_SOURCE_DIR}/app/*.lua
     ${PROJECT_SOURCE_DIR}/assets/*.lua
+    ${PROJECT_SOURCE_DIR}/playtest/assets/*.lua
     ${PROJECT_SOURCE_DIR}/tests/fixtures/*.lua
 )
 

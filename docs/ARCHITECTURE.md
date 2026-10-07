@@ -18,27 +18,33 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
   save games, an editor, an animation graph, a general ECS, and homing or piercing
   projectiles.
 
-| Target                          | What it owns                                                                                                            | Dependencies                                                              |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `advanced_platformer_core`      | Simulation, navigation, and plain render-scene data                                                                     | GLM; no window, graphics API, JSON, or Lua                                |
-| `advanced_platformer_scripting` | The Lua runtime behind the NPC activity boundary; `lua_npc_scripts.hpp` is its interface, its other headers are private | Core, Lua, sol2                                                           |
-| `advanced_platformer`           | Application, content loading, graphics, UI, and debug tools                                                             | Core, scripting, GLFW, glad, ImGui, ImPlot, imgui-node-editor, stb, Glaze |
-| `advanced_platformer_playtest`  | A headless playtest: a bot plays generated levels and prints one JSON line per level                                    | Core, scripting, Glaze                                                    |
-| `advanced_platformer_tests`     | Catch2 tests for the core, scripting, and the application code that needs no window                                     | Core, scripting, Glaze, Catch2                                            |
+| Target                          | What it owns                                                                                                            | Dependencies                                            |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `advanced_platformer_core`      | Simulation, navigation, and plain render-scene data                                                                     | GLM; no window, graphics API, JSON, or Lua              |
+| `advanced_platformer_scripting` | The Lua runtime behind the NPC activity boundary; `lua_npc_scripts.hpp` is its interface, its other headers are private | Core, Lua, sol2                                         |
+| `advanced_platformer_game`      | Content loading, catalogs, level generation and composition, `Game`, and the diagnostics it records; headless           | Core, scripting, Glaze                                  |
+| `advanced_platformer`           | Application, content session, graphics, UI, and debug tools                                                             | Game, GLFW, glad, ImGui, ImPlot, imgui-node-editor, stb |
+| `advanced_platformer_playtest`  | A headless playtest: a bot plays generated levels and prints one JSON line per level                                    | Game                                                    |
+| `advanced_platformer_tests`     | Catch2 tests for the core, scripting, the game, and the application code that needs no window                           | Game, Catch2                                            |
 
-### Application folders
+### Folders
 
-| Location              | Responsibility                                                                                                       |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `app/application.cpp` | Window events, input, fixed steps, pause and single step, UI requests, hot reload, and rendering                     |
-| `app/game`            | Session flow: `Game` owns the current level, catalogs, scripts, and camera; level generation, composition and reload |
-| `app/content`         | Content definitions, Glaze loaders, catalogs, validators, and the asset watcher                                      |
-| `app/graphics`        | Window and OpenGL context, ImGui session, viewport conversion, and sprite submission                                 |
-| `app/ui`              | HUD, inventory, exit hint, and pause notice                                                                          |
-| `app/playtest`        | The playtest runner, and the bot's machine and Lua activities                                                        |
-| `app/debug`           | Debug snapshots and their ImGui presentation, the console, and the frame profile UI                                  |
-| `scripting`           | Lua VM, sandbox, `vec2` binding, and the activity adapter                                                            |
-| `assets`              | Catalogs, room pieces, Lua scripts, and the atlas                                                                    |
+| Location              | Responsibility                                                                                             |
+| --------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `core/include`        | The core's public headers, under `advanced_platformer/`                                                    |
+| `core/src`            | The core's implementations                                                                                 |
+| `scripting`           | Lua VM, sandbox, `vec2` binding, and the activity adapter                                                  |
+| `game/content`        | Content definitions, Glaze loaders, catalogs, and validators                                               |
+| `game/level`          | Level generation, composition and reload                                                                   |
+| `game/game.hpp`       | `Game` owns the current level, catalogs, scripts, and camera, and is the one way a level changes           |
+| `game/diagnostics`    | The debug overlay and navigation snapshots `Game` records, and the console log                             |
+| `app/application.cpp` | Window events, input, fixed steps, pause and single step, UI requests, hot reload, and rendering           |
+| `app/session`         | The content session and asset watcher, the atlas check, pause and single step, and UI requests to the game |
+| `app/graphics`        | Window and OpenGL context, ImGui session, viewport conversion, and sprite submission                       |
+| `app/ui`              | HUD, inventory, exit hint, and pause notice                                                                |
+| `app/debug`           | ImGui presentation of the diagnostics, the console, and the frame profile UI                               |
+| `playtest`            | The playtest runner; `playtest/assets` holds the bot's machine and Lua activities                          |
+| `assets`              | Catalogs, room pieces, Lua scripts, and the atlas                                                          |
 
 - `GameLevel` keeps the level number, map, world, player spawn, actor definition names,
   and the placement id of each actor and pickup together. Replacing it starts a fresh
@@ -75,7 +81,7 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 - Rendering reads the resulting state at the available frame rate and never advances
   time.
 
-[`updateWorldSimulation`](../src/world/world_simulation.cpp) owns this order:
+[`updateWorldSimulation`](../core/src/world/world_simulation.cpp) owns this order:
 
 | Order | Work                                                                                              |
 | ----- | ------------------------------------------------------------------------------------------------- |
@@ -149,7 +155,7 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 ## Actor composition
 
 Players and NPCs are configurations of one
-[`Actor`](../include/advanced_platformer/actor/actor.hpp): a body, intentions, facing,
+[`Actor`](../core/include/advanced_platformer/actor/actor.hpp): a body, intentions, facing,
 team, and life state, plus optional components.
 
 | Capability           | Components                                                                                               | Rule                                                  |
@@ -434,16 +440,16 @@ to the traversal profile. The search itself does not change.
 
 ### Data-driven level boundary
 
-| Step                 | Owner                                | Result                                                                                                                                                                                         |
-| -------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Load shared catalogs | `app/content/game_catalogs.cpp`      | Definitions and the room pieces, kept for the session                                                                                                                                          |
-| Check the atlas      | `app/content/atlas_regions.cpp`      | Every sprite region inside the atlas the session uploaded; the session runs it after each load                                                                                                 |
-| Load scripts         | `app/content/npc_script_catalog.cpp` | Each script a machine names, with every named activity present                                                                                                                                 |
-| Generate a level     | `app/game/level_generator.cpp`       | Room pieces laid out from the seed and stitched into a `GeneratedLevel`                                                                                                                        |
-| Compose the level    | `composeLevel`                       | Names resolved into a map, world, and placed objects, with the player at its spawn                                                                                                             |
-| Enter the level      | `Game::enterLevel`                   | `composePlayableLevel` moves to the next seed until the player can reach the exit; then the old actors' scripts are forgotten, the camera follows the player and the navigation fill is queued |
+| Step                 | Owner                                 | Result                                                                                                                                                                                         |
+| -------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Load shared catalogs | `game/content/game_catalogs.cpp`      | Definitions and the room pieces, kept for the session                                                                                                                                          |
+| Check the atlas      | `app/session/atlas_regions.cpp`       | Every sprite region inside the atlas the session uploaded; the session runs it after each load                                                                                                 |
+| Load scripts         | `game/content/npc_script_catalog.cpp` | Each script a machine names, with every named activity present                                                                                                                                 |
+| Generate a level     | `game/level/level_generator.cpp`      | Room pieces laid out from the seed and stitched into a `GeneratedLevel`                                                                                                                        |
+| Compose the level    | `composeLevel`                        | Names resolved into a map, world, and placed objects, with the player at its spawn                                                                                                             |
+| Enter the level      | `Game::enterLevel`                    | `composePlayableLevel` moves to the next seed until the player can reach the exit; then the old actors' scripts are forgotten, the camera follows the player and the navigation fill is queued |
 
-- JSON stays in `app/content`; the core receives C++ values. Each file is read with
+- JSON stays in `game/content`; the core receives C++ values. Each file is read with
   Glaze through `content_glaze` into structs that mirror it, so unknown keys, missing
   required members, and wrong types fail with a line and column. `WithDefaults<T>` keeps
   C++ defaults for fields left out; enums and one-of fields are Glaze metadata.
@@ -557,7 +563,7 @@ to the traversal profile. The search itself does not change.
 - `advanced_platformer_playtest <run seed> <levels> [seconds per level]` plays a run
   headless through `Game`, with the shipped content, and prints one JSON line per level.
 - The bot is the player actor with senses and the `bot` machine from
-  `app/playtest/machines.json`, whose one activity is in `app/playtest/bot.lua`. It senses,
+  `playtest/assets/machines.json`, whose one activity is in `playtest/assets/bot.lua`. It senses,
   thinks and moves exactly as an NPC does: `play` routes to the exit, asks for a fresh
   route when it has stood still for a second, and aims and shoots at the opponent it
   sees while it keeps going. `playtestContent` builds that content on top of the shipped

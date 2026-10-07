@@ -8,7 +8,7 @@ class TidyTargetSelectionTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.paths = sources()
-        cls.changed_source = Path("src/actor/actor_id.cpp")
+        cls.changed_source = Path("core/src/actor/actor_id.cpp")
         cls.manifest = Path("cmake/sources/Core.cmake")
 
     def test_source_and_manifest_select_only_changed_code(self):
@@ -34,13 +34,13 @@ class TidyTargetSelectionTests(unittest.TestCase):
         )
 
     def test_removed_source_selects_nothing(self):
-        self.assertEqual(selected_paths(self.paths, [Path("src/removed.cpp")]), [])
+        self.assertEqual(selected_paths(self.paths, [Path("core/src/removed.cpp")]), [])
 
     def test_removed_source_and_manifest_select_only_changed_code(self):
         self.assertEqual(
             selected_paths(
                 self.paths,
-                [Path("src/removed.cpp"), self.changed_source, self.manifest],
+                [Path("core/src/removed.cpp"), self.changed_source, self.manifest],
             ),
             [self.changed_source],
         )
@@ -48,7 +48,7 @@ class TidyTargetSelectionTests(unittest.TestCase):
     def test_removed_header_selects_everything(self):
         self.assertEqual(
             selected_paths(
-                self.paths, [Path("include/advanced_platformer/removed.hpp")]
+                self.paths, [Path("core/include/advanced_platformer/removed.hpp")]
             ),
             self.paths,
         )

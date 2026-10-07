@@ -1,0 +1,28 @@
+target_sources(
+    advanced_platformer_game
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/game/content/actor_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/game/content/actor_definition.cpp
+        ${PROJECT_SOURCE_DIR}/game/content/animation_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/game/content/camera_settings.cpp
+        ${PROJECT_SOURCE_DIR}/game/content/content_diagnostics.cpp
+        ${PROJECT_SOURCE_DIR}/game/content/content_glaze.cpp
+        ${PROJECT_SOURCE_DIR}/game/content/content_validation.cpp
+        ${PROJECT_SOURCE_DIR}/game/content/exit_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/game/content/game_catalogs.cpp
+        ${PROJECT_SOURCE_DIR}/game/content/game_content.cpp
+        ${PROJECT_SOURCE_DIR}/game/content/hud_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/game/content/item_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/game/content/machine_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/game/content/npc_script_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/game/content/pickup_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/game/content/room_pieces.cpp
+        ${PROJECT_SOURCE_DIR}/game/content/tile_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/game/diagnostics/console_log.cpp
+        ${PROJECT_SOURCE_DIR}/game/diagnostics/debug_overlay.cpp
+        ${PROJECT_SOURCE_DIR}/game/diagnostics/navigation_debug.cpp
+        ${PROJECT_SOURCE_DIR}/game/game.cpp
+        ${PROJECT_SOURCE_DIR}/game/level/level_composition.cpp
+        ${PROJECT_SOURCE_DIR}/game/level/level_generator.cpp
+        ${PROJECT_SOURCE_DIR}/game/level/level_reload.cpp
+)

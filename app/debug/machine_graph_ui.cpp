@@ -1,6 +1,6 @@
 #include "machine_graph_ui.hpp"
 
-#include "debug_overlay.hpp"
+#include "diagnostics/debug_overlay.hpp"
 #include "debug_ui_layout.hpp"
 #include "npc_names.hpp"
 

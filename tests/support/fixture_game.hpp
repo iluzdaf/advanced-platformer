@@ -5,7 +5,7 @@
 
 #include "content/game_content.hpp"
 #include "content/room_pieces.hpp"
-#include "game/game.hpp"
+#include "game.hpp"
 #include "support/fixed_step.hpp"
 
 namespace tests

@@ -6,7 +6,7 @@
 
 #include <imgui.h>
 
-#include "game/game.hpp"
+#include "game.hpp"
 #include "graphics/display_viewport.hpp"
 #include "graphics/sprite_renderer.hpp"
 #include "advanced_platformer/inventory/inventory.hpp"
