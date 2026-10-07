@@ -288,8 +288,7 @@ app/           application shell, graphics, UI, and debug tools
   game/        game flow, level transitions, and level composition
   content/     JSON loaders, catalogs, and content validators
 assets/        runtime game content
-  catalogs/    shared JSON definitions
-  levels/      room pieces, with how a run grows
+  catalogs/    shared JSON definitions, with room pieces in catalogs/pieces
   scripts/     Lua NPC activities
   textures/    runtime sprite atlas
 cmake/         dependencies, quality rules, and explicit target source manifests
@@ -298,7 +297,7 @@ scripting/     Lua scripting target: the NPC activity runtime and its sol2 bindi
 src/           core implementations
 tests/         Catch2 tests for core systems and testable application code
   app/         application tests grouped like app/ (content, debug, game, graphics, UI)
-  fixtures/    example content mirroring assets/levels, catalogs, and scripts
+  fixtures/    example content mirroring assets/catalogs and scripts, with room piece sets in rooms/
   support/     test-only builders and simulation helpers
 tools/         repository quality and maintenance scripts
 docs/          architecture, content format, and glossary

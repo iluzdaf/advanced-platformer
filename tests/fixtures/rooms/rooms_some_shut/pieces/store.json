@@ -1,0 +1,12 @@
+{
+  "role": "arena",
+  "doors": ["left"],
+  "map": ["########", "#......#", ".......#", ".......#", ".......#", "########"],
+  "pickups": [
+    {
+      "id": "medicine_box_1",
+      "definition": "medicine_box",
+      "spawn": [2, 4]
+    }
+  ]
+}

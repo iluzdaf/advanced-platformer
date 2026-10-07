@@ -1,0 +1,21 @@
+{
+  "role": "exit",
+  "doors": ["right"],
+  "mirror": false,
+  "map": ["########", "#......#", "#.......", "#.......", "#.......", "########"],
+  "exit": {
+    "definition": "test_door",
+    "spawn": [4, 4],
+    "requirement": {
+      "item": "key",
+      "quantity": 1
+    }
+  },
+  "pickups": [
+    {
+      "id": "door_key_1",
+      "definition": "door_key",
+      "spawn": [1, 4]
+    }
+  ]
+}

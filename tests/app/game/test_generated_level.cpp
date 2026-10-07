@@ -17,7 +17,7 @@
 TEST_CASE("A run starts at level 1 with the seed its run seed gives", "[app][generation]")
 {
     const advanced_platformer::Game game =
-        tests::fixtureGame(tests::fixtureContent("tests/fixtures/levels/finish.json"), 5);
+        tests::fixtureGame(tests::fixtureContent("tests/fixtures/rooms/finish/rooms.json"), 5);
 
     REQUIRE(game.runSeed() == 5U);
     REQUIRE(game.levelNumber() == 1);
@@ -29,7 +29,7 @@ TEST_CASE(
     "[app][generation]")
 {
     advanced_platformer::Game game =
-        tests::fixtureGame(tests::fixtureContent("tests/fixtures/levels/finish.json"), 5);
+        tests::fixtureGame(tests::fixtureContent("tests/fixtures/rooms/finish/rooms.json"), 5);
     const std::uint32_t seed = game.levelSeed();
     const advanced_platformer::Health health = game.playerHealth();
 
@@ -45,8 +45,8 @@ TEST_CASE(
 
 TEST_CASE("A generated level skips seeds whose exit the player cannot reach", "[app][generation]")
 {
-    const auto pieces =
-        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/levels/rooms_some_shut.json");
+    const auto pieces = advanced_platformer::loadRoomPieceCatalog(
+        "tests/fixtures/rooms/rooms_some_shut/rooms.json");
     const auto catalogs =
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
     bool skipped = false;
@@ -73,7 +73,7 @@ TEST_CASE("A generated level skips seeds whose exit the player cannot reach", "[
 TEST_CASE("A generated level whose every seed is shut off fails to start", "[app][generation]")
 {
     const auto pieces =
-        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/levels/rooms_all_shut.json");
+        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/rooms/rooms_all_shut/rooms.json");
     const auto catalogs =
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
 

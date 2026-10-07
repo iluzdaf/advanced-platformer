@@ -1,0 +1,14 @@
+{
+  "role": "start",
+  "doors": ["left"],
+  "mirror": false,
+  "map": ["########", "#......#", ".......#", ".......#", ".......#", "########"],
+  "playerSpawn": [6, 4],
+  "actors": [
+    {
+      "id": "test_guard_1",
+      "definition": "test_guard",
+      "spawn": [2, 4]
+    }
+  ]
+}

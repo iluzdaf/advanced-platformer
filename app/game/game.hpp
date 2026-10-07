@@ -9,7 +9,6 @@
 
 #include "debug/debug_overlay.hpp"
 #include "game/level_composition.hpp"
-#include "content/room_pieces.hpp"
 #include "content/game_catalogs.hpp"
 #include "content/hud_catalog.hpp"
 #include "game/level_reload.hpp"
@@ -37,7 +36,6 @@ namespace advanced_platformer
     public:
         Game(
             int textureId,
-            RoomPieceCatalog pieces,
             GameCatalogs gameCatalogs,
             LuaNpcScripts npcScripts,
             LuaPresentationScript presentation,
@@ -83,7 +81,6 @@ namespace advanced_platformer
         CameraController& cameraControllerValue();
         const CameraController& cameraControllerValue() const;
 
-        RoomPieceCatalog pieces;
         GameCatalogs gameCatalogs;
         LuaNpcScripts npcScripts;
         LuaPresentationScript presentation;

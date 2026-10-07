@@ -12,6 +12,7 @@
 #include "item_catalog.hpp"
 #include "machine_catalog.hpp"
 #include "pickup_catalog.hpp"
+#include "room_pieces.hpp"
 #include "tile_catalog.hpp"
 
 namespace advanced_platformer
@@ -27,6 +28,7 @@ namespace advanced_platformer
         ExitCatalog exits;
         HudIcons hudIcons;
         CameraSettings camera;
+        RoomPieceCatalog pieces;
     };
 
     GameCatalogs loadGameCatalogs(

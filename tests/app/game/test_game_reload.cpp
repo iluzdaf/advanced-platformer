@@ -46,11 +46,11 @@ TEST_CASE("A failed reload leaves the game as it was", "[app][reload]")
 TEST_CASE("A reload that shuts off the exit leaves the game as it was", "[app][reload]")
 {
     advanced_platformer::Game running =
-        tests::fixtureGame("tests/fixtures/levels/rooms_some_shut.json");
+        tests::fixtureGame("tests/fixtures/rooms/rooms_some_shut/rooms.json");
     const std::uint32_t seed = running.levelSeed();
     advanced_platformer::GameContent shut = tests::fixtureContent();
-    shut.pieces =
-        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/levels/rooms_all_shut.json");
+    shut.gameCatalogs.pieces =
+        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/rooms/rooms_all_shut/rooms.json");
 
     REQUIRE_THROWS_WITH(
         running.reload(std::move(shut)),

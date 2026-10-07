@@ -15,9 +15,10 @@
 #include <format>
 #include <map>
 #include <optional>
-#include <set>
+#include <span>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -113,7 +114,6 @@ namespace advanced_platformer
 
     struct RoomPieceJson
     {
-        std::string name;
         RoomRole role = RoomRole::Corridor;
         std::vector<RoomSide> doors;
         std::optional<bool> mirror;
@@ -137,7 +137,6 @@ namespace advanced_platformer
         std::array<int, 2> roomSize{};
         RunJson run;
         std::map<std::string, std::string> tileLegend;
-        std::vector<RoomPieceJson> pieces;
     };
 
     namespace
@@ -534,18 +533,13 @@ namespace advanced_platformer
             }
         }
 
-        RoomPiece pieceFrom(
-            const RoomPieceJson& json,
-            GridSize size,
-            std::string_view sourceName,
-            const std::string& path)
+        RoomPiece pieceFrom(const RoomPieceSource& source, GridSize size)
         {
+            const auto json = readContent<RoomPieceJson>(source.text, source.sourceName);
+            const std::string_view sourceName = source.sourceName;
+            const std::string path;
             RoomPiece piece;
-            if (json.name.empty())
-            {
-                failJson(sourceName, fieldPath(path, "name"), "piece name cannot be empty");
-            }
-            piece.name = json.name;
+            piece.name = source.name;
             piece.role = json.role;
             for (const RoomSide side : json.doors)
             {
@@ -606,7 +600,10 @@ namespace advanced_platformer
         }
     }
 
-    RoomPieceCatalog parseRoomPieceCatalog(std::string_view text, std::string_view sourceName)
+    RoomPieceCatalog parseRoomPieceCatalog(
+        std::string_view text,
+        std::string_view sourceName,
+        std::span<const RoomPieceSource> pieces)
     {
         const auto file = readContent<RoomPieceCatalogJson>(text, sourceName);
         RoomPieceCatalog result;
@@ -647,19 +644,10 @@ namespace advanced_platformer
         }
         result.open = open->first;
 
-        std::set<std::string> names;
-        for (std::size_t index = 0; index < file.pieces.size(); ++index)
+        for (const RoomPieceSource& source : pieces)
         {
-            const std::string path = indexPath("pieces", index);
-            RoomPiece piece = pieceFrom(file.pieces[index], result.roomSize, sourceName, path);
-            if (!names.insert(piece.name).second)
-            {
-                failJson(
-                    sourceName,
-                    fieldPath(path, "name"),
-                    std::format("piece name '{}' is already used", piece.name));
-            }
-            validatePieceMap(piece, result, sourceName, fieldPath(path, "map"));
+            RoomPiece piece = pieceFrom(source, result.roomSize);
+            validatePieceMap(piece, result, source.sourceName, "map");
             result.pieces.push_back(std::move(piece));
         }
         return result;
@@ -667,6 +655,27 @@ namespace advanced_platformer
 
     RoomPieceCatalog loadRoomPieceCatalog(const std::filesystem::path& path)
     {
-        return parseRoomPieceCatalog(loadContentText(path), path.string());
+        const std::filesystem::path folder = path.parent_path() / "pieces";
+        std::vector<std::filesystem::path> files;
+        std::error_code error;
+        for (const auto& entry : std::filesystem::directory_iterator(folder, error))
+        {
+            if (entry.is_regular_file() && entry.path().extension() == ".json")
+            {
+                files.push_back(entry.path());
+            }
+        }
+        if (files.empty())
+        {
+            failJson(path.string(), "", std::format("expected piece files in {}", folder.string()));
+        }
+        std::ranges::sort(files);
+        std::vector<RoomPieceSource> pieces;
+        pieces.reserve(files.size());
+        for (const std::filesystem::path& file : files)
+        {
+            pieces.push_back({file.stem().string(), loadContentText(file), file.string()});
+        }
+        return parseRoomPieceCatalog(loadContentText(path), path.string(), pieces);
     }
 }

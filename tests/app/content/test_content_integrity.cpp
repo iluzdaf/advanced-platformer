@@ -51,7 +51,7 @@ namespace
 
 TEST_CASE("Every run level can be composed until the rooms stop growing", "[app][content]")
 {
-    const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/levels/rooms.json");
+    const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/catalogs/rooms.json");
     const auto catalogs =
         advanced_platformer::loadGameCatalogs("assets/catalogs", pngSize(ShippedAtlas));
     for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
@@ -66,7 +66,7 @@ TEST_CASE("Every run level can be composed until the rooms stop growing", "[app]
 
 TEST_CASE("Every run level has valid actor placement", "[app][content]")
 {
-    const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/levels/rooms.json");
+    const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/catalogs/rooms.json");
     const auto catalogs =
         advanced_platformer::loadGameCatalogs("assets/catalogs", pngSize(ShippedAtlas));
     for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
@@ -85,7 +85,7 @@ TEST_CASE("Every run level has valid actor placement", "[app][content]")
 
 TEST_CASE("Every run level starts with a route from the spawn to the exit", "[app][content]")
 {
-    const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/levels/rooms.json");
+    const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/catalogs/rooms.json");
     const auto catalogs =
         advanced_platformer::loadGameCatalogs("assets/catalogs", pngSize(ShippedAtlas));
     for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)

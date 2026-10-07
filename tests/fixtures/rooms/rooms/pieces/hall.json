@@ -1,0 +1,13 @@
+{
+  "role": "corridor",
+  "doors": ["left", "right"],
+  "mirror": false,
+  "map": ["########", "#......#", "........", "........", "........", "########"],
+  "actors": [
+    {
+      "id": "test_guard_1",
+      "definition": "test_guard",
+      "spawn": [6, 4]
+    }
+  ]
+}

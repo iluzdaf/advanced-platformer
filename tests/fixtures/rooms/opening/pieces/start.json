@@ -1,0 +1,14 @@
+{
+  "role": "start",
+  "doors": ["left"],
+  "mirror": false,
+  "map": ["########", "#......#", ".......#", ".......#", ".......#", "########"],
+  "playerSpawn": [5, 4],
+  "pickups": [
+    {
+      "id": "door_key_1",
+      "definition": "door_key",
+      "spawn": [3, 4]
+    }
+  ]
+}

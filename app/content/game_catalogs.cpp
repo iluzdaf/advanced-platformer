@@ -8,6 +8,7 @@
 #include "item_catalog.hpp"
 #include "machine_catalog.hpp"
 #include "pickup_catalog.hpp"
+#include "room_pieces.hpp"
 #include "tile_catalog.hpp"
 
 #include <filesystem>
@@ -31,6 +32,7 @@ namespace advanced_platformer
         catalogs.exits = loadExitCatalog(catalogDirectory / "exits.json");
         catalogs.hudIcons = loadHudIcons(catalogDirectory / "hud.json");
         catalogs.camera = loadCameraSettings(catalogDirectory / "camera.json");
+        catalogs.pieces = loadRoomPieceCatalog(catalogDirectory / "rooms.json");
         validateAtlasRegions(catalogs, atlasSize, catalogDirectory);
         return catalogs;
     }

@@ -26,7 +26,7 @@ namespace
     using advanced_platformer::RoomSide;
     using advanced_platformer::RoomSlot;
 
-    constexpr const char* FixturePieces = "tests/fixtures/levels/rooms.json";
+    constexpr const char* FixturePieces = "tests/fixtures/rooms/rooms/rooms.json";
 
     advanced_platformer::LevelGeneration generation(std::uint32_t seed)
     {
@@ -127,7 +127,7 @@ TEST_CASE("Stitched rooms share the wall between them", "[app][content][generati
              {{2, 0}, advanced_platformer::withDoor({}, RoomSide::Left), 2}},
         .exit = 2};
     const advanced_platformer::LevelData level =
-        advanced_platformer::stitchRooms(catalog, layout, {{4, false}, {1, false}, {3, false}});
+        advanced_platformer::stitchRooms(catalog, layout, {{3, false}, {1, false}, {0, false}});
 
     REQUIRE(level.mapRows.size() == 6);
     REQUIRE(level.mapRows.front().size() == 3 * 7 + 1);
@@ -154,7 +154,7 @@ TEST_CASE("A mirrored piece flips its placements with its map", "[app][content][
 {
     advanced_platformer::RoomPieceCatalog catalog =
         advanced_platformer::loadRoomPieceCatalog(FixturePieces);
-    catalog.pieces[2].actors.push_back(
+    catalog.pieces[4].actors.push_back(
         {.id = "guard",
          .definitionName = "test_guard",
          .spawn = {1, 4},
@@ -166,7 +166,7 @@ TEST_CASE("A mirrored piece flips its placements with its map", "[app][content][
              {{1, 0}, advanced_platformer::withDoor({}, RoomSide::Left), 1}},
         .exit = 1};
     const advanced_platformer::LevelData level =
-        advanced_platformer::stitchRooms(catalog, layout, {{2, true}, {3, false}});
+        advanced_platformer::stitchRooms(catalog, layout, {{4, true}, {0, false}});
 
     REQUIRE(level.mapRows[3] == "#.............#");
     REQUIRE(level.actors.front().id == "room0_guard");
@@ -194,7 +194,7 @@ TEST_CASE(
         .exit = 1};
 
     REQUIRE_THROWS_WITH(
-        advanced_platformer::stitchRooms(catalog, layout, {{1, false}, {3, false}}),
+        advanced_platformer::stitchRooms(catalog, layout, {{1, false}, {0, false}}),
         "Room piece 'hall' has doors left, right, not the right that room0 needs");
 }
 

@@ -14,15 +14,16 @@
 
 namespace tests
 {
-    constexpr const char* FixturePieces = "tests/fixtures/levels/actor_placement.json";
+    constexpr const char* FixturePieces = "tests/fixtures/catalogs/rooms.json";
 
     inline advanced_platformer::GameContent fixtureContent(const char* pieces = FixturePieces)
     {
-        return {
-            advanced_platformer::loadRoomPieceCatalog(pieces),
+        advanced_platformer::GameContent content{
             advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", AtlasSize),
             advanced_platformer::LuaNpcScripts{},
             advanced_platformer::LuaPresentationScript{}};
+        content.gameCatalogs.pieces = advanced_platformer::loadRoomPieceCatalog(pieces);
+        return content;
     }
 
     inline advanced_platformer::Game fixtureGame(
@@ -31,7 +32,6 @@ namespace tests
     {
         return {
             0,
-            std::move(content.pieces),
             std::move(content.gameCatalogs),
             std::move(content.npcScripts),
             std::move(content.presentation),

@@ -231,7 +231,6 @@ namespace advanced_platformer
         GameContent loaded = content.load();
         Game game(
             content.atlasTextureId(),
-            std::move(loaded.pieces),
             std::move(loaded.gameCatalogs),
             std::move(loaded.npcScripts),
             std::move(loaded.presentation),

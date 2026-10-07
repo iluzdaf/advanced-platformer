@@ -19,7 +19,7 @@
 TEST_CASE("A level's cells become the feet of those cells on its map", "[app][content]")
 {
     const auto pieces =
-        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/levels/opening.json");
+        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/rooms/opening/rooms.json");
     const auto gameCatalogs =
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
     const auto gameLevel = advanced_platformer::composeGameLevel(pieces, 1, 1, 0, gameCatalogs);
@@ -43,7 +43,7 @@ TEST_CASE("A level's cells become the feet of those cells on its map", "[app][co
 TEST_CASE("A level composes an actor from its catalog definition", "[app][actors]")
 {
     const auto pieces =
-        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/levels/actor_placement.json");
+        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/catalogs/rooms.json");
     const auto gameCatalogs =
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
     auto gameLevel = advanced_platformer::composeGameLevel(pieces, 1, 1, 0, gameCatalogs);
@@ -57,7 +57,7 @@ TEST_CASE("A level composes an actor from its catalog definition", "[app][actors
 TEST_CASE("Level composition reports unknown actor definitions", "[app][actors]")
 {
     const auto pieces =
-        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/levels/unknown_actor.json");
+        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/rooms/unknown_actor/rooms.json");
     const auto gameCatalogs =
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
     REQUIRE_THROWS_WITH(

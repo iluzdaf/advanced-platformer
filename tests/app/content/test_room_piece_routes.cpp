@@ -91,7 +91,7 @@ namespace
 TEST_CASE("Every shipped run level reaches its exit across seeds", "[app][content][generation]")
 {
     const advanced_platformer::RoomPieceCatalog pieces =
-        advanced_platformer::loadRoomPieceCatalog("assets/levels/rooms.json");
+        advanced_platformer::loadRoomPieceCatalog("assets/catalogs/rooms.json");
     const advanced_platformer::GameCatalogs catalogs =
         advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
     for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
@@ -113,7 +113,7 @@ TEST_CASE("Every shipped run level reaches its exit across seeds", "[app][conten
 TEST_CASE("Every shipped room piece joins each pair of its doors", "[app][content][generation]")
 {
     const RoomPieceCatalog catalog =
-        advanced_platformer::loadRoomPieceCatalog("assets/levels/rooms.json");
+        advanced_platformer::loadRoomPieceCatalog("assets/catalogs/rooms.json");
     for (const RoomRole role : {RoomRole::Corridor, RoomRole::Shaft, RoomRole::Arena})
     {
         for (const RoomChoice piece : orientations(catalog, role))
@@ -155,7 +155,7 @@ TEST_CASE(
     "[app][content][generation]")
 {
     const RoomPieceCatalog catalog =
-        advanced_platformer::loadRoomPieceCatalog("assets/levels/rooms.json");
+        advanced_platformer::loadRoomPieceCatalog("assets/catalogs/rooms.json");
     for (const RoomRole role : {RoomRole::Start, RoomRole::Exit})
     {
         for (const RoomChoice piece : orientations(catalog, role))

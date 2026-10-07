@@ -8,16 +8,16 @@ do. Movement, combat and pathfinding stay in C++.
 - Errors name the file and either a field path (`items.herb.maximumStack`, `map[2][7]`)
   or a line and column (`items.json: line 5, column 7: unknown field 'maximimStack'`).
 - Every shared definition is validated, even when no level uses it.
-- Shared catalogs and Lua scripts load at startup, and a level's room pieces when the
-  level starts. Debug builds also reload them while the game runs; see [Hot reload](#hot-reload).
+- Catalogs, room pieces and Lua scripts load at startup. Debug builds also reload them
+  while the game runs; see [Hot reload](#hot-reload).
 - Units are pixels, seconds and pixels per second. Sprite regions are atlas pixels.
 
 ## Hot reload
 
 Builds other than Release read `assets/` from the source tree, not the copy beside the
 executable, and check it four times a second. Once a change has settled, the game loads
-every catalog, script, the atlas and the current level's room pieces again, and builds
-the level again from the same seed. If anything fails,
+every catalog, room piece, script and the atlas again, and builds the level again from
+the same seed. If anything fails,
 the console shows the error and the game keeps running what it had. Otherwise the game
 applies the new content without restarting:
 
@@ -37,20 +37,21 @@ again from the next seed, also keeping health and items.
 
 ## Files
 
-| File                                                             | Holds                                              | Loader                                                                                                                       |
-| ---------------------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| [`levels/rooms.json`](../assets/levels/rooms.json)               | Room pieces, and how a run's levels grow from them | [`room_pieces.cpp`](../app/content/room_pieces.cpp), [`level_generator.cpp`](../app/game/level_generator.cpp)                |
-| [`catalogs/tiles.json`](../assets/catalogs/tiles.json)           | Tile size and tiles                                | [`tile_catalog.cpp`](../app/content/tile_catalog.cpp)                                                                        |
-| [`catalogs/actors.json`](../assets/catalogs/actors.json)         | The player and every actor definition              | [`actor_catalog.cpp`](../app/content/actor_catalog.cpp), [`actor_definition.cpp`](../app/content/actor_definition.cpp)       |
-| [`catalogs/animations.json`](../assets/catalogs/animations.json) | Animation sets                                     | [`animation_catalog.cpp`](../app/content/animation_catalog.cpp)                                                              |
-| [`catalogs/machines.json`](../assets/catalogs/machines.json)     | NPC state machines                                 | [`machine_catalog.cpp`](../app/content/machine_catalog.cpp)                                                                  |
-| [`scripts/*.lua`](../assets/scripts)                             | Lua activities                                     | [`npc_script_catalog.cpp`](../app/content/npc_script_catalog.cpp), [`lua_npc_scripts.cpp`](../scripting/lua_npc_scripts.cpp) |
-| [`scripts/presentation.lua`](../assets/scripts/presentation.lua) | Effects that answer world events                   | [`lua_presentation_script.cpp`](../scripting/lua_presentation_script.cpp)                                                    |
-| [`catalogs/items.json`](../assets/catalogs/items.json)           | Inventory items                                    | [`item_catalog.cpp`](../app/content/item_catalog.cpp)                                                                        |
-| [`catalogs/pickups.json`](../assets/catalogs/pickups.json)       | World pickups                                      | [`pickup_catalog.cpp`](../app/content/pickup_catalog.cpp)                                                                    |
-| [`catalogs/exits.json`](../assets/catalogs/exits.json)           | Exit bodies and sprites                            | [`exit_catalog.cpp`](../app/content/exit_catalog.cpp)                                                                        |
-| [`catalogs/hud.json`](../assets/catalogs/hud.json)               | HUD icon regions                                   | [`hud_catalog.cpp`](../app/content/hud_catalog.cpp)                                                                          |
-| [`catalogs/camera.json`](../assets/catalogs/camera.json)         | Camera dead zone                                   | [`camera_settings.cpp`](../app/content/camera_settings.cpp)                                                                  |
+| File                                                             | Holds                                          | Loader                                                                                                                       |
+| ---------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| [`catalogs/rooms.json`](../assets/catalogs/rooms.json)           | Room size, legend, and how a run's levels grow | [`room_pieces.cpp`](../app/content/room_pieces.cpp), [`level_generator.cpp`](../app/game/level_generator.cpp)                |
+| [`catalogs/pieces/*.json`](../assets/catalogs/pieces)            | One room piece each                            | [`room_pieces.cpp`](../app/content/room_pieces.cpp)                                                                          |
+| [`catalogs/tiles.json`](../assets/catalogs/tiles.json)           | Tile size and tiles                            | [`tile_catalog.cpp`](../app/content/tile_catalog.cpp)                                                                        |
+| [`catalogs/actors.json`](../assets/catalogs/actors.json)         | The player and every actor definition          | [`actor_catalog.cpp`](../app/content/actor_catalog.cpp), [`actor_definition.cpp`](../app/content/actor_definition.cpp)       |
+| [`catalogs/animations.json`](../assets/catalogs/animations.json) | Animation sets                                 | [`animation_catalog.cpp`](../app/content/animation_catalog.cpp)                                                              |
+| [`catalogs/machines.json`](../assets/catalogs/machines.json)     | NPC state machines                             | [`machine_catalog.cpp`](../app/content/machine_catalog.cpp)                                                                  |
+| [`scripts/*.lua`](../assets/scripts)                             | Lua activities                                 | [`npc_script_catalog.cpp`](../app/content/npc_script_catalog.cpp), [`lua_npc_scripts.cpp`](../scripting/lua_npc_scripts.cpp) |
+| [`scripts/presentation.lua`](../assets/scripts/presentation.lua) | Effects that answer world events               | [`lua_presentation_script.cpp`](../scripting/lua_presentation_script.cpp)                                                    |
+| [`catalogs/items.json`](../assets/catalogs/items.json)           | Inventory items                                | [`item_catalog.cpp`](../app/content/item_catalog.cpp)                                                                        |
+| [`catalogs/pickups.json`](../assets/catalogs/pickups.json)       | World pickups                                  | [`pickup_catalog.cpp`](../app/content/pickup_catalog.cpp)                                                                    |
+| [`catalogs/exits.json`](../assets/catalogs/exits.json)           | Exit bodies and sprites                        | [`exit_catalog.cpp`](../app/content/exit_catalog.cpp)                                                                        |
+| [`catalogs/hud.json`](../assets/catalogs/hud.json)               | HUD icon regions                               | [`hud_catalog.cpp`](../app/content/hud_catalog.cpp)                                                                          |
+| [`catalogs/camera.json`](../assets/catalogs/camera.json)         | Camera dead zone                               | [`camera_settings.cpp`](../app/content/camera_settings.cpp)                                                                  |
 
 Every catalog is required, even when empty. Every sprite region, frame and icon must lie
 inside the atlas.
@@ -89,37 +90,43 @@ pickup falls until it rests on a tile, and falls again if that tile breaks.
 
 ## Room pieces
 
+`catalogs/rooms.json` describes every piece, and each piece is its own file in
+`catalogs/pieces/`, named after the file: `pieces/hall.json` is the piece `hall`. The
+loader reads the folder in file-name order.
+
 ```json
 {
   "roomSize": [20, 12],
   "run": { "firstRooms": 6, "roomsPerLevel": 3, "maxRooms": 18 },
-  "tileLegend": { ".": "empty", "#": "stone" },
-  "pieces": [
-    {
-      "name": "hall",
-      "role": "corridor",
-      "doors": ["left", "right"],
-      "map": ["####################", "#..................#", "..."],
-      "actors": [
-        {
-          "id": "zombie_1",
-          "definition": "zombie",
-          "spawn": [4, 10],
-          "patrol": { "first": [2, 10], "second": [9, 10] }
-        }
-      ],
-      "pickups": [{ "id": "coin_pile_1", "definition": "coin_pile", "spawn": [12, 10] }]
-    }
-  ]
+  "tileLegend": { ".": "empty", "#": "stone" }
 }
 ```
 
-| Field        | Meaning                                                                                                                 |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| `roomSize`   | Every piece's size in cells: an even width of at least 8 and a height of at least 6.                                    |
-| `run`        | How many rooms each level of a [run](#run) has.                                                                         |
-| `tileLegend` | One-character map symbols to tile names in `tiles.json`, with a symbol for `empty`.                                     |
-| `pieces`     | `name`, unique; `role`; `doors`; optional `mirror` (default `true`); `map`, the piece's rows; and the placements below. |
+| Field        | Meaning                                                                              |
+| ------------ | ------------------------------------------------------------------------------------ |
+| `roomSize`   | Every piece's size in cells: an even width of at least 8 and a height of at least 6. |
+| `run`        | How many rooms each level of a [run](#run) has.                                      |
+| `tileLegend` | One-character map symbols to tile names in `tiles.json`, with a symbol for `empty`.  |
+
+```json
+{
+  "role": "corridor",
+  "doors": ["left", "right"],
+  "map": ["####################", "#..................#", "..."],
+  "actors": [
+    {
+      "id": "zombie_1",
+      "definition": "zombie",
+      "spawn": [4, 10],
+      "patrol": { "first": [2, 10], "second": [9, 10] }
+    }
+  ],
+  "pickups": [{ "id": "coin_pile_1", "definition": "coin_pile", "spawn": [12, 10] }]
+}
+```
+
+A piece file has `role`, `doors`, optional `mirror` (default `true`), `map`, the piece's
+rows, and the placements below.
 
 A piece's `role` is `start`, `exit`, `corridor`, `shaft` or `arena`. Its `doors` list
 some of `left`, `right`, `up` and `down`. Side doors are three cells tall and stand on
