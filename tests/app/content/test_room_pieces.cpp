@@ -1,7 +1,10 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 
+#include <chrono>
+#include <filesystem>
 #include <format>
+#include <fstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -54,21 +57,45 @@ namespace
         throw std::out_of_range(name);
     }
 
-    advanced_platformer::RoomPieceCatalog parseFixture(const FixtureDocument& document)
+    class TemporaryDirectory
     {
-        std::vector<advanced_platformer::RoomPieceSource> pieces;
-        pieces.reserve(document.pieces.size());
+    public:
+        TemporaryDirectory()
+            : path(
+                  std::filesystem::temp_directory_path() /
+                  std::format(
+                      "advanced_platformer_rooms_{}",
+                      std::chrono::steady_clock::now().time_since_epoch().count()))
+        {
+            std::filesystem::create_directories(path / "pieces");
+        }
+
+        ~TemporaryDirectory()
+        {
+            std::filesystem::remove_all(path);
+        }
+
+        TemporaryDirectory(const TemporaryDirectory&) = delete;
+        TemporaryDirectory& operator=(const TemporaryDirectory&) = delete;
+
+        std::filesystem::path path;
+    };
+
+    advanced_platformer::RoomPieceCatalog loadFixture(const FixtureDocument& document)
+    {
+        const TemporaryDirectory folder;
+        std::ofstream(folder.path / "pieces.json") << tests::dumpJson(document.catalog);
         for (const auto& [name, json] : document.pieces)
         {
-            pieces.push_back({name, tests::dumpJson(json), std::format("pieces/{}.json", name)});
+            std::ofstream(folder.path / "pieces" / std::format("{}.json", name))
+                << tests::dumpJson(json);
         }
-        return advanced_platformer::parseRoomPieceCatalog(
-            tests::dumpJson(document.catalog), "pieces.json", pieces);
+        return advanced_platformer::loadRoomPieceCatalog(folder.path / "pieces.json");
     }
 
     void requireRejected(const FixtureDocument& document, const std::string& message)
     {
-        REQUIRE_THROWS_WITH(parseFixture(document), Catch::Matchers::ContainsSubstring(message));
+        REQUIRE_THROWS_WITH(loadFixture(document), Catch::Matchers::ContainsSubstring(message));
     }
 }
 
@@ -120,7 +147,7 @@ TEST_CASE(
     piece(document, "exit")["exit"] = tests::parseJson(
         R"({"definition": "test_door", "spawn": [6, 4], "requirement": {"item": "key", "quantity": 2}, "consumeItem": true})");
 
-    const advanced_platformer::RoomPieceCatalog catalog = parseFixture(document);
+    const advanced_platformer::RoomPieceCatalog catalog = loadFixture(document);
 
     const advanced_platformer::ActorPlacement& guard = catalog.pieces[1].actors[0];
     const advanced_platformer::PatrolPlacement patrol =
@@ -228,7 +255,7 @@ TEST_CASE("A room piece file says how a run's levels grow", "[app][content][gene
     document.catalog["run"] =
         tests::parseJson(R"({"grid": [5, 3], "firstRooms": 4, "roomsPerLevel": 2, "maxRooms": 9})");
 
-    const advanced_platformer::RoomPieceCatalog catalog = parseFixture(document);
+    const advanced_platformer::RoomPieceCatalog catalog = loadFixture(document);
 
     REQUIRE(catalog.run.grid.width == 5);
     REQUIRE(catalog.run.grid.height == 3);
@@ -237,7 +264,7 @@ TEST_CASE("A room piece file says how a run's levels grow", "[app][content][gene
     REQUIRE(catalog.run.maxRooms == 9);
 
     tests::eraseKey(document.catalog["run"], "grid");
-    const advanced_platformer::RoomPieceCatalog defaulted = parseFixture(document);
+    const advanced_platformer::RoomPieceCatalog defaulted = loadFixture(document);
     REQUIRE(defaulted.run.grid.width == 9);
     REQUIRE(defaulted.run.grid.height == 7);
 }
@@ -358,20 +385,35 @@ TEST_CASE(
 
 TEST_CASE("Doors sit at the same cells on every room's edges", "[app][content][generation]")
 {
-    const advanced_platformer::GridSize size{8, 6};
+    FixtureDocument document = fixturePieces();
+    tests::Json& hall = piece(document, "hall");
+    hall["doors"] = tests::parseJson(R"(["up", "down"])");
+    hall["map"] = tests::parseJson(
+        R"(["##....##", "#......#", "#......#", "#......#", "#......#", "##....##"])");
 
-    REQUIRE(
-        advanced_platformer::doorCells(size, RoomSide::Left) ==
-        std::vector<Cell>{{0, 2}, {0, 3}, {0, 4}});
-    REQUIRE(
-        advanced_platformer::doorCells(size, RoomSide::Right) ==
-        std::vector<Cell>{{7, 2}, {7, 3}, {7, 4}});
-    REQUIRE(
-        advanced_platformer::doorCells(size, RoomSide::Up) ==
-        std::vector<Cell>{{2, 0}, {3, 0}, {4, 0}, {5, 0}});
-    REQUIRE(
-        advanced_platformer::doorCells(size, RoomSide::Down) ==
-        std::vector<Cell>{{2, 5}, {3, 5}, {4, 5}, {5, 5}});
+    SECTION("Doors above and below are four cells wide and centred")
+    {
+        const advanced_platformer::RoomPieceCatalog catalog = loadFixture(document);
+
+        REQUIRE(
+            catalog.pieces[1].doors ==
+            advanced_platformer::withDoor(
+                advanced_platformer::withDoor({}, RoomSide::Up), RoomSide::Down));
+    }
+    SECTION("A cell beside the door above")
+    {
+        hall["map"][0] = "##.....#";
+        requireRejected(
+            document,
+            "pieces/hall.json: map[0][6]: expected a tile, not '.': an edge is solid away from the "
+            "doors");
+    }
+    SECTION("A wall where the door below should be open")
+    {
+        hall["map"][5] = "##.##.##";
+        requireRejected(
+            document, "pieces/hall.json: map[5][3]: expected '.': an edge is open on a door");
+    }
 }
 
 TEST_CASE("Room doors are sets of sides that flip left to right", "[app][content][generation]")
@@ -381,7 +423,6 @@ TEST_CASE("Room doors are sets of sides that flip left to right", "[app][content
 
     REQUIRE(advanced_platformer::hasDoor(leftAndUp, RoomSide::Left));
     REQUIRE_FALSE(advanced_platformer::hasDoor(leftAndUp, RoomSide::Right));
-    REQUIRE(advanced_platformer::doorCount(leftAndUp) == 2);
     REQUIRE(
         advanced_platformer::mirroredDoors(leftAndUp) ==
         advanced_platformer::withDoor(

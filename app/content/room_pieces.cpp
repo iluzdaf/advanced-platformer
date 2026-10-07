@@ -157,11 +157,6 @@ namespace advanced_platformer
         return {static_cast<std::uint8_t>(doors.bits | bitOf(side))};
     }
 
-    int doorCount(RoomDoors doors)
-    {
-        return std::popcount(doors.bits);
-    }
-
     RoomDoors mirroredDoors(RoomDoors doors)
     {
         RoomDoors result{static_cast<std::uint8_t>(
@@ -227,41 +222,6 @@ namespace advanced_platformer
 
     namespace
     {
-        constexpr int SideDoorHeight = 3;
-        constexpr int VerticalDoorWidth = 4;
-    }
-
-    std::vector<Cell> doorCells(GridSize roomSize, RoomSide side)
-    {
-        std::vector<Cell> cells;
-        const int floor = roomSize.height - 1;
-        const int firstColumn = (roomSize.width / 2) - (VerticalDoorWidth / 2);
-        switch (side)
-        {
-        case RoomSide::Left:
-        case RoomSide::Right: {
-            const int column = side == RoomSide::Left ? 0 : roomSize.width - 1;
-            for (int row = floor - SideDoorHeight; row < floor; ++row)
-            {
-                cells.push_back({column, row});
-            }
-            break;
-        }
-        case RoomSide::Up:
-        case RoomSide::Down: {
-            const int row = side == RoomSide::Up ? 0 : floor;
-            for (int column = firstColumn; column < firstColumn + VerticalDoorWidth; ++column)
-            {
-                cells.push_back({column, row});
-            }
-            break;
-        }
-        }
-        return cells;
-    }
-
-    namespace
-    {
         constexpr int MinimumRoomWidth = 8;
         constexpr int MinimumRoomHeight = 6;
 
@@ -287,6 +247,38 @@ namespace advanced_platformer
                 return "arena";
             }
             return "unknown";
+        }
+
+        constexpr int SideDoorHeight = 3;
+        constexpr int VerticalDoorWidth = 4;
+
+        std::vector<Cell> doorCells(GridSize roomSize, RoomSide side)
+        {
+            std::vector<Cell> cells;
+            const int floor = roomSize.height - 1;
+            const int firstColumn = (roomSize.width / 2) - (VerticalDoorWidth / 2);
+            switch (side)
+            {
+            case RoomSide::Left:
+            case RoomSide::Right: {
+                const int column = side == RoomSide::Left ? 0 : roomSize.width - 1;
+                for (int row = floor - SideDoorHeight; row < floor; ++row)
+                {
+                    cells.push_back({column, row});
+                }
+                break;
+            }
+            case RoomSide::Up:
+            case RoomSide::Down: {
+                const int row = side == RoomSide::Up ? 0 : floor;
+                for (int column = firstColumn; column < firstColumn + VerticalDoorWidth; ++column)
+                {
+                    cells.push_back({column, row});
+                }
+                break;
+            }
+            }
+            return cells;
         }
 
         bool onDoor(GridSize roomSize, RoomDoors doors, Cell cell)
@@ -533,6 +525,18 @@ namespace advanced_platformer
             }
         }
 
+        struct RoomPieceSource
+        {
+            std::string name;
+            std::string text;
+            std::string sourceName;
+        };
+
+        int doorCount(RoomDoors doors)
+        {
+            return std::popcount(doors.bits);
+        }
+
         RoomPiece pieceFrom(const RoomPieceSource& source, GridSize size)
         {
             const auto json = readContent<RoomPieceJson>(source.text, source.sourceName);
@@ -598,59 +602,59 @@ namespace advanced_platformer
             }
             return run;
         }
-    }
 
-    RoomPieceCatalog parseRoomPieceCatalog(
-        std::string_view text,
-        std::string_view sourceName,
-        std::span<const RoomPieceSource> pieces)
-    {
-        const auto file = readContent<RoomPieceCatalogJson>(text, sourceName);
-        RoomPieceCatalog result;
-        result.roomSize = {file.roomSize[0], file.roomSize[1]};
-        result.run = runFrom(file.run, sourceName);
-        if (result.roomSize.width < MinimumRoomWidth ||
-            result.roomSize.height < MinimumRoomHeight || result.roomSize.width % 2 != 0)
+        RoomPieceCatalog parseRoomPieceCatalog(
+            std::string_view text,
+            std::string_view sourceName,
+            std::span<const RoomPieceSource> pieces)
         {
-            failJson(
-                sourceName,
-                "roomSize",
-                std::format(
-                    "expected an even width of at least {} and a height of at least {}",
-                    MinimumRoomWidth,
-                    MinimumRoomHeight));
-        }
+            const auto file = readContent<RoomPieceCatalogJson>(text, sourceName);
+            RoomPieceCatalog result;
+            result.roomSize = {file.roomSize[0], file.roomSize[1]};
+            result.run = runFrom(file.run, sourceName);
+            if (result.roomSize.width < MinimumRoomWidth ||
+                result.roomSize.height < MinimumRoomHeight || result.roomSize.width % 2 != 0)
+            {
+                failJson(
+                    sourceName,
+                    "roomSize",
+                    std::format(
+                        "expected an even width of at least {} and a height of at least {}",
+                        MinimumRoomWidth,
+                        MinimumRoomHeight));
+            }
 
-        if (file.tileLegend.empty())
-        {
-            failJson(sourceName, "tileLegend", "expected a nonempty object");
-        }
-        std::vector<std::string> tileSymbols;
-        tileSymbols.reserve(file.tileLegend.size());
-        for (const auto& [symbol, tile] : file.tileLegend)
-        {
-            tileSymbols.push_back(symbol);
-        }
-        validateLegendSymbols(tileSymbols, sourceName);
-        for (const auto& [symbol, tile] : file.tileLegend)
-        {
-            result.tileLegend.emplace(symbol.front(), tile);
-        }
-        const auto open = std::ranges::find_if(
-            result.tileLegend, [](const auto& entry) { return entry.second == "empty"; });
-        if (open == result.tileLegend.end())
-        {
-            failJson(sourceName, "tileLegend", "expected a symbol for empty");
-        }
-        result.open = open->first;
+            if (file.tileLegend.empty())
+            {
+                failJson(sourceName, "tileLegend", "expected a nonempty object");
+            }
+            std::vector<std::string> tileSymbols;
+            tileSymbols.reserve(file.tileLegend.size());
+            for (const auto& [symbol, tile] : file.tileLegend)
+            {
+                tileSymbols.push_back(symbol);
+            }
+            validateLegendSymbols(tileSymbols, sourceName);
+            for (const auto& [symbol, tile] : file.tileLegend)
+            {
+                result.tileLegend.emplace(symbol.front(), tile);
+            }
+            const auto open = std::ranges::find_if(
+                result.tileLegend, [](const auto& entry) { return entry.second == "empty"; });
+            if (open == result.tileLegend.end())
+            {
+                failJson(sourceName, "tileLegend", "expected a symbol for empty");
+            }
+            result.open = open->first;
 
-        for (const RoomPieceSource& source : pieces)
-        {
-            RoomPiece piece = pieceFrom(source, result.roomSize);
-            validatePieceMap(piece, result, source.sourceName, "map");
-            result.pieces.push_back(std::move(piece));
+            for (const RoomPieceSource& source : pieces)
+            {
+                RoomPiece piece = pieceFrom(source, result.roomSize);
+                validatePieceMap(piece, result, source.sourceName, "map");
+                result.pieces.push_back(std::move(piece));
+            }
+            return result;
         }
-        return result;
     }
 
     RoomPieceCatalog loadRoomPieceCatalog(const std::filesystem::path& path)

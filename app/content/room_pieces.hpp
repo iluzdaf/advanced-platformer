@@ -4,7 +4,6 @@
 #include <filesystem>
 #include <map>
 #include <optional>
-#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -32,7 +31,6 @@ namespace advanced_platformer
 
     bool hasDoor(RoomDoors doors, RoomSide side);
     RoomDoors withDoor(RoomDoors doors, RoomSide side);
-    int doorCount(RoomDoors doors);
     RoomDoors mirroredDoors(RoomDoors doors);
 
     RoomSide oppositeOf(RoomSide side);
@@ -78,18 +76,5 @@ namespace advanced_platformer
         std::vector<RoomPiece> pieces;
     };
 
-    struct RoomPieceSource
-    {
-        std::string name;
-        std::string text;
-        std::string sourceName;
-    };
-
-    std::vector<Cell> doorCells(GridSize roomSize, RoomSide side);
-
-    RoomPieceCatalog parseRoomPieceCatalog(
-        std::string_view text,
-        std::string_view sourceName,
-        std::span<const RoomPieceSource> pieces);
     RoomPieceCatalog loadRoomPieceCatalog(const std::filesystem::path& path);
 }
