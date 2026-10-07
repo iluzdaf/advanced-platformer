@@ -103,9 +103,7 @@ ctest --preset mac-debug -R "Pickup" --output-on-failure
 
 The hearts at the top-left show the player's current and maximum health.
 
-Every level is generated from room pieces, starting in the centre room. Reach the bunker
-door in the farthest room to move on to the next level, which has more rooms. The run
-never ends: dying starts a new run at level 1 with full health and no items.
+Reach the bunker door to move on to the next level. Dying starts a new run at level 1.
 
 ## Debug overlay
 
