@@ -8,6 +8,7 @@
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/inventory/item.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "advanced_platformer/navigation/path_follower.hpp"
@@ -79,7 +80,11 @@ namespace advanced_platformer
             }
             for (const Pickup& pickup : update.world.pickups())
             {
-                snapshot.pickups.push_back(feetOf(pickup.body.bounds));
+                snapshot.pickups.push_back(
+                    NpcPickupSnapshot{
+                        .feet = feetOf(pickup.body.bounds),
+                        .item = update.world.itemDefinition(pickup.stack.item).name,
+                        .quantity = pickup.stack.quantity});
             }
             return snapshot;
         }

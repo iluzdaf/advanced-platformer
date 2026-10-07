@@ -220,7 +220,7 @@ TEST_CASE("The engine fills an activity's snapshot from the world", "[npc][lua]"
                 tests::NpcMachineBuilder::named("test").state(
                     "acting", advanced_platformer::NpcActivity{"fixture", "act"})));
     world.setExit({.bounds = {{96.0F, 16.0F}, {16.0F, 16.0F}}});
-    world.addPickup({{{{40.0F, 24.0F}, {8.0F, 8.0F}}}, {1, 1}});
+    world.addPickup({{{{40.0F, 24.0F}, {8.0F, 8.0F}}}, {1, 2}});
     tests::RecordingNpcScripts scripts;
 
     advanced_platformer::updateNpcSenses(map, world, tests::FixedStepSeconds);
@@ -230,7 +230,9 @@ TEST_CASE("The engine fills an activity's snapshot from the world", "[npc][lua]"
     const advanced_platformer::NpcActivitySnapshot& snapshot = scripts.calls.back().snapshot;
     REQUIRE(snapshot.center == advanced_platformer::centerOf(actor(world, npc).body.bounds));
     REQUIRE(snapshot.exitFeet == glm::vec2{104.0F, 32.0F});
-    REQUIRE(snapshot.pickups == std::vector<glm::vec2>{{44.0F, 32.0F}});
+    REQUIRE(
+        snapshot.pickups ==
+        std::vector<advanced_platformer::NpcPickupSnapshot>{{{44.0F, 32.0F}, "Coin", 2}});
     REQUIRE(
         snapshot.targetCenter.value_or(glm::vec2{}) ==
         advanced_platformer::centerOf(actor(world, player).body.bounds));

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <string>
 #include <vector>
 
 #include <glm/vec2.hpp>
@@ -20,6 +21,15 @@ namespace advanced_platformer
         bool right = false;
     };
 
+    struct NpcPickupSnapshot
+    {
+        glm::vec2 feet{0.0F, 0.0F};
+        std::string item;
+        int quantity = 1;
+
+        bool operator==(const NpcPickupSnapshot&) const = default;
+    };
+
     struct NpcActivitySnapshot
     {
         glm::vec2 feet = {0.0F, 0.0F};
@@ -33,7 +43,7 @@ namespace advanced_platformer
         std::optional<NavigationPathStatus> routeStatus;
         bool routeComplete = false;
         std::optional<glm::vec2> exitFeet;
-        std::vector<glm::vec2> pickups;
+        std::vector<NpcPickupSnapshot> pickups;
     };
 
     struct NpcActivityCommand
