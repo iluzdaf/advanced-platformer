@@ -21,8 +21,6 @@
 
 namespace advanced_platformer
 {
-    // machines.json as written: its member names are the file's keys. Glaze reflects only types
-    // with linkage, so these cannot go in an anonymous namespace.
     struct ActivityJson
     {
         std::string script;
@@ -37,7 +35,6 @@ namespace advanced_platformer
 
     struct MachineTransitionJson
     {
-        // One state name, or a list of them: one transition per name, in order.
         std::variant<std::string, std::vector<std::string>> from;
         std::string to;
         std::map<std::string, bool> when;
@@ -143,23 +140,23 @@ namespace advanced_platformer
             }
             return machine;
         }
-    }
 
-    void validateMachineCatalog(const MachineCatalog& catalog)
-    {
-        for (const auto& entry : catalog)
+        void validateMachineCatalog(const MachineCatalog& catalog)
         {
-            try
+            for (const auto& entry : catalog)
             {
-                if (entry.first.empty())
+                try
                 {
-                    throw std::invalid_argument("machine name cannot be empty");
+                    if (entry.first.empty())
+                    {
+                        throw std::invalid_argument("machine name cannot be empty");
+                    }
+                    validateNpcStateMachine(entry.second);
                 }
-                validateNpcStateMachine(entry.second);
-            }
-            catch (const std::invalid_argument& error)
-            {
-                failJson({}, fieldPath("machines", entry.first), error.what());
+                catch (const std::invalid_argument& error)
+                {
+                    failJson({}, fieldPath("machines", entry.first), error.what());
+                }
             }
         }
     }

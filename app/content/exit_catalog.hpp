@@ -18,7 +18,6 @@ namespace advanced_platformer
     };
 
     using ExitCatalog = std::map<std::string, ExitDefinition>;
-    void validateExitDefinition(const ExitDefinition& definition);
     void validateExitCatalog(const ExitCatalog& catalog);
     ExitCatalog parseExitCatalog(std::string_view text, std::string_view sourceName);
     ExitCatalog loadExitCatalog(const std::filesystem::path& path);

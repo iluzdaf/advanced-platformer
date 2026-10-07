@@ -272,6 +272,38 @@ namespace advanced_platformer
             }
             return result;
         }
+
+        void validateActorCatalog(
+            const ActorCatalog& catalog,
+            const AnimationCatalog& animations,
+            const MachineCatalog& machines)
+        {
+            for (const auto& entry : catalog.definitions)
+            {
+                if (entry.first.empty())
+                {
+                    throw std::invalid_argument("actor name cannot be empty");
+                }
+                try
+                {
+                    validateActorDefinition(entry.second, animations, machines);
+                }
+                catch (const std::invalid_argument& error)
+                {
+                    failJson({}, fieldPath("actors", entry.first), error.what());
+                }
+            }
+            const auto& player = actorDefinition(catalog, catalog.player);
+            if (player.senses)
+            {
+                throw std::invalid_argument("player definition must not enable NPC sensing");
+            }
+            if (!player.health || !player.inventorySlots)
+            {
+                throw std::invalid_argument(
+                    "player definition requires health and inventorySlots for the game HUD");
+            }
+        }
     }
 
     ActorCatalog parseActorCatalog(
@@ -344,38 +376,6 @@ namespace advanced_platformer
         const MachineCatalog& machines)
     {
         return parseActorCatalog(loadContentText(path), path.string(), animations, machines);
-    }
-
-    void validateActorCatalog(
-        const ActorCatalog& catalog,
-        const AnimationCatalog& animations,
-        const MachineCatalog& machines)
-    {
-        for (const auto& entry : catalog.definitions)
-        {
-            if (entry.first.empty())
-            {
-                throw std::invalid_argument("actor name cannot be empty");
-            }
-            try
-            {
-                validateActorDefinition(entry.second, animations, machines);
-            }
-            catch (const std::invalid_argument& error)
-            {
-                failJson({}, fieldPath("actors", entry.first), error.what());
-            }
-        }
-        const auto& player = actorDefinition(catalog, catalog.player);
-        if (player.senses)
-        {
-            throw std::invalid_argument("player definition must not enable NPC sensing");
-        }
-        if (!player.health || !player.inventorySlots)
-        {
-            throw std::invalid_argument(
-                "player definition requires health and inventorySlots for the game HUD");
-        }
     }
 
     const ActorDefinition& actorDefinition(const ActorCatalog& catalog, const std::string& name)

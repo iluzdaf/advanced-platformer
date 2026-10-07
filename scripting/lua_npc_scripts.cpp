@@ -347,11 +347,6 @@ namespace advanced_platformer
             script, LoadedScript{std::move(sourceName), std::move(fresh), activities});
     }
 
-    bool LuaNpcScripts::hasScript(std::string_view script) const
-    {
-        return implementation->scriptNamed(script) != nullptr;
-    }
-
     bool LuaNpcScripts::hasActivity(const NpcActivity& activity) const
     {
         return implementation->activityTable(activity).has_value();

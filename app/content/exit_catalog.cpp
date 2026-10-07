@@ -20,8 +20,6 @@
 
 namespace advanced_platformer
 {
-    // exits.json as written: its member names are the file's keys. Glaze reflects only types
-    // with linkage, so these cannot go in an anonymous namespace.
     struct ExitJson
     {
         glm::vec2 bodySize{};
@@ -33,12 +31,15 @@ namespace advanced_platformer
         std::map<std::string, ExitJson> exits;
     };
 
-    void validateExitDefinition(const ExitDefinition& definition)
+    namespace
     {
-        LevelExit exit;
-        exit.bounds.size = definition.bodySize;
-        validateLevelExit(exit);
-        validateContentSprite(definition.sprite);
+        void validateExitDefinition(const ExitDefinition& definition)
+        {
+            LevelExit exit;
+            exit.bounds.size = definition.bodySize;
+            validateLevelExit(exit);
+            validateContentSprite(definition.sprite);
+        }
     }
 
     void validateExitCatalog(const ExitCatalog& catalog)

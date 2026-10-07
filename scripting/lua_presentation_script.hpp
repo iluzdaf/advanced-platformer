@@ -12,8 +12,6 @@
 
 namespace advanced_platformer
 {
-    std::string_view presentationHookName(WorldEventKind kind);
-
     class LuaPresentationScript final : public PresentationScripts
     {
     public:
