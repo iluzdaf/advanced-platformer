@@ -12,6 +12,8 @@
 #include "advanced_platformer/combat/attack_system.hpp"
 #include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/inventory/inventory.hpp"
+#include "advanced_platformer/inventory/item.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
@@ -117,7 +119,8 @@ TEST_CASE("An NPC activity receives snapshots and returns engine commands", "[np
     scripts.command.aimAt = glm::vec2{80.0F, 16.0F};
     scripts.command.intentions.primaryAttackPressed = true;
 
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
+    advanced_platformer::WorldRequests requests;
+    advanced_platformer::updateNpcBehaviour(map, world, requests, 0.1F, scripts);
 
     REQUIRE(scripts.calls.size() == 2);
     REQUIRE(scripts.calls[0].hook == "enter");
@@ -140,7 +143,7 @@ TEST_CASE("An NPC activity receives snapshots and returns engine commands", "[np
     REQUIRE(actor(world, npcId).intentions.primaryAttackPressed);
     REQUIRE(tests::component<advanced_platformer::NpcMachine>(world, npcId).stateElapsed == 0.1F);
 
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, requests, 0.1F, scripts);
     REQUIRE(scripts.calls.size() == 3);
     REQUIRE(scripts.calls.back().hook == "update");
     REQUIRE(scripts.calls.back().snapshot.facts.stateElapsed == 0.1F);
@@ -162,12 +165,13 @@ TEST_CASE("A scripted machine exits and enters around a transition", "[npc][lua]
                     .when("targetKnown", true)));
     tests::RecordingNpcScripts scripts;
 
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
+    advanced_platformer::WorldRequests requests;
+    advanced_platformer::updateNpcBehaviour(map, world, requests, 0.1F, scripts);
     tests::component<advanced_platformer::NpcBrain>(world, npcId).target = playerId;
     tests::component<advanced_platformer::NpcBrain>(world, npcId).lastKnownTargetFeet = {
         56.0F, 32.0F};
     tests::component<advanced_platformer::NpcPerception>(world, npcId).targetVisible = true;
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, requests, 0.1F, scripts);
 
     REQUIRE(scripts.calls.size() == 5);
     REQUIRE(scripts.calls[0].hook == "enter");
@@ -215,6 +219,7 @@ TEST_CASE("The engine fills an activity's snapshot from the world", "[npc][lua]"
             .atFeet({24.0F, 32.0F})
             .platforming()
             .onTeam(advanced_platformer::Team::Enemy)
+            .withHealth(2, 3)
             .thinking({64.0F, 1.0F})
             .running(
                 tests::NpcMachineBuilder::named("test").state(
@@ -224,11 +229,14 @@ TEST_CASE("The engine fills an activity's snapshot from the world", "[npc][lua]"
     tests::RecordingNpcScripts scripts;
 
     advanced_platformer::updateNpcSenses(map, world, tests::FixedStepSeconds);
-    advanced_platformer::updateNpcBehaviour(map, world, tests::FixedStepSeconds, scripts);
+    advanced_platformer::WorldRequests requests;
+    advanced_platformer::updateNpcBehaviour(map, world, requests, tests::FixedStepSeconds, scripts);
 
     REQUIRE(scripts.calls.size() == 2);
     const advanced_platformer::NpcActivitySnapshot& snapshot = scripts.calls.back().snapshot;
     REQUIRE(snapshot.center == advanced_platformer::centerOf(actor(world, npc).body.bounds));
+    REQUIRE(snapshot.health.value_or(advanced_platformer::Health{}).current == 2);
+    REQUIRE(snapshot.health.value_or(advanced_platformer::Health{}).maximum == 3);
     REQUIRE(snapshot.exitFeet == glm::vec2{104.0F, 32.0F});
     REQUIRE(
         snapshot.pickups ==
@@ -292,7 +300,8 @@ TEST_CASE("A flyer has no footing, and the last known target feet outlast the ta
         72.0F, 32.0F};
     tests::RecordingNpcScripts scripts;
 
-    advanced_platformer::updateNpcBehaviour(map, world, tests::FixedStepSeconds, scripts);
+    advanced_platformer::WorldRequests requests;
+    advanced_platformer::updateNpcBehaviour(map, world, requests, tests::FixedStepSeconds, scripts);
 
     const advanced_platformer::NpcActivitySnapshot& snapshot = scripts.calls.back().snapshot;
     REQUIRE_FALSE(snapshot.footing.has_value());
@@ -317,15 +326,50 @@ TEST_CASE("A script can turn its NPC's patrol round", "[npc][lua]")
     tests::RecordingNpcScripts scripts;
     scripts.command.turnPatrol = true;
 
-    advanced_platformer::updateNpcBehaviour(map, world, tests::FixedStepSeconds, scripts);
+    advanced_platformer::WorldRequests requests;
+    advanced_platformer::updateNpcBehaviour(map, world, requests, tests::FixedStepSeconds, scripts);
     REQUIRE(scripts.calls.back()
                 .snapshot.patrol.value_or(advanced_platformer::Patrol{})
                 .headingToSecond);
     REQUIRE_FALSE(tests::component<advanced_platformer::Patrol>(world, npc).headingToSecond);
 
-    advanced_platformer::updateNpcBehaviour(map, world, tests::FixedStepSeconds, scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, requests, tests::FixedStepSeconds, scripts);
     REQUIRE_FALSE(scripts.calls.back()
                       .snapshot.patrol.value_or(advanced_platformer::Patrol{})
                       .headingToSecond);
     REQUIRE(tests::component<advanced_platformer::Patrol>(world, npc).headingToSecond);
+}
+
+TEST_CASE("A script can use an item from its NPC's bag by name", "[npc][lua][inventory]")
+{
+    advanced_platformer::TileMap map = tests::TileMapBuilder({"........", "........", "########"});
+    const advanced_platformer::ItemDefinition coin{1, "Coin", {}, 5};
+    const advanced_platformer::ItemDefinition potion{
+        2, "Potion", {}, 5, advanced_platformer::ItemEffect::Heal, 2};
+    advanced_platformer::World world({coin, potion});
+    advanced_platformer::Inventory bag(2);
+    bag.add(potion, 2);
+    const advanced_platformer::ActorId npc = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({24.0F, 16.0F})
+            .flying(20.0F)
+            .withHealth(1, 5)
+            .withInventory(bag)
+            .thinking({64.0F, 1.0F})
+            .running(
+                tests::NpcMachineBuilder::named("test").state(
+                    "acting", advanced_platformer::NpcActivity{"fixture", "act"})));
+    tests::RecordingNpcScripts scripts;
+    scripts.command.useItem = "Potion";
+
+    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
+    REQUIRE(tests::component<advanced_platformer::Health>(world, npc).current == 3);
+    REQUIRE(tests::component<advanced_platformer::Inventory>(world, npc).count(2) == 1);
+
+    scripts.command.useItem = "Coin";
+    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
+    REQUIRE(
+        scripts.calls.back().snapshot.health.value_or(advanced_platformer::Health{}).current == 3);
+    REQUIRE(tests::component<advanced_platformer::Health>(world, npc).current == 3);
+    REQUIRE(tests::component<advanced_platformer::Inventory>(world, npc).count(2) == 1);
 }

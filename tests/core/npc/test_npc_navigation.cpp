@@ -151,8 +151,9 @@ namespace
         advanced_platformer::NpcActivityScripts& scripts)
     {
         advanced_platformer::FrameProfile profile;
+        advanced_platformer::WorldRequests requests;
         advanced_platformer::updateNpcBehaviour(
-            map, world, tests::FixedStepSeconds, scripts, &profile);
+            map, world, requests, tests::FixedStepSeconds, scripts, &profile);
         return profile;
     }
 
@@ -306,7 +307,8 @@ TEST_CASE("An unreachable patrol heads as close as it can without retrying", "[n
     const advanced_platformer::ActorId npcId =
         world.addActor(makeNpc({24.0F, 32.0F}).patrolling({24.0F, 32.0F}, {120.0F, 32.0F}));
 
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
+    advanced_platformer::WorldRequests requests;
+    advanced_platformer::updateNpcBehaviour(map, world, requests, 0.1F, scripts);
     const advanced_platformer::PathFollower& follower =
         tests::component<advanced_platformer::PathFollower>(world, npcId);
     REQUIRE(follower.path.has_value());
@@ -317,7 +319,7 @@ TEST_CASE("An unreachable patrol heads as close as it can without retrying", "[n
     REQUIRE(follower.goal == advanced_platformer::feetInCell(tests::TileSize, {7, 1}));
     REQUIRE(tests::actor(world, npcId).intentions.direction.x > 0.0F);
 
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, requests, 0.1F, scripts);
     REQUIRE(follower.path.has_value());
     REQUIRE(follower.nextStep == 0);
     REQUIRE(
@@ -336,16 +338,17 @@ TEST_CASE("A patrol goal that moves is planned for at once", "[npc][navigation]"
     const advanced_platformer::ActorId npcId =
         world.addActor(makeNpc({24.0F, 32.0F}).patrolling({24.0F, 32.0F}, {120.0F, 32.0F}));
 
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
+    advanced_platformer::WorldRequests requests;
+    advanced_platformer::updateNpcBehaviour(map, world, requests, 0.1F, scripts);
     const advanced_platformer::PathFollower& follower =
         tests::component<advanced_platformer::PathFollower>(world, npcId);
     REQUIRE(follower.goal == advanced_platformer::feetInCell(tests::TileSize, {7, 1}));
 
     tests::component<advanced_platformer::Patrol>(world, npcId).secondFeet = {124.0F, 32.0F};
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, requests, 0.1F, scripts);
     REQUIRE(follower.goal == advanced_platformer::feetInCell(tests::TileSize, {7, 1}));
 
     tests::component<advanced_platformer::Patrol>(world, npcId).secondFeet = {88.0F, 32.0F};
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, requests, 0.1F, scripts);
     REQUIRE(follower.goal == advanced_platformer::feetInCell(tests::TileSize, {5, 1}));
 }

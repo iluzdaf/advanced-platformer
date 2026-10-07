@@ -3,6 +3,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <glm/vec2.hpp>
 
+#include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/input/input_state.hpp"
 #include "advanced_platformer/npc/npc.hpp"
@@ -179,6 +180,40 @@ TEST_CASE("A snapshot's exit and pickups reach Lua with the item each pickup hol
         scripts.update(FirstActor, Activity, snapshot, 0.5F);
     REQUIRE(toExit.routeTo == glm::vec2{200.0F, 34.0F});
     REQUIRE_FALSE(toExit.clearRoute);
+}
+
+TEST_CASE("A script reads its health and asks to use an item by name", "[lua][npc]")
+{
+    LuaNpcScripts scripts;
+    scripts.loadScriptText(
+        "example",
+        R"(
+            return {
+                activities = {
+                    decide = {
+                        update = function(self, snapshot)
+                            if snapshot.health and snapshot.health.current < snapshot.health.maximum then
+                                return { useItem = "Potion" }
+                            end
+                            return {}
+                        end
+                    }
+                }
+            }
+        )",
+        "command.lua");
+
+    NpcActivitySnapshot snapshot = commandSnapshot();
+    snapshot.health = advanced_platformer::Health{2, 5};
+    scripts.enter(FirstActor, Activity, snapshot);
+    REQUIRE(scripts.update(FirstActor, Activity, snapshot, 0.5F).useItem == "Potion");
+
+    snapshot.health = advanced_platformer::Health{5, 5};
+    REQUIRE_FALSE(scripts.update(FirstActor, Activity, snapshot, 0.5F).useItem.has_value());
+
+    snapshot.health.reset();
+    REQUIRE_FALSE(scripts.update(FirstActor, Activity, snapshot, 0.5F).useItem.has_value());
+    REQUIRE(scripts.diagnostics().empty());
 }
 
 TEST_CASE("Lua receives independent surface and range facts", "[lua][npc]")

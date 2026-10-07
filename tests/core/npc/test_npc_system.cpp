@@ -87,7 +87,8 @@ TEST_CASE("A machine reacts to landing and blocked walking facts", "[npc][machin
     REQUIRE(
         advanced_platformer::onSameGroundRun(
             map, actor(world, npcId).body.bounds, actor(world, playerId).body.bounds));
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
+    advanced_platformer::WorldRequests requests;
+    advanced_platformer::updateNpcBehaviour(map, world, requests, 0.1F, scripts);
     REQUIRE(
         tests::component<advanced_platformer::NpcMachine>(world, npcId)
             .definition
@@ -107,7 +108,7 @@ TEST_CASE("A machine reacts to landing and blocked walking facts", "[npc][machin
     REQUIRE(tests::component<advanced_platformer::PlatformerMovement>(actor(world, npcId)).blocked);
     scripts.command = {};
     advanced_platformer::updateNpcSenses(map, world, 0.1F);
-    advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts);
+    advanced_platformer::updateNpcBehaviour(map, world, requests, 0.1F, scripts);
     REQUIRE(
         tests::component<advanced_platformer::NpcMachine>(world, npcId)
             .definition
@@ -124,8 +125,10 @@ TEST_CASE("NPC behaviour rejects invalid timing", "[npc][validation]")
     advanced_platformer::World world;
     tests::RecordingNpcScripts scripts;
 
+    advanced_platformer::WorldRequests requests;
     REQUIRE_THROWS_AS(
-        advanced_platformer::updateNpcBehaviour(map, world, -0.1F, scripts), std::invalid_argument);
+        advanced_platformer::updateNpcBehaviour(map, world, requests, -0.1F, scripts),
+        std::invalid_argument);
 }
 
 TEST_CASE("An NPC without a state machine cannot act", "[npc][validation]")
@@ -136,7 +139,9 @@ TEST_CASE("An NPC without a state machine cannot act", "[npc][validation]")
     actor(world, npcId).machine.reset();
     tests::RecordingNpcScripts scripts;
 
+    advanced_platformer::WorldRequests requests;
     REQUIRE_THROWS_AS(
-        advanced_platformer::updateNpcBehaviour(map, world, 0.1F, scripts), std::logic_error);
+        advanced_platformer::updateNpcBehaviour(map, world, requests, 0.1F, scripts),
+        std::logic_error);
     REQUIRE(scripts.calls.empty());
 }

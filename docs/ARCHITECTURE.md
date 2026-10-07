@@ -283,7 +283,7 @@ Each NPC update has three steps:
 3. A transition exits the old activity, resets the state's time, clears the route, and
    enters the new activity. The active activity updates, and its command requests a
    route, aim, or attack through `InputIntentions`. Movement and combat execute them
-   later in the same step.
+   later in the same step. An item use from the bag goes into `WorldRequests`.
 
 - Loading rejects a machine with no states, a repeated state name, a transition from or
   to an unknown state, a condition no fact row answers, or a hold that is not finite and
