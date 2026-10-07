@@ -1,10 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 
-#include <chrono>
-#include <filesystem>
 #include <format>
-#include <fstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -15,6 +12,7 @@
 #include "content/room_pieces.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "support/json_document.hpp"
+#include "support/temporary_directory.hpp"
 
 namespace
 {
@@ -57,38 +55,14 @@ namespace
         throw std::out_of_range(name);
     }
 
-    class TemporaryDirectory
-    {
-    public:
-        TemporaryDirectory()
-            : path(
-                  std::filesystem::temp_directory_path() /
-                  std::format(
-                      "advanced_platformer_rooms_{}",
-                      std::chrono::steady_clock::now().time_since_epoch().count()))
-        {
-            std::filesystem::create_directories(path / "pieces");
-        }
-
-        ~TemporaryDirectory()
-        {
-            std::filesystem::remove_all(path);
-        }
-
-        TemporaryDirectory(const TemporaryDirectory&) = delete;
-        TemporaryDirectory& operator=(const TemporaryDirectory&) = delete;
-
-        std::filesystem::path path;
-    };
-
     advanced_platformer::RoomPieceCatalog loadFixture(const FixtureDocument& document)
     {
-        const TemporaryDirectory folder;
-        std::ofstream(folder.path / "pieces.json") << tests::dumpJson(document.catalog);
+        const tests::TemporaryDirectory folder;
+        tests::writeFile(folder.path / "pieces.json", tests::dumpJson(document.catalog));
         for (const auto& [name, json] : document.pieces)
         {
-            std::ofstream(folder.path / "pieces" / std::format("{}.json", name))
-                << tests::dumpJson(json);
+            tests::writeFile(
+                folder.path / "pieces" / std::format("{}.json", name), tests::dumpJson(json));
         }
         return advanced_platformer::loadRoomPieceCatalog(folder.path / "pieces.json");
     }
