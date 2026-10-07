@@ -23,6 +23,5 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/game/diagnostics/navigation_debug.cpp
         ${PROJECT_SOURCE_DIR}/game/game.cpp
         ${PROJECT_SOURCE_DIR}/game/level/level_composition.cpp
-        ${PROJECT_SOURCE_DIR}/game/level/level_generator.cpp
         ${PROJECT_SOURCE_DIR}/game/level/level_reload.cpp
 )

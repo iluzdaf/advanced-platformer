@@ -13,6 +13,8 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/core/src/inventory/inventory.cpp
         ${PROJECT_SOURCE_DIR}/core/src/inventory/item.cpp
         ${PROJECT_SOURCE_DIR}/core/src/inventory/item_use.cpp
+        ${PROJECT_SOURCE_DIR}/core/src/level/level_generator.cpp
+        ${PROJECT_SOURCE_DIR}/core/src/level/room_pieces.cpp
         ${PROJECT_SOURCE_DIR}/core/src/math/aabb.cpp
         ${PROJECT_SOURCE_DIR}/core/src/math/coordinates.cpp
         ${PROJECT_SOURCE_DIR}/core/src/math/validation.cpp

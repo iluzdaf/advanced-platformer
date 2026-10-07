@@ -21,6 +21,7 @@
 #include <glaze/glaze.hpp>
 
 #include "advanced_platformer/inventory/item.hpp"
+#include "advanced_platformer/level/placements.hpp"
 
 template <> struct glz::meta<advanced_platformer::ItemEffect>
 {

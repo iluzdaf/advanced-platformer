@@ -8,26 +8,18 @@
 #include <glm/vec2.hpp>
 
 #include "advanced_platformer/inventory/item.hpp"
+#include "advanced_platformer/level/placements.hpp"
 
 namespace advanced_platformer
 {
-    struct NamedItemStack
-    {
-        // Authoring name; composition resolves this to the engine's numeric ItemId.
-        std::string item;
-        int quantity = 1;
-    };
-
     struct ItemCatalog
     {
-        // IDs are assigned when loading; reuse this catalog for a game session.
         std::map<std::string, ItemDefinition> definitions;
     };
 
     void validateItemCatalog(const ItemCatalog& catalog);
     ItemCatalog parseItemCatalog(std::string_view text, std::string_view sourceName);
     ItemCatalog loadItemCatalog(const std::filesystem::path& path);
-    // Rejects the first item icon that runs past an atlas of this size, naming its field.
     void validateItemAtlasRegions(
         const ItemCatalog& catalog,
         glm::ivec2 atlasSize,

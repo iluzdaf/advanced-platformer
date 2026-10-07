@@ -8,7 +8,7 @@
 #include "content/game_catalogs.hpp"
 #include "content/tile_catalog.hpp"
 #include "level/level_composition.hpp"
-#include "level/level_generator.hpp"
+#include "advanced_platformer/level/level_generator.hpp"
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"

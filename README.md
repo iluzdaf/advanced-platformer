@@ -301,8 +301,8 @@ assets/        runtime game content
   scripts/     Lua NPC activities
   textures/    runtime sprite atlas
 cmake/         dependencies, quality rules, and explicit target source manifests
-core/          the simulation library: include/ holds its public headers, src/ its implementations
-game/          the headless game library: content loaders and catalogs, level generation, Game, diagnostics
+core/          the simulation and level generation library: include/ holds its public headers, src/ its implementations
+game/          the headless game library: content loaders and catalogs, level composition, Game, diagnostics
 playtest/      headless playtest runner, with the bot's own content in assets/
 scripting/     Lua scripting target: the NPC activity runtime and its sol2 bindings
 tests/         Catch2 tests, grouped like the code they test (core subjects, app, game, playtest, scripting)

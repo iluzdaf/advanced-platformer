@@ -6,7 +6,7 @@
 #include "game.hpp"
 #include "level/level_composition.hpp"
 #include "content/game_catalogs.hpp"
-#include "level/level_generator.hpp"
+#include "advanced_platformer/level/level_generator.hpp"
 #include "content/room_pieces.hpp"
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/world/level_validation.hpp"

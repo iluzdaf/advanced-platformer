@@ -10,8 +10,9 @@
 #include <string>
 #include <vector>
 
-#include "level/level_generator.hpp"
-#include "content/placements.hpp"
+#include "advanced_platformer/level/level_generator.hpp"
+#include "advanced_platformer/level/placements.hpp"
+#include "advanced_platformer/level/room_pieces.hpp"
 #include "content/room_pieces.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 

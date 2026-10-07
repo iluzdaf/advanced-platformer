@@ -8,6 +8,7 @@
 
 #include "content/game_catalogs.hpp"
 #include "content/game_content.hpp"
+#include "advanced_platformer/level/room_pieces.hpp"
 #include "content/room_pieces.hpp"
 #include "game.hpp"
 #include "level/level_reload.hpp"

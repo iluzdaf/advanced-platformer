@@ -52,7 +52,6 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/game/diagnostics/test_navigation_debug.cpp
         ${PROJECT_SOURCE_DIR}/tests/game/level/test_generated_level.cpp
         ${PROJECT_SOURCE_DIR}/tests/game/level/test_level_composition.cpp
-        ${PROJECT_SOURCE_DIR}/tests/game/level/test_level_generator.cpp
         ${PROJECT_SOURCE_DIR}/tests/game/level/test_level_object_composition.cpp
         ${PROJECT_SOURCE_DIR}/tests/game/level/test_level_reload.cpp
         ${PROJECT_SOURCE_DIR}/tests/game/level/test_level_transition.cpp
@@ -60,6 +59,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/game/test_game_reload.cpp
         ${PROJECT_SOURCE_DIR}/tests/input/test_input_program.cpp
         ${PROJECT_SOURCE_DIR}/tests/input/test_input_state.cpp
+        ${PROJECT_SOURCE_DIR}/tests/level/test_level_generator.cpp
         ${PROJECT_SOURCE_DIR}/tests/inventory/test_inventory.cpp
         ${PROJECT_SOURCE_DIR}/tests/math/test_coordinates.cpp
         ${PROJECT_SOURCE_DIR}/tests/math/test_validation.cpp

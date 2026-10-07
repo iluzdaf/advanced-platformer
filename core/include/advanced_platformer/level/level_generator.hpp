@@ -6,10 +6,9 @@
 #include <string_view>
 #include <vector>
 
+#include "advanced_platformer/level/placements.hpp"
+#include "advanced_platformer/level/room_pieces.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
-
-#include "content/placements.hpp"
-#include "content/room_pieces.hpp"
 
 namespace advanced_platformer
 {

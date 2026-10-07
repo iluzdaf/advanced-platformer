@@ -11,8 +11,9 @@
 #include <vector>
 
 #include "content/game_catalogs.hpp"
+#include "advanced_platformer/level/room_pieces.hpp"
 #include "content/room_pieces.hpp"
-#include "level/level_generator.hpp"
+#include "advanced_platformer/level/level_generator.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "support/player_reach.hpp"
 

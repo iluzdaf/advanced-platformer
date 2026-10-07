@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "content/game_content.hpp"
+#include "advanced_platformer/level/room_pieces.hpp"
 #include "content/room_pieces.hpp"
 #include "game.hpp"
 #include "support/fixed_step.hpp"

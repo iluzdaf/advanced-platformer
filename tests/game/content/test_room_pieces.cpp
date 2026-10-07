@@ -8,7 +8,8 @@
 #include <vector>
 
 #include "content/content_glaze.hpp"
-#include "content/placements.hpp"
+#include "advanced_platformer/level/placements.hpp"
+#include "advanced_platformer/level/room_pieces.hpp"
 #include "content/room_pieces.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "support/json_document.hpp"

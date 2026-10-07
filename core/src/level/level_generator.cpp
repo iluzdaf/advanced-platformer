@@ -1,7 +1,4 @@
-#include "level_generator.hpp"
-
-#include "content/placements.hpp"
-#include "content/room_pieces.hpp"
+#include "advanced_platformer/level/level_generator.hpp"
 
 #include <algorithm>
 #include <array>
@@ -16,6 +13,8 @@
 #include <utility>
 #include <vector>
 
+#include "advanced_platformer/level/placements.hpp"
+#include "advanced_platformer/level/room_pieces.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 
 namespace advanced_platformer

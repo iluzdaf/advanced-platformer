@@ -5,10 +5,14 @@
 
 #include "advanced_platformer/math/coordinates.hpp"
 
-#include "item_catalog.hpp"
-
 namespace advanced_platformer
 {
+    struct NamedItemStack
+    {
+        std::string item;
+        int quantity = 1;
+    };
+
     struct PatrolPlacement
     {
         Cell first;

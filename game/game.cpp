@@ -4,7 +4,7 @@
 #include "content/actor_catalog.hpp"
 #include "diagnostics/navigation_debug.hpp"
 #include "level/level_composition.hpp"
-#include "level/level_generator.hpp"
+#include "advanced_platformer/level/level_generator.hpp"
 #include "content/game_catalogs.hpp"
 #include "content/hud_catalog.hpp"
 #include "content/game_content.hpp"
