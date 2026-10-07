@@ -3,12 +3,9 @@
 #include <cstdint>
 #include <utility>
 
-#include "content/game_catalogs.hpp"
 #include "content/game_content.hpp"
 #include "content/room_pieces.hpp"
 #include "game/game.hpp"
-#include "lua_npc_scripts.hpp"
-#include "lua_presentation_script.hpp"
 #include "support/fixed_step.hpp"
 
 namespace tests
@@ -17,10 +14,8 @@ namespace tests
 
     inline advanced_platformer::GameContent fixtureContent(const char* pieces = FixturePieces)
     {
-        advanced_platformer::GameContent content{
-            advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs"),
-            advanced_platformer::LuaNpcScripts{},
-            advanced_platformer::LuaPresentationScript{}};
+        advanced_platformer::GameContent content =
+            advanced_platformer::loadGameContent("tests/fixtures");
         content.gameCatalogs.pieces = advanced_platformer::loadRoomPieceCatalog(pieces);
         return content;
     }
