@@ -18,9 +18,9 @@
 namespace
 {
     using advanced_platformer::Cell;
-    using advanced_platformer::LevelData;
     using advanced_platformer::LevelSettings;
     using advanced_platformer::RoomPieceCatalog;
+    using advanced_platformer::StitchedLevel;
 
     constexpr const char* FixturePieces = "tests/fixtures/rooms/rooms/pieces.json";
 
@@ -37,7 +37,7 @@ namespace
         return std::format("{}@{},{};", id, cell.x, cell.y);
     }
 
-    std::string levelText(const LevelData& level)
+    std::string levelText(const StitchedLevel& level)
     {
         std::string text;
         for (const std::string& row : level.mapRows)
@@ -81,7 +81,7 @@ TEST_CASE("Stitched rooms share the wall between them", "[app][content][generati
     const RoomPieceCatalog catalog = advanced_platformer::loadRoomPieceCatalog(FixturePieces);
     for (std::uint32_t seed = 1; seed <= 10; ++seed)
     {
-        const LevelData level =
+        const StitchedLevel level =
             advanced_platformer::generateLevel(catalog, settings(seed), "pieces.json");
         INFO("seed " << seed);
 
@@ -134,7 +134,7 @@ TEST_CASE("A mirrored piece flips its placements with its map", "[app][content][
          .definitionName = "test_guard",
          .spawn = {1, 4},
          .patrol = advanced_platformer::PatrolPlacement{{1, 4}, {6, 4}}});
-    const LevelData level = advanced_platformer::generateLevel(
+    const StitchedLevel level = advanced_platformer::generateLevel(
         catalog, {.grid = {2, 1}, .roomCount = 2, .seed = 1}, "pieces.json");
 
     REQUIRE(level.mapRows[3] == "#.............#");

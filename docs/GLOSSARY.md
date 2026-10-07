@@ -79,21 +79,21 @@ belong to.
 
 ## Presentation and content
 
-| Term                | Meaning                                                                                                                  |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Render scene        | The list of plain draw commands built from the world each frame, before anything touches OpenGL.                         |
-| Internal resolution | The 320 by 180 image the game draws, scaled to fit the window.                                                           |
-| Atlas               | The one image every sprite is cut from.                                                                                  |
-| Cover               | Tiles that block sight but can be walked into, such as grass. Whatever stands in cover is hidden from anyone outside it. |
-| Catalog             | A JSON file of named definitions, such as `actors.json` or `items.json`.                                                 |
-| Definition          | One named entry in a catalog, which levels refer to by name.                                                             |
-| Legend              | The part of `pieces.json` that says what each character in a piece's map rows means.                                     |
-| Room                | One grid slot of a generated level, with the doors the layout gave it. The generator fills it with a matching piece.     |
-| Room piece          | A hand-drawn room with a role and doors on its edges, one file in `pieces/`. A room gets one whose doors match exactly.  |
-| Room layout         | The grid slots a generated level's rooms fill, the doors between them, and which room is the exit.                       |
-| Level data          | What the generator hands over: the stitched map rows, the legend, and the placements in cells (`LevelData`).             |
-| Level               | A level data composed into a map and world with the player in it, ready to play (`GameLevel`).                           |
-| Seed                | The number a generated level is built from. The same seed always builds the same level.                                  |
-| Run                 | Generated levels played one after another from level 1, each with more rooms, until the player dies. See `pieces.json`.  |
-| Run seed            | The number a run's level seeds follow from. Each defeat starts a new run with the next run seed.                         |
-| Defeat              | The player's death timer running out. It stops the world, and the game starts a new run.                                 |
+| Term                | Meaning                                                                                                                           |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Render scene        | The list of plain draw commands built from the world each frame, before anything touches OpenGL.                                  |
+| Internal resolution | The 320 by 180 image the game draws, scaled to fit the window.                                                                    |
+| Atlas               | The one image every sprite is cut from.                                                                                           |
+| Cover               | Tiles that block sight but can be walked into, such as grass. Whatever stands in cover is hidden from anyone outside it.          |
+| Catalog             | A JSON file of named definitions, such as `actors.json` or `items.json`.                                                          |
+| Definition          | One named entry in a catalog, which levels refer to by name.                                                                      |
+| Legend              | The part of `pieces.json` that says what each character in a piece's map rows means.                                              |
+| Room                | One grid slot of a generated level, with the doors the layout gave it. The generator fills it with a matching piece.              |
+| Room piece          | A hand-drawn room with a role and doors on its edges, one file in `pieces/`. A room gets one whose doors match exactly.           |
+| Room layout         | The grid slots a generated level's rooms fill, the doors between them, and which room is the exit.                                |
+| Stitched level      | What the generator hands over: the pieces' map rows stitched into one, the legend, and the placements in cells (`StitchedLevel`). |
+| Level               | A stitched level composed into a map and world with the player in it, ready to play (`GameLevel`).                                |
+| Seed                | The number a generated level is built from. The same seed always builds the same level.                                           |
+| Run                 | Generated levels played one after another from level 1, each with more rooms, until the player dies. See `pieces.json`.           |
+| Run seed            | The number a run's level seeds follow from. Each defeat starts a new run with the next run seed.                                  |
+| Defeat              | The player's death timer running out. It stops the world, and the game starts a new run.                                          |

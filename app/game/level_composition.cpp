@@ -81,8 +81,8 @@ namespace advanced_platformer
             return exit;
         }
 
-        GameLevel composeLevelData(
-            const LevelData& data,
+        GameLevel composeStitchedLevel(
+            const StitchedLevel& stitched,
             const std::string& levelName,
             int levelNumber,
             std::uint32_t seed,
@@ -93,13 +93,13 @@ namespace advanced_platformer
             const auto& exits = catalogs.exits;
             const auto& items = catalogs.items;
             const auto& pickups = catalogs.pickups;
-            TileMap map = composeTileMap(data.mapRows, data.tileLegend, catalogs.tiles);
+            TileMap map = composeTileMap(stitched.mapRows, stitched.tileLegend, catalogs.tiles);
             World world(composeItems(items, textureId));
             std::unordered_map<std::uint32_t, std::string> actorDefinitionNames;
             std::unordered_map<std::uint32_t, std::string> actorPlacementIds;
             std::vector<std::string> pickupPlacementIds;
             std::set<std::string> placedIds;
-            for (const auto& placement : data.actors)
+            for (const auto& placement : stitched.actors)
             {
                 try
                 {
@@ -119,7 +119,7 @@ namespace advanced_platformer
                         std::format("{}: actor '{}': {}", levelName, placement.id, error.what()));
                 }
             }
-            for (const auto& placement : data.pickups)
+            for (const auto& placement : stitched.pickups)
             {
                 try
                 {
@@ -141,13 +141,13 @@ namespace advanced_platformer
             placedIds.insert(pickupPlacementIds.begin(), pickupPlacementIds.end());
             try
             {
-                world.setExit(composePlacedExit(map, textureId, data.exit, items, exits));
+                world.setExit(composePlacedExit(map, textureId, stitched.exit, items, exits));
             }
             catch (const std::invalid_argument& error)
             {
                 throw std::invalid_argument(std::format("{}: exit: {}", levelName, error.what()));
             }
-            const glm::vec2 playerSpawnFeet = feetInCell(map.tileSize(), data.playerSpawn);
+            const glm::vec2 playerSpawnFeet = feetInCell(map.tileSize(), stitched.playerSpawn);
             return {
                 levelNumber,
                 std::move(map),
@@ -176,9 +176,10 @@ namespace advanced_platformer
         const Actor& player)
     {
         const std::string levelName = std::format("Level {} (seed {})", levelNumber, seed);
-        const LevelData data =
+        const StitchedLevel stitched =
             generateLevel(pieces, levelSettings(pieces.run, levelNumber, seed), levelName);
-        GameLevel level = composeLevelData(data, levelName, levelNumber, seed, textureId, catalogs);
+        GameLevel level =
+            composeStitchedLevel(stitched, levelName, levelNumber, seed, textureId, catalogs);
         Actor placed = player;
         moveFeetTo(placed.body.bounds, level.playerSpawnFeet);
         const ActorId playerId = level.world.addActor(std::move(placed));

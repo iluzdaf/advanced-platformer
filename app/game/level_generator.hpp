@@ -13,7 +13,7 @@
 
 namespace advanced_platformer
 {
-    struct LevelData
+    struct StitchedLevel
     {
         std::map<char, std::string> tileLegend;
         std::vector<std::string> mapRows;
@@ -30,7 +30,7 @@ namespace advanced_platformer
         std::uint32_t seed = 0;
     };
 
-    LevelData generateLevel(
+    StitchedLevel generateLevel(
         const RoomPieceCatalog& catalog,
         const LevelSettings& settings,
         std::string_view levelName);
