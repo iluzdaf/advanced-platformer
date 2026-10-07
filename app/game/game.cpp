@@ -56,7 +56,7 @@ namespace advanced_platformer
         : gameCatalogs(std::move(gameCatalogs)),
           npcScripts(std::move(npcScripts)),
           presentation(std::move(presentation)),
-          level(startLevel(
+          level(composePlayableLevel(
               this->gameCatalogs.pieces,
               1,
               runLevelSeed(runSeed, 1),
@@ -72,7 +72,7 @@ namespace advanced_platformer
         {
             throw std::invalid_argument("The game's simulation step must be finite and positive");
         }
-        startCamera();
+        prepareLevel();
     }
 
     void Game::changeLevel(LevelChange change)
@@ -109,7 +109,7 @@ namespace advanced_platformer
 
     void Game::enterLevel(int levelNumber, std::uint32_t seed, const Actor& player)
     {
-        GameLevel next = startLevel(
+        GameLevel next = composePlayableLevel(
             gameCatalogs.pieces,
             levelNumber,
             seed,
@@ -122,10 +122,10 @@ namespace advanced_platformer
             npcScripts.forget(actor.id);
         }
         level = std::move(next);
-        startCamera();
+        prepareLevel();
     }
 
-    void Game::startCamera()
+    void Game::prepareLevel()
     {
         const Actor* playerActor = level.world.findActor(level.world.playerId());
         if (playerActor == nullptr)

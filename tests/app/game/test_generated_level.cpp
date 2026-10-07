@@ -52,7 +52,7 @@ TEST_CASE("A generated level skips seeds whose exit the player cannot reach", "[
     bool skipped = false;
     for (std::uint32_t seed = 0; seed < 16; ++seed)
     {
-        const advanced_platformer::GameLevel level = advanced_platformer::startLevel(
+        const advanced_platformer::GameLevel level = advanced_platformer::composePlayableLevel(
             pieces,
             1,
             seed,
@@ -78,7 +78,7 @@ TEST_CASE("A generated level whose every seed is shut off fails to start", "[app
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
 
     REQUIRE_THROWS_WITH(
-        advanced_platformer::startLevel(
+        advanced_platformer::composePlayableLevel(
             pieces,
             2,
             1,

@@ -38,7 +38,7 @@ namespace advanced_platformer
         int textureId,
         const GameCatalogs& catalogs,
         const Actor& player);
-    GameLevel startLevel(
+    GameLevel composePlayableLevel(
         const RoomPieceCatalog& pieces,
         int levelNumber,
         std::uint32_t seed,

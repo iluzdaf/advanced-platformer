@@ -193,7 +193,7 @@ namespace advanced_platformer
         constexpr std::uint32_t SeedAttempts = 100;
     }
 
-    GameLevel startLevel(
+    GameLevel composePlayableLevel(
         const RoomPieceCatalog& pieces,
         int levelNumber,
         std::uint32_t seed,

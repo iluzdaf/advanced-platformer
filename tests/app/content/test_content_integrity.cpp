@@ -73,7 +73,7 @@ TEST_CASE("Every run level starts with a route from the spawn to the exit", "[ap
         advanced_platformer::loadGameCatalogs("assets/catalogs", pngSize(ShippedAtlas));
     for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
     {
-        const advanced_platformer::GameLevel level = advanced_platformer::startLevel(
+        const advanced_platformer::GameLevel level = advanced_platformer::composePlayableLevel(
             pieces,
             number,
             advanced_platformer::runLevelSeed(1, number),

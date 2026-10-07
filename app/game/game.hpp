@@ -83,7 +83,7 @@ namespace advanced_platformer
     private:
         Actor carriedPlayer() const;
         void enterLevel(int levelNumber, std::uint32_t seed, const Actor& player);
-        void startCamera();
+        void prepareLevel();
         CameraController& cameraControllerValue();
         const CameraController& cameraControllerValue() const;
 
