@@ -1,0 +1,14 @@
+{
+  "role": "exit",
+  "doors": ["right"],
+  "mirror": false,
+  "map": ["########", "#......#", "#.......", "#.......", "#.......", "########"],
+  "exit": {
+    "definition": "test_door",
+    "spawn": [2, 4],
+    "requirement": {
+      "item": "missing",
+      "quantity": 1
+    }
+  }
+}

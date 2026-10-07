@@ -6,16 +6,13 @@
 
 #include <glm/vec2.hpp>
 
-#include "content/game_catalogs.hpp"
-#include "content/level_catalog.hpp"
 #include "game/game.hpp"
-#include "lua_npc_scripts.hpp"
 #include "lua_presentation_script.hpp"
 #include "lua_script_diagnostic.hpp"
 #include "advanced_platformer/input/input_state.hpp"
 #include "advanced_platformer/render/camera.hpp"
-#include "support/atlas_size.hpp"
 #include "support/fixed_step.hpp"
+#include "support/fixture_game.hpp"
 
 namespace
 {
@@ -25,13 +22,10 @@ namespace
     {
         advanced_platformer::LuaPresentationScript presentation;
         presentation.loadScriptText(presentationSource, "fx.lua");
-        return {
-            0,
-            advanced_platformer::loadLevelCatalog("tests/fixtures/levels/levels.json"),
-            advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
-            advanced_platformer::LuaNpcScripts{},
-            std::move(presentation),
-            tests::FixedStepSeconds};
+        advanced_platformer::GameContent content =
+            tests::fixtureContent("tests/fixtures/rooms/finish/pieces.json");
+        content.presentation = std::move(presentation);
+        return tests::fixtureGame(std::move(content));
     }
 
     bool shaking(const advanced_platformer::Game& game)

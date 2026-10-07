@@ -4,6 +4,6 @@
 
 namespace tests
 {
-    // The atlas the test catalogs are loaded against, in pixels. Every fixture region fits.
     constexpr glm::ivec2 AtlasSize{256, 256};
+    constexpr glm::ivec2 UncheckedAtlasSize{4096, 4096};
 }

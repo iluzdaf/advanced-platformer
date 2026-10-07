@@ -1,7 +1,9 @@
 target_sources(
     advanced_platformer_tests
     PRIVATE
+        ${PROJECT_SOURCE_DIR}/app/application_context.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/console_log.cpp
+        ${PROJECT_SOURCE_DIR}/app/debug/debug_cursor.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/debug_overlay.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/frame_axes.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/frame_selection.cpp
@@ -10,6 +12,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/app/content/actor_definition.cpp
         ${PROJECT_SOURCE_DIR}/app/content/animation_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/asset_watcher.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/camera_settings.cpp
         ${PROJECT_SOURCE_DIR}/app/content/content_diagnostics.cpp
         ${PROJECT_SOURCE_DIR}/app/content/content_glaze.cpp
         ${PROJECT_SOURCE_DIR}/app/content/content_validation.cpp
@@ -18,15 +21,17 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/app/content/game_content.cpp
         ${PROJECT_SOURCE_DIR}/app/content/hud_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/item_catalog.cpp
-        ${PROJECT_SOURCE_DIR}/app/content/level_catalog.cpp
-        ${PROJECT_SOURCE_DIR}/app/content/level_data.cpp
+        ${PROJECT_SOURCE_DIR}/app/game/level_generator.cpp
         ${PROJECT_SOURCE_DIR}/app/content/machine_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/npc_script_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/pickup_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/room_pieces.cpp
         ${PROJECT_SOURCE_DIR}/app/content/tile_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/game/game.cpp
         ${PROJECT_SOURCE_DIR}/app/game/level_composition.cpp
         ${PROJECT_SOURCE_DIR}/app/game/level_reload.cpp
+        ${PROJECT_SOURCE_DIR}/app/game/level_requests.cpp
+        ${PROJECT_SOURCE_DIR}/app/game/play_control.cpp
         ${PROJECT_SOURCE_DIR}/app/graphics/display_viewport.cpp
         ${PROJECT_SOURCE_DIR}/app/ui/inventory_layout.cpp
         ${PROJECT_SOURCE_DIR}/tests/actor/test_actor_system.cpp
@@ -35,27 +40,28 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/combat/test_contact_damage.cpp
         ${PROJECT_SOURCE_DIR}/tests/combat/test_projectile_system.cpp
         ${PROJECT_SOURCE_DIR}/tests/combat/test_ranged_attack.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/test_application_context.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_actor_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_actor_definition.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_animation_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_asset_watcher.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_atlas_regions.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/content/test_camera_settings.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_content_integrity.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_content_glaze.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_content_validation.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_exit_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_hud_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_item_catalog.cpp
-        ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_catalog.cpp
-        ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_data.cpp
-        ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_data_diagnostics.cpp
-        ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_data_placement_validation.cpp
-        ${PROJECT_SOURCE_DIR}/tests/app/content/test_level_data_validation.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/game/test_level_generator.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_machine_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_npc_script_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_pickup_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/content/test_room_piece_routes.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/content/test_room_pieces.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/content/test_tile_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_console_log.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/debug/test_debug_cursor.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_debug_overlay.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_debug_overlay_machine.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_debug_overlay_navigation.cpp
@@ -64,11 +70,14 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_game_debug.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/debug/test_navigation_debug.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/game/test_game_presentation.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/game/test_generated_level.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/game/test_game_reload.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/game/test_level_composition.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/game/test_level_object_composition.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/game/test_level_reload.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/game/test_level_requests.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/game/test_level_transition.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/game/test_play_control.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/graphics/test_display_viewport.cpp
         ${PROJECT_SOURCE_DIR}/tests/input/test_input_state.cpp
         ${PROJECT_SOURCE_DIR}/tests/input/test_input_program.cpp

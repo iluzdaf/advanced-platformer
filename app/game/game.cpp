@@ -4,13 +4,15 @@
 #include "content/actor_catalog.hpp"
 #include "debug/navigation_debug.hpp"
 #include "level_composition.hpp"
-#include "content/level_catalog.hpp"
+#include "level_generator.hpp"
 #include "content/game_catalogs.hpp"
 #include "content/hud_catalog.hpp"
 #include "content/game_content.hpp"
 #include "level_reload.hpp"
 
 #include <cstddef>
+#include <cstdint>
+#include <format>
 #include <iterator>
 #include <cmath>
 #include <optional>
@@ -46,55 +48,84 @@ namespace advanced_platformer
 {
     Game::Game(
         int textureId,
-        LevelCatalog levelCatalog,
         GameCatalogs gameCatalogs,
         LuaNpcScripts npcScripts,
         LuaPresentationScript presentation,
-        float stepSeconds)
-        : levelCatalog(std::move(levelCatalog)),
-          gameCatalogs(std::move(gameCatalogs)),
+        float stepSeconds,
+        std::uint32_t runSeed)
+        : gameCatalogs(std::move(gameCatalogs)),
           npcScripts(std::move(npcScripts)),
           presentation(std::move(presentation)),
-          level(composeStartedLevel(
-              this->levelCatalog,
-              this->levelCatalog.startLevel,
+          level(composePlayableLevel(
+              this->gameCatalogs.pieces,
+              1,
+              runLevelSeed(runSeed, 1),
               textureId,
               this->gameCatalogs,
-              composePlayer(this->gameCatalogs, textureId))),
+              composePlayer(this->gameCatalogs, textureId),
+              stepSeconds)),
           atlasTextureId(textureId),
-          simulationStepSeconds(stepSeconds)
+          simulationStepSeconds(stepSeconds),
+          currentRunSeed(runSeed)
     {
         if (!isFinitePositive(simulationStepSeconds))
         {
             throw std::invalid_argument("The game's simulation step must be finite and positive");
         }
-        startCamera();
+        prepareLevel();
     }
 
-    void Game::loadLevel(int levelNumber)
+    void Game::changeLevel(LevelChange change)
     {
-        Actor nextPlayer = composePlayer(gameCatalogs, atlasTextureId);
-        if (const Actor* previousPlayer = level.world.findActor(level.world.playerId()))
+        switch (change)
         {
-            nextPlayer.health = previousPlayer->health;
-            nextPlayer.inventory = previousPlayer->inventory;
+        case LevelChange::NewRun:
+            enterLevel(
+                1, runLevelSeed(currentRunSeed, 1), composePlayer(gameCatalogs, atlasTextureId));
+            return;
+        case LevelChange::NextLevel:
+            enterLevel(
+                level.number + 1, runLevelSeed(currentRunSeed, level.number + 1), carriedPlayer());
+            return;
+        case LevelChange::Restart:
+            enterLevel(level.number, level.seed, carriedPlayer());
+            return;
+        case LevelChange::Reroll:
+            enterLevel(level.number, level.seed + 1U, carriedPlayer());
+            return;
         }
-        replaceLevel(levelNumber, std::move(nextPlayer));
     }
 
-    void Game::replaceLevel(int levelNumber, Actor player)
+    Actor Game::carriedPlayer() const
     {
-        GameLevel next = composeStartedLevel(
-            levelCatalog, levelNumber, atlasTextureId, gameCatalogs, std::move(player));
+        Actor next = composePlayer(gameCatalogs, atlasTextureId);
+        if (const Actor* live = level.world.findActor(level.world.playerId()))
+        {
+            next.health = live->health;
+            next.inventory = live->inventory;
+        }
+        return next;
+    }
+
+    void Game::enterLevel(int levelNumber, std::uint32_t seed, const Actor& player)
+    {
+        GameLevel next = composePlayableLevel(
+            gameCatalogs.pieces,
+            levelNumber,
+            seed,
+            atlasTextureId,
+            gameCatalogs,
+            player,
+            simulationStepSeconds);
         for (const Actor& actor : level.world.actors())
         {
             npcScripts.forget(actor.id);
         }
         level = std::move(next);
-        startCamera();
+        prepareLevel();
     }
 
-    void Game::startCamera()
+    void Game::prepareLevel()
     {
         const Actor* playerActor = level.world.findActor(level.world.playerId());
         if (playerActor == nullptr)
@@ -102,16 +133,12 @@ namespace advanced_platformer
             throw std::logic_error("The game could not initialise its camera");
         }
         cameraController =
-            makeCameraController(level.map, playerActor->body.bounds, levelCatalog.cameraDeadZone);
+            makeCameraController(level.map, playerActor->body.bounds, gameCatalogs.camera.deadZone);
         queueNavigationFill(level.map, level.world, simulationStepSeconds);
     }
 
     void Game::update(const InputIntentions& intentions, float deltaTime, FrameProfile* profile)
     {
-        if (gameComplete)
-        {
-            return;
-        }
         Actor* player = level.world.findActor(level.world.playerId());
         if (player == nullptr)
         {
@@ -123,20 +150,13 @@ namespace advanced_platformer
 
         if (level.world.levelComplete())
         {
-            const auto& completedExit = level.world.exit();
-            if (!completedExit.has_value())
-            {
-                throw std::logic_error("A completed game level must have an exit");
-            }
-            const auto nextLevel = completedExit->nextLevel;
-            if (nextLevel.has_value())
-            {
-                loadLevel(*nextLevel);
-            }
-            else
-            {
-                gameComplete = true;
-            }
+            changeLevel(LevelChange::NextLevel);
+            return;
+        }
+        if (level.world.playerDefeated())
+        {
+            currentRunSeed = nextRunSeed(currentRunSeed);
+            changeLevel(LevelChange::NewRun);
             return;
         }
 
@@ -267,10 +287,6 @@ namespace advanced_platformer
 
     void Game::useInventoryItem(std::size_t slot)
     {
-        if (gameComplete)
-        {
-            return;
-        }
         WorldRequests requests;
         requests.useItem(level.world.playerId(), slot);
         applyWorldRequests(level.world, requests);
@@ -287,39 +303,33 @@ namespace advanced_platformer
         return level.map.breakTile(cellAt(level.map.tileSize(), world));
     }
 
-    void Game::restart()
-    {
-        replaceLevel(levelCatalog.startLevel, composePlayer(gameCatalogs, atlasTextureId));
-        gameComplete = false;
-    }
-
-    void Game::restartLevel()
-    {
-        if (!gameComplete)
-        {
-            loadLevel(level.number);
-        }
-    }
-
     LevelReload Game::reload(GameContent content)
     {
-        GameLevel fresh = composeStartedLevel(
-            content.levelCatalog,
+        GameLevel fresh = composeLevel(
+            content.gameCatalogs.pieces,
             level.number,
+            level.seed,
             atlasTextureId,
             content.gameCatalogs,
             composePlayer(content.gameCatalogs, atlasTextureId));
+        if (!playerCanReachExit(fresh.map, fresh.world, simulationStepSeconds))
+        {
+            throw std::invalid_argument(
+                std::format(
+                    "Level {}: seed {} has no route from the spawn to the exit",
+                    level.number,
+                    level.seed));
+        }
         GameLevel next = level;
         LevelReload result = reloadLevel(
             next, std::move(fresh), matchItemIds(gameCatalogs.items, content.gameCatalogs.items));
 
         level = std::move(next);
-        levelCatalog = std::move(content.levelCatalog);
         gameCatalogs = std::move(content.gameCatalogs);
         npcScripts = std::move(content.npcScripts);
         presentation = std::move(content.presentation);
         CameraController& camera = cameraControllerValue();
-        camera.deadZoneSize = levelCatalog.cameraDeadZone;
+        camera.deadZoneSize = gameCatalogs.camera.deadZone;
         const Actor* player = level.world.findActor(level.world.playerId());
         if (player != nullptr)
         {
@@ -334,9 +344,14 @@ namespace advanced_platformer
         return level.number;
     }
 
-    bool Game::complete() const
+    std::uint32_t Game::levelSeed() const
     {
-        return gameComplete;
+        return level.seed;
+    }
+
+    std::uint32_t Game::runSeed() const
+    {
+        return currentRunSeed;
     }
 
     std::optional<glm::vec2> Game::levelExitScreenPosition() const

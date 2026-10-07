@@ -5,32 +5,7 @@
 #include <stdexcept>
 
 #include "content/content_validation.hpp"
-#include "content/item_catalog.hpp"
 #include "content/tile_catalog.hpp"
-#include "content/level_data.hpp"
-
-TEST_CASE("Exit settings are validated without JSON", "[app][content][validation]")
-{
-    advanced_platformer::ExitPlacement exit;
-    exit.definitionName = "test_door";
-    REQUIRE_NOTHROW(advanced_platformer::validateExitSettings(exit));
-    exit.requirement = advanced_platformer::NamedItemStack{"key", 1};
-    exit.nextLevel = 2;
-    REQUIRE_NOTHROW(advanced_platformer::validateExitSettings(exit));
-    exit.requirement->quantity = 0;
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::validateExitSettings(exit),
-        "exit.requirement.quantity: expected a positive integer, got 0");
-    exit.requirement->quantity = -1;
-    REQUIRE_THROWS_AS(advanced_platformer::validateExitSettings(exit), std::invalid_argument);
-    exit.requirement.reset();
-    exit.nextLevel = 0;
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::validateExitSettings(exit),
-        "exit.nextLevel: level number must be positive");
-    exit.nextLevel = -1;
-    REQUIRE_THROWS_AS(advanced_platformer::validateExitSettings(exit), std::invalid_argument);
-}
 
 TEST_CASE(
     "Tile catalog validation accepts C++ definitions without JSON",
@@ -121,23 +96,4 @@ TEST_CASE("Tile legend symbols are unambiguous independently of JSON", "[app][co
     REQUIRE_THROWS_AS(advanced_platformer::validateLegendSymbols({""}), std::invalid_argument);
     REQUIRE_THROWS_AS(
         advanced_platformer::validateLegendSymbols({".", "."}), std::invalid_argument);
-}
-
-TEST_CASE(
-    "Map authoring validation reports useful paths without JSON",
-    "[app][content][validation]")
-{
-    REQUIRE_NOTHROW(advanced_platformer::validateMapRows({"..", ".."}, {{'.', "empty"}}));
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::validateMapRows({}, {{'.', "empty"}}),
-        "map: expected at least one row");
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::validateMapRows({""}, {{'.', "empty"}}),
-        "map[0]: row cannot be empty");
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::validateMapRows({"..", "."}, {{'.', "empty"}}),
-        "map[1]: expected 2 columns, got 1");
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::validateMapRows({".?"}, {{'.', "empty"}}),
-        "map[0][1]: unknown symbol '?'; define it in tileLegend");
 }

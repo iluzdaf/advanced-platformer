@@ -1,6 +1,7 @@
 #include "advanced_platformer/world/level_validation.hpp"
 
 #include <format>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -12,7 +13,12 @@
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
+#include "advanced_platformer/navigation/actor_navigation.hpp"
+#include "advanced_platformer/navigation/navigation_fill.hpp"
+#include "advanced_platformer/navigation/navigation_path.hpp"
+#include "advanced_platformer/navigation/platformer_connection_cache.hpp"
 #include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/world/level_exit.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
 #include "advanced_platformer/world/world.hpp"
 
@@ -88,8 +94,6 @@ namespace advanced_platformer
             validatePlacement(map, actor, bounds, level, place, needsGround);
         }
 
-        // A climber can patrol to a wall or ceiling; navigation takes it to the nearest
-        // place it can hold.
         bool patrolNeedsGround(const Actor& actor)
         {
             return actor.platformerMovement.has_value() && !actor.surfaceClimb.has_value();
@@ -124,5 +128,31 @@ namespace advanced_platformer
                 "respawn",
                 player->platformerMovement.has_value());
         }
+    }
+
+    bool playerCanReachExit(const TileMap& map, const World& world, float stepSeconds)
+    {
+        const Actor* player = world.findActor(world.playerId());
+        if (player == nullptr)
+        {
+            throw std::invalid_argument("A route to the exit needs a player");
+        }
+        const std::optional<LevelExit>& exit = world.exit();
+        if (!exit.has_value())
+        {
+            throw std::invalid_argument("A route to the exit needs an exit");
+        }
+        Actor atRespawn = *player;
+        moveFeetTo(atRespawn.body.bounds, world.playerSpawnFeet());
+        const glm::vec2 goal = feetOf(exit->bounds);
+        PlatformerConnectionCache cache;
+        std::optional<NavigationPathResult> result =
+            findActorPath(map, atRespawn, goal, stepSeconds, cache);
+        while (result.has_value() && result->status == NavigationPathStatus::Deferred)
+        {
+            advanceNavigationFill(map, cache, 1);
+            result = findActorPath(map, atRespawn, goal, stepSeconds, cache);
+        }
+        return result.has_value() && result->status == NavigationPathStatus::Found;
     }
 }

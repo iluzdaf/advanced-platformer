@@ -78,17 +78,6 @@ TEST_CASE("Unusable or stale item requests are harmless", "[world][inventory][us
     REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(2) == 1);
 }
 
-TEST_CASE("Respawning preserves the collected inventory", "[world][inventory][lifecycle]")
-{
-    auto world = makeWorld();
-    tests::component<advanced_platformer::Inventory>(tests::player(world))
-        .add(world.itemDefinition(3), 1);
-    tests::player(world).life = advanced_platformer::LifeState::Dying;
-    world.respawnPlayer();
-    REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(3) == 1);
-    REQUIRE(tests::player(world).life == advanced_platformer::LifeState::Alive);
-}
-
 TEST_CASE("World rejects duplicate item definitions", "[world][inventory][validation]")
 {
     auto definitions = items();

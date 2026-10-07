@@ -4,7 +4,6 @@
 
 #include "game/game.hpp"
 #include "graphics/display_viewport.hpp"
-#include "ui/completion_ui.hpp"
 #include "ui/exit_hint_ui.hpp"
 #include "ui/health_hud_ui.hpp"
 #include "ui/inventory_ui.hpp"
@@ -25,17 +24,13 @@ namespace advanced_platformer
             return requests;
         }
         drawHealthHud(game.playerHealth(), game.hudIcons(), atlas, *viewport);
-        if (!game.complete())
-        {
-            requests.toggleInventory = drawInventoryButton(atlas, game.hudIcons().bag, *viewport);
-            drawLockedExitHint(game, atlas, *viewport);
-        }
-        drawLevelCompletion(game, *viewport);
-        if (simulationPaused && !game.complete())
+        requests.toggleInventory = drawInventoryButton(atlas, game.hudIcons().bag, *viewport);
+        drawLockedExitHint(game, atlas, *viewport);
+        if (simulationPaused)
         {
             drawPauseNotice(*viewport);
         }
-        if (inventoryOpen && !game.complete())
+        if (inventoryOpen)
         {
             requests.useInventorySlot = drawInventory(game, atlas, *viewport);
         }

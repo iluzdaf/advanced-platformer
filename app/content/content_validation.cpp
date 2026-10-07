@@ -1,7 +1,6 @@
 #include "content_validation.hpp"
 
 #include "content_diagnostics.hpp"
-#include "level_data.hpp"
 #include "tile_catalog.hpp"
 
 #include <cstddef>
@@ -43,30 +42,6 @@ namespace advanced_platformer
                 sourceName,
                 path,
                 std::format("region runs past the {} by {} atlas", atlasSize.x, atlasSize.y));
-        }
-    }
-
-    void validateExitSettings(
-        const ExitPlacement& placement,
-        const std::string& path,
-        std::string_view sourceName)
-    {
-        if (placement.definitionName.empty())
-        {
-            failJson(
-                sourceName, fieldPath(path, "definition"), "exit definition name cannot be empty");
-        }
-        if (placement.requirement && placement.requirement->quantity <= 0)
-        {
-            failJson(
-                sourceName,
-                fieldPath(path, "requirement.quantity"),
-                std::format(
-                    "expected a positive integer, got {}", placement.requirement->quantity));
-        }
-        if (placement.nextLevel && *placement.nextLevel <= 0)
-        {
-            failJson(sourceName, fieldPath(path, "nextLevel"), "level number must be positive");
         }
     }
 
@@ -168,44 +143,6 @@ namespace advanced_platformer
             if (!tiles.insert(symbol).second)
             {
                 failJson(sourceName, fieldPath("tileLegend", symbol), "repeated symbol");
-            }
-        }
-    }
-
-    void validateMapRows(
-        const std::vector<std::string>& rows,
-        const std::map<char, std::string>& legend,
-        std::string_view sourceName)
-    {
-        if (rows.empty())
-        {
-            failJson(sourceName, "map", "expected at least one row");
-        }
-        const std::size_t width = rows.front().size();
-        if (width == 0)
-        {
-            failJson(sourceName, "map[0]", "row cannot be empty");
-        }
-        for (std::size_t row = 0; row < rows.size(); ++row)
-        {
-            const std::string path = indexPath("map", row);
-            if (rows[row].size() != width)
-            {
-                failJson(
-                    sourceName,
-                    path,
-                    std::format("expected {} columns, got {}", width, rows[row].size()));
-            }
-            for (std::size_t column = 0; column < width; ++column)
-            {
-                const char symbol = rows[row][column];
-                if (legend.find(symbol) == legend.end())
-                {
-                    failJson(
-                        sourceName,
-                        indexPath(path, column),
-                        std::format("unknown symbol '{}'; define it in tileLegend", symbol));
-                }
             }
         }
     }

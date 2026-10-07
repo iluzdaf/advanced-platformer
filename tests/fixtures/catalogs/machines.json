@@ -9,6 +9,10 @@
         { "from": "rest", "to": "hunt", "when": { "targetKnown": true } },
         { "from": "hunt", "to": "rest", "when": { "targetKnown": false }, "after": 0.5 }
       ]
+    },
+    "test_contact_enemy": {
+      "states": [{ "name": "attack", "does": { "script": "contact_enemy", "activity": "attack" } }],
+      "transitions": []
     }
   }
 }

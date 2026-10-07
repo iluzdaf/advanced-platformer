@@ -6,16 +6,17 @@
 
 #include "actor_catalog.hpp"
 #include "animation_catalog.hpp"
+#include "camera_settings.hpp"
 #include "exit_catalog.hpp"
 #include "hud_catalog.hpp"
 #include "item_catalog.hpp"
 #include "machine_catalog.hpp"
 #include "pickup_catalog.hpp"
+#include "room_pieces.hpp"
 #include "tile_catalog.hpp"
 
 namespace advanced_platformer
 {
-    // Shared definitions, not live actors or levels. Keep these for the game session.
     struct GameCatalogs
     {
         TileCatalog tiles;
@@ -26,16 +27,14 @@ namespace advanced_platformer
         PickupCatalog pickups;
         ExitCatalog exits;
         HudIcons hudIcons;
+        CameraSettings camera;
+        RoomPieceCatalog pieces;
     };
 
-    // Loads every catalog in the directory, then checks their regions fit in an atlas of
-    // this size, in pixels.
     GameCatalogs loadGameCatalogs(
         const std::filesystem::path& catalogDirectory,
         glm::ivec2 atlasSize);
 
-    // Rejects the first region in any catalog that runs past the atlas, naming its file in
-    // the directory and its field.
     void validateAtlasRegions(
         const GameCatalogs& catalogs,
         glm::ivec2 atlasSize,

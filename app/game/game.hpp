@@ -3,12 +3,12 @@
 #include <optional>
 #include <vector>
 #include <cstddef>
+#include <cstdint>
 
 #include <glm/vec2.hpp>
 
 #include "debug/debug_overlay.hpp"
 #include "game/level_composition.hpp"
-#include "content/level_catalog.hpp"
 #include "content/game_catalogs.hpp"
 #include "content/hud_catalog.hpp"
 #include "game/level_reload.hpp"
@@ -23,6 +23,14 @@ namespace advanced_platformer
 {
     constexpr float LockedExitHintSeconds = 1.0F;
 
+    enum class LevelChange : std::uint8_t
+    {
+        NewRun,
+        NextLevel,
+        Restart,
+        Reroll
+    };
+
     struct FrameProfile;
     struct GameContent;
     struct Health;
@@ -36,11 +44,11 @@ namespace advanced_platformer
     public:
         Game(
             int textureId,
-            LevelCatalog levelCatalog,
             GameCatalogs gameCatalogs,
             LuaNpcScripts npcScripts,
             LuaPresentationScript presentation,
-            float simulationStepSeconds);
+            float simulationStepSeconds,
+            std::uint32_t runSeed);
 
         void update(
             const InputIntentions& intentions,
@@ -59,11 +67,11 @@ namespace advanced_platformer
         const ItemDefinition& itemDefinition(int id) const;
         void useInventoryItem(std::size_t slot);
         bool breakTileAt(glm::vec2 internalPosition);
-        void restart();
-        void restartLevel();
+        void changeLevel(LevelChange change);
         LevelReload reload(GameContent content);
         int levelNumber() const;
-        bool complete() const;
+        std::uint32_t levelSeed() const;
+        std::uint32_t runSeed() const;
         std::optional<glm::vec2> levelExitScreenPosition() const;
         bool exitReady() const;
         std::optional<Sprite> lockedExitHintIcon() const;
@@ -73,13 +81,12 @@ namespace advanced_platformer
         Camera renderCamera() const;
 
     private:
-        void loadLevel(int levelNumber);
-        void replaceLevel(int levelNumber, Actor player);
-        void startCamera();
+        Actor carriedPlayer() const;
+        void enterLevel(int levelNumber, std::uint32_t seed, const Actor& player);
+        void prepareLevel();
         CameraController& cameraControllerValue();
         const CameraController& cameraControllerValue() const;
 
-        LevelCatalog levelCatalog;
         GameCatalogs gameCatalogs;
         LuaNpcScripts npcScripts;
         LuaPresentationScript presentation;
@@ -88,6 +95,6 @@ namespace advanced_platformer
         CameraShake cameraShake;
         int atlasTextureId = 0;
         float simulationStepSeconds = 0.0F;
-        bool gameComplete = false;
+        std::uint32_t currentRunSeed = 0;
     };
 }

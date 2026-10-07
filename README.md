@@ -3,8 +3,8 @@
 Advanced Platformer is a C++26 engine and example game built from independently
 testable systems. The current implementation includes platformer movement, tile collision,
 scrolling, composed actors, NPC state machines with Lua activities, flying and platformer
-pathfinding, projectiles, animation, inventory, automatic pickups, a three-level game
-loop, and ImGui debugging tools.
+pathfinding, projectiles, animation, inventory, automatic pickups, an endless run of
+generated levels, and ImGui debugging tools.
 
 ## Documentation
 
@@ -94,8 +94,8 @@ ctest --preset mac-debug -R "Pickup" --output-on-failure
 | Collect an item                                     | Walk over it                              |
 | Open or close the inventory (pauses the game)       | Q, or click the bag at the bottom-left    |
 | Drink a health potion                               | Click it in the open inventory            |
-| Restart from the starting level                     | R, at the completion message              |
 | Restart the current level, keeping health and items | F5                                        |
+| Generate the current level again from the next seed | F6                                        |
 | Pause or resume the simulation                      | P                                         |
 | Run one simulation step while paused                | . (full stop)                             |
 | Toggle the debug overlay                            | F1                                        |
@@ -103,8 +103,7 @@ ctest --preset mac-debug -R "Pickup" --output-on-failure
 
 The hearts at the top-left show the player's current and maximum health.
 
-Find each level's key and reach its bunker door to unlock the exit. Each door consumes
-one key; the third exit completes the example campaign.
+Reach the bunker door to move on to the next level. Dying starts a new run at level 1.
 
 ## Debug overlay
 
@@ -287,8 +286,7 @@ app/           application shell, graphics, UI, and debug tools
   game/        game flow, level transitions, and level composition
   content/     JSON loaders, catalogs, and content validators
 assets/        runtime game content
-  catalogs/    shared JSON definitions
-  levels/      level catalog and maps
+  catalogs/    shared JSON definitions, with room pieces in catalogs/pieces
   scripts/     Lua NPC activities
   textures/    runtime sprite atlas
 cmake/         dependencies, quality rules, and explicit target source manifests
@@ -297,7 +295,7 @@ scripting/     Lua scripting target: the NPC activity runtime and its sol2 bindi
 src/           core implementations
 tests/         Catch2 tests for core systems and testable application code
   app/         application tests grouped like app/ (content, debug, game, graphics, UI)
-  fixtures/    example content mirroring assets/levels, catalogs, and scripts
+  fixtures/    example content mirroring assets/catalogs and scripts, with room piece sets in rooms/
   support/     test-only builders and simulation helpers
 tools/         repository quality and maintenance scripts
 docs/          architecture, content format, and glossary

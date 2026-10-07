@@ -1,0 +1,19 @@
+{
+  "role": "start",
+  "doors": ["left"],
+  "mirror": false,
+  "map": ["########", "#......#", ".......#", ".......#", ".......#", "########"],
+  "playerSpawn": [6, 4],
+  "pickups": [
+    {
+      "id": "medicine_box_1",
+      "definition": "medicine_box",
+      "spawn": [2, 4]
+    },
+    {
+      "id": "door_key_1",
+      "definition": "door_key",
+      "spawn": [4, 4]
+    }
+  ]
+}

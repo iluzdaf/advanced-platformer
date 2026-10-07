@@ -27,20 +27,23 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 
 ### Application folders
 
-| Location              | Responsibility                                                                                           |
-| --------------------- | -------------------------------------------------------------------------------------------------------- |
-| `app/application.cpp` | Window events, input, fixed steps, pause and single step, UI requests, hot reload, and rendering         |
-| `app/game`            | Session flow: `Game` owns the current level, catalogs, scripts, and camera; level composition and reload |
-| `app/content`         | Content definitions, Glaze loaders, catalogs, validators, and the asset watcher                          |
-| `app/graphics`        | Window and OpenGL context, ImGui session, viewport conversion, and sprite submission                     |
-| `app/ui`              | HUD, inventory, exit hint, and completion UI                                                             |
-| `app/debug`           | Debug snapshots and their ImGui presentation, the console, and the frame profile UI                      |
-| `scripting`           | Lua VM, sandbox, `vec2` binding, and the activity adapter                                                |
-| `assets`              | Levels, catalogs, Lua scripts, and the atlas                                                             |
+| Location              | Responsibility                                                                                                       |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `app/application.cpp` | Window events, input, fixed steps, pause and single step, UI requests, hot reload, and rendering                     |
+| `app/game`            | Session flow: `Game` owns the current level, catalogs, scripts, and camera; level generation, composition and reload |
+| `app/content`         | Content definitions, Glaze loaders, catalogs, validators, and the asset watcher                                      |
+| `app/graphics`        | Window and OpenGL context, ImGui session, viewport conversion, and sprite submission                                 |
+| `app/ui`              | HUD, inventory, exit hint, and pause notice                                                                          |
+| `app/debug`           | Debug snapshots and their ImGui presentation, the console, and the frame profile UI                                  |
+| `scripting`           | Lua VM, sandbox, `vec2` binding, and the activity adapter                                                            |
+| `assets`              | Catalogs, room pieces, Lua scripts, and the atlas                                                                    |
 
 - `GameLevel` keeps the level number, map, world, player spawn, actor definition names,
   and the placement id of each actor and pickup together. Replacing it starts a fresh
-  world.
+  world. It keeps its seed, so a restart or reload builds the same level. `Game` keeps the
+  run seed that each level's seed follows from. `Game::changeLevel` holds the four ways a
+  level changes (new run, next level, restart, reroll): which level, which seed, and
+  whether the player's health and items carry over.
 
 ### Headers, not modules
 
@@ -61,11 +64,10 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
   enters the accumulator, so a stall does not cause a burst of catch-up steps.
 - The application owns pause and single step. The fixed step resets across a pause, as
   across the inventory; the game only sees which steps it is asked to run.
-- Input is cleared while the inventory is open, the game is complete, play was
-  interrupted, or ImGui captures the keyboard. Without a gameplay cursor, only the
+- Input is cleared while the inventory is open, play was interrupted, or ImGui captures the keyboard. Without a gameplay cursor, only the
   attack is cleared.
-- `Game::update` writes player intentions, runs the simulation, handles completion,
-  updates the camera, then runs `updateWorldPresentation`: world events through the
+- `Game::update` writes player intentions, runs the simulation, moves to the next level
+  or starts a new run, updates the camera, then runs `updateWorldPresentation`: world events through the
   presentation scripts, the camera shake, and animation and cover fades, which pause
   while the exit opens.
 - Rendering reads the resulting state at the available frame rate and never advances
@@ -75,14 +77,14 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 
 | Order | Work                                                                                              |
 | ----- | ------------------------------------------------------------------------------------------------- |
-| 1     | Return if the level is complete; otherwise advance the world clock                                |
+| 1     | Return if the level is complete or the player defeated; otherwise advance the world clock         |
 | 2     | While the exit is opening, update only the exit and return                                        |
 | 3     | Build queued navigation connections within the step's budget                                      |
 | 4     | Update NPC senses and target memory                                                               |
 | 5     | Advance NPC machines and run their Lua activities into intentions                                 |
 | 6     | Move actors, then pickups, resolving tile collision                                               |
 | 7     | Update attacks, projectiles, which may break tiles, and projectile bursts                         |
-| 8     | Apply damage and knockback, advance death timers, respawn the player                              |
+| 8     | Apply damage and knockback, advance death timers, defeat the player                               |
 | 9     | Detect pickups                                                                                    |
 | 10    | Forget the Lua state of actors about to be removed, then apply queued requests                    |
 | 11    | Open the exit when the player enters it with what it needs; complete the level once it has opened |
@@ -93,7 +95,7 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
   intention; facts are gathered per slot the same way, so scripts and machines never name a
   kind.
 - `updateLifeState` alone applies damage. It stamps the hit on the world clock, sets a
-  knockback's velocity, and owns death timers and respawning.
+  knockback's velocity, and owns death timers and the player's defeat.
 - For inventory clicks, `drawInterface` returns a slot request; the application passes
   it to `Game::useInventoryItem`, which applies that request alone.
 - Each phase measures itself into the optional `FrameProfile`. Parent phases exclude
@@ -126,8 +128,8 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 - Rendering reads stamps, the clock, and timers; it never ticks them. The hit flash's
   length is a rendering constant.
 - A length content tunes is a duration field in seconds, checked like every other time.
-- Timers and stamps belong to their world. Respawn clears the damage stamp, and nothing
-  carries a stamp into another world.
+- Timers and stamps belong to their world, and nothing carries a stamp into another
+  world.
 
 ## World ownership and identity
 
@@ -224,10 +226,17 @@ team, and life state, plus optional components.
 - A projectile breaks a tile only when its weapon `breaksTiles` and the tile names what it
   breaks into. The swap changes the cell's ID and the map logs the break.
   `updateProjectiles` alone takes a mutable map.
-- `validateLevelActors` checks every spawn, the player's respawn, and every patrol
+- `validateLevelActors` checks every spawn, the player's spawn, and every patrol
   endpoint for body clearance. Platformers also need ground support, except a climber's
   patrol endpoints, which may be on a wall or ceiling. Errors name the level, actor, and
   location.
+- `playerCanReachExit` finds a path for the player from its spawn to the exit, in a
+  cache of its own. Each time the search defers, the fill builds just the cell it asked
+  for, so only the cells the search reaches are simulated. It ignores the exit's
+  requirement and breakable tiles.
+- Starting a level runs it on each seed in turn until one passes, so a restart rebuilds a
+  level the player can finish. A hot reload keeps the seed and runs the check once; a
+  reload that cuts off the exit fails, so the layout never jumps while a piece is edited.
 
 ## NPC behaviour
 
@@ -397,8 +406,8 @@ to the traversal profile. The search itself does not change.
 | Damage         | Queued by combat and projectiles, applied by `updateLifeState`, and stamped on the world clock; a knockback sets velocity and clears grounded           |
 | Death          | Health at zero enters Dying with a timer; dying actors take no intentions or damage but still move and collide                                          |
 
-- The death timer removes an NPC or respawns the player at the stored spawn feet with
-  restored health and movement state. Inventory persists.
+- The death timer removes an NPC. For the player it marks the world defeated, which stops
+  the simulation until `Game` starts a new run.
 - Death timing is independent of animation length; sprites fade in its last part.
 
 ## Inventory, pickups, and levels
@@ -416,17 +425,20 @@ to the traversal profile. The search itself does not change.
   player into the door, then the level completes.
 - `Game` replaces `GameLevel` at a transition, carrying only the player's health and
   inventory, and resets the camera. Velocities, projectiles, NPC and Lua state, and old
-  IDs do not cross. The final exit completes the game; a restart loads the start level.
+  IDs do not cross. Every exit leads to the next level, whose seed follows from the run
+  seed and the level number.
+- A defeat starts a new run: level 1, a fresh player with full health and no items, and
+  the next run seed.
 
 ### Data-driven level boundary
 
-| Step                 | Owner                                | Result                                                                             |
-| -------------------- | ------------------------------------ | ---------------------------------------------------------------------------------- |
-| Load shared catalogs | `app/content/game_catalogs.cpp`      | Definitions checked against the atlas size and kept for the session                |
-| Load scripts         | `app/content/npc_script_catalog.cpp` | Each script a machine names, with every named activity present                     |
-| Load a level         | `app/content/level_data.cpp`         | Plain `LevelData` of explicit placements, each actor and pickup with an id         |
-| Compose the level    | `app/game/level_composition.cpp`     | Names resolved into a map, world, and placed objects                               |
-| Start the level      | `composeStartedLevel`, then `Game`   | Player inserted, placements validated, camera made, and the navigation fill queued |
+| Step                 | Owner                                | Result                                                                                                                                                                                         |
+| -------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Load shared catalogs | `app/content/game_catalogs.cpp`      | Definitions checked against the atlas size, and the room pieces, kept for the session                                                                                                          |
+| Load scripts         | `app/content/npc_script_catalog.cpp` | Each script a machine names, with every named activity present                                                                                                                                 |
+| Generate a level     | `app/game/level_generator.cpp`       | Room pieces laid out from the seed and stitched into a `GeneratedLevel`                                                                                                                        |
+| Compose the level    | `composeLevel`                       | Names resolved into a map, world, and placed objects, with the player at its spawn                                                                                                             |
+| Enter the level      | `Game::enterLevel`                   | `composePlayableLevel` moves to the next seed until the player can reach the exit; then the old actors' scripts are forgotten, the camera follows the player and the navigation fill is queued |
 
 - JSON stays in `app/content`; the core receives C++ values. Each file is read with
   Glaze through `content_glaze` into structs that mirror it, so unknown keys, missing
@@ -447,9 +459,10 @@ to the traversal profile. The search itself does not change.
 - Builds other than Release define `ADVANCED_PLATFORMER_SOURCE_ASSETS`. The application
   reads content from there and polls an `AssetWatcher`, which reports a change once two
   polls in a row see the same files.
-- `Game::reload` is all or nothing. It loads and composes everything, merges the result
-  into a copy of the live level with `reloadLevel`, then swaps in the level, catalogs,
-  and scripts; the atlas is uploaded after. An error changes nothing and is reported to
+- `Game::reload` is all or nothing. It loads everything, composes the level at its
+  current seed with `composeLevel`, checks the exit can still be reached, merges
+  the result into a copy of the live level with `reloadLevel`, then swaps in the level,
+  catalogs, and scripts; the atlas is uploaded after. An error changes nothing and is reported to
   the console.
 - The merge keeps the live `World`. What it keeps and replaces is in
   [CONTENT.md](CONTENT.md#hot-reload).
@@ -464,7 +477,7 @@ to the traversal profile. The search itself does not change.
 - Scene construction computes pickup bobbing, hit flashes, death fading, and bursts from
   state and timers.
 - `CameraController` starts centred on the player, moves only to return the player to a
-  dead zone sized by the level catalog, clamps to the map, and rounds to internal pixels.
+  dead zone sized by `camera.json`, clamps to the map, and rounds to internal pixels.
 - `CameraShake` offsets only the drawn view. A shake has a duration and a magnitude,
   fades linearly, and a new one replaces it. Follow, aim, and the debug overlay use the
   steady camera.
@@ -543,7 +556,7 @@ to the traversal profile. The search itself does not change.
 | Glaze loaders                      | Types, required and unknown fields, and rules a struct cannot state, by path   |
 | Content validators and composition | Authoring rules and cross-file references, including unused catalog entries    |
 | Core validators                    | Runtime values and component combinations, regardless of how they were created |
-| Level validation                   | Body clearance and support against the composed map                            |
+| Level validation                   | Body clearance and support against the composed map, and a route to the exit   |
 
 - Domain checks run without parsing JSON; loaders add the source name and field path to
   their errors.

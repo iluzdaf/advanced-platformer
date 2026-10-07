@@ -14,7 +14,7 @@
 namespace advanced_platformer
 {
     struct Actor;
-    struct LevelCatalog;
+    struct RoomPieceCatalog;
     struct GameCatalogs;
 
     struct GameLevel
@@ -27,18 +27,23 @@ namespace advanced_platformer
         std::unordered_map<std::uint32_t, std::string> actorPlacementIds;
         std::vector<std::string> pickupPlacementIds;
         std::set<std::string> placedIds;
+        std::uint32_t seed = 0;
     };
 
-    GameLevel composeGameLevel(
-        const LevelCatalog& catalog,
-        int levelNumber,
-        int textureId,
-        const GameCatalogs& catalogs);
     Actor composePlayer(const GameCatalogs& catalogs, int textureId);
-    GameLevel composeStartedLevel(
-        const LevelCatalog& catalog,
+    GameLevel composeLevel(
+        const RoomPieceCatalog& pieces,
         int levelNumber,
+        std::uint32_t seed,
         int textureId,
         const GameCatalogs& catalogs,
-        Actor player);
+        const Actor& player);
+    GameLevel composePlayableLevel(
+        const RoomPieceCatalog& pieces,
+        int levelNumber,
+        std::uint32_t seed,
+        int textureId,
+        const GameCatalogs& catalogs,
+        const Actor& player,
+        float stepSeconds);
 }

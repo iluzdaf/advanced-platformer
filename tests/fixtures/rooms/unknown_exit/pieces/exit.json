@@ -1,0 +1,10 @@
+{
+  "role": "exit",
+  "doors": ["right"],
+  "mirror": false,
+  "map": ["########", "#......#", "#.......", "#.......", "#.......", "########"],
+  "exit": {
+    "definition": "missing",
+    "spawn": [2, 4]
+  }
+}

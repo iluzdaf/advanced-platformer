@@ -13,7 +13,6 @@ namespace advanced_platformer
 {
     struct ExitDefinition
     {
-        // Content declares it; composition rejects a size left at zero.
         glm::vec2 bodySize = {0.0F, 0.0F};
         Sprite sprite;
     };
@@ -23,12 +22,10 @@ namespace advanced_platformer
     void validateExitCatalog(const ExitCatalog& catalog);
     ExitCatalog parseExitCatalog(std::string_view text, std::string_view sourceName);
     ExitCatalog loadExitCatalog(const std::filesystem::path& path);
-    // Rejects the first exit sprite that runs past an atlas of this size, naming its field.
     void validateExitAtlasRegions(
         const ExitCatalog& catalog,
         glm::ivec2 atlasSize,
         std::string_view sourceName);
     const ExitDefinition& exitDefinition(const ExitCatalog& catalog, const std::string& name);
-    // Completion requirements and destination belong to the level placement.
     LevelExit composeExit(const ExitDefinition& definition, int textureId, glm::vec2 spawnFeet);
 }

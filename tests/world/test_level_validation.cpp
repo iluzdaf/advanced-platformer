@@ -6,9 +6,15 @@
 #include <glm/vec2.hpp>
 
 #include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/math/aabb.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/world/level_exit.hpp"
 #include "advanced_platformer/world/level_validation.hpp"
 #include "advanced_platformer/world/world.hpp"
 #include "support/actor_builder.hpp"
+#include "support/add_player.hpp"
+#include "support/fixed_step.hpp"
+#include "support/tile_size.hpp"
 #include "support/tile_map_builder.hpp"
 
 namespace
@@ -16,6 +22,20 @@ namespace
     tests::ActorBuilder makePlatformer(glm::vec2 feet)
     {
         return tests::ActorBuilder::sized({12.0F, 20.0F}).atFeet(feet).platforming();
+    }
+
+    advanced_platformer::World worldWithExit(
+        advanced_platformer::Cell player,
+        advanced_platformer::Cell exit)
+    {
+        advanced_platformer::World world;
+        tests::addPlayer(
+            world, makePlatformer(advanced_platformer::feetInCell(tests::TileSize, player)));
+        advanced_platformer::LevelExit levelExit;
+        levelExit.bounds = advanced_platformer::boxStandingOn(
+            advanced_platformer::feetInCell(tests::TileSize, exit), {16.0F, 16.0F});
+        world.setExit(levelExit);
+        return world;
     }
 
     tests::ActorBuilder makeFlyer(glm::vec2 feet)
@@ -118,4 +138,42 @@ TEST_CASE("A climber's patrol points need clearance but not ground", "[world][le
             advanced_platformer::validateLevelActors(map, world, 1),
             "Level 1 actor 1 spawn has no ground support");
     }
+}
+
+TEST_CASE("The player can reach an exit it can walk and jump to", "[world][level-validation]")
+{
+    const advanced_platformer::TileMap map = tests::TileMapBuilder(
+        {"##########", "#........#", "#........#", "#.....##.#", "##########"});
+    const advanced_platformer::World world = worldWithExit({1, 3}, {6, 2});
+
+    REQUIRE(advanced_platformer::playerCanReachExit(map, world, tests::FixedStepSeconds));
+    REQUIRE(world.platformerConnections().size() == 0);
+}
+
+TEST_CASE("The player cannot reach an exit walled off from it", "[world][level-validation]")
+{
+    const advanced_platformer::TileMap map = tests::TileMapBuilder(
+        {"##########", "#....#...#", "#....#...#", "#....#...#", "##########"});
+
+    REQUIRE_FALSE(
+        advanced_platformer::playerCanReachExit(
+            map, worldWithExit({1, 3}, {7, 3}), tests::FixedStepSeconds));
+}
+
+TEST_CASE("The player cannot reach an exit high above its jump", "[world][level-validation]")
+{
+    const advanced_platformer::TileMap map = tests::TileMapBuilder(
+        {"##########",
+         "#........#",
+         "#........#",
+         "#......###",
+         "#........#",
+         "#........#",
+         "#........#",
+         "#........#",
+         "##########"});
+
+    REQUIRE_FALSE(
+        advanced_platformer::playerCanReachExit(
+            map, worldWithExit({1, 7}, {7, 2}), tests::FixedStepSeconds));
 }

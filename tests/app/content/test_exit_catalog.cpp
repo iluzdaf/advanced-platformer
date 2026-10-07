@@ -4,8 +4,6 @@
 #include <stdexcept>
 #include <string>
 #include "content/exit_catalog.hpp"
-#include "content/content_validation.hpp"
-#include "content/level_data.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/render/sprite.hpp"
 #include "support/json_document.hpp"
@@ -36,7 +34,6 @@ TEST_CASE("Exit definitions compose independent bounds and sprites", "[app][exit
     REQUIRE(exit.sprite->region.size == glm::vec2{16, 24});
     REQUIRE(exit.sprite->anchor == advanced_platformer::SpriteAnchor::BodyCenter);
     REQUIRE_FALSE(exit.requirement.has_value());
-    REQUIRE_FALSE(exit.nextLevel.has_value());
     REQUIRE_FALSE(exit.consumeItem);
 }
 
@@ -74,12 +71,6 @@ TEST_CASE(
         start = "exits.json: line 1, column ";
         end = "expected two numbers, [x, y]";
     }
-    SECTION("Destination belongs to placement")
-    {
-        definition["nextLevel"] = 2;
-        start = "exits.json: line 1, column ";
-        end = "unknown field 'nextLevel'";
-    }
     SECTION("Requirement belongs to placement")
     {
         definition["requirement"] = tests::object({{"item", "key"}, {"quantity", 1}});
@@ -97,15 +88,11 @@ TEST_CASE(
         Catch::Matchers::StartsWith(start) && Catch::Matchers::EndsWith(end));
 }
 
-TEST_CASE("Exit definitions and placement names validate without JSON", "[app][exits][validation]")
+TEST_CASE("Exit definitions validate without JSON", "[app][exits][validation]")
 {
     auto catalog = advanced_platformer::parseExitCatalog(tests::dumpJson(exitData()), "fixture");
     catalog.at("gate").bodySize.x = std::numeric_limits<float>::infinity();
     REQUIRE_THROWS_AS(advanced_platformer::validateExitCatalog(catalog), std::invalid_argument);
-    advanced_platformer::ExitPlacement placement;
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::validateExitSettings(placement),
-        "exit.definition: exit definition name cannot be empty");
     REQUIRE_THROWS_AS(
         advanced_platformer::loadExitCatalog("tests/fixtures/catalogs/missing-exits.json"),
         std::invalid_argument);

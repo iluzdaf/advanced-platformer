@@ -1,6 +1,6 @@
-# Content and Level Format
+# Content Format
 
-The authoring reference for the files under `assets`. Levels place named definitions;
+The authoring reference for the files under `assets`. Room pieces place named definitions;
 definitions configure engine components; machines and Lua activities decide what NPCs
 do. Movement, combat and pathfinding stay in C++.
 
@@ -8,107 +8,147 @@ do. Movement, combat and pathfinding stay in C++.
 - Errors name the file and either a field path (`items.herb.maximumStack`, `map[2][7]`)
   or a line and column (`items.json: line 5, column 7: unknown field 'maximimStack'`).
 - Every shared definition is validated, even when no level uses it.
-- Shared catalogs and Lua scripts load at startup, and a level file when the level
-  starts. Debug builds also reload them while the game runs; see [Hot reload](#hot-reload).
+- Catalogs, room pieces and Lua scripts load at startup. Debug builds also reload them
+  while the game runs; see [Hot reload](#hot-reload).
 - Units are pixels, seconds and pixels per second. Sprite regions are atlas pixels.
 
 ## Hot reload
 
 Builds other than Release read `assets/` from the source tree, not the copy beside the
 executable, and check it four times a second. Once a change has settled, the game loads
-every catalog, script, the atlas and the current level's file again. If anything fails,
+every catalog, room piece, script and the atlas again, and builds the level again from
+the same seed. If anything fails,
 the console shows the error and the game keeps running what it had. Otherwise the game
 applies the new content without restarting:
 
-- Actors and pickups are matched to their placements by `id`. A kept one stays where it
+- Actors and pickups are matched to their placements by `id`, which names the room, the
+  definition and a count, such as `room3_zombie_1`. A kept one stays where it
   is, keeps what it was doing, and takes its new definition, spawn and patrol. Health is
   kept but capped at the new maximum.
-- A new `id` spawns. An `id` gone from the file removes its actor or pickup. An actor
+- A new `id` spawns. An `id` gone from the level removes its actor or pickup. An actor
   killed or a pickup collected stays gone while its `id` remains.
 - The player keeps their position, health and items, matched to items by name.
 - Tiles broken in play stay broken. Machines resume in the state with the same name, or
   the first state, and every activity starts again under the new scripts.
 
 The console reports what was kept, spawned and removed. F5 restarts the current level
-from its file, keeping the player's health and items.
+from the same seed, keeping the player's health and items. F6 builds the current level
+again from the next seed, also keeping health and items.
 
 ## Files
 
-| File                                                             | Holds                                                 | Loader                                                                                                                       |
-| ---------------------------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| [`levels/levels.json`](../assets/levels/levels.json)             | Start level, camera dead zone, level numbers to files | [`level_catalog.cpp`](../app/content/level_catalog.cpp)                                                                      |
-| `levels/level_N.json`                                            | A level's map, legends and placements                 | [`level_data.cpp`](../app/content/level_data.cpp)                                                                            |
-| [`catalogs/tiles.json`](../assets/catalogs/tiles.json)           | Tile size and tiles                                   | [`tile_catalog.cpp`](../app/content/tile_catalog.cpp)                                                                        |
-| [`catalogs/actors.json`](../assets/catalogs/actors.json)         | The player and every actor definition                 | [`actor_catalog.cpp`](../app/content/actor_catalog.cpp), [`actor_definition.cpp`](../app/content/actor_definition.cpp)       |
-| [`catalogs/animations.json`](../assets/catalogs/animations.json) | Animation sets                                        | [`animation_catalog.cpp`](../app/content/animation_catalog.cpp)                                                              |
-| [`catalogs/machines.json`](../assets/catalogs/machines.json)     | NPC state machines                                    | [`machine_catalog.cpp`](../app/content/machine_catalog.cpp)                                                                  |
-| [`scripts/*.lua`](../assets/scripts)                             | Lua activities                                        | [`npc_script_catalog.cpp`](../app/content/npc_script_catalog.cpp), [`lua_npc_scripts.cpp`](../scripting/lua_npc_scripts.cpp) |
-| [`scripts/presentation.lua`](../assets/scripts/presentation.lua) | Effects that answer world events                      | [`lua_presentation_script.cpp`](../scripting/lua_presentation_script.cpp)                                                    |
-| [`catalogs/items.json`](../assets/catalogs/items.json)           | Inventory items                                       | [`item_catalog.cpp`](../app/content/item_catalog.cpp)                                                                        |
-| [`catalogs/pickups.json`](../assets/catalogs/pickups.json)       | World pickups                                         | [`pickup_catalog.cpp`](../app/content/pickup_catalog.cpp)                                                                    |
-| [`catalogs/exits.json`](../assets/catalogs/exits.json)           | Exit bodies and sprites                               | [`exit_catalog.cpp`](../app/content/exit_catalog.cpp)                                                                        |
-| [`catalogs/hud.json`](../assets/catalogs/hud.json)               | HUD icon regions                                      | [`hud_catalog.cpp`](../app/content/hud_catalog.cpp)                                                                          |
+| File                                                             | Holds                                          | Loader                                                                                                                       |
+| ---------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| [`catalogs/pieces.json`](../assets/catalogs/pieces.json)         | Room size, legend, and how a run's levels grow | [`room_pieces.cpp`](../app/content/room_pieces.cpp), [`level_generator.cpp`](../app/game/level_generator.cpp)                |
+| [`catalogs/pieces/*.json`](../assets/catalogs/pieces)            | One room piece each                            | [`room_pieces.cpp`](../app/content/room_pieces.cpp)                                                                          |
+| [`catalogs/tiles.json`](../assets/catalogs/tiles.json)           | Tile size and tiles                            | [`tile_catalog.cpp`](../app/content/tile_catalog.cpp)                                                                        |
+| [`catalogs/actors.json`](../assets/catalogs/actors.json)         | The player and every actor definition          | [`actor_catalog.cpp`](../app/content/actor_catalog.cpp), [`actor_definition.cpp`](../app/content/actor_definition.cpp)       |
+| [`catalogs/animations.json`](../assets/catalogs/animations.json) | Animation sets                                 | [`animation_catalog.cpp`](../app/content/animation_catalog.cpp)                                                              |
+| [`catalogs/machines.json`](../assets/catalogs/machines.json)     | NPC state machines                             | [`machine_catalog.cpp`](../app/content/machine_catalog.cpp)                                                                  |
+| [`scripts/*.lua`](../assets/scripts)                             | Lua activities                                 | [`npc_script_catalog.cpp`](../app/content/npc_script_catalog.cpp), [`lua_npc_scripts.cpp`](../scripting/lua_npc_scripts.cpp) |
+| [`scripts/presentation.lua`](../assets/scripts/presentation.lua) | Effects that answer world events               | [`lua_presentation_script.cpp`](../scripting/lua_presentation_script.cpp)                                                    |
+| [`catalogs/items.json`](../assets/catalogs/items.json)           | Inventory items                                | [`item_catalog.cpp`](../app/content/item_catalog.cpp)                                                                        |
+| [`catalogs/pickups.json`](../assets/catalogs/pickups.json)       | World pickups                                  | [`pickup_catalog.cpp`](../app/content/pickup_catalog.cpp)                                                                    |
+| [`catalogs/exits.json`](../assets/catalogs/exits.json)           | Exit bodies and sprites                        | [`exit_catalog.cpp`](../app/content/exit_catalog.cpp)                                                                        |
+| [`catalogs/hud.json`](../assets/catalogs/hud.json)               | HUD icon regions                               | [`hud_catalog.cpp`](../app/content/hud_catalog.cpp)                                                                          |
+| [`catalogs/camera.json`](../assets/catalogs/camera.json)         | Camera dead zone                               | [`camera_settings.cpp`](../app/content/camera_settings.cpp)                                                                  |
 
 Every catalog is required, even when empty. Every sprite region, frame and icon must lie
 inside the atlas.
 
-## Level catalog
+## Run
+
+A run is endless. It starts at level 1, and each exit leads to the next level. When the
+player dies, the run starts again at level 1 with full health, no items and a new run
+seed. Each level's seed follows from the run seed and the level number, so a run seed
+always gives the same levels. The `run` block of [`pieces.json`](#room-pieces) says how
+the levels grow:
+
+```json
+"run": { "firstRooms": 6, "roomsPerLevel": 3, "maxRooms": 18 }
+```
+
+| Field           | Required | Meaning                                                          |
+| --------------- | -------- | ---------------------------------------------------------------- |
+| `firstRooms`    | Yes      | How many rooms level 1 has, from 2 up to `maxRooms`.             |
+| `roomsPerLevel` | Yes      | How many rooms each later level adds. Zero or more.              |
+| `maxRooms`      | Yes      | The most rooms a level has, from 2 up to the number of slots.    |
+| `grid`          | No       | The grid of room slots, `[columns, rows]`. Defaults to `[9, 7]`. |
+
+The rooms grow from the centre slot of the grid, each new room opening off one room
+already placed and touching no other, so they form branching corridors without loops.
+The start is the centre room, and the exit is the room the most doors away from it. A
+seed whose exit the player cannot reach is skipped for the next one, up to 100 seeds,
+and the level keeps the seed it settled on. A hot reload keeps that seed, and an edit
+that cuts off its exit is rejected like any other failed reload.
+Each room takes a random piece of its role whose doors are exactly the room's, flipped
+if the piece allows it. The pieces are copied onto one map with neighbours sharing the
+wall between them, and empty slots are filled with the start piece's corner tile. Each piece's placements move with it,
+so the level has the start piece's player spawn, the exit piece's exit, and every
+piece's actors and pickups. Coordinates start at the top-left, with Y pointing down. A
+pickup falls until it rests on a tile, and falls again if that tile breaks.
+
+## Room pieces
+
+`catalogs/pieces.json` describes every piece, and each piece is its own file in
+`catalogs/pieces/`, named after the file: `pieces/hall.json` is the piece `hall`. The
+loader reads the folder in file-name order.
 
 ```json
 {
-  "startLevel": 1,
-  "cameraDeadZone": [80, 45],
-  "levels": [{ "number": 1, "file": "level_1.json" }]
+  "roomSize": [20, 12],
+  "run": { "firstRooms": 6, "roomsPerLevel": 3, "maxRooms": 18 },
+  "tileLegend": { ".": "empty", "#": "stone" }
 }
 ```
 
-| Field            | Meaning                                                                                |
-| ---------------- | -------------------------------------------------------------------------------------- |
-| `startLevel`     | The `number` of the first level.                                                       |
-| `cameraDeadZone` | The part of the 320 by 180 view the player moves in before the camera follows.         |
-| `levels`         | `number`, a positive unique ID that exits refer to, and `file`, relative to this file. |
-
-## Level files
+| Field        | Meaning                                                                              |
+| ------------ | ------------------------------------------------------------------------------------ |
+| `roomSize`   | Every piece's size in cells: an even width of at least 8 and a height of at least 6. |
+| `run`        | How many rooms each level of a [run](#run) has.                                      |
+| `tileLegend` | One-character map symbols to tile names in `tiles.json`, with a symbol for `empty`.  |
 
 ```json
 {
-  "tileLegend": { ".": "empty", "#": "stone" },
-  "map": ["........", "########"],
-  "playerSpawn": { "cell": [1, 0] },
-  "actors": [{ "id": "zombie_1", "definition": "zombie", "spawn": { "cell": [2, 0] } }],
-  "pickups": [{ "id": "medicine_1", "definition": "medicine_box", "spawn": { "cell": [4, 0] } }],
-  "exit": { "definition": "bunker_door", "spawn": { "cell": [6, 0] }, "nextLevel": 2 }
+  "role": "corridor",
+  "doors": ["left", "right"],
+  "map": ["####################", "#..................#", "..."],
+  "actors": [
+    {
+      "id": "zombie_1",
+      "definition": "zombie",
+      "spawn": [4, 10],
+      "patrol": { "first": [2, 10], "second": [9, 10] }
+    }
+  ],
+  "pickups": [{ "id": "coin_pile_1", "definition": "coin_pile", "spawn": [12, 10] }]
 }
 ```
 
-| Field         | Required | Meaning                                                         |
-| ------------- | -------- | --------------------------------------------------------------- |
-| `tileLegend`  | Yes      | One-character map symbols to tile names in `tiles.json`.        |
-| `map`         | Yes      | Rows of equal, nonzero length. Every symbol is in `tileLegend`. |
-| `playerSpawn` | Yes      | Where the player starts.                                        |
-| `actors`      | No       | Actor placements.                                               |
-| `pickups`     | No       | Pickup placements.                                              |
-| `exit`        | Yes      | The exit placement. Without `nextLevel`, it completes the game. |
+A piece file has `role`, `doors`, optional `mirror` (default `true`), `map`, the piece's
+rows, and the placements below.
 
-### Positions
+A piece's `role` is `start`, `exit`, `corridor`, `shaft` or `arena`. Its `doors` list
+some of `left`, `right`, `up` and `down`. Side doors are three cells tall and stand on
+the bottom row; doors above and below are four cells wide and centred. A piece's edges
+are the `empty` symbol on its doors and solid everywhere else. With `mirror`, the
+generator may also flip the piece left to right, placements included.
 
-Coordinates start at the top-left, with Y pointing down. A cell is `[column, row]`.
-A position is an object with one key: `cell`, which puts an object's feet at the bottom
-centre of that cell, or `feet`, that point in world pixels.
+| Placement     | Fields                                                                                                                                                                               |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `playerSpawn` | A cell. Required on a `start` piece, allowed on no other.                                                                                                                            |
+| `exit`        | `definition` from `exits.json`; `spawn`; optional `requirement` (`item`, positive `quantity`) and `consumeItem` (default `false`). Required on an `exit` piece, allowed on no other. |
+| `actors`      | `id`; `definition` from `actors.json`; `spawn`; optional `patrol` with `first` and `second`.                                                                                         |
+| `pickups`     | `id`; `definition` from `pickups.json`; `spawn`.                                                                                                                                     |
 
-### Placements
+Every cell is `[column, row]` inside the piece, counted from its top-left. An `id` is
+nonempty and unique among the piece's actors and pickups; the generator prefixes it with
+the room, as in `room3_zombie_1`.
 
-| Placement | Fields                                                                                                                                       |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Actor     | `id`; `definition` from `actors.json`; `spawn`; optional `patrol` with `first` and `second`, absolute positions.                             |
-| Pickup    | `id`; `definition` from `pickups.json`; `spawn`.                                                                                             |
-| Exit      | `definition` from `exits.json`; `spawn`; optional `requirement` (`item`, positive `quantity`), `consumeItem` (default `false`), `nextLevel`. |
-
-An `id` names one actor or pickup placement. It is nonempty and unique among the
-level's actors and pickups.
-
-Bodies come from definitions, never placements. A pickup falls until it rests on a
-tile, and falls again if that tile breaks.
+Each room needs a piece of its role with exactly its doors, so the shipped catalog
+covers every door set a room can have; a level that has a room no piece fits fails to
+build and names the doors. Tests check that the player can
+walk and jump through every shipped piece from each of its doors to each other.
 
 ## Tiles
 
@@ -385,10 +425,20 @@ Saves, if added, should store item names: item IDs are assigned at load and can 
 "bunker_door": { "bodySize": [16, 32], "sprite": { "position": [48, 216], "size": [16, 32] } }
 ```
 
-`bodySize` and `sprite` are required. The requirement, consumption and next level belong
-to each [placement](#placements), so doors that look alike can lead to different levels.
+`bodySize` and `sprite` are required. The requirement and consumption belong to a room
+piece file's [`exit`](#room-pieces). Every exit leads to the next level of the
+[run](#run).
 
 ## HUD icons
 
 `hud.json` has the regions `fullHeart`, `emptyHeart` and `bag`, each with `position` and
 `size`. The HUD draws them all at one size.
+
+## Camera
+
+`camera.json` holds `deadZone`, the part of the 320 by 180 view the player moves in
+before the camera follows.
+
+```json
+{ "deadZone": [80, 45] }
+```

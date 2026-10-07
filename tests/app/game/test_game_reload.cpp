@@ -1,49 +1,23 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_string.hpp>
 
+#include <cstdint>
+#include <format>
 #include <stdexcept>
 #include <utility>
 
 #include "content/game_catalogs.hpp"
 #include "content/game_content.hpp"
-#include "content/level_catalog.hpp"
+#include "content/room_pieces.hpp"
 #include "game/game.hpp"
 #include "game/level_reload.hpp"
-#include "lua_npc_scripts.hpp"
-#include "lua_presentation_script.hpp"
-#include "support/atlas_size.hpp"
 #include "support/fixed_step.hpp"
-
-namespace
-{
-    advanced_platformer::GameContent content()
-    {
-        return {
-            advanced_platformer::parseLevelCatalog(
-                R"({"startLevel":1,"cameraDeadZone":[80,45],"levels":[{"number":1,"file":"actor_placement.json"}]})",
-                "fixture",
-                "tests/fixtures/levels"),
-            advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize),
-            advanced_platformer::LuaNpcScripts{},
-            advanced_platformer::LuaPresentationScript{}};
-    }
-
-    advanced_platformer::Game game()
-    {
-        advanced_platformer::GameContent loaded = content();
-        return {
-            0,
-            std::move(loaded.levelCatalog),
-            std::move(loaded.gameCatalogs),
-            std::move(loaded.npcScripts),
-            std::move(loaded.presentation),
-            tests::FixedStepSeconds};
-    }
-}
+#include "support/fixture_game.hpp"
 
 TEST_CASE("A reload applies new definitions to the running game", "[app][reload]")
 {
-    advanced_platformer::Game running = game();
-    advanced_platformer::GameContent changed = content();
+    advanced_platformer::Game running = tests::fixtureGame();
+    advanced_platformer::GameContent changed = tests::fixtureContent();
     changed.gameCatalogs.actors.definitions.at("test_player").health = 5;
 
     const advanced_platformer::LevelReload reload = running.reload(std::move(changed));
@@ -57,8 +31,8 @@ TEST_CASE("A reload applies new definitions to the running game", "[app][reload]
 
 TEST_CASE("A failed reload leaves the game as it was", "[app][reload]")
 {
-    advanced_platformer::Game running = game();
-    advanced_platformer::GameContent broken = content();
+    advanced_platformer::Game running = tests::fixtureGame();
+    advanced_platformer::GameContent broken = tests::fixtureContent();
     broken.gameCatalogs.actors.definitions.erase("test_guard");
     broken.gameCatalogs.actors.definitions.at("test_player").health = 5;
 
@@ -66,5 +40,22 @@ TEST_CASE("A failed reload leaves the game as it was", "[app][reload]")
 
     REQUIRE(running.playerHealth().maximum == 3);
     running.update({}, tests::FixedStepSeconds);
-    REQUIRE(running.reload(content()).kept == 1);
+    REQUIRE(running.reload(tests::fixtureContent()).kept == 1);
+}
+
+TEST_CASE("A reload that shuts off the exit leaves the game as it was", "[app][reload]")
+{
+    advanced_platformer::Game running =
+        tests::fixtureGame("tests/fixtures/rooms/rooms_some_shut/pieces.json");
+    const std::uint32_t seed = running.levelSeed();
+    advanced_platformer::GameContent shut = tests::fixtureContent();
+    shut.gameCatalogs.pieces = advanced_platformer::loadRoomPieceCatalog(
+        "tests/fixtures/rooms/rooms_all_shut/pieces.json");
+
+    REQUIRE_THROWS_WITH(
+        running.reload(std::move(shut)),
+        std::format("Level 1: seed {} has no route from the spawn to the exit", seed));
+
+    REQUIRE(running.levelSeed() == seed);
+    REQUIRE(running.levelNumber() == 1);
 }

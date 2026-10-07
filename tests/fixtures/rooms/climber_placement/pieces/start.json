@@ -1,0 +1,14 @@
+{
+  "role": "start",
+  "doors": ["left"],
+  "mirror": false,
+  "map": ["########", "#......#", ".......#", ".......#", ".......#", "########"],
+  "playerSpawn": [6, 4],
+  "actors": [
+    {
+      "id": "test_climber_1",
+      "definition": "test_climber",
+      "spawn": [2, 4]
+    }
+  ]
+}
