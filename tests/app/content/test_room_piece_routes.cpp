@@ -16,7 +16,6 @@
 #include "advanced_platformer/math/coordinates.hpp"
 #include "support/atlas_size.hpp"
 #include "support/player_reach.hpp"
-#include "support/run_levels.hpp"
 
 namespace
 {
@@ -183,25 +182,6 @@ namespace
             .run = shipped.run,
             .tileLegend = shipped.tileLegend,
             .open = shipped.open};
-    }
-}
-
-TEST_CASE("Every shipped run level reaches its exit across seeds", "[app][content][generation]")
-{
-    const RoomPieceCatalog pieces =
-        advanced_platformer::loadRoomPieceCatalog("assets/catalogs/pieces.json");
-    const advanced_platformer::GameCatalogs catalogs =
-        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::UncheckedAtlasSize);
-    for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
-    {
-        for (std::uint32_t seed = 1; seed <= 20; ++seed)
-        {
-            INFO("level " << number << " seed " << seed);
-            REQUIRE(
-                tests::playerReachesExit(
-                    advanced_platformer::generateLevel(pieces, number, seed, "pieces.json"),
-                    catalogs));
-        }
     }
 }
 

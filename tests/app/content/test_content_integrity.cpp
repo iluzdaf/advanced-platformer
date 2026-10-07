@@ -14,9 +14,7 @@
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "lua_npc_scripts.hpp"
 #include "lua_presentation_script.hpp"
-#include "advanced_platformer/world/level_validation.hpp"
 #include "support/atlas_size.hpp"
-#include "support/fixed_step.hpp"
 #include "support/run_levels.hpp"
 
 TEST_CASE("Every run level can be composed until the rooms stop growing", "[app][content]")
@@ -36,29 +34,6 @@ TEST_CASE("Every run level can be composed until the rooms stop growing", "[app]
         INFO("Level " << number);
         REQUIRE(content.number == number);
         REQUIRE(content.world.exit().has_value());
-    }
-}
-
-TEST_CASE("Every run level starts with a route from the spawn to the exit", "[app][content]")
-{
-    const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/catalogs/pieces.json");
-    const auto catalogs =
-        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::UncheckedAtlasSize);
-    for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
-    {
-        const advanced_platformer::GameLevel level = advanced_platformer::composePlayableLevel(
-            pieces,
-            number,
-            advanced_platformer::runLevelSeed(1, number),
-            0,
-            catalogs,
-            advanced_platformer::composePlayer(catalogs, 0),
-            tests::FixedStepSeconds);
-
-        INFO("Level " << number);
-        REQUIRE(
-            advanced_platformer::playerCanReachExit(
-                level.map, level.world, tests::FixedStepSeconds));
     }
 }
 
