@@ -1,15 +1,18 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
+#include <ranges>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
 #include "content/game_catalogs.hpp"
 #include "content/room_pieces.hpp"
 #include "game/level_generator.hpp"
-#include "content/room_pieces.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "support/atlas_size.hpp"
 #include "support/player_reach.hpp"
@@ -18,33 +21,53 @@
 namespace
 {
     using advanced_platformer::Cell;
-    using advanced_platformer::RoomChoice;
+    using advanced_platformer::LevelData;
     using advanced_platformer::RoomDoors;
-    using advanced_platformer::RoomLayout;
+    using advanced_platformer::RoomPiece;
     using advanced_platformer::RoomPieceCatalog;
     using advanced_platformer::RoomRole;
     using advanced_platformer::RoomSide;
-    using advanced_platformer::RoomSlot;
     constexpr std::array AllSides{RoomSide::Left, RoomSide::Right, RoomSide::Up, RoomSide::Down};
-    constexpr Cell Centre{1, 1};
+    constexpr advanced_platformer::GridSize Grid{5, 5};
+    constexpr Cell Centre{2, 2};
+    constexpr std::uint32_t SeedsToTry = 50000;
 
-    RoomDoors doorsOf(const RoomPieceCatalog& catalog, RoomChoice choice)
+    struct Orientation
     {
-        const RoomDoors doors = catalog.pieces[choice.piece].doors;
-        return choice.mirrored ? mirroredDoors(doors) : doors;
+        RoomPiece piece;
+        bool mirrored = false;
+    };
+
+    RoomDoors doorsOf(const Orientation& orientation)
+    {
+        const RoomDoors doors = orientation.piece.doors;
+        return orientation.mirrored ? mirroredDoors(doors) : doors;
     }
 
-    std::vector<RoomChoice> orientations(const RoomPieceCatalog& catalog, RoomRole role)
+    std::string describe(const Orientation& orientation)
     {
-        std::vector<RoomChoice> result;
-        for (std::size_t piece = 0; piece < catalog.pieces.size(); ++piece)
+        return orientation.piece.name + (orientation.mirrored ? " (mirrored)" : "");
+    }
+
+    bool mirrorsToItself(const RoomPiece& piece)
+    {
+        return std::ranges::all_of(
+            piece.rows,
+            [](const std::string& row)
+            { return std::ranges::equal(row, row | std::views::reverse); });
+    }
+
+    std::vector<Orientation> orientations(const RoomPieceCatalog& catalog, RoomRole role)
+    {
+        std::vector<Orientation> result;
+        for (const RoomPiece& piece : catalog.pieces)
         {
-            if (catalog.pieces[piece].role != role)
+            if (piece.role != role)
             {
                 continue;
             }
             result.push_back({piece, false});
-            if (catalog.pieces[piece].mirror)
+            if (piece.mirror && !mirrorsToItself(piece))
             {
                 result.push_back({piece, true});
             }
@@ -52,45 +75,120 @@ namespace
         return result;
     }
 
-    RoomChoice firstWithOnlyDoor(const RoomPieceCatalog& catalog, RoomRole role, RoomSide side)
+    bool isMirroredAt(const LevelData& level, const RoomPiece& piece, Cell origin)
     {
-        for (const RoomChoice choice : orientations(catalog, role))
+        for (std::size_t row = 0; row < piece.rows.size(); ++row)
         {
-            if (doorsOf(catalog, choice) == withDoor(RoomDoors{}, side))
+            const std::string placed =
+                level.mapRows[static_cast<std::size_t>(origin.y) + row].substr(
+                    static_cast<std::size_t>(origin.x), piece.rows[row].size());
+            if (placed != piece.rows[row])
             {
-                return choice;
+                return true;
             }
         }
-        FAIL("No piece of the role has only the door");
-        return {};
+        return false;
     }
 
     struct Route
     {
-        std::vector<RoomSlot> rooms;
-        std::vector<RoomChoice> choices;
+        RoomPieceCatalog catalog;
+        std::vector<Cell> slots;
+        Orientation tested;
+        Cell testedSlot;
     };
 
-    bool routeWorks(const RoomPieceCatalog& catalog, const Route& route)
+    Cell originOf(const RoomPieceCatalog& catalog, const Route& route)
+    {
+        Cell least = route.slots.front();
+        for (const Cell slot : route.slots)
+        {
+            least = {std::min(least.x, slot.x), std::min(least.y, slot.y)};
+        }
+        return {
+            (route.testedSlot.x - least.x) * (catalog.roomSize.width - 1),
+            (route.testedSlot.y - least.y) * (catalog.roomSize.height - 1)};
+    }
+
+    std::optional<LevelData> generateRoute(const Route& route)
+    {
+        for (std::uint32_t seed = 1; seed <= SeedsToTry; ++seed)
+        {
+            LevelData level;
+            try
+            {
+                level = advanced_platformer::generateLevel(
+                    route.catalog,
+                    {.grid = Grid, .roomCount = static_cast<int>(route.slots.size()), .seed = seed},
+                    "route");
+            }
+            catch (const std::invalid_argument&)
+            {
+                continue;
+            }
+            if (isMirroredAt(level, route.tested.piece, originOf(route.catalog, route)) ==
+                route.tested.mirrored)
+            {
+                return level;
+            }
+        }
+        return std::nullopt;
+    }
+
+    bool routeWorks(const Route& route)
     {
         static const advanced_platformer::GameCatalogs shippedCatalogs =
             advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
-        const RoomLayout layout{
-            .grid = {3, 3}, .rooms = route.rooms, .exit = route.rooms.size() - 1};
-        const advanced_platformer::LevelData level =
-            advanced_platformer::stitchRooms(catalog, layout, route.choices);
-        return tests::playerReachesExit(level, shippedCatalogs);
+        const std::optional<LevelData> level = generateRoute(route);
+        if (!level.has_value())
+        {
+            FAIL("No seed laid the route out");
+            return false;
+        }
+        return tests::playerReachesExit(*level, shippedCatalogs);
     }
 
-    std::string describe(const RoomPieceCatalog& catalog, RoomChoice choice)
+    void addPiecesWithOnlyDoor(
+        RoomPieceCatalog& catalog,
+        const RoomPieceCatalog& shipped,
+        RoomRole role,
+        RoomSide side)
     {
-        return catalog.pieces[choice.piece].name + (choice.mirrored ? " (mirrored)" : "");
+        for (const RoomPiece& piece : shipped.pieces)
+        {
+            if (piece.role == role &&
+                (piece.doors == withDoor(RoomDoors{}, side) ||
+                 (piece.mirror && mirroredDoors(piece.doors) == withDoor(RoomDoors{}, side))))
+            {
+                catalog.pieces.push_back(piece);
+            }
+        }
+    }
+
+    void addFillersWithOnlyDoor(
+        RoomPieceCatalog& catalog,
+        const RoomPieceCatalog& shipped,
+        RoomSide side)
+    {
+        for (const RoomRole role : {RoomRole::Corridor, RoomRole::Shaft, RoomRole::Arena})
+        {
+            addPiecesWithOnlyDoor(catalog, shipped, role, side);
+        }
+    }
+
+    RoomPieceCatalog emptyCatalog(const RoomPieceCatalog& shipped)
+    {
+        return {
+            .roomSize = shipped.roomSize,
+            .run = shipped.run,
+            .tileLegend = shipped.tileLegend,
+            .open = shipped.open};
     }
 }
 
 TEST_CASE("Every shipped run level reaches its exit across seeds", "[app][content][generation]")
 {
-    const advanced_platformer::RoomPieceCatalog pieces =
+    const RoomPieceCatalog pieces =
         advanced_platformer::loadRoomPieceCatalog("assets/catalogs/rooms.json");
     const advanced_platformer::GameCatalogs catalogs =
         advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
@@ -112,13 +210,13 @@ TEST_CASE("Every shipped run level reaches its exit across seeds", "[app][conten
 
 TEST_CASE("Every shipped room piece joins each pair of its doors", "[app][content][generation]")
 {
-    const RoomPieceCatalog catalog =
+    const RoomPieceCatalog shipped =
         advanced_platformer::loadRoomPieceCatalog("assets/catalogs/rooms.json");
     for (const RoomRole role : {RoomRole::Corridor, RoomRole::Shaft, RoomRole::Arena})
     {
-        for (const RoomChoice piece : orientations(catalog, role))
+        for (const Orientation& piece : orientations(shipped, role))
         {
-            const RoomDoors doors = doorsOf(catalog, piece);
+            const RoomDoors doors = doorsOf(piece);
             for (const RoomSide from : AllSides)
             {
                 for (const RoomSide to : AllSides)
@@ -127,23 +225,36 @@ TEST_CASE("Every shipped room piece joins each pair of its doors", "[app][conten
                     {
                         continue;
                     }
-                    const RoomSide startDoor = advanced_platformer::oppositeOf(from);
-                    const RoomSide exitDoor = advanced_platformer::oppositeOf(to);
-                    const Route route{
-                        {{advanced_platformer::stepTowards(Centre, from),
-                          withDoor(RoomDoors{}, startDoor),
-                          0},
-                         {Centre, doors, 1},
-                         {advanced_platformer::stepTowards(Centre, to),
-                          withDoor(RoomDoors{}, exitDoor),
-                          2}},
-                        {firstWithOnlyDoor(catalog, RoomRole::Start, startDoor),
-                         piece,
-                         firstWithOnlyDoor(catalog, RoomRole::Exit, exitDoor)}};
+                    const RoomSide towardsPiece = advanced_platformer::oppositeOf(from);
+                    const Cell pieceSlot = advanced_platformer::stepTowards(Centre, towardsPiece);
+                    Route route{
+                        .catalog = emptyCatalog(shipped),
+                        .slots = {Centre, pieceSlot},
+                        .tested = piece,
+                        .testedSlot = pieceSlot};
+                    addPiecesWithOnlyDoor(route.catalog, shipped, RoomRole::Start, towardsPiece);
+                    route.catalog.pieces.push_back(piece.piece);
+                    for (const RoomSide door : AllSides)
+                    {
+                        if (door == from || !hasDoor(doors, door))
+                        {
+                            continue;
+                        }
+                        route.slots.push_back(advanced_platformer::stepTowards(pieceSlot, door));
+                        const RoomSide facing = advanced_platformer::oppositeOf(door);
+                        if (door == to)
+                        {
+                            addPiecesWithOnlyDoor(route.catalog, shipped, RoomRole::Exit, facing);
+                        }
+                        else
+                        {
+                            addFillersWithOnlyDoor(route.catalog, shipped, facing);
+                        }
+                    }
                     INFO(
-                        describe(catalog, piece) << " from " << advanced_platformer::nameOf(from)
-                                                 << " to " << advanced_platformer::nameOf(to));
-                    CHECK(routeWorks(catalog, route));
+                        describe(piece) << " from " << advanced_platformer::nameOf(from) << " to "
+                                        << advanced_platformer::nameOf(to));
+                    CHECK(routeWorks(route));
                 }
             }
         }
@@ -154,39 +265,70 @@ TEST_CASE(
     "Every shipped start room reaches an exit through each of its doors",
     "[app][content][generation]")
 {
-    const RoomPieceCatalog catalog =
+    const RoomPieceCatalog shipped =
         advanced_platformer::loadRoomPieceCatalog("assets/catalogs/rooms.json");
-    for (const RoomRole role : {RoomRole::Start, RoomRole::Exit})
+    for (const Orientation& piece : orientations(shipped, RoomRole::Start))
     {
-        for (const RoomChoice piece : orientations(catalog, role))
+        const RoomDoors doors = doorsOf(piece);
+        for (const RoomSide side : AllSides)
         {
-            for (const RoomSide side : AllSides)
+            if (!hasDoor(doors, side))
             {
-                if (!hasDoor(doorsOf(catalog, piece), side))
+                continue;
+            }
+            Route route{
+                .catalog = emptyCatalog(shipped),
+                .slots = {Centre},
+                .tested = piece,
+                .testedSlot = Centre};
+            route.catalog.pieces.push_back(piece.piece);
+            for (const RoomSide door : AllSides)
+            {
+                if (!hasDoor(doors, door))
                 {
                     continue;
                 }
-                const RoomSide other = advanced_platformer::oppositeOf(side);
-                const RoomSlot here{Centre, doorsOf(catalog, piece), 0};
-                const RoomSlot there{
-                    advanced_platformer::stepTowards(Centre, side),
-                    withDoor(RoomDoors{}, other),
-                    1};
-                Route route;
-                if (role == RoomRole::Start)
+                route.slots.push_back(advanced_platformer::stepTowards(Centre, door));
+                const RoomSide facing = advanced_platformer::oppositeOf(door);
+                if (door == side)
                 {
-                    route = {
-                        {here, there}, {piece, firstWithOnlyDoor(catalog, RoomRole::Exit, other)}};
+                    addPiecesWithOnlyDoor(route.catalog, shipped, RoomRole::Exit, facing);
                 }
                 else
                 {
-                    route = {
-                        {{there.grid, there.doors, 0}, {here.grid, here.doors, 1}},
-                        {firstWithOnlyDoor(catalog, RoomRole::Start, other), piece}};
+                    addFillersWithOnlyDoor(route.catalog, shipped, facing);
                 }
-                INFO(describe(catalog, piece) << " through " << advanced_platformer::nameOf(side));
-                CHECK(routeWorks(catalog, route));
             }
+            INFO(describe(piece) << " through " << advanced_platformer::nameOf(side));
+            CHECK(routeWorks(route));
+        }
+    }
+}
+
+TEST_CASE("Every shipped exit room is reached through its door", "[app][content][generation]")
+{
+    const RoomPieceCatalog shipped =
+        advanced_platformer::loadRoomPieceCatalog("assets/catalogs/rooms.json");
+    for (const Orientation& piece : orientations(shipped, RoomRole::Exit))
+    {
+        const RoomDoors doors = doorsOf(piece);
+        for (const RoomSide side : AllSides)
+        {
+            if (!hasDoor(doors, side))
+            {
+                continue;
+            }
+            const RoomSide towardsExit = advanced_platformer::oppositeOf(side);
+            const Cell exitSlot = advanced_platformer::stepTowards(Centre, towardsExit);
+            Route route{
+                .catalog = emptyCatalog(shipped),
+                .slots = {Centre, exitSlot},
+                .tested = piece,
+                .testedSlot = exitSlot};
+            addPiecesWithOnlyDoor(route.catalog, shipped, RoomRole::Start, towardsExit);
+            route.catalog.pieces.push_back(piece.piece);
+            INFO(describe(piece) << " through " << advanced_platformer::nameOf(side));
+            CHECK(routeWorks(route));
         }
     }
 }
