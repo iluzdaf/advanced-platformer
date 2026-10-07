@@ -23,7 +23,7 @@ namespace
     using advanced_platformer::GeneratedLevel;
     using advanced_platformer::RoomDoors;
     using advanced_platformer::RoomPiece;
-    using advanced_platformer::RoomPieceCatalog;
+    using advanced_platformer::RoomPieces;
     using advanced_platformer::RoomRole;
     using advanced_platformer::RoomSide;
     constexpr std::array AllSides{RoomSide::Left, RoomSide::Right, RoomSide::Up, RoomSide::Down};
@@ -56,7 +56,7 @@ namespace
             { return std::ranges::equal(row, row | std::views::reverse); });
     }
 
-    std::vector<Orientation> orientations(const RoomPieceCatalog& catalog, RoomRole role)
+    std::vector<Orientation> orientations(const RoomPieces& catalog, RoomRole role)
     {
         std::vector<Orientation> result;
         for (const RoomPiece& piece : catalog.pieces)
@@ -91,13 +91,13 @@ namespace
 
     struct Route
     {
-        RoomPieceCatalog catalog;
+        RoomPieces catalog;
         std::vector<Cell> slots;
         Orientation tested;
         Cell testedSlot;
     };
 
-    Cell originOf(const RoomPieceCatalog& catalog, const Route& route)
+    Cell originOf(const RoomPieces& catalog, const Route& route)
     {
         Cell least = route.slots.front();
         for (const Cell slot : route.slots)
@@ -148,8 +148,8 @@ namespace
     }
 
     void addPiecesWithOnlyDoor(
-        RoomPieceCatalog& catalog,
-        const RoomPieceCatalog& shipped,
+        RoomPieces& catalog,
+        const RoomPieces& shipped,
         RoomRole role,
         RoomSide side)
     {
@@ -164,10 +164,7 @@ namespace
         }
     }
 
-    void addFillersWithOnlyDoor(
-        RoomPieceCatalog& catalog,
-        const RoomPieceCatalog& shipped,
-        RoomSide side)
+    void addFillersWithOnlyDoor(RoomPieces& catalog, const RoomPieces& shipped, RoomSide side)
     {
         for (const RoomRole role : {RoomRole::Corridor, RoomRole::Shaft, RoomRole::Arena})
         {
@@ -175,7 +172,7 @@ namespace
         }
     }
 
-    RoomPieceCatalog emptyCatalog(const RoomPieceCatalog& shipped)
+    RoomPieces emptyCatalog(const RoomPieces& shipped)
     {
         return {
             .roomSize = shipped.roomSize,
@@ -187,7 +184,7 @@ namespace
 
 TEST_CASE("Every shipped room piece joins each pair of its doors", "[app][content][generation]")
 {
-    const RoomPieceCatalog shipped =
+    const RoomPieces shipped =
         advanced_platformer::loadRoomPieceCatalog("assets/catalogs/pieces.json");
     for (const RoomRole role : {RoomRole::Corridor, RoomRole::Shaft, RoomRole::Arena})
     {
@@ -242,7 +239,7 @@ TEST_CASE(
     "Every shipped start room reaches an exit through each of its doors",
     "[app][content][generation]")
 {
-    const RoomPieceCatalog shipped =
+    const RoomPieces shipped =
         advanced_platformer::loadRoomPieceCatalog("assets/catalogs/pieces.json");
     for (const Orientation& piece : orientations(shipped, RoomRole::Start))
     {
@@ -284,7 +281,7 @@ TEST_CASE(
 
 TEST_CASE("Every shipped exit room is reached through its door", "[app][content][generation]")
 {
-    const RoomPieceCatalog shipped =
+    const RoomPieces shipped =
         advanced_platformer::loadRoomPieceCatalog("assets/catalogs/pieces.json");
     for (const Orientation& piece : orientations(shipped, RoomRole::Exit))
     {

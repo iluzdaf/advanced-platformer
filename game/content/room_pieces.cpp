@@ -217,11 +217,11 @@ namespace advanced_platformer
 
         void validatePieceMap(
             const RoomPiece& piece,
-            const RoomPieceCatalog& catalog,
+            const RoomPieces& roomPieces,
             std::string_view sourceName,
             const std::string& path)
         {
-            const GridSize size = catalog.roomSize;
+            const GridSize size = roomPieces.roomSize;
             if (std::cmp_not_equal(piece.rows.size(), size.height))
             {
                 failJson(
@@ -246,7 +246,7 @@ namespace advanced_platformer
                     const Cell cell{column, row};
                     const std::string cellPath =
                         indexPath(rowPath, static_cast<std::size_t>(column));
-                    if (!catalog.tileLegend.contains(symbol))
+                    if (!roomPieces.tileLegend.contains(symbol))
                     {
                         failJson(
                             sourceName,
@@ -256,15 +256,15 @@ namespace advanced_platformer
                     if (onEdge(size, cell))
                     {
                         const bool door = onDoor(size, piece.doors, cell);
-                        if (door && symbol != catalog.open)
+                        if (door && symbol != roomPieces.open)
                         {
                             failJson(
                                 sourceName,
                                 cellPath,
                                 std::format(
-                                    "expected '{}': an edge is open on a door", catalog.open));
+                                    "expected '{}': an edge is open on a door", roomPieces.open));
                         }
-                        if (!door && symbol == catalog.open)
+                        if (!door && symbol == roomPieces.open)
                         {
                             failJson(
                                 sourceName,
@@ -272,7 +272,7 @@ namespace advanced_platformer
                                 std::format(
                                     "expected a tile, not '{}': an edge is solid away from the "
                                     "doors",
-                                    catalog.open));
+                                    roomPieces.open));
                         }
                     }
                 }
@@ -520,13 +520,13 @@ namespace advanced_platformer
             return run;
         }
 
-        RoomPieceCatalog parseRoomPieceCatalog(
+        RoomPieces parseRoomPieceCatalog(
             std::string_view text,
             std::string_view sourceName,
             std::span<const RoomPieceSource> pieces)
         {
             const auto file = readContent<RoomPieceCatalogJson>(text, sourceName);
-            RoomPieceCatalog result;
+            RoomPieces result;
             result.roomSize = {file.roomSize[0], file.roomSize[1]};
             result.run = runFrom(file.run, sourceName);
             if (result.roomSize.width < MinimumRoomWidth ||
@@ -574,7 +574,7 @@ namespace advanced_platformer
         }
     }
 
-    RoomPieceCatalog loadRoomPieceCatalog(const std::filesystem::path& path)
+    RoomPieces loadRoomPieceCatalog(const std::filesystem::path& path)
     {
         const std::filesystem::path folder = path.parent_path() / "pieces";
         std::vector<std::filesystem::path> files;

@@ -198,7 +198,7 @@ namespace advanced_platformer
         }
 
         std::vector<RoomChoice> chooseRooms(
-            const RoomPieceCatalog& catalog,
+            const RoomPieces& roomPieces,
             const RoomLayout& layout,
             LevelRandom& random)
         {
@@ -208,9 +208,9 @@ namespace advanced_platformer
             {
                 const RoomDoors doors = layout.rooms[room].doors;
                 std::vector<RoomChoice> candidates;
-                for (std::size_t piece = 0; piece < catalog.pieces.size(); ++piece)
+                for (std::size_t piece = 0; piece < roomPieces.pieces.size(); ++piece)
                 {
-                    const RoomPiece& candidate = catalog.pieces[piece];
+                    const RoomPiece& candidate = roomPieces.pieces[piece];
                     if (!roleFits(candidate.role, room, layout))
                     {
                         continue;
@@ -243,7 +243,7 @@ namespace advanced_platformer
         }
 
         GeneratedLevel stitchRooms(
-            const RoomPieceCatalog& catalog,
+            const RoomPieces& roomPieces,
             const RoomLayout& layout,
             const std::vector<RoomChoice>& choices)
         {
@@ -254,14 +254,14 @@ namespace advanced_platformer
                 least = {std::min(least.x, room.grid.x), std::min(least.y, room.grid.y)};
                 most = {std::max(most.x, room.grid.x), std::max(most.y, room.grid.y)};
             }
-            const GridSize size = catalog.roomSize;
+            const GridSize size = roomPieces.roomSize;
             const GridSize stride{size.width - 1, size.height - 1};
             const int width = ((most.x - least.x) * stride.width) + size.width;
             const int height = ((most.y - least.y) * stride.height) + size.height;
 
-            const char solid = catalog.pieces.at(choices.front().piece).rows.front().front();
+            const char solid = roomPieces.pieces.at(choices.front().piece).rows.front().front();
             GeneratedLevel level;
-            level.tileLegend = catalog.tileLegend;
+            level.tileLegend = roomPieces.tileLegend;
             level.mapRows.assign(
                 static_cast<std::size_t>(height),
                 std::string(static_cast<std::size_t>(width), solid));
@@ -270,7 +270,7 @@ namespace advanced_platformer
             {
                 const RoomSlot& slot = layout.rooms[room];
                 const RoomChoice choice = choices[room];
-                const RoomPiece& piece = catalog.pieces.at(choice.piece);
+                const RoomPiece& piece = roomPieces.pieces.at(choice.piece);
                 const Cell origin{
                     (slot.grid.x - least.x) * stride.width,
                     (slot.grid.y - least.y) * stride.height};
@@ -335,24 +335,24 @@ namespace advanced_platformer
     }
 
     GeneratedLevel generateLevel(
-        const RoomPieceCatalog& catalog,
+        const RoomPieces& roomPieces,
         int levelNumber,
         std::uint32_t seed,
         std::string_view levelName)
     {
         LevelRandom random{seed};
         const RoomLayout layout =
-            layoutRooms(catalog.run.grid, roomsForLevel(catalog.run, levelNumber), random);
+            layoutRooms(roomPieces.run.grid, roomsForLevel(roomPieces.run, levelNumber), random);
         std::vector<RoomChoice> choices;
         try
         {
-            choices = chooseRooms(catalog, layout, random);
+            choices = chooseRooms(roomPieces, layout, random);
         }
         catch (const std::invalid_argument& error)
         {
             throw std::invalid_argument(std::format("{}: {}", levelName, error.what()));
         }
-        return stitchRooms(catalog, layout, choices);
+        return stitchRooms(roomPieces, layout, choices);
     }
 
     std::uint32_t runLevelSeed(std::uint32_t runSeed, int levelNumber)

@@ -56,7 +56,7 @@ namespace
         throw std::out_of_range(name);
     }
 
-    advanced_platformer::RoomPieceCatalog loadFixture(const FixtureDocument& document)
+    advanced_platformer::RoomPieces loadFixture(const FixtureDocument& document)
     {
         const tests::TemporaryDirectory folder;
         tests::writeFile(folder.path / "pieces.json", tests::dumpJson(document.catalog));
@@ -78,7 +78,7 @@ TEST_CASE(
     "A room piece folder names its pieces by file, with doors, roles and placements",
     "[app][content][generation]")
 {
-    const advanced_platformer::RoomPieceCatalog catalog =
+    const advanced_platformer::RoomPieces catalog =
         advanced_platformer::loadRoomPieceCatalog(FixturePieces);
 
     REQUIRE(catalog.roomSize.width == 8);
@@ -122,7 +122,7 @@ TEST_CASE(
     piece(document, "exit")["exit"] = tests::parseJson(
         R"({"definition": "test_door", "spawn": [6, 4], "requirement": {"item": "key", "quantity": 2}, "consumeItem": true})");
 
-    const advanced_platformer::RoomPieceCatalog catalog = loadFixture(document);
+    const advanced_platformer::RoomPieces catalog = loadFixture(document);
 
     const advanced_platformer::ActorPlacement& guard = catalog.pieces[1].actors[0];
     const advanced_platformer::PatrolPlacement patrol =
@@ -230,7 +230,7 @@ TEST_CASE("A room piece file says how a run's levels grow", "[app][content][gene
     document.catalog["run"] =
         tests::parseJson(R"({"grid": [5, 3], "firstRooms": 4, "roomsPerLevel": 2, "maxRooms": 9})");
 
-    const advanced_platformer::RoomPieceCatalog catalog = loadFixture(document);
+    const advanced_platformer::RoomPieces catalog = loadFixture(document);
 
     REQUIRE(catalog.run.grid.width == 5);
     REQUIRE(catalog.run.grid.height == 3);
@@ -239,7 +239,7 @@ TEST_CASE("A room piece file says how a run's levels grow", "[app][content][gene
     REQUIRE(catalog.run.maxRooms == 9);
 
     tests::eraseKey(document.catalog["run"], "grid");
-    const advanced_platformer::RoomPieceCatalog defaulted = loadFixture(document);
+    const advanced_platformer::RoomPieces defaulted = loadFixture(document);
     REQUIRE(defaulted.run.grid.width == 9);
     REQUIRE(defaulted.run.grid.height == 7);
 }
@@ -368,7 +368,7 @@ TEST_CASE("Doors sit at the same cells on every room's edges", "[app][content][g
 
     SECTION("Doors above and below are four cells wide and centred")
     {
-        const advanced_platformer::RoomPieceCatalog catalog = loadFixture(document);
+        const advanced_platformer::RoomPieces catalog = loadFixture(document);
 
         REQUIRE(
             catalog.pieces[1].doors ==

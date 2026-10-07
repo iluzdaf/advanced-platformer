@@ -174,7 +174,7 @@ namespace advanced_platformer
     }
 
     GameLevel composeLevel(
-        const RoomPieceCatalog& pieces,
+        const RoomPieces& pieces,
         int levelNumber,
         std::uint32_t seed,
         int textureId,
@@ -200,7 +200,7 @@ namespace advanced_platformer
     }
 
     GameLevel composePlayableLevel(
-        const RoomPieceCatalog& pieces,
+        const RoomPieces& pieces,
         int levelNumber,
         std::uint32_t seed,
         int textureId,

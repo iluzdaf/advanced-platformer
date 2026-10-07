@@ -27,7 +27,7 @@ namespace advanced_platformer
         ExitCatalog exits;
         HudIcons hudIcons;
         CameraSettings camera;
-        RoomPieceCatalog pieces;
+        RoomPieces pieces;
     };
 
     GameCatalogs loadGameCatalogs(const std::filesystem::path& catalogDirectory);

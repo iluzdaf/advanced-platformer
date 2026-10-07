@@ -23,7 +23,7 @@ namespace advanced_platformer
     };
 
     GeneratedLevel generateLevel(
-        const RoomPieceCatalog& catalog,
+        const RoomPieces& roomPieces,
         int levelNumber,
         std::uint32_t seed,
         std::string_view levelName);

@@ -6,5 +6,5 @@
 
 namespace advanced_platformer
 {
-    RoomPieceCatalog loadRoomPieceCatalog(const std::filesystem::path& path);
+    RoomPieces loadRoomPieceCatalog(const std::filesystem::path& path);
 }

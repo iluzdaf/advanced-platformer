@@ -65,7 +65,7 @@ namespace advanced_platformer
         int maxRooms = 0;
     };
 
-    struct RoomPieceCatalog
+    struct RoomPieces
     {
         GridSize roomSize;
         RunSettings run;

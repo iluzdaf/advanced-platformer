@@ -14,7 +14,7 @@
 namespace advanced_platformer
 {
     struct Actor;
-    struct RoomPieceCatalog;
+    struct RoomPieces;
     struct GameCatalogs;
 
     struct GameLevel
@@ -32,14 +32,14 @@ namespace advanced_platformer
 
     Actor composePlayer(const GameCatalogs& catalogs, int textureId);
     GameLevel composeLevel(
-        const RoomPieceCatalog& pieces,
+        const RoomPieces& pieces,
         int levelNumber,
         std::uint32_t seed,
         int textureId,
         const GameCatalogs& catalogs,
         const Actor& player);
     GameLevel composePlayableLevel(
-        const RoomPieceCatalog& pieces,
+        const RoomPieces& pieces,
         int levelNumber,
         std::uint32_t seed,
         int textureId,

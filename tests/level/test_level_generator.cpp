@@ -20,13 +20,13 @@ namespace
 {
     using advanced_platformer::Cell;
     using advanced_platformer::GeneratedLevel;
-    using advanced_platformer::RoomPieceCatalog;
+    using advanced_platformer::RoomPieces;
 
     constexpr const char* FixturePieces = "tests/fixtures/rooms/rooms/pieces.json";
 
-    RoomPieceCatalog fixtureCatalog(advanced_platformer::GridSize grid, int rooms)
+    RoomPieces fixtureCatalog(advanced_platformer::GridSize grid, int rooms)
     {
-        RoomPieceCatalog catalog = advanced_platformer::loadRoomPieceCatalog(FixturePieces);
+        RoomPieces catalog = advanced_platformer::loadRoomPieceCatalog(FixturePieces);
         catalog.run = {.grid = grid, .firstRooms = rooms, .roomsPerLevel = 0, .maxRooms = rooms};
         return catalog;
     }
@@ -62,7 +62,7 @@ namespace
 
 TEST_CASE("The same seed generates the same level", "[app][content][generation]")
 {
-    const RoomPieceCatalog catalog = fixtureCatalog({5, 1}, 5);
+    const RoomPieces catalog = fixtureCatalog({5, 1}, 5);
     const std::string first =
         levelText(advanced_platformer::generateLevel(catalog, 1, 7, "pieces.json"));
 
@@ -78,7 +78,7 @@ TEST_CASE("The same seed generates the same level", "[app][content][generation]"
 
 TEST_CASE("Stitched rooms share the wall between them", "[app][content][generation]")
 {
-    const RoomPieceCatalog catalog = fixtureCatalog({5, 1}, 5);
+    const RoomPieces catalog = fixtureCatalog({5, 1}, 5);
     for (std::uint32_t seed = 1; seed <= 10; ++seed)
     {
         const GeneratedLevel level =
@@ -128,7 +128,7 @@ TEST_CASE("Stitched rooms share the wall between them", "[app][content][generati
 
 TEST_CASE("A mirrored piece flips its placements with its map", "[app][content][generation]")
 {
-    RoomPieceCatalog catalog = fixtureCatalog({2, 1}, 2);
+    RoomPieces catalog = fixtureCatalog({2, 1}, 2);
     catalog.pieces[3].actors.push_back(
         {.id = "guard",
          .definitionName = "test_guard",
@@ -152,7 +152,7 @@ TEST_CASE(
     "A level fails to generate when no piece fits a room's doors",
     "[app][content][generation]")
 {
-    RoomPieceCatalog catalog = fixtureCatalog({5, 1}, 5);
+    RoomPieces catalog = fixtureCatalog({5, 1}, 5);
     std::erase_if(
         catalog.pieces,
         [](const advanced_platformer::RoomPiece& piece)
@@ -168,7 +168,7 @@ TEST_CASE(
 
 TEST_CASE("Each level adds rooms until the run's cap", "[app][content][generation]")
 {
-    RoomPieceCatalog catalog = advanced_platformer::loadRoomPieceCatalog(FixturePieces);
+    RoomPieces catalog = advanced_platformer::loadRoomPieceCatalog(FixturePieces);
     catalog.run = {.grid = {9, 1}, .firstRooms = 3, .roomsPerLevel = 2, .maxRooms = 7};
     const auto roomsIn = [&](int levelNumber)
     {
