@@ -1,0 +1,29 @@
+target_sources(
+    advanced_platformer_playtest
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/app/debug/debug_overlay.cpp
+        ${PROJECT_SOURCE_DIR}/app/debug/navigation_debug.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/actor_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/actor_definition.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/animation_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/camera_settings.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/content_diagnostics.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/content_glaze.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/content_validation.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/exit_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/game_catalogs.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/game_content.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/hud_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/item_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/machine_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/npc_script_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/pickup_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/room_pieces.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/tile_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/app/game/game.cpp
+        ${PROJECT_SOURCE_DIR}/app/game/level_composition.cpp
+        ${PROJECT_SOURCE_DIR}/app/game/level_generator.cpp
+        ${PROJECT_SOURCE_DIR}/app/game/level_reload.cpp
+        ${PROJECT_SOURCE_DIR}/app/playtest/main.cpp
+        ${PROJECT_SOURCE_DIR}/app/playtest/playtest.cpp
+)

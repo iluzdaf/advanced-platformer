@@ -67,6 +67,7 @@ namespace advanced_platformer
         bool breakTileAt(glm::vec2 internalPosition);
         void changeLevel(LevelChange change);
         LevelReload reload(GameContent content);
+        const GameLevel& currentLevel() const;
         int levelNumber() const;
         std::uint32_t levelSeed() const;
         std::uint32_t runSeed() const;

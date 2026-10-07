@@ -82,6 +82,19 @@ ctest --preset mac-debug -N
 ctest --preset mac-debug -R "Pickup" --output-on-failure
 ```
 
+## Playtest runner
+
+The playtest runner plays a run without a window and prints one JSON line per level.
+Give it a run seed, the number of levels, and optionally a time limit per level in
+seconds (120 by default):
+
+```sh
+cmake --build --preset mac-debug --target advanced_platformer_playtest
+build/mac-debug/advanced_platformer_playtest 1 5
+```
+
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#playtest) describes the bot and each field.
+
 ## Playing the example game
 
 | Action                                              | Controls                                  |
@@ -285,6 +298,7 @@ cmake --build --preset mac-debug --target header_self_containment
 app/           application shell, graphics, UI, and debug tools
   game/        game flow, level transitions, and level composition
   content/     JSON loaders, catalogs, and content validators
+  playtest/    headless playtest runner
 assets/        runtime game content
   catalogs/    shared JSON definitions, with room pieces in catalogs/pieces
   scripts/     Lua NPC activities
