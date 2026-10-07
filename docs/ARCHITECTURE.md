@@ -566,10 +566,14 @@ to the traversal profile. The search itself does not change.
 - The bot is the player actor with senses and the `bot` machine from the bot directory's
   `machines.json`, whose one activity is in its `bot.lua`. The directory is
   `playtest/assets` unless `--bot` names another, so a bot can be edited and replayed
-  without a rebuild. It senses, thinks and moves exactly as an NPC does: `play` routes to
-  the exit, asks for a fresh route when it has stood still for a second, and aims and
-  shoots at the opponent it sees while it keeps going. `playtestContent` builds that
-  content on top of the shipped catalogs, so nothing of the bot ships with the game.
+  without a rebuild. It senses, thinks and moves exactly as an NPC does. `bot.lua` keeps a
+  `skills` table, each skill a description and a `run(self, snapshot, step, ...)` that
+  returns a command: `goToExit` routes to the exit and asks for a fresh route when the
+  route ends short of it or the bot has stood still for a second, `fightNearest` aims and
+  shoots at the opponent it sees on top of another skill's command, and `collect` routes
+  to the nearest pickup of a named item. The `play` activity composes `goToExit` and
+  `fightNearest`. `playtestContent` builds that content on top of the shipped catalogs, so
+  nothing of the bot ships with the game.
 - A level ends at the exit, when the player is defeated (which ends the run, as in the
   game), when the player gets no closer to the exit for 15 seconds (stuck), or at the
   time limit. After stuck or a timeout the run moves on to the next level.
