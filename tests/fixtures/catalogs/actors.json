@@ -22,12 +22,12 @@
       "senses": {},
       "machine": "test_machine"
     },
-    "test_spikes": {
+    "test_contact_enemy": {
       "bodySize": [8, 8],
       "team": "enemy",
       "movement": { "platformer": {} },
       "senses": {},
-      "machine": "test_spikes",
+      "machine": "test_contact_enemy",
       "primaryAttack": { "contact": { "damage": 3 } }
     }
   }

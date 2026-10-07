@@ -6,8 +6,8 @@
   "playerSpawn": [5, 4],
   "actors": [
     {
-      "id": "test_spikes_1",
-      "definition": "test_spikes",
+      "id": "test_contact_enemy_1",
+      "definition": "test_contact_enemy",
       "spawn": [2, 4]
     }
   ],

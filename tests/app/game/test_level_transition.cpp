@@ -89,8 +89,8 @@ TEST_CASE(
     "[app][level-transition]")
 {
     advanced_platformer::GameContent content =
-        tests::fixtureContent("tests/fixtures/rooms/spikes/rooms.json");
-    content.npcScripts.loadScript("spikes", "tests/fixtures/scripts/spikes.lua");
+        tests::fixtureContent("tests/fixtures/rooms/contact_enemy/rooms.json");
+    content.npcScripts.loadScript("contact_enemy", "tests/fixtures/scripts/contact_enemy.lua");
     advanced_platformer::Game game = tests::fixtureGame(std::move(content));
     const auto initialHealth = game.playerHealth();
     const auto initialInventory = game.playerInventory();
