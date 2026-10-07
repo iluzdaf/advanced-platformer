@@ -80,10 +80,7 @@ namespace advanced_platformer
             exit.consumeItem = placement.consumeItem;
             return exit;
         }
-    }
 
-    namespace
-    {
         struct GeneratedLevel
         {
             LevelData data;
@@ -100,87 +97,87 @@ namespace advanced_platformer
             LevelData data = generateLevel(pieces, generation, sourceName);
             return {std::move(data), std::move(sourceName)};
         }
-    }
 
-    GameLevel composeGameLevel(
-        const RoomPieceCatalog& pieces,
-        int levelNumber,
-        std::uint32_t seed,
-        int textureId,
-        const GameCatalogs& catalogs)
-    {
-        const GeneratedLevel source = generateRunLevel(pieces, levelNumber, seed);
-        const LevelData& data = source.data;
-        const std::string& path = source.sourceName;
-        const auto& actors = catalogs.actors;
-        const auto& exits = catalogs.exits;
-        const auto& items = catalogs.items;
-        const auto& pickups = catalogs.pickups;
-        TileMap map = composeTileMap(data.mapRows, data.tileLegend, catalogs.tiles);
-        World world(composeItems(items, textureId));
-        std::unordered_map<std::uint32_t, std::string> actorDefinitionNames;
-        std::unordered_map<std::uint32_t, std::string> actorPlacementIds;
-        std::vector<std::string> pickupPlacementIds;
-        std::set<std::string> placedIds;
-        for (const auto& placement : data.actors)
+        GameLevel composeGameLevel(
+            const RoomPieceCatalog& pieces,
+            int levelNumber,
+            std::uint32_t seed,
+            int textureId,
+            const GameCatalogs& catalogs)
         {
+            const GeneratedLevel source = generateRunLevel(pieces, levelNumber, seed);
+            const LevelData& data = source.data;
+            const std::string& path = source.sourceName;
+            const auto& actors = catalogs.actors;
+            const auto& exits = catalogs.exits;
+            const auto& items = catalogs.items;
+            const auto& pickups = catalogs.pickups;
+            TileMap map = composeTileMap(data.mapRows, data.tileLegend, catalogs.tiles);
+            World world(composeItems(items, textureId));
+            std::unordered_map<std::uint32_t, std::string> actorDefinitionNames;
+            std::unordered_map<std::uint32_t, std::string> actorPlacementIds;
+            std::vector<std::string> pickupPlacementIds;
+            std::set<std::string> placedIds;
+            for (const auto& placement : data.actors)
+            {
+                try
+                {
+                    const ActorId id = world.addActor(composeActor(
+                        actorDefinition(actors, placement.definitionName),
+                        catalogs.animations,
+                        textureId,
+                        feetInCell(map.tileSize(), placement.spawn),
+                        makePatrol(map, placement.patrol),
+                        catalogs.machines));
+                    actorDefinitionNames.emplace(id.value, placement.definitionName);
+                    actorPlacementIds.emplace(id.value, placement.id);
+                }
+                catch (const std::invalid_argument& error)
+                {
+                    throw std::invalid_argument(
+                        std::format("{}: actor '{}': {}", path, placement.id, error.what()));
+                }
+            }
+            for (const auto& placement : data.pickups)
+            {
+                try
+                {
+                    Pickup pickup = makePickup(map, placement, pickups, items, textureId);
+                    pickup.placement = pickupPlacementIds.size();
+                    pickupPlacementIds.push_back(placement.id);
+                    world.addPickup(pickup);
+                }
+                catch (const std::invalid_argument& error)
+                {
+                    throw std::invalid_argument(
+                        std::format("{}: pickup '{}': {}", path, placement.id, error.what()));
+                }
+            }
+            for (const auto& [actor, id] : actorPlacementIds)
+            {
+                placedIds.insert(id);
+            }
+            placedIds.insert(pickupPlacementIds.begin(), pickupPlacementIds.end());
             try
             {
-                const ActorId id = world.addActor(composeActor(
-                    actorDefinition(actors, placement.definitionName),
-                    catalogs.animations,
-                    textureId,
-                    feetInCell(map.tileSize(), placement.spawn),
-                    makePatrol(map, placement.patrol),
-                    catalogs.machines));
-                actorDefinitionNames.emplace(id.value, placement.definitionName);
-                actorPlacementIds.emplace(id.value, placement.id);
+                world.setExit(makeExit(map, textureId, data.exit, items, exits));
             }
             catch (const std::invalid_argument& error)
             {
-                throw std::invalid_argument(
-                    std::format("{}: actor '{}': {}", path, placement.id, error.what()));
+                throw std::invalid_argument(std::format("{}: exit: {}", path, error.what()));
             }
+            const glm::vec2 playerSpawnFeet = feetInCell(map.tileSize(), data.playerSpawn);
+            return {
+                levelNumber,
+                std::move(map),
+                std::move(world),
+                playerSpawnFeet,
+                std::move(actorDefinitionNames),
+                std::move(actorPlacementIds),
+                std::move(pickupPlacementIds),
+                std::move(placedIds),
+                seed};
         }
-        for (const auto& placement : data.pickups)
-        {
-            try
-            {
-                Pickup pickup = makePickup(map, placement, pickups, items, textureId);
-                pickup.placement = pickupPlacementIds.size();
-                pickupPlacementIds.push_back(placement.id);
-                world.addPickup(pickup);
-            }
-            catch (const std::invalid_argument& error)
-            {
-                throw std::invalid_argument(
-                    std::format("{}: pickup '{}': {}", path, placement.id, error.what()));
-            }
-        }
-        for (const auto& [actor, id] : actorPlacementIds)
-        {
-            placedIds.insert(id);
-        }
-        placedIds.insert(pickupPlacementIds.begin(), pickupPlacementIds.end());
-        try
-        {
-            world.setExit(makeExit(map, textureId, data.exit, items, exits));
-        }
-        catch (const std::invalid_argument& error)
-        {
-            throw std::invalid_argument(std::format("{}: exit: {}", path, error.what()));
-        }
-        const glm::vec2 playerSpawnFeet = feetInCell(map.tileSize(), data.playerSpawn);
-        return {
-            levelNumber,
-            std::move(map),
-            std::move(world),
-            playerSpawnFeet,
-            std::move(actorDefinitionNames),
-            std::move(actorPlacementIds),
-            std::move(pickupPlacementIds),
-            std::move(placedIds),
-            seed};
     }
 
     Actor composePlayer(const GameCatalogs& catalogs, int textureId)

@@ -22,7 +22,8 @@ TEST_CASE("A level's cells become the feet of those cells on its map", "[app][co
         advanced_platformer::loadRoomPieceCatalog("tests/fixtures/rooms/opening/rooms.json");
     const auto gameCatalogs =
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
-    const auto gameLevel = advanced_platformer::composeGameLevel(pieces, 1, 1, 0, gameCatalogs);
+    const auto gameLevel = advanced_platformer::composeLevelAtSeed(
+        pieces, 1, 1, 0, gameCatalogs, advanced_platformer::composePlayer(gameCatalogs, 0));
     const int tileSize = gameLevel.map.tileSize();
 
     REQUIRE(gameLevel.playerSpawnFeet == advanced_platformer::feetInCell(tileSize, {12, 4}));
@@ -46,8 +47,9 @@ TEST_CASE("A level composes an actor from its catalog definition", "[app][actors
         advanced_platformer::loadRoomPieceCatalog("tests/fixtures/catalogs/rooms.json");
     const auto gameCatalogs =
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
-    auto gameLevel = advanced_platformer::composeGameLevel(pieces, 1, 1, 0, gameCatalogs);
-    REQUIRE(gameLevel.world.actors().size() == 1);
+    auto gameLevel = advanced_platformer::composeLevelAtSeed(
+        pieces, 1, 1, 0, gameCatalogs, advanced_platformer::composePlayer(gameCatalogs, 0));
+    REQUIRE(gameLevel.world.actors().size() == 2);
     auto& actor = gameLevel.world.actors().front();
     REQUIRE(
         tests::component<advanced_platformer::PlatformerMovement>(actor).config.maximumSpeed == 23);
@@ -61,7 +63,8 @@ TEST_CASE("Level composition reports unknown actor definitions", "[app][actors]"
     const auto gameCatalogs =
         advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
     REQUIRE_THROWS_WITH(
-        advanced_platformer::composeGameLevel(pieces, 1, 1, 0, gameCatalogs),
+        advanced_platformer::composeLevelAtSeed(
+            pieces, 1, 1, 0, gameCatalogs, advanced_platformer::composePlayer(gameCatalogs, 0)),
         Catch::Matchers::ContainsSubstring("Level 1 (seed 1): actor '") &&
             Catch::Matchers::ContainsSubstring("unknown actor definition 'missing'"));
 }

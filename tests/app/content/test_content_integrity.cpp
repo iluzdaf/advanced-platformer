@@ -14,16 +14,13 @@
 #include "content/room_pieces.hpp"
 #include "content/npc_script_catalog.hpp"
 #include "game/level_composition.hpp"
-#include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
-#include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/npc/npc_activity_scripts.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "lua_npc_scripts.hpp"
 #include "lua_presentation_script.hpp"
 #include "advanced_platformer/world/level_validation.hpp"
-#include "support/add_player.hpp"
 #include "support/fixed_step.hpp"
 #include "support/run_levels.hpp"
 
@@ -56,30 +53,16 @@ TEST_CASE("Every run level can be composed until the rooms stop growing", "[app]
         advanced_platformer::loadGameCatalogs("assets/catalogs", pngSize(ShippedAtlas));
     for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
     {
-        const auto content = advanced_platformer::composeGameLevel(
-            pieces, number, advanced_platformer::runLevelSeed(1, number), 0, catalogs);
+        const auto content = advanced_platformer::composeLevelAtSeed(
+            pieces,
+            number,
+            advanced_platformer::runLevelSeed(1, number),
+            0,
+            catalogs,
+            advanced_platformer::composePlayer(catalogs, 0));
         INFO("Level " << number);
         REQUIRE(content.number == number);
         REQUIRE(content.world.exit().has_value());
-    }
-}
-
-TEST_CASE("Every run level has valid actor placement", "[app][content]")
-{
-    const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/catalogs/rooms.json");
-    const auto catalogs =
-        advanced_platformer::loadGameCatalogs("assets/catalogs", pngSize(ShippedAtlas));
-    for (int number = 1; number <= tests::levelsUntilCap(pieces.run); ++number)
-    {
-        auto content = advanced_platformer::composeGameLevel(
-            pieces, number, advanced_platformer::runLevelSeed(1, number), 0, catalogs);
-        advanced_platformer::Actor player = advanced_platformer::composePlayer(catalogs, 0);
-        advanced_platformer::moveFeetTo(player.body.bounds, content.playerSpawnFeet);
-        tests::addPlayer(content.world, player);
-
-        INFO("Level " << number);
-        REQUIRE_NOTHROW(
-            advanced_platformer::validateLevelActors(content.map, content.world, content.number));
     }
 }
 
