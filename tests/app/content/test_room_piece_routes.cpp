@@ -21,12 +21,12 @@
 namespace
 {
     using advanced_platformer::Cell;
+    using advanced_platformer::GeneratedLevel;
     using advanced_platformer::RoomDoors;
     using advanced_platformer::RoomPiece;
     using advanced_platformer::RoomPieceCatalog;
     using advanced_platformer::RoomRole;
     using advanced_platformer::RoomSide;
-    using advanced_platformer::StitchedLevel;
     constexpr std::array AllSides{RoomSide::Left, RoomSide::Right, RoomSide::Up, RoomSide::Down};
     constexpr advanced_platformer::GridSize Grid{5, 5};
     constexpr Cell Centre{2, 2};
@@ -75,7 +75,7 @@ namespace
         return result;
     }
 
-    bool isMirroredAt(const StitchedLevel& level, const RoomPiece& piece, Cell origin)
+    bool isMirroredAt(const GeneratedLevel& level, const RoomPiece& piece, Cell origin)
     {
         for (std::size_t row = 0; row < piece.rows.size(); ++row)
         {
@@ -110,11 +110,11 @@ namespace
             (route.testedSlot.y - least.y) * (catalog.roomSize.height - 1)};
     }
 
-    std::optional<StitchedLevel> generateRoute(const Route& route)
+    std::optional<GeneratedLevel> generateRoute(const Route& route)
     {
         for (std::uint32_t seed = 1; seed <= SeedsToTry; ++seed)
         {
-            StitchedLevel level;
+            GeneratedLevel level;
             try
             {
                 level = advanced_platformer::generateLevel(
@@ -139,7 +139,7 @@ namespace
     {
         static const advanced_platformer::GameCatalogs shippedCatalogs =
             advanced_platformer::loadGameCatalogs("assets/catalogs", tests::ShippedAtlasSize);
-        const std::optional<StitchedLevel> level = generateRoute(route);
+        const std::optional<GeneratedLevel> level = generateRoute(route);
         if (!level.has_value())
         {
             FAIL("No seed laid the route out");

@@ -433,7 +433,7 @@ to the traversal profile. The search itself does not change.
 | -------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Load shared catalogs | `app/content/game_catalogs.cpp`       | Definitions checked against the atlas size, and the room pieces, kept for the session                                               |
 | Load scripts         | `app/content/npc_script_catalog.cpp`  | Each script a machine names, with every named activity present                                                                      |
-| Generate a level     | `app/game/level_generator.cpp`        | Room pieces laid out from the seed and stitched into a `StitchedLevel`                                                              |
+| Generate a level     | `app/game/level_generator.cpp`        | Room pieces laid out from the seed and stitched into a `GeneratedLevel`                                                             |
 | Compose the level    | `composeLevel`                        | Names resolved into a map, world, and placed objects, with the player at its spawn                                                  |
 | Start the level      | `startLevel`, then `Game::enterLevel` | Composed again from each following seed until the player can reach the exit; then the camera is made and the navigation fill queued |
 

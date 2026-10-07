@@ -243,7 +243,7 @@ namespace advanced_platformer
             return std::format("room{}", room);
         }
 
-        StitchedLevel stitchRooms(
+        GeneratedLevel stitchRooms(
             const RoomPieceCatalog& catalog,
             const RoomLayout& layout,
             const std::vector<RoomChoice>& choices)
@@ -261,7 +261,7 @@ namespace advanced_platformer
             const int height = ((most.y - least.y) * stride.height) + size.height;
 
             const char solid = catalog.pieces.at(choices.front().piece).rows.front().front();
-            StitchedLevel level;
+            GeneratedLevel level;
             level.tileLegend = catalog.tileLegend;
             level.mapRows.assign(
                 static_cast<std::size_t>(height),
@@ -323,7 +323,7 @@ namespace advanced_platformer
         }
     }
 
-    StitchedLevel generateLevel(
+    GeneratedLevel generateLevel(
         const RoomPieceCatalog& catalog,
         const LevelSettings& settings,
         std::string_view levelName)

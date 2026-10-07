@@ -21,7 +21,7 @@
 namespace tests
 {
     inline bool playerReachesExit(
-        const advanced_platformer::StitchedLevel& level,
+        const advanced_platformer::GeneratedLevel& level,
         const advanced_platformer::GameCatalogs& catalogs)
     {
         const advanced_platformer::TileMap map =
