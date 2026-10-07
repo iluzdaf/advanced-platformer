@@ -11,7 +11,7 @@ generated levels, and ImGui debugging tools.
 | Document                                | What it covers                                                                    |
 | --------------------------------------- | --------------------------------------------------------------------------------- |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Design, ownership rules, runtime flow, and the reasons behind the main decisions. |
-| [CONTENT.md](docs/CONTENT.md)           | How to author levels, definitions, machines, and NPC scripts under `assets`.      |
+| [CONTENT.md](docs/CONTENT.md)           | How to author levels, definitions, machines, and NPC scripts under `game/assets`. |
 | [GLOSSARY.md](docs/GLOSSARY.md)         | The words the code and documents use, each with one meaning.                      |
 
 ## Requirements
@@ -53,7 +53,7 @@ cd build/mac-debug
 ./advanced_platformer
 ```
 
-Debug builds read `assets/` from the source tree and reload it while the game runs when a
+Debug builds read `game/assets/` from the source tree and reload it while the game runs when a
 file there changes. See [Hot reload](docs/CONTENT.md#hot-reload).
 
 Press F1 in the game to open the [debug overlay](#debug-overlay), which shows frame
@@ -186,7 +186,7 @@ cmake --build --preset mac-coverage --target coverage
 ```
 
 It runs the tests under instrumentation and prints line, function, region and branch
-coverage for `app/`, `src/`, `include/` and `scripting/`, leaving out `external/` and
+coverage for `app/`, `core/`, `game/`, `playtest/` and `scripting/`, leaving out `external/` and
 the tests themselves. The line-by-line report is at
 `build/mac-coverage/coverage/html/index.html`. Only code built into the test executable is
 counted, so the window, renderer and ImGui code does not appear. The table and the HTML report are `llvm-cov`'s own output; Clang's [Interpreting reports](https://clang.llvm.org/docs/SourceBasedCodeCoverage.html#interpreting-reports) explains their regions, functions, lines and branches.
@@ -273,8 +273,8 @@ changing only a manifest checks the whole tree. So do changes to the analysis ru
 the CI workflow, the global build configuration, the third-party libraries under
 `external/` (including a submodule moving to another commit), or
 `tools/tidy_targets.py`, which picks the files. Local `tidy` builds always check the
-whole tree. CMake configuration fails with a focused error if an `app/`, `src/`, or
-enabled `tests/` source is missing from its target's manifest.
+whole tree. CMake configuration fails with a focused error if an `app/`, `core/`, `game/`,
+`playtest/`, or enabled `tests/` source is missing from its target's manifest.
 
 To see which files CI will check for your branch, run the same script:
 
@@ -295,21 +295,15 @@ cmake --build --preset mac-debug --target header_self_containment
 ## Repository layout
 
 ```text
-app/           application shell, graphics, UI, and debug tools
-  game/        game flow, level transitions, and level composition
-  content/     JSON loaders, catalogs, and content validators
-  playtest/    headless playtest runner
-assets/        runtime game content
-  catalogs/    shared JSON definitions, with room pieces in catalogs/pieces
-  scripts/     Lua NPC activities
-  textures/    runtime sprite atlas
+app/           application shell, content session, graphics, UI, and debug tools
 cmake/         dependencies, quality rules, and explicit target source manifests
-include/       public core headers
+core/          the simulation and level generation library: include/ holds its public headers, src/ its implementations
+game/          the headless game library: content loaders and catalogs, level composition, Game, diagnostics
+  assets/      runtime game content: catalogs (room pieces in catalogs/pieces), Lua scripts, the atlas
+playtest/      headless playtest runner, with the bot's own content in assets/
 scripting/     Lua scripting target: the NPC activity runtime and its sol2 bindings
-src/           core implementations
-tests/         Catch2 tests for core systems and testable application code
-  app/         application tests grouped like app/ (content, debug, game, graphics, UI)
-  fixtures/    example content mirroring assets/catalogs and scripts, with room piece sets in rooms/
+tests/         Catch2 tests, grouped like the code they test (core, game, app, playtest, scripting)
+  fixtures/    example content mirroring game/assets catalogs and scripts, with room piece sets in rooms/
   support/     test-only builders and simulation helpers
 tools/         repository quality and maintenance scripts
 docs/          architecture, content format, and glossary

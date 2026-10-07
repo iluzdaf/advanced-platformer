@@ -2,7 +2,7 @@
 
 #include <optional>
 
-#include "game/game.hpp"
+#include "game.hpp"
 #include "graphics/display_viewport.hpp"
 #include "ui/exit_hint_ui.hpp"
 #include "ui/health_hud_ui.hpp"

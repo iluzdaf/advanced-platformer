@@ -2,8 +2,8 @@
 
 #include <optional>
 
-#include "game/game.hpp"
-#include "game/play_control.hpp"
+#include "game.hpp"
+#include "session/play_control.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
 
 namespace advanced_platformer

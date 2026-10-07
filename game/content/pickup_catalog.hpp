@@ -1,0 +1,42 @@
+#pragma once
+#include <filesystem>
+#include <map>
+#include <optional>
+#include <string>
+#include <string_view>
+
+#include <glm/vec2.hpp>
+
+#include "advanced_platformer/level/placements.hpp"
+#include "advanced_platformer/render/sprite.hpp"
+#include "advanced_platformer/world/pickup.hpp"
+
+#include "item_catalog.hpp"
+
+namespace advanced_platformer
+{
+    struct PickupDefinition
+    {
+        NamedItemStack stack;
+        glm::vec2 bodySize = {0.0F, 0.0F};
+        std::optional<Sprite> sprite;
+    };
+
+    using PickupCatalog = std::map<std::string, PickupDefinition>;
+    void validatePickupDefinition(const PickupDefinition& definition, const ItemCatalog& items);
+    PickupCatalog parsePickupCatalog(
+        std::string_view text,
+        std::string_view sourceName,
+        const ItemCatalog& items);
+    PickupCatalog loadPickupCatalog(const std::filesystem::path& path, const ItemCatalog& items);
+    void validatePickupAtlasRegions(
+        const PickupCatalog& catalog,
+        glm::ivec2 atlasSize,
+        std::string_view sourceName);
+    const PickupDefinition& pickupDefinition(const PickupCatalog& catalog, const std::string& name);
+    Pickup composePickup(
+        const PickupDefinition& definition,
+        const ItemCatalog& items,
+        int textureId,
+        glm::vec2 spawnFeet);
+}

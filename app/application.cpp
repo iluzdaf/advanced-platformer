@@ -15,15 +15,15 @@
 
 #include <imgui.h>
 
-#include "content/content_session.hpp"
+#include "session/content_session.hpp"
 #include "content/game_content.hpp"
-#include "debug/console_log.hpp"
+#include "diagnostics/console_log.hpp"
 #include "debug/debug_cursor.hpp"
 #include "debug/debug_tools.hpp"
 #include "debug/frame_profile_ui.hpp"
-#include "game/game.hpp"
-#include "game/level_requests.hpp"
-#include "game/play_control.hpp"
+#include "game.hpp"
+#include "session/level_requests.hpp"
+#include "session/play_control.hpp"
 #include "graphics/display_viewport.hpp"
 #include "graphics/game_window.hpp"
 #include "graphics/imgui_session.hpp"

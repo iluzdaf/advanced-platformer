@@ -182,6 +182,17 @@ namespace advanced_platformer
                                     ? sol::make_object(lua, routeStatusName(*snapshot.routeStatus))
                                     : sol::make_object(lua, sol::lua_nil);
         result["routeComplete"] = snapshot.routeComplete;
+        result["exitFeet"] = optionalVector(snapshot.exitFeet);
+        sol::table pickups = lua.create_table();
+        for (const NpcPickupSnapshot& pickup : snapshot.pickups)
+        {
+            sol::table entry = lua.create_table();
+            entry["feet"] = luaVector(lua, pickup.feet);
+            entry["item"] = pickup.item;
+            entry["quantity"] = pickup.quantity;
+            pickups.add(entry);
+        }
+        result["pickups"] = pickups;
 
         sol::table facts = lua.create_table();
         facts["targetKnown"] = snapshot.facts.targetKnown;

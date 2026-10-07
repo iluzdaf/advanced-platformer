@@ -4,8 +4,8 @@
 
 #include "debug/debug_cursor.hpp"
 #include "debug/debug_tool_visibility.hpp"
-#include "game/level_requests.hpp"
-#include "game/play_control.hpp"
+#include "session/level_requests.hpp"
+#include "session/play_control.hpp"
 
 namespace advanced_platformer
 {

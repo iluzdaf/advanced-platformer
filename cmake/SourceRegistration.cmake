@@ -2,10 +2,16 @@ function(verify_project_source_registration)
     set(project_targets
         advanced_platformer_core
         advanced_platformer_scripting
+        advanced_platformer_game
         advanced_platformer
         advanced_platformer_playtest
     )
-    set(project_source_patterns ${PROJECT_SOURCE_DIR}/app/*.cpp ${PROJECT_SOURCE_DIR}/src/*.cpp)
+    set(project_source_patterns
+        ${PROJECT_SOURCE_DIR}/app/*.cpp
+        ${PROJECT_SOURCE_DIR}/core/src/*.cpp
+        ${PROJECT_SOURCE_DIR}/game/*.cpp
+        ${PROJECT_SOURCE_DIR}/playtest/*.cpp
+    )
 
     if(BUILD_TESTING)
         list(APPEND project_targets advanced_platformer_tests)

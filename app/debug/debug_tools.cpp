@@ -1,8 +1,8 @@
 #include "debug_tools.hpp"
 
-#include "console_log.hpp"
+#include "diagnostics/console_log.hpp"
 #include "console_ui.hpp"
-#include "debug_overlay.hpp"
+#include "diagnostics/debug_overlay.hpp"
 #include "debug_overlay_ui.hpp"
 #include "debug_tool_visibility.hpp"
 #include "frame_profile_ui.hpp"

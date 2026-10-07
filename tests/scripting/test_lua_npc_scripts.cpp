@@ -142,6 +142,45 @@ TEST_CASE(
     REQUIRE(scripts.diagnostics().empty());
 }
 
+TEST_CASE("A snapshot's exit and pickups reach Lua with the item each pickup holds", "[lua][npc]")
+{
+    LuaNpcScripts scripts;
+    scripts.loadScriptText(
+        "example",
+        R"(
+            return {
+                activities = {
+                    decide = {
+                        update = function(self, snapshot)
+                            for _, pickup in ipairs(snapshot.pickups) do
+                                if pickup.item == "heart" and pickup.quantity == 2 then
+                                    return { routeTo = pickup.feet, clearRoute = snapshot.exitFeet ~= nil }
+                                end
+                            end
+                            return { routeTo = snapshot.exitFeet }
+                        end
+                    }
+                }
+            }
+        )",
+        "command.lua");
+
+    NpcActivitySnapshot snapshot = commandSnapshot();
+    snapshot.exitFeet = {{200.0F, 34.0F}};
+    snapshot.pickups = {{{40.0F, 34.0F}, "coin", 1}, {{90.0F, 34.0F}, "heart", 2}};
+    scripts.enter(FirstActor, Activity, snapshot);
+    const advanced_platformer::NpcActivityCommand command =
+        scripts.update(FirstActor, Activity, snapshot, 0.5F);
+    REQUIRE(command.routeTo == glm::vec2{90.0F, 34.0F});
+    REQUIRE(command.clearRoute);
+
+    snapshot.pickups.clear();
+    const advanced_platformer::NpcActivityCommand toExit =
+        scripts.update(FirstActor, Activity, snapshot, 0.5F);
+    REQUIRE(toExit.routeTo == glm::vec2{200.0F, 34.0F});
+    REQUIRE_FALSE(toExit.clearRoute);
+}
+
 TEST_CASE("Lua receives independent surface and range facts", "[lua][npc]")
 {
     LuaNpcScripts scripts;

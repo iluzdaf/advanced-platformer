@@ -1,6 +1,6 @@
 # Content Format
 
-The authoring reference for the files under `assets`. Room pieces place named definitions;
+The authoring reference for the files under `game/assets`. Room pieces place named definitions;
 definitions configure engine components; machines and Lua activities decide what NPCs
 do. Movement, combat and pathfinding stay in C++.
 
@@ -14,7 +14,7 @@ do. Movement, combat and pathfinding stay in C++.
 
 ## Hot reload
 
-Builds other than Release read `assets/` from the source tree, not the copy beside the
+Builds other than Release read `game/assets/` from the source tree, not the copy beside the
 executable, and check it four times a second. Once a change has settled, the game loads
 every catalog, room piece, script and the atlas again, and builds the level again from
 the same seed. If anything fails,
@@ -37,21 +37,21 @@ again from the next seed, also keeping health and items.
 
 ## Files
 
-| File                                                             | Holds                                          | Loader                                                                                                                       |
-| ---------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| [`catalogs/pieces.json`](../assets/catalogs/pieces.json)         | Room size, legend, and how a run's levels grow | [`room_pieces.cpp`](../app/content/room_pieces.cpp), [`level_generator.cpp`](../app/game/level_generator.cpp)                |
-| [`catalogs/pieces/*.json`](../assets/catalogs/pieces)            | One room piece each                            | [`room_pieces.cpp`](../app/content/room_pieces.cpp)                                                                          |
-| [`catalogs/tiles.json`](../assets/catalogs/tiles.json)           | Tile size and tiles                            | [`tile_catalog.cpp`](../app/content/tile_catalog.cpp)                                                                        |
-| [`catalogs/actors.json`](../assets/catalogs/actors.json)         | The player and every actor definition          | [`actor_catalog.cpp`](../app/content/actor_catalog.cpp), [`actor_definition.cpp`](../app/content/actor_definition.cpp)       |
-| [`catalogs/animations.json`](../assets/catalogs/animations.json) | Animation sets                                 | [`animation_catalog.cpp`](../app/content/animation_catalog.cpp)                                                              |
-| [`catalogs/machines.json`](../assets/catalogs/machines.json)     | NPC state machines                             | [`machine_catalog.cpp`](../app/content/machine_catalog.cpp)                                                                  |
-| [`scripts/*.lua`](../assets/scripts)                             | Lua activities                                 | [`npc_script_catalog.cpp`](../app/content/npc_script_catalog.cpp), [`lua_npc_scripts.cpp`](../scripting/lua_npc_scripts.cpp) |
-| [`scripts/presentation.lua`](../assets/scripts/presentation.lua) | Effects that answer world events               | [`lua_presentation_script.cpp`](../scripting/lua_presentation_script.cpp)                                                    |
-| [`catalogs/items.json`](../assets/catalogs/items.json)           | Inventory items                                | [`item_catalog.cpp`](../app/content/item_catalog.cpp)                                                                        |
-| [`catalogs/pickups.json`](../assets/catalogs/pickups.json)       | World pickups                                  | [`pickup_catalog.cpp`](../app/content/pickup_catalog.cpp)                                                                    |
-| [`catalogs/exits.json`](../assets/catalogs/exits.json)           | Exit bodies and sprites                        | [`exit_catalog.cpp`](../app/content/exit_catalog.cpp)                                                                        |
-| [`catalogs/hud.json`](../assets/catalogs/hud.json)               | HUD icon regions                               | [`hud_catalog.cpp`](../app/content/hud_catalog.cpp)                                                                          |
-| [`catalogs/camera.json`](../assets/catalogs/camera.json)         | Camera dead zone                               | [`camera_settings.cpp`](../app/content/camera_settings.cpp)                                                                  |
+| File                                                                  | Holds                                          | Loader                                                                                                                        |
+| --------------------------------------------------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| [`catalogs/pieces.json`](../game/assets/catalogs/pieces.json)         | Room size, legend, and how a run's levels grow | [`room_pieces.cpp`](../game/content/room_pieces.cpp), [`level_generator.cpp`](../core/src/level/level_generator.cpp)          |
+| [`catalogs/pieces/*.json`](../game/assets/catalogs/pieces)            | One room piece each                            | [`room_pieces.cpp`](../game/content/room_pieces.cpp)                                                                          |
+| [`catalogs/tiles.json`](../game/assets/catalogs/tiles.json)           | Tile size and tiles                            | [`tile_catalog.cpp`](../game/content/tile_catalog.cpp)                                                                        |
+| [`catalogs/actors.json`](../game/assets/catalogs/actors.json)         | The player and every actor definition          | [`actor_catalog.cpp`](../game/content/actor_catalog.cpp), [`actor_definition.cpp`](../game/content/actor_definition.cpp)      |
+| [`catalogs/animations.json`](../game/assets/catalogs/animations.json) | Animation sets                                 | [`animation_catalog.cpp`](../game/content/animation_catalog.cpp)                                                              |
+| [`catalogs/machines.json`](../game/assets/catalogs/machines.json)     | NPC state machines                             | [`machine_catalog.cpp`](../game/content/machine_catalog.cpp)                                                                  |
+| [`scripts/*.lua`](../game/assets/scripts)                             | Lua activities                                 | [`npc_script_catalog.cpp`](../game/content/npc_script_catalog.cpp), [`lua_npc_scripts.cpp`](../scripting/lua_npc_scripts.cpp) |
+| [`scripts/presentation.lua`](../game/assets/scripts/presentation.lua) | Effects that answer world events               | [`lua_presentation_script.cpp`](../scripting/lua_presentation_script.cpp)                                                     |
+| [`catalogs/items.json`](../game/assets/catalogs/items.json)           | Inventory items                                | [`item_catalog.cpp`](../game/content/item_catalog.cpp)                                                                        |
+| [`catalogs/pickups.json`](../game/assets/catalogs/pickups.json)       | World pickups                                  | [`pickup_catalog.cpp`](../game/content/pickup_catalog.cpp)                                                                    |
+| [`catalogs/exits.json`](../game/assets/catalogs/exits.json)           | Exit bodies and sprites                        | [`exit_catalog.cpp`](../game/content/exit_catalog.cpp)                                                                        |
+| [`catalogs/hud.json`](../game/assets/catalogs/hud.json)               | HUD icon regions                               | [`hud_catalog.cpp`](../game/content/hud_catalog.cpp)                                                                          |
+| [`catalogs/camera.json`](../game/assets/catalogs/camera.json)         | Camera dead zone                               | [`camera_settings.cpp`](../game/content/camera_settings.cpp)                                                                  |
 
 Every catalog is required, even when empty. Every sprite region, frame and icon must lie
 inside the atlas.
@@ -249,14 +249,14 @@ one atlas pixel is one world pixel. To change how big something looks, change th
 }
 ```
 
-| Field   | Meaning                                                                                        |
-| ------- | ---------------------------------------------------------------------------------------------- |
-| `name`  | The state's name, unique in the machine.                                                       |
-| `does`  | The Lua activity it runs: `script`, a file in `assets/scripts` without `.lua`, and `activity`. |
-| `from`  | A state, or a list of states for one transition from each.                                     |
-| `to`    | The state to enter.                                                                            |
-| `when`  | [Facts](#facts) and the value each must have. Empty always holds.                              |
-| `after` | Optional seconds every condition must hold before the transition fires.                        |
+| Field   | Meaning                                                                                             |
+| ------- | --------------------------------------------------------------------------------------------------- |
+| `name`  | The state's name, unique in the machine.                                                            |
+| `does`  | The Lua activity it runs: `script`, a file in `game/assets/scripts` without `.lua`, and `activity`. |
+| `from`  | A state, or a list of states for one transition from each.                                          |
+| `to`    | The state to enter.                                                                                 |
+| `when`  | [Facts](#facts) and the value each must have. Empty always holds.                                   |
+| `after` | Optional seconds every condition must hold before the transition fires.                             |
 
 From one state, the first transition in the list whose conditions have held long enough
 fires.
@@ -274,7 +274,7 @@ fires.
 | `secondaryReady`               | As `primaryReady`, for the secondary attack.                       |                                                                                     |
 | `secondaryActive`              | As `primaryActive`, for the secondary attack.                      |                                                                                     |
 | `targetWithinStandoffDistance` | The remembered target is nearer than `standoffDistance`.           | Measured to its last known feet.                                                    |
-| `heardLanding`                 | The NPC heard the player land on its ground run.                   | For one update.                                                                     |
+| `heardLanding`                 | The NPC heard an opponent land on its ground run.                  | For one update.                                                                     |
 | `targetOnSameSurface`          | The NPC can reach its grounded target without leaving its surface. | A climber may use walls and ceilings. Ignores distance and sight.                   |
 | `targetWithinNoticeDistance`   | The remembered target is within `noticeDistance`.                  | Ignores ground and sight.                                                           |
 | `movementBlocked`              | The NPC hit a wall, or its ledge guard stopped it.                 | From the last movement update.                                                      |
@@ -287,7 +287,7 @@ fires.
 A script returns `{ activities = { name = { enter, update, exit } } }`. `update` is
 required, and `enter` and `exit` are optional. Each hook gets `self`, a table kept for
 the visit, and a snapshot. `update` also gets the step in seconds, and returns a command
-or `nil`. [`common.lua`](../assets/scripts/common.lua) has `idle`, `patrol`, `chase`,
+or `nil`. [`common.lua`](../game/assets/scripts/common.lua) has `idle`, `patrol`, `chase`,
 `attack`, `search`, `retreat` and `watch`.
 
 | Snapshot              | Meaning                                                                                                                                                                           |
@@ -302,6 +302,8 @@ or `nil`. [`common.lua`](../assets/scripts/common.lua) has `idle`, `patrol`, `ch
 | `stateElapsed`        | Seconds in this state.                                                                                                                                                            |
 | `routeStatus`         | `found`, `unreachable` (the route ends as close to the goal as the NPC can get) or `deferred` (the engine is still working it out); `nil` before any route or after `clearRoute`. |
 | `routeComplete`       | Whether the last route asked for has been followed to its end.                                                                                                                    |
+| `exitFeet`            | The level exit's feet, when the level has one.                                                                                                                                    |
+| `pickups`             | Every pickup in the level: `feet`, `item` (its name in `items.json`) and `quantity`.                                                                                              |
 
 | Command                                          | Meaning                                                                          |
 | ------------------------------------------------ | -------------------------------------------------------------------------------- |

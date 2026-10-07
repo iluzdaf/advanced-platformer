@@ -10,7 +10,7 @@ include(cmake/Dependencies.cmake)
 
 add_library(advanced_platformer_core)
 include(cmake/sources/Core.cmake)
-target_include_directories(advanced_platformer_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(advanced_platformer_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core/include)
 target_compile_features(advanced_platformer_core PUBLIC cxx_std_26)
 target_link_libraries(advanced_platformer_core PUBLIC advanced_platformer_glm)
 enable_project_warnings(advanced_platformer_core)
@@ -31,6 +31,17 @@ target_link_libraries(
 enable_project_warnings(advanced_platformer_scripting)
 enable_project_coverage(advanced_platformer_scripting)
 
+add_library(advanced_platformer_game)
+include(cmake/sources/Game.cmake)
+target_include_directories(advanced_platformer_game PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/game)
+target_compile_features(advanced_platformer_game PUBLIC cxx_std_26)
+target_link_libraries(
+    advanced_platformer_game
+    PUBLIC advanced_platformer_scripting advanced_platformer_json
+)
+enable_project_warnings(advanced_platformer_game)
+enable_project_coverage(advanced_platformer_game)
+
 add_executable(advanced_platformer)
 include(cmake/sources/Application.cmake)
 target_compile_features(advanced_platformer PRIVATE cxx_std_26)
@@ -38,15 +49,14 @@ target_include_directories(advanced_platformer PRIVATE ${CMAKE_CURRENT_SOURCE_DI
 target_compile_definitions(
     advanced_platformer
     PRIVATE
-        $<$<NOT:$<CONFIG:Release>>:ADVANCED_PLATFORMER_SOURCE_ASSETS="${CMAKE_CURRENT_SOURCE_DIR}/assets">
+        $<$<NOT:$<CONFIG:Release>>:ADVANCED_PLATFORMER_SOURCE_ASSETS="${CMAKE_CURRENT_SOURCE_DIR}/game/assets">
 )
 target_link_libraries(
     advanced_platformer
     PRIVATE
-        advanced_platformer_scripting
+        advanced_platformer_game
         advanced_platformer_glad
         advanced_platformer_imgui
-        advanced_platformer_json
         advanced_platformer_stb
         glfw
 )
@@ -56,7 +66,7 @@ enable_project_coverage(advanced_platformer)
 add_custom_target(
     game_assets
     COMMAND
-        ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/assets
+        ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/game/assets
         $<TARGET_FILE_DIR:advanced_platformer>/assets
     COMMENT "Copying game assets beside the executables"
     VERBATIM
@@ -66,18 +76,28 @@ add_dependencies(advanced_platformer game_assets)
 add_executable(advanced_platformer_playtest)
 include(cmake/sources/Playtest.cmake)
 target_compile_features(advanced_platformer_playtest PRIVATE cxx_std_26)
-target_include_directories(advanced_platformer_playtest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
+target_include_directories(
+    advanced_platformer_playtest
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/playtest
+)
 target_compile_definitions(
     advanced_platformer_playtest
     PRIVATE
-        $<$<NOT:$<CONFIG:Release>>:ADVANCED_PLATFORMER_SOURCE_ASSETS="${CMAKE_CURRENT_SOURCE_DIR}/assets">
+        $<$<NOT:$<CONFIG:Release>>:ADVANCED_PLATFORMER_SOURCE_ASSETS="${CMAKE_CURRENT_SOURCE_DIR}/game/assets">
+        $<$<NOT:$<CONFIG:Release>>:ADVANCED_PLATFORMER_SOURCE_PLAYTEST_ASSETS="${CMAKE_CURRENT_SOURCE_DIR}/playtest/assets">
 )
-target_link_libraries(
-    advanced_platformer_playtest
-    PRIVATE advanced_platformer_scripting advanced_platformer_json
-)
+target_link_libraries(advanced_platformer_playtest PRIVATE advanced_platformer_game)
 enable_project_warnings(advanced_platformer_playtest)
-add_dependencies(advanced_platformer_playtest game_assets)
+
+add_custom_target(
+    playtest_assets
+    COMMAND
+        ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/playtest/assets
+        $<TARGET_FILE_DIR:advanced_platformer_playtest>/playtest/assets
+    COMMENT "Copying the playtest bot's content beside the executables"
+    VERBATIM
+)
+add_dependencies(advanced_platformer_playtest game_assets playtest_assets)
 
 include(cmake/Quality.cmake)
 
@@ -97,11 +117,19 @@ if(BUILD_TESTING)
     target_compile_features(advanced_platformer_tests PRIVATE cxx_std_26)
     target_include_directories(
         advanced_platformer_tests
-        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app ${CMAKE_CURRENT_SOURCE_DIR}/tests
+        PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/app
+            ${CMAKE_CURRENT_SOURCE_DIR}/playtest
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests
+    )
+    target_compile_definitions(
+        advanced_platformer_tests
+        PRIVATE
+            ADVANCED_PLATFORMER_SOURCE_PLAYTEST_ASSETS="${CMAKE_CURRENT_SOURCE_DIR}/playtest/assets"
     )
     target_link_libraries(
         advanced_platformer_tests
-        PRIVATE advanced_platformer_scripting advanced_platformer_json Catch2::Catch2WithMain
+        PRIVATE advanced_platformer_game Catch2::Catch2WithMain
     )
     enable_project_warnings(advanced_platformer_tests)
     enable_project_coverage(advanced_platformer_tests)

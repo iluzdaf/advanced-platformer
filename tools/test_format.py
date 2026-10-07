@@ -15,8 +15,8 @@ class FormatterSelectionTests(unittest.TestCase):
             [
                 "app/application.cpp",
                 "scripting/lua_npc_scripts.hpp",
-                "src/npc/npc_system.cpp",
-                "include/advanced_platformer/render/sprite.hpp",
+                "core/src/npc/npc_system.cpp",
+                "core/include/advanced_platformer/render/sprite.hpp",
                 "tests/support/cell_connections.hpp",
             ],
         )
@@ -28,7 +28,7 @@ class FormatterSelectionTests(unittest.TestCase):
         self.assertFormatter(
             "prettier",
             [
-                "assets/catalogs/pickups.json",
+                "game/assets/catalogs/pickups.json",
                 "tests/fixtures/rooms/locked_door/pieces/exit.json",
                 ".vscode/settings.json",
                 "CMakePresets.json",
@@ -51,7 +51,7 @@ class FormatterSelectionTests(unittest.TestCase):
     def test_lua(self):
         self.assertFormatter(
             "stylua",
-            ["assets/scripts/rat.lua", "tests/fixtures/scripts/example_npc.lua"],
+            ["game/assets/scripts/rat.lua", "tests/fixtures/scripts/example_npc.lua"],
         )
 
     def test_files_the_format_targets_skip(self):
@@ -59,13 +59,13 @@ class FormatterSelectionTests(unittest.TestCase):
             None,
             [
                 "external/glm/glm/glm.hpp",
-                "include/advanced_platformer/vendored.cpp",
-                "src/CMakeLists.txt",
+                "docs/vendored.cpp",
+                "core/src/CMakeLists.txt",
                 "tests/CMakeLists.txt",
                 "build/mac-debug/compile_commands.json",
                 "external/catch2/README.md",
                 "tests/README.md",
-                "assets/textures/sprites.png",
+                "game/assets/textures/sprites.png",
                 "tools/hooks/notes.md",
                 "LICENSE",
             ],

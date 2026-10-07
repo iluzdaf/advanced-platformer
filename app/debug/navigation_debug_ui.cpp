@@ -11,7 +11,7 @@
 
 #include "debug_draw.hpp"
 #include "graphics/display_viewport.hpp"
-#include "navigation_debug.hpp"
+#include "diagnostics/navigation_debug.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/navigation/traversal.hpp"
 #include "ui/hud_draw.hpp"

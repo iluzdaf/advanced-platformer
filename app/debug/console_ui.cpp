@@ -1,6 +1,6 @@
 #include "console_ui.hpp"
 
-#include "console_log.hpp"
+#include "diagnostics/console_log.hpp"
 #include "debug_draw.hpp"
 #include "debug_ui_layout.hpp"
 #include "ui/hud_draw.hpp"

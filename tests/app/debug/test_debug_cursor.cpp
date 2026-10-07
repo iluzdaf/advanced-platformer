@@ -6,8 +6,8 @@
 #include <glm/vec2.hpp>
 
 #include "debug/debug_cursor.hpp"
-#include "game/game.hpp"
-#include "game/play_control.hpp"
+#include "game.hpp"
+#include "session/play_control.hpp"
 #include "advanced_platformer/input/input_state.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "support/fixture_game.hpp"
