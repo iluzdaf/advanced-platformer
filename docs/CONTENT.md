@@ -302,6 +302,8 @@ or `nil`. [`common.lua`](../assets/scripts/common.lua) has `idle`, `patrol`, `ch
 | `stateElapsed`        | Seconds in this state.                                                                                                                                                            |
 | `routeStatus`         | `found`, `unreachable` (the route ends as close to the goal as the NPC can get) or `deferred` (the engine is still working it out); `nil` before any route or after `clearRoute`. |
 | `routeComplete`       | Whether the last route asked for has been followed to its end.                                                                                                                    |
+| `exitFeet`            | The level exit's feet, when the level has one.                                                                                                                                    |
+| `pickups`             | The feet of every pickup in the level.                                                                                                                                            |
 
 | Command                                          | Meaning                                                                          |
 | ------------------------------------------------ | -------------------------------------------------------------------------------- |

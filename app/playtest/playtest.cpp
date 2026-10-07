@@ -4,6 +4,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <format>
 #include <limits>
 #include <map>
@@ -18,18 +19,18 @@
 #include <glm/geometric.hpp>
 #include <glm/vec2.hpp>
 
+#include "content/actor_catalog.hpp"
+#include "content/actor_definition.hpp"
+#include "content/game_content.hpp"
+#include "content/machine_catalog.hpp"
+#include "content/npc_script_catalog.hpp"
 #include "game/game.hpp"
 #include "game/level_composition.hpp"
 #include "lua_script_diagnostic.hpp"
 #include "advanced_platformer/actor/actor.hpp"
-#include "advanced_platformer/input/input_state.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
-#include "advanced_platformer/navigation/actor_navigation.hpp"
-#include "advanced_platformer/navigation/navigation_fill.hpp"
-#include "advanced_platformer/navigation/navigation_path.hpp"
-#include "advanced_platformer/navigation/path_follower.hpp"
-#include "advanced_platformer/navigation/platformer_connection_cache.hpp"
+#include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/world/level_exit.hpp"
 #include "advanced_platformer/world/pickup.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
@@ -44,8 +45,6 @@ namespace advanced_platformer
         std::uint32_t levelSeed = 0;
         std::string outcome;
         float seconds = 0.0F;
-        int replans = 0;
-        int unreachablePlans = 0;
         std::map<std::string, int> damageByNearestNpc;
         int healthLeft = 0;
         std::array<int, 2> endCell{};
@@ -56,14 +55,37 @@ namespace advanced_platformer
 
     namespace
     {
-        struct PlaytestBot
+        constexpr float BotNoticeDistance = 160.0F;
+        constexpr float BotTargetMemorySeconds = 1.0F;
+        constexpr const char* BotName = "bot";
+    }
+
+    GameContent playtestContent(GameContent content, const std::filesystem::path& botDirectory)
+    {
+        const MachineCatalog botMachines = loadMachineCatalog(botDirectory / "machines.json");
+        for (const auto& [name, machine] : botMachines)
         {
-            PlatformerConnectionCache cache;
-            PathFollower follower;
-            std::size_t breaksWhenPlanned = 0;
+            content.gameCatalogs.machines[name] = machine;
+        }
+        loadNpcActivityScripts(content.npcScripts, botMachines, botDirectory);
+
+        ActorCatalog& actors = content.gameCatalogs.actors;
+        ActorDefinition bot = actorDefinition(actors, actors.player);
+        bot.senses = NpcSenses{
+            .noticeDistance = BotNoticeDistance, .targetMemoryDuration = BotTargetMemorySeconds};
+        bot.machine = BotName;
+        validateActorDefinition(
+            bot, content.gameCatalogs.animations, content.gameCatalogs.machines);
+        actors.definitions[BotName] = std::move(bot);
+        actors.player = BotName;
+        return content;
+    }
+
+    namespace
+    {
+        struct PlaytestWatch
+        {
             int lastHealth = 0;
-            glm::vec2 lastFeet{0.0F, 0.0F};
-            float stillSeconds = 0.0F;
             float bestExitDistance = std::numeric_limits<float>::max();
             float secondsSinceProgress = 0.0F;
         };
@@ -123,73 +145,6 @@ namespace advanced_platformer
 
     namespace
     {
-        constexpr float StillSecondsBeforeReplan = 1.0F;
-
-        bool needsPlan(const PlaytestBot& bot, const TileMap& map)
-        {
-            return !bot.follower.path.has_value() || pathComplete(bot.follower) ||
-                   map.brokenCells().size() != bot.breaksWhenPlanned ||
-                   bot.stillSeconds >= StillSecondsBeforeReplan;
-        }
-
-        void planToExit(
-            PlaytestBot& bot,
-            const GameLevel& level,
-            const Actor& player,
-            float stepSeconds,
-            LevelPlaytest& result)
-        {
-            std::optional<NavigationPathResult> found =
-                findActorPath(level.map, player, exitFeet(level), stepSeconds, bot.cache);
-            while (found.has_value() && found->status == NavigationPathStatus::Deferred)
-            {
-                advanceNavigationFill(level.map, bot.cache, 1);
-                found = findActorPath(level.map, player, exitFeet(level), stepSeconds, bot.cache);
-            }
-            if (!found.has_value() || !found->path.has_value())
-            {
-                return;
-            }
-            ++result.replans;
-            if (found->status == NavigationPathStatus::Unreachable)
-            {
-                ++result.unreachablePlans;
-            }
-            bot.breaksWhenPlanned = level.map.brokenCells().size();
-            bot.stillSeconds = 0.0F;
-            setPath(bot.follower, std::move(*found->path));
-        }
-    }
-
-    namespace
-    {
-        InputIntentions botIntentions(
-            PlaytestBot& bot,
-            const GameLevel& level,
-            const Actor& player,
-            float stepSeconds,
-            LevelPlaytest& result)
-        {
-            if (needsPlan(bot, level.map))
-            {
-                clearPath(bot.follower);
-                planToExit(bot, level, player, stepSeconds, result);
-            }
-            if (!bot.follower.path.has_value() || !player.platformerMovement.has_value())
-            {
-                return {};
-            }
-            return followPlatformerPath(
-                player.body,
-                *player.platformerMovement,
-                bot.follower,
-                stepSeconds,
-                player.surfaceClimb.has_value() ? &*player.surfaceClimb : nullptr);
-        }
-    }
-
-    namespace
-    {
         std::string scriptErrorText(const LuaScriptDiagnostic& diagnostic)
         {
             return std::format(
@@ -232,38 +187,31 @@ namespace advanced_platformer
 
     namespace
     {
-        constexpr float StillDistance = 0.5F;
-
         void observeStep(
-            PlaytestBot& bot,
+            PlaytestWatch& watch,
             const GameLevel& level,
             float stepSeconds,
             LevelPlaytest& result)
         {
             const Actor& player = playerOf(level);
             const int health = healthOf(player);
-            if (health < bot.lastHealth)
+            if (health < watch.lastHealth)
             {
-                result.damageByNearestNpc[nearestNpcName(level, player)] += bot.lastHealth - health;
-                clearPath(bot.follower);
+                result.damageByNearestNpc[nearestNpcName(level, player)] +=
+                    watch.lastHealth - health;
             }
-            bot.lastHealth = health;
+            watch.lastHealth = health;
 
             const glm::vec2 feet = feetOf(player.body.bounds);
-            bot.stillSeconds = glm::distance(feet, bot.lastFeet) < StillDistance
-                                   ? bot.stillSeconds + stepSeconds
-                                   : 0.0F;
-            bot.lastFeet = feet;
-
             const float exitDistance = glm::distance(feet, exitFeet(level));
-            if (exitDistance < bot.bestExitDistance - static_cast<float>(level.map.tileSize()))
+            if (exitDistance < watch.bestExitDistance - static_cast<float>(level.map.tileSize()))
             {
-                bot.bestExitDistance = exitDistance;
-                bot.secondsSinceProgress = 0.0F;
+                watch.bestExitDistance = exitDistance;
+                watch.secondsSinceProgress = 0.0F;
             }
             else
             {
-                bot.secondsSinceProgress += stepSeconds;
+                watch.secondsSinceProgress += stepSeconds;
             }
 
             result.healthLeft = health;
@@ -287,21 +235,17 @@ namespace advanced_platformer
                 .levelSeed = game.levelSeed(),
                 .pickupsPlaced = static_cast<int>(level.pickupPlacementIds.size())};
 
-            PlaytestBot bot;
-            const Actor& start = playerOf(level);
-            bot.lastHealth = healthOf(start);
-            bot.lastFeet = feetOf(start.body.bounds);
-            observeStep(bot, level, 0.0F, result);
+            PlaytestWatch watch;
+            watch.lastHealth = healthOf(playerOf(level));
+            observeStep(watch, level, 0.0F, result);
 
             while (result.seconds < secondsPerLevel)
             {
                 const Actor& player = playerOf(level);
-                const InputIntentions intentions =
-                    botIntentions(bot, level, player, stepSeconds, result);
                 const std::string nearest = nearestNpcName(level, player);
                 const int healthBefore = healthOf(player);
 
-                game.update(intentions, stepSeconds);
+                game.update({}, stepSeconds);
                 result.seconds += stepSeconds;
                 recordScriptErrors(game, result);
 
@@ -317,8 +261,8 @@ namespace advanced_platformer
                     result.outcome = PlaytestOutcome::Exit;
                     return result;
                 }
-                observeStep(bot, level, stepSeconds, result);
-                if (bot.secondsSinceProgress >= StuckSeconds)
+                observeStep(watch, level, stepSeconds, result);
+                if (watch.secondsSinceProgress >= StuckSeconds)
                 {
                     result.outcome = PlaytestOutcome::Stuck;
                     return result;
@@ -379,8 +323,6 @@ namespace advanced_platformer
             .levelSeed = level.levelSeed,
             .outcome = std::string(outcomeName(level.outcome)),
             .seconds = level.seconds,
-            .replans = level.replans,
-            .unreachablePlans = level.unreachablePlans,
             .damageByNearestNpc = level.damageByNearestNpc,
             .healthLeft = level.healthLeft,
             .endCell = {level.endCell.x, level.endCell.y},

@@ -1,5 +1,6 @@
 #include "advanced_platformer/npc/npc_activity_runner.hpp"
 
+#include <optional>
 #include <vector>
 
 #include <glm/vec2.hpp>
@@ -17,7 +18,10 @@
 #include "advanced_platformer/npc/npc_facts.hpp"
 #include "advanced_platformer/npc/npc_navigation.hpp"
 #include "advanced_platformer/npc/npc_update.hpp"
+#include "advanced_platformer/world/level_exit.hpp"
+#include "advanced_platformer/world/pickup.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
+#include "advanced_platformer/world/world.hpp"
 
 namespace advanced_platformer
 {
@@ -68,6 +72,14 @@ namespace advanced_platformer
             if (target != nullptr)
             {
                 snapshot.targetCenter = centerOf(target->body.bounds);
+            }
+            if (const std::optional<LevelExit>& exit = update.world.exit(); exit.has_value())
+            {
+                snapshot.exitFeet = feetOf(exit->bounds);
+            }
+            for (const Pickup& pickup : update.world.pickups())
+            {
+                snapshot.pickups.push_back(feetOf(pickup.body.bounds));
             }
             return snapshot;
         }

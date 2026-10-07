@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <filesystem>
 #include <map>
 #include <string>
 #include <vector>
@@ -10,6 +11,7 @@
 namespace advanced_platformer
 {
     class Game;
+    struct GameContent;
 
     enum class PlaytestOutcome : std::uint8_t
     {
@@ -26,8 +28,6 @@ namespace advanced_platformer
         std::uint32_t levelSeed = 0;
         PlaytestOutcome outcome = PlaytestOutcome::Timeout;
         float seconds = 0.0F;
-        int replans = 0;
-        int unreachablePlans = 0;
         std::map<std::string, int> damageByNearestNpc;
         int healthLeft = 0;
         Cell endCell;
@@ -36,6 +36,7 @@ namespace advanced_platformer
         std::vector<std::string> scriptErrors;
     };
 
+    GameContent playtestContent(GameContent content, const std::filesystem::path& botDirectory);
     std::vector<LevelPlaytest> playtestRun(
         Game& game,
         int levels,

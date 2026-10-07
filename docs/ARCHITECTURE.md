@@ -35,7 +35,7 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 | `app/content`         | Content definitions, Glaze loaders, catalogs, validators, and the asset watcher                                      |
 | `app/graphics`        | Window and OpenGL context, ImGui session, viewport conversion, and sprite submission                                 |
 | `app/ui`              | HUD, inventory, exit hint, and pause notice                                                                          |
-| `app/playtest`        | The playtest runner: a bot that follows the player's route to each exit and reports what happened                    |
+| `app/playtest`        | The playtest runner, and the bot's machine and Lua activities                                                        |
 | `app/debug`           | Debug snapshots and their ImGui presentation, the console, and the frame profile UI                                  |
 | `scripting`           | Lua VM, sandbox, `vec2` binding, and the activity adapter                                                            |
 | `assets`              | Catalogs, room pieces, Lua scripts, and the atlas                                                                    |
@@ -556,17 +556,17 @@ to the traversal profile. The search itself does not change.
 
 - `advanced_platformer_playtest <run seed> <levels> [seconds per level]` plays a run
   headless through `Game`, with the shipped content, and prints one JSON line per level.
-- The bot asks `findActorPath` for the player's route to the exit from its own
-  connection cache and follows it with `followPlatformerPath`, the same follower NPCs
-  use. It plans again when the route ends, a tile breaks, it takes damage, or it stands
-  still for a second. While airborne it has no route and presses nothing. It never
-  attacks or collects on purpose.
+- The bot is the player actor with senses and the `bot` machine from
+  `app/playtest/machines.json`, whose activities are in `app/playtest/bot.lua`. It senses,
+  thinks and moves exactly as an NPC does: `travel` routes to the exit, and `fight` keeps
+  routing while it aims and shoots at the target it sees. `playtestContent` builds that
+  content on top of the shipped catalogs, so nothing of the bot ships with the game.
 - A level ends at the exit, when the player is defeated (which ends the run, as in the
   game), when the player gets no closer to the exit for 15 seconds (stuck), or at the
   time limit. After stuck or a timeout the run moves on to the next level.
-- Each line holds the run and level seeds, the outcome, seconds, plans made and how many
-  only got close, damage counted against the nearest live NPC's definition, health left,
-  the cell the player ended in, pickups placed and collected, and Lua script errors.
+- Each line holds the run and level seeds, the outcome, seconds, damage counted against
+  the nearest live NPC's definition, health left, the cell the player ended in, pickups
+  placed and collected, and Lua script errors.
 
 ## Error handling and validation
 

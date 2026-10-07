@@ -164,7 +164,13 @@ namespace advanced_platformer
     Actor composePlayer(const GameCatalogs& catalogs, int textureId)
     {
         const auto& actors = catalogs.actors;
-        return composeActor(actorDefinition(actors, actors.player), catalogs.animations, textureId);
+        return composeActor(
+            actorDefinition(actors, actors.player),
+            catalogs.animations,
+            textureId,
+            {},
+            std::nullopt,
+            catalogs.machines);
     }
 
     GameLevel composeLevel(

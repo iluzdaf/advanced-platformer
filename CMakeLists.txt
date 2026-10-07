@@ -71,6 +71,7 @@ target_compile_definitions(
     advanced_platformer_playtest
     PRIVATE
         $<$<NOT:$<CONFIG:Release>>:ADVANCED_PLATFORMER_SOURCE_ASSETS="${CMAKE_CURRENT_SOURCE_DIR}/assets">
+        ADVANCED_PLATFORMER_PLAYTEST_DIR="${CMAKE_CURRENT_SOURCE_DIR}/app/playtest"
 )
 target_link_libraries(
     advanced_platformer_playtest
@@ -98,6 +99,10 @@ if(BUILD_TESTING)
     target_include_directories(
         advanced_platformer_tests
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app ${CMAKE_CURRENT_SOURCE_DIR}/tests
+    )
+    target_compile_definitions(
+        advanced_platformer_tests
+        PRIVATE ADVANCED_PLATFORMER_PLAYTEST_DIR="${CMAKE_CURRENT_SOURCE_DIR}/app/playtest"
     )
     target_link_libraries(
         advanced_platformer_tests

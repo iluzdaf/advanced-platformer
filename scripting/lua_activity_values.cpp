@@ -182,6 +182,13 @@ namespace advanced_platformer
                                     ? sol::make_object(lua, routeStatusName(*snapshot.routeStatus))
                                     : sol::make_object(lua, sol::lua_nil);
         result["routeComplete"] = snapshot.routeComplete;
+        result["exitFeet"] = optionalVector(snapshot.exitFeet);
+        sol::table pickups = lua.create_table();
+        for (const glm::vec2 feet : snapshot.pickups)
+        {
+            pickups.add(luaVector(lua, feet));
+        }
+        result["pickups"] = pickups;
 
         sol::table facts = lua.create_table();
         facts["targetKnown"] = snapshot.facts.targetKnown;

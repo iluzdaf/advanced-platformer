@@ -10,7 +10,9 @@
 
 TEST_CASE("A playtest bot follows the route to the exit")
 {
-    advanced_platformer::Game game = tests::fixtureGame();
+    advanced_platformer::Game game = tests::fixtureGame(
+        advanced_platformer::playtestContent(
+            tests::fixtureContent(), ADVANCED_PLATFORMER_PLAYTEST_DIR));
 
     const std::vector<advanced_platformer::LevelPlaytest> results =
         advanced_platformer::playtestRun(game, 1, 60.0F, tests::FixedStepSeconds);
@@ -18,13 +20,14 @@ TEST_CASE("A playtest bot follows the route to the exit")
     REQUIRE(results.size() == 1);
     CHECK(results.front().outcome == advanced_platformer::PlaytestOutcome::Exit);
     CHECK(results.front().level == 1);
-    CHECK(results.front().replans >= 1);
     CHECK(game.levelNumber() == 2);
 }
 
 TEST_CASE("A playtest moves on to the next level after a timeout")
 {
-    advanced_platformer::Game game = tests::fixtureGame();
+    advanced_platformer::Game game = tests::fixtureGame(
+        advanced_platformer::playtestContent(
+            tests::fixtureContent(), ADVANCED_PLATFORMER_PLAYTEST_DIR));
 
     const std::vector<advanced_platformer::LevelPlaytest> results =
         advanced_platformer::playtestRun(game, 2, tests::FixedStepSeconds, tests::FixedStepSeconds);

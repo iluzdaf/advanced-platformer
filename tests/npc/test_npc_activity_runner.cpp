@@ -27,6 +27,8 @@
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "advanced_platformer/npc/npc_system.hpp"
 #include "advanced_platformer/npc/npc_senses.hpp"
+#include "advanced_platformer/world/level_exit.hpp"
+#include "advanced_platformer/world/pickup.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
 #include "advanced_platformer/world/world.hpp"
 #include "advanced_platformer/world/world_requests.hpp"
@@ -205,7 +207,7 @@ TEST_CASE("Removing an actor forgets its activity state", "[npc][lua][lifecycle]
 TEST_CASE("The engine fills an activity's snapshot from the world", "[npc][lua]")
 {
     advanced_platformer::TileMap map = tests::TileMapBuilder({"........", "........", "##......"});
-    advanced_platformer::World world;
+    advanced_platformer::World world({{1, "Coin", {}, 5}});
     const advanced_platformer::ActorId player = tests::addPlayer(
         world, makePlayer({56.0F, 32.0F}).onTeam(advanced_platformer::Team::Player));
     const advanced_platformer::ActorId npc = world.addActor(
@@ -217,6 +219,8 @@ TEST_CASE("The engine fills an activity's snapshot from the world", "[npc][lua]"
             .running(
                 tests::NpcMachineBuilder::named("test").state(
                     "acting", advanced_platformer::NpcActivity{"fixture", "act"})));
+    world.setExit({.bounds = {{96.0F, 16.0F}, {16.0F, 16.0F}}});
+    world.addPickup({{{{40.0F, 24.0F}, {8.0F, 8.0F}}}, {1, 1}});
     tests::RecordingNpcScripts scripts;
 
     advanced_platformer::updateNpcSenses(map, world, tests::FixedStepSeconds);
@@ -225,6 +229,8 @@ TEST_CASE("The engine fills an activity's snapshot from the world", "[npc][lua]"
     REQUIRE(scripts.calls.size() == 2);
     const advanced_platformer::NpcActivitySnapshot& snapshot = scripts.calls.back().snapshot;
     REQUIRE(snapshot.center == advanced_platformer::centerOf(actor(world, npc).body.bounds));
+    REQUIRE(snapshot.exitFeet == glm::vec2{104.0F, 32.0F});
+    REQUIRE(snapshot.pickups == std::vector<glm::vec2>{{44.0F, 32.0F}});
     REQUIRE(
         snapshot.targetCenter.value_or(glm::vec2{}) ==
         advanced_platformer::centerOf(actor(world, player).body.bounds));

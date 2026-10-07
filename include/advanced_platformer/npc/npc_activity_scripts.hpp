@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <vector>
 
 #include <glm/vec2.hpp>
 
@@ -31,6 +32,8 @@ namespace advanced_platformer
         NpcFacts facts;
         std::optional<NavigationPathStatus> routeStatus;
         bool routeComplete = false;
+        std::optional<glm::vec2> exitFeet;
+        std::vector<glm::vec2> pickups;
     };
 
     struct NpcActivityCommand

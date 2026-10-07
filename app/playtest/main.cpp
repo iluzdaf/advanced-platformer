@@ -55,8 +55,8 @@ namespace
         }
 
         constexpr auto StepSeconds = static_cast<float>(advanced_platformer::FixedDeltaSeconds);
-        advanced_platformer::GameContent content =
-            advanced_platformer::loadGameContent(AssetDirectory);
+        advanced_platformer::GameContent content = advanced_platformer::playtestContent(
+            advanced_platformer::loadGameContent(AssetDirectory), ADVANCED_PLATFORMER_PLAYTEST_DIR);
         advanced_platformer::Game game{
             0,
             std::move(content.gameCatalogs),
