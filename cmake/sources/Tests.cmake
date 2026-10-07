@@ -12,6 +12,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/app/content/actor_definition.cpp
         ${PROJECT_SOURCE_DIR}/app/content/animation_catalog.cpp
         ${PROJECT_SOURCE_DIR}/app/content/asset_watcher.cpp
+        ${PROJECT_SOURCE_DIR}/app/content/atlas_regions.cpp
         ${PROJECT_SOURCE_DIR}/app/content/camera_settings.cpp
         ${PROJECT_SOURCE_DIR}/app/content/content_diagnostics.cpp
         ${PROJECT_SOURCE_DIR}/app/content/content_glaze.cpp

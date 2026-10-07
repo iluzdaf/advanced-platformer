@@ -14,7 +14,6 @@
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "lua_npc_scripts.hpp"
 #include "lua_presentation_script.hpp"
-#include "support/atlas_size.hpp"
 
 namespace
 {
@@ -32,8 +31,7 @@ namespace
 TEST_CASE("Every run level can be composed until the rooms stop growing", "[app][content]")
 {
     const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/catalogs/pieces.json");
-    const auto catalogs =
-        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::UncheckedAtlasSize);
+    const auto catalogs = advanced_platformer::loadGameCatalogs("assets/catalogs");
     for (int number = 1; number <= levelsUntilCap(pieces.run); ++number)
     {
         const auto content = advanced_platformer::composeLevel(
@@ -52,7 +50,7 @@ TEST_CASE("Every run level can be composed until the rooms stop growing", "[app]
 TEST_CASE("Every shipped Lua activity resolves", "[app][content][lua]")
 {
     const advanced_platformer::GameCatalogs catalogs =
-        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::UncheckedAtlasSize);
+        advanced_platformer::loadGameCatalogs("assets/catalogs");
     advanced_platformer::LuaNpcScripts scripts;
 
     REQUIRE_NOTHROW(
@@ -62,7 +60,7 @@ TEST_CASE("Every shipped Lua activity resolves", "[app][content][lua]")
 TEST_CASE("Every shipped Lua activity runs without errors", "[app][content][lua]")
 {
     const advanced_platformer::GameCatalogs catalogs =
-        advanced_platformer::loadGameCatalogs("assets/catalogs", tests::UncheckedAtlasSize);
+        advanced_platformer::loadGameCatalogs("assets/catalogs");
     advanced_platformer::LuaNpcScripts scripts;
     advanced_platformer::loadNpcActivityScripts(scripts, catalogs.machines, "assets/scripts");
 

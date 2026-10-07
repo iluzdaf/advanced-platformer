@@ -10,7 +10,6 @@
 #include "content/room_pieces.hpp"
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/world/level_validation.hpp"
-#include "support/atlas_size.hpp"
 #include "support/fixed_step.hpp"
 #include "support/fixture_game.hpp"
 
@@ -47,8 +46,7 @@ TEST_CASE("A generated level skips seeds whose exit the player cannot reach", "[
 {
     const auto pieces = advanced_platformer::loadRoomPieceCatalog(
         "tests/fixtures/rooms/rooms_some_shut/pieces.json");
-    const auto catalogs =
-        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
+    const auto catalogs = advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs");
     bool skipped = false;
     for (std::uint32_t seed = 0; seed < 16; ++seed)
     {
@@ -74,8 +72,7 @@ TEST_CASE("A generated level whose every seed is shut off fails to start", "[app
 {
     const auto pieces = advanced_platformer::loadRoomPieceCatalog(
         "tests/fixtures/rooms/rooms_all_shut/pieces.json");
-    const auto catalogs =
-        advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs", tests::AtlasSize);
+    const auto catalogs = advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs");
 
     REQUIRE_THROWS_WITH(
         advanced_platformer::composePlayableLevel(
