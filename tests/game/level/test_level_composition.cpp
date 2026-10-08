@@ -134,31 +134,6 @@ TEST_CASE("A room piece rejects placements inside its walls", "[app][generation]
     }
 }
 
-TEST_CASE("A room piece rejects a pickup the player cannot reach", "[app][generation]")
-{
-    auto catalogs = patrolPlacementCatalogs();
-    startPiece(catalogs).pickups.push_back({"medicine_box_1", "medicine_box", {6, 4}});
-
-    REQUIRE_THROWS_WITH(
-        advanced_platformer::validateRoomPieces(catalogs, tests::FixedStepSeconds),
-        "Room piece 'start': pickup 'medicine_box_1': the player cannot reach it from a door or "
-        "the player spawn");
-}
-
-TEST_CASE(
-    "A room piece accepts a pickup that falls within reach once the tile under it breaks",
-    "[app][generation]")
-{
-    auto catalogs = patrolPlacementCatalogs();
-    catalogs.pieces.tileLegend['X'] = "glass";
-    advanced_platformer::RoomPiece& start = startPiece(catalogs);
-    start.rows[1] = "##.##.##";
-    start.rows[2] = "##X..#.#";
-    start.pickups.push_back({"medicine_box_1", "medicine_box", {2, 1}});
-
-    REQUIRE_NOTHROW(advanced_platformer::validateRoomPieces(catalogs, tests::FixedStepSeconds));
-}
-
 TEST_CASE("A room piece rejects a flyer that spawns resting on a tile", "[app][generation]")
 {
     auto catalogs = patrolPlacementCatalogs();

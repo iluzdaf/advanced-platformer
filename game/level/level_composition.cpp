@@ -26,35 +26,16 @@
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
-#include "advanced_platformer/movement/platformer_movement.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/world/level_exit.hpp"
 #include "advanced_platformer/world/pickup.hpp"
 #include "advanced_platformer/world/level_validation.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
-#include "advanced_platformer/world/world.hpp"
 
 namespace advanced_platformer
 {
     namespace
     {
-        constexpr float SettleSeconds = 10.0F;
-
-        template <typename Step>
-        void stepUntilAtRest(const Aabb& bounds, float stepSeconds, Step step)
-        {
-            const int steps = static_cast<int>(SettleSeconds / stepSeconds);
-            for (int count = 0; count < steps; ++count)
-            {
-                const glm::vec2 before = feetOf(bounds);
-                step();
-                if (feetOf(bounds) == before)
-                {
-                    return;
-                }
-            }
-        }
-
         Pickup composePlacedPickup(
             const TileMap& map,
             const PickupPlacement& placement,
@@ -304,98 +285,6 @@ namespace advanced_platformer
             }
         }
 
-        glm::vec2 playerLandingFeet(const TileMap& map, Actor player, Cell cell, float stepSeconds)
-        {
-            moveFeetTo(player.body.bounds, feetInCell(map.tileSize(), cell));
-            if (player.platformerMovement.has_value())
-            {
-                stepUntilAtRest(
-                    player.body.bounds,
-                    stepSeconds,
-                    [&]
-                    {
-                        updatePlatformerMovement(
-                            map, player.body, *player.platformerMovement, {}, stepSeconds);
-                    });
-            }
-            return feetOf(player.body.bounds);
-        }
-
-        std::vector<glm::vec2> playerEntryFeet(
-            const RoomPiece& piece,
-            const TileMap& map,
-            const Actor& player,
-            float stepSeconds)
-        {
-            std::vector<glm::vec2> entries;
-            if (piece.playerSpawn.has_value())
-            {
-                entries.push_back(feetInCell(map.tileSize(), *piece.playerSpawn));
-            }
-            const int width = static_cast<int>(piece.rows.front().size());
-            const int height = static_cast<int>(piece.rows.size());
-            std::vector<Cell> openings;
-            for (int y = 0; y < height - 1; ++y)
-            {
-                openings.push_back({0, y});
-                openings.push_back({width - 1, y});
-            }
-            for (int x = 1; x < width - 1; ++x)
-            {
-                openings.push_back({x, 0});
-                openings.push_back({x, height - 1});
-            }
-            for (const Cell opening : openings)
-            {
-                if (map.blocksMovement(opening))
-                {
-                    continue;
-                }
-                const glm::vec2 feet = playerLandingFeet(map, player, opening, stepSeconds);
-                if (std::ranges::find(entries, feet) == entries.end())
-                {
-                    entries.push_back(feet);
-                }
-            }
-            return entries;
-        }
-
-        bool playerReaches(
-            const TileMap& map,
-            Actor player,
-            const std::vector<glm::vec2>& entries,
-            glm::vec2 goal,
-            float stepSeconds)
-        {
-            return std::ranges::any_of(
-                entries,
-                [&](glm::vec2 entry)
-                {
-                    moveFeetTo(player.body.bounds, entry);
-                    return actorCanReach(map, player, goal, stepSeconds);
-                });
-        }
-
-        std::optional<glm::vec2> pickupLandingFeetOnceTileBelowBreaks(
-            const TileMap& map,
-            const Pickup& pickup,
-            const ItemCatalog& items,
-            float stepSeconds)
-        {
-            const Cell cell = cellAtFeet(map.tileSize(), feetOf(pickup.body.bounds));
-            TileMap broken = map;
-            if (!broken.breakTile({cell.x, cell.y + 1}))
-            {
-                return std::nullopt;
-            }
-            World world(composeItems(items, 0));
-            world.addPickup(pickup);
-            const Aabb& bounds = world.pickups().front().body.bounds;
-            stepUntilAtRest(
-                bounds, stepSeconds, [&] { updatePickupMovement(broken, world, stepSeconds); });
-            return feetOf(bounds);
-        }
-
         void validatePieceOrientation(
             const RoomPiece& piece,
             const RoomPieces& pieces,
@@ -404,8 +293,6 @@ namespace advanced_platformer
             std::string_view name)
         {
             const TileMap map = composeTileMap(piece.rows, pieces.tileLegend, catalogs.tiles);
-            const Actor player = composePlayer(catalogs, 0);
-            const std::vector<glm::vec2> entries = playerEntryFeet(piece, map, player, stepSeconds);
             for (const ActorPlacement& placement : piece.actors)
             {
                 try
@@ -440,22 +327,9 @@ namespace advanced_platformer
             {
                 try
                 {
-                    const Pickup pickup =
-                        composePlacedPickup(map, placement, catalogs.pickups, catalogs.items, 0);
-                    validatePickupPlacement(map, pickup);
-                    if (playerReaches(
-                            map, player, entries, feetOf(pickup.body.bounds), stepSeconds))
-                    {
-                        continue;
-                    }
-                    const std::optional<glm::vec2> landing = pickupLandingFeetOnceTileBelowBreaks(
-                        map, pickup, catalogs.items, stepSeconds);
-                    if (!landing.has_value() ||
-                        !playerReaches(map, player, entries, *landing, stepSeconds))
-                    {
-                        throw std::invalid_argument(
-                            "the player cannot reach it from a door or the player spawn");
-                    }
+                    validatePickupPlacement(
+                        map,
+                        composePlacedPickup(map, placement, catalogs.pickups, catalogs.items, 0));
                 }
                 catch (const std::invalid_argument& error)
                 {
