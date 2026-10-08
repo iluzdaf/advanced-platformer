@@ -40,7 +40,7 @@ TEST_CASE("The overlay shows an NPC's machine state", "[app][debug]")
         advanced_platformer::Camera{}, {80.0F, 40.0F}};
 
     const advanced_platformer::DebugOverlay debug = advanced_platformer::makeDebugOverlay(
-        world, map, cameraController, 128.0F, tests::FixedStepSeconds);
+        world, map, cameraController, tests::FixedStepSeconds);
 
     REQUIRE(debug.actors.size() == 1);
     REQUIRE(debug.actors.front().machineState == "rest");
@@ -48,7 +48,6 @@ TEST_CASE("The overlay shows an NPC's machine state", "[app][debug]")
 
 namespace
 {
-    // An NPC on the ground running a two-state machine, for the machine window's tests.
     advanced_platformer::Actor machineNpc(glm::vec2 topLeft)
     {
         return tests::ActorBuilder::sized({12.0F, 12.0F})
@@ -63,7 +62,6 @@ namespace
                     .when("targetKnown", true));
     }
 
-    // Which NPC the machine window follows, or nothing.
     std::optional<advanced_platformer::ActorId> followedBy(
         const advanced_platformer::DebugOverlay& debug)
     {
@@ -85,13 +83,7 @@ namespace
         advanced_platformer::NavigationDebugView view;
         view.cursorWorld = cursorWorld;
         return advanced_platformer::makeDebugOverlay(
-            world,
-            map,
-            cameraController,
-            128.0F,
-            tests::FixedStepSeconds,
-            view,
-            lockedMachineActor);
+            world, map, cameraController, tests::FixedStepSeconds, view, lockedMachineActor);
     }
 }
 
@@ -127,7 +119,6 @@ TEST_CASE("The machine window follows the NPC under the cursor instead", "[app][
     const advanced_platformer::DebugOverlay underCursor =
         overlayOf(world, glm::vec2{206.0F, 26.0F});
     REQUIRE(followedBy(underCursor) == further);
-    // The cursor over nothing changes nothing.
     REQUIRE(followedBy(overlayOf(world, glm::vec2{10.0F, 10.0F})) != further);
 }
 

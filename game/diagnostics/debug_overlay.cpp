@@ -48,9 +48,7 @@ namespace advanced_platformer
             return ActorDebugKind::Actor;
         }
 
-        ActorSpriteDebugInfo spriteDebugInfo(
-            const Actor& actor,
-            const Sprite& sprite)
+        ActorSpriteDebugInfo spriteDebugInfo(const Actor& actor, const Sprite& sprite)
         {
             if (!isFiniteNonNegative(sprite.region.position) ||
                 !isFinitePositive(sprite.region.size))
@@ -225,7 +223,6 @@ namespace advanced_platformer
         const World& world,
         const TileMap& map,
         const CameraController& cameraController,
-        float atlasWidth,
         float simulationStepSeconds,
         const NavigationDebugView& navigation,
         std::optional<ActorId> lockedMachineActor)
@@ -234,10 +231,6 @@ namespace advanced_platformer
         {
             throw std::invalid_argument(
                 "Debug overlay simulation step must be finite and positive");
-        }
-        if (!isFinitePositive(atlasWidth))
-        {
-            throw std::invalid_argument("Debug overlay atlas width must be positive and finite");
         }
 
         DebugOverlay scene;

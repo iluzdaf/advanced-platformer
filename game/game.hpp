@@ -55,7 +55,6 @@ namespace advanced_platformer
         glm::vec2 playerAimDirection(glm::vec2 screenPosition) const;
         RenderScene buildScene() const;
         DebugOverlay debugOverlay(
-            float atlasWidth,
             std::optional<glm::vec2> internalCursor,
             std::size_t navigationProfileIndex,
             std::optional<ActorId> lockedMachineActor = std::nullopt) const;

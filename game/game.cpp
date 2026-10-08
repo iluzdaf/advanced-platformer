@@ -193,7 +193,6 @@ namespace advanced_platformer
     }
 
     DebugOverlay Game::debugOverlay(
-        float atlasWidth,
         std::optional<glm::vec2> internalCursor,
         std::size_t navigationProfileIndex,
         std::optional<ActorId> lockedMachineActor) const
@@ -222,7 +221,6 @@ namespace advanced_platformer
             level.world,
             level.map,
             cameraControllerValue(),
-            atlasWidth,
             simulationStepSeconds,
             navigation,
             lockedMachineActor);

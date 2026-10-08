@@ -300,10 +300,7 @@ namespace advanced_platformer
                     context.debugCursor.machineActor,
                     profile,
                     game.debugOverlay(
-                        static_cast<float>(atlas.width),
-                        internalCursor,
-                        context.debugBodyIndex,
-                        context.debugCursor.machineActor),
+                        internalCursor, context.debugBodyIndex, context.debugCursor.machineActor),
                     windowViewport,
                     context.debugToolVisibility,
                     console,
