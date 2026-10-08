@@ -139,7 +139,7 @@ TEST_CASE("An NPC activity receives snapshots and returns engine commands", "[np
     REQUIRE(scriptedPatrol.secondFeet == glm::vec2{72.0F, 32.0F});
     REQUIRE(scripts.updateSteps == std::vector<float>{0.1F});
     REQUIRE(actor(world, npcId).intentions.direction.x > 0.0F);
-    REQUIRE(actor(world, npcId).intentions.aimDirection == glm::vec2{56.0F, -16.0F});
+    REQUIRE(actor(world, npcId).intentions.aimDirection == glm::vec2{56.0F, -10.0F});
     REQUIRE(actor(world, npcId).intentions.primaryAttackPressed);
     REQUIRE(tests::component<advanced_platformer::NpcMachine>(world, npcId).stateElapsed == 0.1F);
 

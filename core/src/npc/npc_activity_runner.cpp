@@ -120,9 +120,9 @@ namespace advanced_platformer
 
     namespace
     {
-        void aimToward(Actor& actor, glm::vec2 targetFeet)
+        void aimToward(Actor& actor, glm::vec2 target)
         {
-            actor.intentions.aimDirection = targetFeet - feetOf(actor.body.bounds);
+            actor.intentions.aimDirection = target - centerOf(actor.body.bounds);
         }
 
         std::optional<std::size_t> slotHolding(
