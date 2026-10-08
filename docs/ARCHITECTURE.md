@@ -251,6 +251,9 @@ team, and life state, plus optional components.
   when a level happens to use the piece. It also checks that each NPC can reach both ends
   of its patrol. The session and the playtest run it right after loading content, so a
   hot reload with a bad piece fails before it reaches `Game`.
+- Pickup reach is a test on the shipped content, not a load check: it needs whole levels
+  built around each piece and a simulation of the pickup's fall, so it runs with the door
+  route tests in `tests/game/content/test_room_piece_routes.cpp`.
 
 ## NPC behaviour
 

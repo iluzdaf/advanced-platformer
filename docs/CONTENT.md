@@ -149,8 +149,10 @@ When content loads, every piece's placements are checked on the piece alone, and
 mirrored when `mirror` allows it. An actor's spawn and patrol ends, and a pickup's spawn,
 must not overlap a blocked tile. A walker's spawn and patrol ends need ground under them;
 a climber's patrol ends may be on a wall or ceiling. An actor with a `patrol` must be able
-to reach both its ends from its spawn. Errors name the piece, `mirrored` when it is the flipped copy, and the placement's
-`id`.
+to reach both its ends from its spawn. A flyer must spawn in open air, with no blocked tile
+right under it. Errors name the piece, `mirrored` when it is the flipped copy, and the placement's
+`id`. Every pickup must be within the player's reach, or rest on a breakable tile that
+drops it within reach; the content tests check this.
 
 Each room needs a piece of its role with exactly its doors, so the shipped catalog
 covers every door set a room can have; a level that has a room no piece fits fails to

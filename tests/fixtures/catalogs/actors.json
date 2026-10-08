@@ -29,6 +29,12 @@
       "senses": {},
       "machine": "test_contact_enemy",
       "primaryAttack": { "contact": { "damage": 3 } }
+    },
+    "test_flyer": {
+      "bodySize": [8, 8],
+      "movement": { "flying": {} },
+      "senses": {},
+      "machine": "test_machine"
     }
   }
 }

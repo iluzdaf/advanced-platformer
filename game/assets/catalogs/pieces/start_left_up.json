@@ -16,5 +16,12 @@
     ".##..............###",
     "####################"
   ],
-  "playerSpawn": [3, 10]
+  "playerSpawn": [3, 10],
+  "actors": [
+    {
+      "id": "boar_1",
+      "definition": "boar",
+      "spawn": [16, 10]
+    }
+  ]
 }

@@ -20,14 +20,14 @@
     {
       "id": "bat_1",
       "definition": "bat",
-      "spawn": [12, 5]
+      "spawn": [9, 4]
     }
   ],
   "pickups": [
     {
       "id": "coin_pile_1",
       "definition": "coin_pile",
-      "spawn": [8, 1]
+      "spawn": [4, 7]
     }
   ]
 }

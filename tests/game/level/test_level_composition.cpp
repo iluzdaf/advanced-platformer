@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 
+#include <optional>
 #include <stdexcept>
 
 #include "level/level_composition.hpp"
@@ -131,4 +132,15 @@ TEST_CASE("A room piece rejects placements inside its walls", "[app][generation]
             advanced_platformer::validateRoomPieces(catalogs, tests::FixedStepSeconds),
             "Room piece 'start': pickup 'medicine_box_1': spawn overlaps a blocked tile");
     }
+}
+
+TEST_CASE("A room piece rejects a flyer that spawns resting on a tile", "[app][generation]")
+{
+    auto catalogs = patrolPlacementCatalogs();
+    startPiece(catalogs).actors.push_back({"test_flyer_1", "test_flyer", {1, 4}, std::nullopt});
+
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::validateRoomPieces(catalogs, tests::FixedStepSeconds),
+        "Room piece 'start': actor 'test_flyer_1': flies, so it must spawn in open air, not on "
+        "a tile");
 }

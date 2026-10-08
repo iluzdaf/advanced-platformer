@@ -299,6 +299,12 @@ namespace advanced_platformer
                 {
                     const Actor actor = composePlacedActor(map, placement, catalogs, 0);
                     validateActorPlacement(map, actor);
+                    if (actor.flyingMovement.has_value() &&
+                        map.blocksMovement({placement.spawn.x, placement.spawn.y + 1}))
+                    {
+                        throw std::invalid_argument(
+                            "flies, so it must spawn in open air, not on a tile");
+                    }
                     if (actor.patrol.has_value())
                     {
                         requireReachable(
