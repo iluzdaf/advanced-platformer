@@ -390,10 +390,11 @@ namespace advanced_platformer
                 std::snprintf(
                     text,
                     sizeof(text),
-                    "frame:  %zu (%.0f, %.0f)",
-                    actor.sprite->atlasFrame,
-                    actor.sprite->atlasPosition.x,
-                    actor.sprite->atlasPosition.y);
+                    "atlas:  %.0f, %.0f  %.0fx%.0f",
+                    actor.sprite->atlasRegion.position.x,
+                    actor.sprite->atlasRegion.position.y,
+                    actor.sprite->atlasRegion.size.x,
+                    actor.sprite->atlasRegion.size.y);
                 drawTextLine(drawList, position, text, TextDetailColour, Indentation);
             }
 

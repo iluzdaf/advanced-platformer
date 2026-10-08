@@ -11,6 +11,7 @@
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/navigation/traversal.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
+#include "advanced_platformer/render/sprite.hpp"
 
 #include "diagnostics/navigation_debug.hpp"
 
@@ -31,8 +32,7 @@ namespace advanced_platformer
     struct ActorSpriteDebugInfo
     {
         Aabb bounds;
-        std::size_t atlasFrame = 0;
-        glm::vec2 atlasPosition = {0.0F, 0.0F};
+        SpriteRegion atlasRegion;
     };
 
     struct PathConnectionDebugInfo

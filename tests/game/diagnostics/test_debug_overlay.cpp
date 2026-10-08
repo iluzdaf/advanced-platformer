@@ -68,8 +68,8 @@ TEST_CASE("Debug overlay data reports player presentation and NPC state", "[app]
         playerDebug.sprite.value_or(advanced_platformer::ActorSpriteDebugInfo{});
     REQUIRE(spriteDebug.bounds.topLeft == glm::vec2{22.0F, 184.0F});
     REQUIRE(spriteDebug.bounds.size == glm::vec2{32.0F, 24.0F});
-    REQUIRE(spriteDebug.atlasFrame == 7);
-    REQUIRE(spriteDebug.atlasPosition == region.position);
+    REQUIRE(spriteDebug.atlasRegion.position == region.position);
+    REQUIRE(spriteDebug.atlasRegion.size == region.size);
 
     const advanced_platformer::ActorDebugInfo& npcDebug = debug.actors.back();
     REQUIRE(npcDebug.id == npcId);
