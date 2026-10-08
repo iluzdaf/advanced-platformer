@@ -31,6 +31,22 @@ namespace advanced_platformer
 {
     namespace
     {
+        std::optional<glm::vec2> breakableTileBelow(const TileMap& map, glm::vec2 feet)
+        {
+            const Cell above = cellAtFeet(map.tileSize(), feet);
+            const Cell below{above.x, above.y + 1};
+            if (!map.contains(below) || !map.blocksMovement(below) ||
+                !map.definitionAt(below).breaksIntoTileId.has_value())
+            {
+                return std::nullopt;
+            }
+            const float half = static_cast<float>(map.tileSize()) / 2.0F;
+            return cellCorner(map.tileSize(), below) + glm::vec2{half, half};
+        }
+    }
+
+    namespace
+    {
         void aimToward(Actor& actor, glm::vec2 targetFeet)
         {
             actor.intentions.aimDirection = targetFeet - feetOf(actor.body.bounds);
@@ -84,11 +100,13 @@ namespace advanced_platformer
             }
             for (const Pickup& pickup : update.world.pickups())
             {
+                const glm::vec2 feet = feetOf(pickup.body.bounds);
                 snapshot.pickups.push_back(
                     NpcPickupSnapshot{
-                        .feet = feetOf(pickup.body.bounds),
+                        .feet = feet,
                         .item = update.world.itemDefinition(pickup.stack.item).name,
-                        .quantity = pickup.stack.quantity});
+                        .quantity = pickup.stack.quantity,
+                        .breakableBelow = breakableTileBelow(update.map, feet)});
             }
             return snapshot;
         }

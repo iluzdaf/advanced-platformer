@@ -1,4 +1,5 @@
 #include <initializer_list>
+#include <optional>
 
 #include <catch2/catch_test_macros.hpp>
 #include <glm/vec2.hpp>
@@ -154,6 +155,9 @@ TEST_CASE("A snapshot's exit and pickups reach Lua with the item each pickup hol
                     decide = {
                         update = function(self, snapshot)
                             for _, pickup in ipairs(snapshot.pickups) do
+                                if pickup.breakableBelow ~= nil then
+                                    return { aimAt = pickup.breakableBelow }
+                                end
                                 if pickup.item == "heart" and pickup.quantity == 2 then
                                     return { routeTo = pickup.feet, clearRoute = snapshot.exitFeet ~= nil }
                                 end
@@ -168,7 +172,8 @@ TEST_CASE("A snapshot's exit and pickups reach Lua with the item each pickup hol
 
     NpcActivitySnapshot snapshot = commandSnapshot();
     snapshot.exitFeet = {{200.0F, 34.0F}};
-    snapshot.pickups = {{{40.0F, 34.0F}, "coin", 1}, {{90.0F, 34.0F}, "heart", 2}};
+    snapshot.pickups = {
+        {{40.0F, 34.0F}, "coin", 1, std::nullopt}, {{90.0F, 34.0F}, "heart", 2, std::nullopt}};
     scripts.enter(FirstActor, Activity, snapshot);
     const advanced_platformer::NpcActivityCommand command =
         scripts.update(FirstActor, Activity, snapshot, 0.5F);
@@ -180,6 +185,11 @@ TEST_CASE("A snapshot's exit and pickups reach Lua with the item each pickup hol
         scripts.update(FirstActor, Activity, snapshot, 0.5F);
     REQUIRE(toExit.routeTo == glm::vec2{200.0F, 34.0F});
     REQUIRE_FALSE(toExit.clearRoute);
+
+    snapshot.pickups = {{{40.0F, 34.0F}, "coin", 1, glm::vec2{40.0F, 42.0F}}};
+    const advanced_platformer::NpcActivityCommand toGlass =
+        scripts.update(FirstActor, Activity, snapshot, 0.5F);
+    REQUIRE(toGlass.aimAt == glm::vec2{40.0F, 42.0F});
 }
 
 TEST_CASE("A script reads its health and asks to use an item by name", "[lua][npc]")

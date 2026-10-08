@@ -96,6 +96,8 @@ namespace advanced_platformer
             int damageSinceSample = 0;
             std::vector<ActorId> targeting;
             std::vector<NpcNotice> noticedSinceSample;
+            int pickupsLeft = 0;
+            int collectedSinceSample = 0;
         };
 
         const Actor& playerOf(const GameLevel& level)
@@ -299,7 +301,10 @@ namespace advanced_platformer
 
             result.healthLeft = health;
             result.endCell = cellAtFeet(level.map.tileSize(), feet);
-            result.pickupsCollected = result.pickupsPlaced - placedPickupsLeft(level);
+            const int pickupsLeft = placedPickupsLeft(level);
+            watch.collectedSinceSample += std::max(0, watch.pickupsLeft - pickupsLeft);
+            watch.pickupsLeft = pickupsLeft;
+            result.pickupsCollected = result.pickupsPlaced - pickupsLeft;
         }
     }
 
@@ -321,6 +326,7 @@ namespace advanced_platformer
                 pacingSample(level, playerOf(level), watchedSeconds(watch, stepSeconds));
             sample.damage = std::exchange(watch.damageSinceSample, 0);
             sample.noticed = std::exchange(watch.noticedSinceSample, {});
+            sample.collected = std::exchange(watch.collectedSinceSample, 0);
             result.pacing.push_back(std::move(sample));
         }
     }
@@ -345,6 +351,7 @@ namespace advanced_platformer
                 std::max(1, static_cast<int>(std::lround(PacingSeconds / stepSeconds)));
             PlaytestWatch watch;
             watch.lastHealth = healthOf(playerOf(level));
+            watch.pickupsLeft = result.pickupsPlaced;
             observeStep(watch, level, 0.0F, result);
             recordPacing(watch, level, stepSeconds, result);
 
@@ -369,6 +376,7 @@ namespace advanced_platformer
                     last.health = 0;
                     last.damage = watch.damageSinceSample + healthBefore;
                     last.noticed = std::move(watch.noticedSinceSample);
+                    last.collected = watch.collectedSinceSample;
                     result.pacing.push_back(std::move(last));
                     return result;
                 }
@@ -378,6 +386,7 @@ namespace advanced_platformer
                     last.seconds = watchedSeconds(watch, stepSeconds);
                     last.damage = watch.damageSinceSample;
                     last.noticed = std::move(watch.noticedSinceSample);
+                    last.collected = watch.collectedSinceSample;
                     result.pacing.push_back(std::move(last));
                     return result;
                 }

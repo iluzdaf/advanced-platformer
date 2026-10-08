@@ -27,6 +27,7 @@ namespace advanced_platformer
         glm::vec2 feet{0.0F, 0.0F};
         std::string item;
         int quantity = 1;
+        std::optional<glm::vec2> breakableBelow;
 
         bool operator==(const NpcPickupSnapshot&) const = default;
     };

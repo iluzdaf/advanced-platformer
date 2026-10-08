@@ -111,6 +111,7 @@ TEST_CASE("A level playtest is written as one JSON line")
              .npcsNear = 2,
              .npcsTargeting = 1,
              .noticed = {{.npc = "rat", .cells = 2.5F}},
+             .collected = 1,
              .piece = "den"}}};
 
     const std::string text = advanced_platformer::formatLevelPlaytest(level);
@@ -122,5 +123,6 @@ TEST_CASE("A level playtest is written as one JSON line")
     CHECK(
         text.find(
             R"("pacing":[{"seconds":0.5,"health":3,"damage":1,"npcsNear":2,"npcsTargeting":1,)"
-            R"("noticed":[{"npc":"rat","cells":2.5}],"piece":"den"}])") != std::string::npos);
+            R"("noticed":[{"npc":"rat","cells":2.5}],"collected":1,"piece":"den"}])") !=
+        std::string::npos);
 }

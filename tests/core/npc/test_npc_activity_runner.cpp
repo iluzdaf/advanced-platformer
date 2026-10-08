@@ -208,6 +208,35 @@ TEST_CASE("Removing an actor forgets its activity state", "[npc][lua][lifecycle]
     REQUIRE(world.findActor(npcId) == nullptr);
 }
 
+TEST_CASE("A snapshot names the breakable tile a pickup rests on", "[npc][lua]")
+{
+    advanced_platformer::TileMap map =
+        tests::TileMapBuilder({"........", "........", "##gg####"})
+            .where('g', tests::Tile().blocksMovement().breaksInto('.'));
+    advanced_platformer::World world({{1, "Coin", {}, 5}});
+    world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({100.0F, 32.0F})
+            .platforming()
+            .thinking({64.0F, 1.0F})
+            .running(
+                tests::NpcMachineBuilder::named("test").state(
+                    "acting", advanced_platformer::NpcActivity{"fixture", "act"})));
+    world.addPickup({{{{4.0F, 24.0F}, {8.0F, 8.0F}}}, {1, 1}});
+    world.addPickup({{{{40.0F, 24.0F}, {8.0F, 8.0F}}}, {1, 1}});
+    tests::RecordingNpcScripts scripts;
+
+    advanced_platformer::WorldRequests requests;
+    advanced_platformer::updateNpcBehaviour(map, world, requests, tests::FixedStepSeconds, scripts);
+
+    REQUIRE_FALSE(scripts.calls.empty());
+    const std::vector<advanced_platformer::NpcPickupSnapshot>& pickups =
+        scripts.calls.back().snapshot.pickups;
+    REQUIRE(pickups.size() == 2);
+    REQUIRE_FALSE(pickups[0].breakableBelow.has_value());
+    REQUIRE(pickups[1].breakableBelow == glm::vec2{40.0F, 40.0F});
+}
+
 TEST_CASE("The engine fills an activity's snapshot from the world", "[npc][lua]")
 {
     advanced_platformer::TileMap map = tests::TileMapBuilder({"........", "........", "##......"});
@@ -239,8 +268,8 @@ TEST_CASE("The engine fills an activity's snapshot from the world", "[npc][lua]"
     REQUIRE(snapshot.health.value_or(advanced_platformer::Health{}).maximum == 3);
     REQUIRE(snapshot.exitFeet == glm::vec2{104.0F, 32.0F});
     REQUIRE(
-        snapshot.pickups ==
-        std::vector<advanced_platformer::NpcPickupSnapshot>{{{44.0F, 32.0F}, "Coin", 2}});
+        snapshot.pickups == std::vector<advanced_platformer::NpcPickupSnapshot>{
+                                {{44.0F, 32.0F}, "Coin", 2, std::nullopt}});
     REQUIRE(
         snapshot.targetCenter.value_or(glm::vec2{}) ==
         advanced_platformer::centerOf(actor(world, player).body.bounds));

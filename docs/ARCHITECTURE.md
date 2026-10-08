@@ -589,8 +589,8 @@ to the traversal profile. The search itself does not change.
   placed and collected, Lua script errors, and the level's pacing: a sample every half
   second, and one when the level ends, of the seconds, health, damage taken since the last
   sample, live NPCs within the bot's notice distance, live NPCs targeting the bot, each NPC
-  that started targeting it since the last sample with its distance in cells, and the piece
-  of the room the player stands in.
+  that started targeting it since the last sample with its distance in cells, pickups
+  collected since the last sample, and the piece of the room the player stands in.
 
 ## Error handling and validation
 
