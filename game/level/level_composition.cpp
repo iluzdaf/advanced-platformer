@@ -285,6 +285,78 @@ namespace advanced_platformer
             }
         }
 
+        Cell restingCell(const TileMap& map, Cell cell)
+        {
+            while (cell.y + 1 < map.height() && !map.blocksMovement({cell.x, cell.y + 1}))
+            {
+                ++cell.y;
+            }
+            return cell;
+        }
+
+        std::vector<Cell> entryCells(const RoomPiece& piece, const TileMap& map)
+        {
+            std::vector<Cell> entries;
+            if (piece.playerSpawn.has_value())
+            {
+                entries.push_back(*piece.playerSpawn);
+            }
+            const int width = static_cast<int>(piece.rows.front().size());
+            const int height = static_cast<int>(piece.rows.size());
+            std::vector<Cell> openings;
+            for (int y = 0; y < height - 1; ++y)
+            {
+                openings.push_back({0, y});
+                openings.push_back({width - 1, y});
+            }
+            for (int x = 1; x < width - 1; ++x)
+            {
+                openings.push_back({x, 0});
+                openings.push_back({x, height - 1});
+            }
+            for (const Cell opening : openings)
+            {
+                if (map.blocksMovement(opening))
+                {
+                    continue;
+                }
+                const Cell cell = restingCell(map, opening);
+                if (std::ranges::find(entries, cell) == entries.end())
+                {
+                    entries.push_back(cell);
+                }
+            }
+            return entries;
+        }
+
+        void requirePlayerReaches(
+            const TileMap& map,
+            Actor player,
+            const std::vector<Cell>& entries,
+            Cell pickup,
+            float stepSeconds)
+        {
+            std::vector<Cell> goals{pickup};
+            TileMap broken = map;
+            if (broken.breakTile({pickup.x, pickup.y + 1}))
+            {
+                goals.push_back(restingCell(broken, pickup));
+            }
+            for (const Cell entry : entries)
+            {
+                moveFeetTo(player.body.bounds, feetInCell(map.tileSize(), entry));
+                for (const Cell goal : goals)
+                {
+                    if (actorCanReach(map, player, feetInCell(map.tileSize(), goal), stepSeconds))
+                    {
+                        return;
+                    }
+                }
+            }
+            throw std::invalid_argument(
+                "the player cannot reach it from a door or the player spawn");
+        }
+
         void validatePieceOrientation(
             const RoomPiece& piece,
             const RoomPieces& pieces,
@@ -293,12 +365,20 @@ namespace advanced_platformer
             std::string_view name)
         {
             const TileMap map = composeTileMap(piece.rows, pieces.tileLegend, catalogs.tiles);
+            const Actor player = composePlayer(catalogs, 0);
+            const std::vector<Cell> entries = entryCells(piece, map);
             for (const ActorPlacement& placement : piece.actors)
             {
                 try
                 {
                     const Actor actor = composePlacedActor(map, placement, catalogs, 0);
                     validateActorPlacement(map, actor);
+                    if (actor.flyingMovement.has_value() &&
+                        map.blocksMovement({placement.spawn.x, placement.spawn.y + 1}))
+                    {
+                        throw std::invalid_argument(
+                            "flies, so it must spawn in open air, not on a tile");
+                    }
                     if (actor.patrol.has_value())
                     {
                         requireReachable(
@@ -324,6 +404,7 @@ namespace advanced_platformer
                     validatePickupPlacement(
                         map,
                         composePlacedPickup(map, placement, catalogs.pickups, catalogs.items, 0));
+                    requirePlayerReaches(map, player, entries, placement.spawn, stepSeconds);
                 }
                 catch (const std::invalid_argument& error)
                 {

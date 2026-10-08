@@ -249,7 +249,9 @@ team, and life state, plus optional components.
 - `validateRoomPieces` checks every piece's placements on the piece alone, and again
   mirrored when the piece allows it, so a bad placement fails when content loads, not
   when a level happens to use the piece. It also checks that each NPC can reach both ends
-  of its patrol. The session and the playtest run it right after loading content, so a
+  of its patrol, that no flyer spawns resting on a tile, and that the player can reach each
+  pickup from the player spawn or a door (or where it falls once a breakable tile under it
+  breaks). The session and the playtest run it right after loading content, so a
   hot reload with a bad piece fails before it reaches `Game`.
 
 ## NPC behaviour

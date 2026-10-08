@@ -6,6 +6,12 @@
       "sprite": { "position": [0, 0] },
       "blocksMovement": true,
       "blocksSight": true
+    },
+    "glass": {
+      "sprite": { "position": [0, 0] },
+      "blocksMovement": true,
+      "blocksSight": false,
+      "breaksInto": "empty"
     }
   }
 }

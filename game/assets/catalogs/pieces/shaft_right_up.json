@@ -20,7 +20,7 @@
     {
       "id": "bat_1",
       "definition": "bat",
-      "spawn": [12, 5]
+      "spawn": [9, 4]
     }
   ],
   "pickups": [

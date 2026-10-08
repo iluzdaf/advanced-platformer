@@ -22,5 +22,12 @@
       "definition": "coin_pile",
       "spawn": [12, 10]
     }
+  ],
+  "actors": [
+    {
+      "id": "boar_1",
+      "definition": "boar",
+      "spawn": [14, 10]
+    }
   ]
 }
