@@ -587,10 +587,18 @@ to the traversal profile. The search itself does not change.
 - Each line holds the run and level seeds, the outcome, seconds, damage counted against
   the nearest live NPC's definition, health left, the cell the player ended in, pickups
   placed and collected, Lua script errors, and the level's pacing: a sample every half
-  second, and one when the level ends, of the seconds, health, damage taken since the last
-  sample, live NPCs within the bot's notice distance, live NPCs targeting the bot, each NPC
-  that started targeting it since the last sample with its distance in cells, pickups
-  collected since the last sample, and the piece of the room the player stands in.
+  second, and one when the level ends.
+
+| Pacing field    | Meaning                                                                                               |
+| --------------- | ----------------------------------------------------------------------------------------------------- |
+| `seconds`       | Seconds since the level started                                                                       |
+| `health`        | The player's health                                                                                   |
+| `damage`        | Damage taken since the last sample                                                                    |
+| `npcsNear`      | Live NPCs within the bot's notice distance                                                            |
+| `npcsTargeting` | Live NPCs targeting the bot                                                                           |
+| `noticed`       | Each NPC that started targeting the bot since the last sample, with `npc` and its distance in `cells` |
+| `collected`     | Pickups collected since the last sample                                                               |
+| `piece`         | The piece of the room the player stands in                                                            |
 
 ## Error handling and validation
 
