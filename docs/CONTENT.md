@@ -321,7 +321,7 @@ or `nil`. [`common.lua`](../game/assets/scripts/common.lua) has `idle`, `patrol`
 | `climbGrip`                                      | `"hold"`, `"release"` or `"keep"` (default).                                     |
 | `avoidLedges`                                    | Stop a walker at a ledge.                                                        |
 | `routeTo`                                        | Follow a route to a point; the engine plans and moves.                           |
-| `aimAt`                                          | Aim at a point.                                                                  |
+| `aimAt`                                          | Aim at a point from the body centre, where shots leave.                          |
 | `clearRoute`                                     | Drop the current route.                                                          |
 | `turnPatrol`                                     | Head for the patrol's other end.                                                 |
 | `useItem`                                        | Use an item from the bag by its name in `items.json`, as the player would.       |

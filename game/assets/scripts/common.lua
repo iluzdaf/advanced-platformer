@@ -82,7 +82,11 @@ return {
                     local canStep = (side < 0 and footing.left) or (side > 0 and footing.right)
                     away = canStep and { x = side, y = 0 } or { x = 0, y = 0 }
                 end
-                return { direction = away, aimAt = threat, primaryAttackPressed = true }
+                return {
+                    direction = away,
+                    aimAt = snapshot.targetCenter or threat,
+                    primaryAttackPressed = true,
+                }
             end,
         },
 
