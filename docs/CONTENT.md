@@ -151,8 +151,9 @@ must not overlap a blocked tile. A walker's spawn and patrol ends need ground un
 a climber's patrol ends may be on a wall or ceiling. An actor with a `patrol` must be able
 to reach both its ends from its spawn. A flyer must spawn in open air, with no blocked tile
 right under it. Errors name the piece, `mirrored` when it is the flipped copy, and the placement's
-`id`. A content test also checks that the player can reach every pickup from the player
-spawn or a door, or reach the spot it falls to once a breakable tile under it breaks.
+`id`. A content test also checks, in the levels the door route tests build, that the player can
+reach every pickup from the player spawn, or reach the spot it falls to once a breakable
+tile under it breaks.
 
 Each room needs a piece of its role with exactly its doors, so the shipped catalog
 covers every door set a room can have; a level that has a room no piece fits fails to
