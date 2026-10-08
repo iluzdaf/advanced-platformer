@@ -35,6 +35,7 @@ namespace advanced_platformer
         int npcsNear = 0;
         int npcsTargeting = 0;
         std::vector<NpcNotice> noticed;
+        int collected = 0;
         std::string piece;
     };
 

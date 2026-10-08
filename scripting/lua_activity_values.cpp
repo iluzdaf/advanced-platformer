@@ -199,6 +199,7 @@ namespace advanced_platformer
             entry["feet"] = luaVector(lua, pickup.feet);
             entry["item"] = pickup.item;
             entry["quantity"] = pickup.quantity;
+            entry["breakableBelow"] = optionalVector(pickup.breakableBelow);
             pickups.add(entry);
         }
         result["pickups"] = pickups;

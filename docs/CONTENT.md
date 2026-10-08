@@ -311,7 +311,7 @@ or `nil`. [`common.lua`](../game/assets/scripts/common.lua) has `idle`, `patrol`
 | `routeStatus`         | `found`, `unreachable` (the route ends as close to the goal as the NPC can get) or `deferred` (the engine is still working it out); `nil` before any route or after `clearRoute`. |
 | `routeComplete`       | Whether the last route asked for has been followed to its end.                                                                                                                    |
 | `exitFeet`            | The level exit's feet, when the level has one.                                                                                                                                    |
-| `pickups`             | Every pickup in the level: `feet`, `item` (its name in `items.json`) and `quantity`.                                                                                              |
+| `pickups`             | Every pickup in the level: `feet`, `item` (its name in `items.json`), `quantity`, and `breakableBelow`, the center of the breakable tile the pickup rests on (`nil` otherwise).   |
 
 | Command                                          | Meaning                                                                          |
 | ------------------------------------------------ | -------------------------------------------------------------------------------- |

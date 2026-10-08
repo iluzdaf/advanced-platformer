@@ -31,11 +31,6 @@ namespace advanced_platformer
 {
     namespace
     {
-        void aimToward(Actor& actor, glm::vec2 targetFeet)
-        {
-            actor.intentions.aimDirection = targetFeet - feetOf(actor.body.bounds);
-        }
-
         NpcFooting footingOf(const TileMap& map, const Actor& actor)
         {
             const glm::vec2 feet = feetOf(actor.body.bounds);
@@ -47,6 +42,19 @@ namespace advanced_platformer
                 return canStandAt(map, beside, size);
             };
             return {canStandBeside(-1.0F), canStandBeside(1.0F)};
+        }
+
+        std::optional<glm::vec2> breakableTileBelow(const TileMap& map, glm::vec2 feet)
+        {
+            const Cell above = cellAtFeet(map.tileSize(), feet);
+            const Cell below{above.x, above.y + 1};
+            if (!map.contains(below) || !map.blocksMovement(below) ||
+                !map.definitionAt(below).breaksIntoTileId.has_value())
+            {
+                return std::nullopt;
+            }
+            const float half = static_cast<float>(map.tileSize()) / 2.0F;
+            return cellCorner(map.tileSize(), below) + glm::vec2{half, half};
         }
 
         NpcActivitySnapshot activitySnapshot(
@@ -84,13 +92,37 @@ namespace advanced_platformer
             }
             for (const Pickup& pickup : update.world.pickups())
             {
+                const glm::vec2 feet = feetOf(pickup.body.bounds);
                 snapshot.pickups.push_back(
                     NpcPickupSnapshot{
-                        .feet = feetOf(pickup.body.bounds),
+                        .feet = feet,
                         .item = update.world.itemDefinition(pickup.stack.item).name,
-                        .quantity = pickup.stack.quantity});
+                        .quantity = pickup.stack.quantity,
+                        .breakableBelow = breakableTileBelow(update.map, feet)});
             }
             return snapshot;
+        }
+    }
+
+    void enterNpcActivity(
+        const NpcUpdate& update,
+        const Actor& actor,
+        const NpcBrain& brain,
+        PathFollower& follower,
+        const Actor* target,
+        const NpcActivity& activity,
+        const NpcFacts& facts)
+    {
+        clearPath(follower);
+        update.scripts.enter(
+            actor.id, activity, activitySnapshot(update, actor, brain, follower, target, facts));
+    }
+
+    namespace
+    {
+        void aimToward(Actor& actor, glm::vec2 targetFeet)
+        {
+            actor.intentions.aimDirection = targetFeet - feetOf(actor.body.bounds);
         }
 
         std::optional<std::size_t> slotHolding(
@@ -152,20 +184,6 @@ namespace advanced_platformer
                 }
             }
         }
-    }
-
-    void enterNpcActivity(
-        const NpcUpdate& update,
-        const Actor& actor,
-        const NpcBrain& brain,
-        PathFollower& follower,
-        const Actor* target,
-        const NpcActivity& activity,
-        const NpcFacts& facts)
-    {
-        clearPath(follower);
-        update.scripts.enter(
-            actor.id, activity, activitySnapshot(update, actor, brain, follower, target, facts));
     }
 
     void updateNpcActivity(
