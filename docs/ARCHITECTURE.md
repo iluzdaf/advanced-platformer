@@ -249,13 +249,11 @@ team, and life state, plus optional components.
 - `validateRoomPieces` checks every piece's placements on the piece alone, and again
   mirrored when the piece allows it, so a bad placement fails when content loads, not
   when a level happens to use the piece. It also checks that each NPC can reach both ends
-  of its patrol, and that no flyer spawns resting on a tile. The session and the playtest run it right after loading content, so a
+  of its patrol. The session and the playtest run it right after loading content, so a
   hot reload with a bad piece fails before it reaches `Game`.
-- Whether the player can reach each shipped pickup is a content test, not a load check
-  (`tests/game/content/test_room_piece_routes.cpp`). It reuses the levels the door route
-  tests build around each piece and starts the player at the level's player spawn. A
-  pickup passes when the player can reach it where it sits, or where it falls once the
-  breakable tile under it breaks; the fall runs `updatePickupMovement` until it stops.
+- Pickup reach is a test on the shipped content, not a load check: it needs whole levels
+  built around each piece and a simulation of the pickup's fall, so it runs with the door
+  route tests in `tests/game/content/test_room_piece_routes.cpp`.
 
 ## NPC behaviour
 
