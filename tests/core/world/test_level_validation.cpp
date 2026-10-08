@@ -8,8 +8,6 @@
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
-#include "advanced_platformer/npc/npc.hpp"
-#include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "advanced_platformer/world/level_exit.hpp"
 #include "advanced_platformer/world/level_validation.hpp"
 #include "advanced_platformer/world/pickup.hpp"
@@ -140,33 +138,6 @@ TEST_CASE("A climber's patrol points need clearance but not ground", "[world][le
         REQUIRE_THROWS_WITH(
             advanced_platformer::validateLevelPlacements(map, world, 1),
             "Level 1 actor 1 spawn has no ground support");
-    }
-}
-
-TEST_CASE("An NPC whose machine needs a patrol must have one", "[world][level-validation]")
-{
-    const advanced_platformer::TileMap map = tests::TileMapBuilder({".....", ".....", "#####"});
-    advanced_platformer::NpcStateMachine machine{"walker", {{"walk", {"test", "patrol"}}}, {}};
-    machine.needsPatrol = true;
-    const advanced_platformer::Actor walker =
-        makePlatformer({24.0F, 32.0F}).thinking({}).running(machine);
-
-    SECTION("without a patrol")
-    {
-        advanced_platformer::World world;
-        world.addActor(walker);
-        REQUIRE_THROWS_WITH(
-            advanced_platformer::validateLevelPlacements(map, world, 1),
-            "Level 1 actor 1 machine 'walker' needs a patrol");
-    }
-
-    SECTION("with a patrol")
-    {
-        advanced_platformer::Actor patrolling = walker;
-        patrolling.patrol = advanced_platformer::Patrol{{24.0F, 32.0F}, {56.0F, 32.0F}, true};
-        advanced_platformer::World world;
-        world.addActor(patrolling);
-        REQUIRE_NOTHROW(advanced_platformer::validateLevelPlacements(map, world, 1));
     }
 }
 

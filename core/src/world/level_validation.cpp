@@ -71,11 +71,6 @@ namespace advanced_platformer
         requirePlacement(map, actor.body.bounds, "spawn", actor.platformerMovement.has_value());
         if (!actor.patrol.has_value())
         {
-            if (actor.machine.has_value() && actor.machine->definition.needsPatrol)
-            {
-                throw std::invalid_argument(
-                    std::format("machine '{}' needs a patrol", actor.machine->definition.name));
-            }
             return;
         }
         const bool needsGround = patrolNeedsGround(actor);

@@ -14,7 +14,6 @@ TEST_CASE("Machine JSON keeps state order, expands from lists and reads holds", 
     auto machineJson = tests::parseJson(
         advanced_platformer::loadContentText("tests/fixtures/catalogs/machines.json"));
     auto& machine = machineJson["machines"]["test_machine"];
-    machine["needsPatrol"] = true;
     machine["states"].get_array().push_back(
         tests::object(
             {{"name", "flee"},
@@ -30,8 +29,6 @@ TEST_CASE("Machine JSON keeps state order, expands from lists and reads holds", 
         advanced_platformer::npcStateMachine(catalog, "test_machine");
 
     REQUIRE(parsed.name == "test_machine");
-    REQUIRE(parsed.needsPatrol);
-    REQUIRE_FALSE(advanced_platformer::npcStateMachine(catalog, "test_contact_enemy").needsPatrol);
     REQUIRE(parsed.states.size() == 3);
     REQUIRE(parsed.states[0].name == "rest");
     REQUIRE(parsed.states[0].does == advanced_platformer::NpcActivity{"test", "idle"});

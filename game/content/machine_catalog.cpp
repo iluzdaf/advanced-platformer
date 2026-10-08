@@ -45,7 +45,6 @@ namespace advanced_platformer
     {
         std::vector<MachineStateJson> states;
         std::vector<MachineTransitionJson> transitions;
-        std::optional<bool> needsPatrol;
     };
 
     struct MachinesJson
@@ -87,7 +86,6 @@ namespace advanced_platformer
         {
             NpcStateMachine machine;
             machine.name = name;
-            machine.needsPatrol = json.needsPatrol.value_or(false);
 
             const std::string statesPath = fieldPath(path, "states");
             for (std::size_t index = 0; index < json.states.size(); ++index)

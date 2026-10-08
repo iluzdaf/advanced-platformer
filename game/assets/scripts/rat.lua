@@ -1,38 +1,21 @@
-local function refugeFrom(snapshot)
-    if snapshot.targetFeet == nil or snapshot.patrol == nil then
-        return nil
-    end
-
-    local left = snapshot.patrol.firstFeet
-    local right = snapshot.patrol.secondFeet
-    if left.x > right.x then
-        left, right = right, left
-    end
-
-    -- Choose the end in the direction away from the threat. Measuring which end is
-    -- globally farther would sometimes send the rat through the player to the other end.
-    if snapshot.feet.x < snapshot.targetFeet.x then
-        return left
-    end
-    return right
-end
-
 return {
     activities = {
         flee = {
             update = function(self, snapshot)
-                local refuge = refugeFrom(snapshot)
-                if refuge == nil then
+                local threat = snapshot.targetFeet
+                if threat == nil then
                     return { clearRoute = true }
                 end
 
-                -- At the far end, hold the corner and face the threat. Facing it lets the
-                -- machine's directional bite-range fact become true
-                if snapshot.feet:distanceSquared(refuge) <= 1 then
-                    return { clearRoute = true, aimAt = snapshot.targetFeet }
+                local side = snapshot.feet.x < threat.x and -1 or 1
+                local footing = snapshot.footing
+                local canStep = footing ~= nil
+                    and ((side < 0 and footing.left) or (side > 0 and footing.right))
+                if not canStep then
+                    return { clearRoute = true, aimAt = threat }
                 end
 
-                return { routeTo = refuge }
+                return { clearRoute = true, direction = { x = side, y = 0 }, avoidLedges = true }
             end,
         },
     },

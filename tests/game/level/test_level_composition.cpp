@@ -111,25 +111,6 @@ TEST_CASE("A room piece rejects a patrol its NPC cannot reach", "[app][generatio
         "Room piece 'start': actor 'test_guard_1': cannot reach its second patrol point");
 }
 
-TEST_CASE("A room piece rejects an NPC whose machine needs a patrol it lacks", "[app][generation]")
-{
-    auto catalogs = patrolPlacementCatalogs();
-    catalogs.machines.at("test_machine").needsPatrol = true;
-
-    SECTION("with a patrol")
-    {
-        REQUIRE_NOTHROW(advanced_platformer::validateRoomPieces(catalogs, tests::FixedStepSeconds));
-    }
-
-    SECTION("without one")
-    {
-        startPiece(catalogs).actors.front().patrol.reset();
-        REQUIRE_THROWS_WITH(
-            advanced_platformer::validateRoomPieces(catalogs, tests::FixedStepSeconds),
-            "Room piece 'start': actor 'test_guard_1': machine 'test_machine' needs a patrol");
-    }
-}
-
 TEST_CASE("A room piece rejects placements inside its walls", "[app][generation]")
 {
     auto catalogs = patrolPlacementCatalogs();
