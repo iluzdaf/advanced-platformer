@@ -43,10 +43,7 @@ namespace advanced_platformer
             };
             return {canStandBeside(-1.0F), canStandBeside(1.0F)};
         }
-    }
 
-    namespace
-    {
         std::optional<glm::vec2> breakableTileBelow(const TileMap& map, glm::vec2 feet)
         {
             const Cell above = cellAtFeet(map.tileSize(), feet);
@@ -59,10 +56,7 @@ namespace advanced_platformer
             const float half = static_cast<float>(map.tileSize()) / 2.0F;
             return cellCorner(map.tileSize(), below) + glm::vec2{half, half};
         }
-    }
 
-    namespace
-    {
         NpcActivitySnapshot activitySnapshot(
             const NpcUpdate& update,
             const Actor& actor,
@@ -130,10 +124,7 @@ namespace advanced_platformer
         {
             actor.intentions.aimDirection = targetFeet - feetOf(actor.body.bounds);
         }
-    }
 
-    namespace
-    {
         std::optional<std::size_t> slotHolding(
             const World& world,
             const Actor& actor,
@@ -154,10 +145,7 @@ namespace advanced_platformer
             }
             return std::nullopt;
         }
-    }
 
-    namespace
-    {
         void applyScriptCommand(
             const NpcUpdate& update,
             Actor& actor,
