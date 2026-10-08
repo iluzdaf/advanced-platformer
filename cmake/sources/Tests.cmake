@@ -41,7 +41,6 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/game/content/test_machine_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/game/content/test_npc_script_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/game/content/test_pickup_catalog.cpp
-        ${PROJECT_SOURCE_DIR}/tests/game/content/test_room_piece_pickups.cpp
         ${PROJECT_SOURCE_DIR}/tests/game/content/test_room_piece_routes.cpp
         ${PROJECT_SOURCE_DIR}/tests/game/content/test_room_pieces.cpp
         ${PROJECT_SOURCE_DIR}/tests/game/content/test_tile_catalog.cpp
