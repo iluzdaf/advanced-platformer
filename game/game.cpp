@@ -46,6 +46,20 @@
 
 namespace advanced_platformer
 {
+    namespace
+    {
+        GameCatalogs checkedCatalogs(GameCatalogs catalogs, float stepSeconds)
+        {
+            if (!isFinitePositive(stepSeconds))
+            {
+                throw std::invalid_argument(
+                    "The game's simulation step must be finite and positive");
+            }
+            validateRoomPieces(catalogs, stepSeconds);
+            return catalogs;
+        }
+    }
+
     Game::Game(
         int textureId,
         GameCatalogs gameCatalogs,
@@ -53,7 +67,7 @@ namespace advanced_platformer
         LuaPresentationScript presentation,
         float stepSeconds,
         std::uint32_t runSeed)
-        : gameCatalogs(std::move(gameCatalogs)),
+        : gameCatalogs(checkedCatalogs(std::move(gameCatalogs), stepSeconds)),
           npcScripts(std::move(npcScripts)),
           presentation(std::move(presentation)),
           level(composePlayableLevel(
@@ -68,10 +82,6 @@ namespace advanced_platformer
           simulationStepSeconds(stepSeconds),
           currentRunSeed(runSeed)
     {
-        if (!isFinitePositive(simulationStepSeconds))
-        {
-            throw std::invalid_argument("The game's simulation step must be finite and positive");
-        }
         prepareLevel();
     }
 
@@ -305,6 +315,7 @@ namespace advanced_platformer
 
     LevelReload Game::reload(GameContent content)
     {
+        validateRoomPieces(content.gameCatalogs, simulationStepSeconds);
         GameLevel fresh = composeLevel(
             content.gameCatalogs.pieces,
             level.number,

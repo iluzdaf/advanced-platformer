@@ -9,12 +9,14 @@
 #include "advanced_platformer/level/level_generator.hpp"
 #include "advanced_platformer/level/room_pieces.hpp"
 #include "content/tile_catalog.hpp"
+#include <algorithm>
 #include <cstdint>
 #include <format>
 #include <optional>
 #include <set>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -62,6 +64,21 @@ namespace advanced_platformer
                 true};
         }
 
+        Actor composePlacedActor(
+            const TileMap& map,
+            const ActorPlacement& placement,
+            const GameCatalogs& catalogs,
+            int textureId)
+        {
+            return composeActor(
+                actorDefinition(catalogs.actors, placement.definitionName),
+                catalogs.animations,
+                textureId,
+                feetInCell(map.tileSize(), placement.spawn),
+                composePatrol(map, placement.patrol),
+                catalogs.machines);
+        }
+
         LevelExit composePlacedExit(
             const TileMap& map,
             int textureId,
@@ -89,7 +106,6 @@ namespace advanced_platformer
             int textureId,
             const GameCatalogs& catalogs)
         {
-            const auto& actors = catalogs.actors;
             const auto& exits = catalogs.exits;
             const auto& items = catalogs.items;
             const auto& pickups = catalogs.pickups;
@@ -103,13 +119,8 @@ namespace advanced_platformer
             {
                 try
                 {
-                    const ActorId id = world.addActor(composeActor(
-                        actorDefinition(actors, placement.definitionName),
-                        catalogs.animations,
-                        textureId,
-                        feetInCell(map.tileSize(), placement.spawn),
-                        composePatrol(map, placement.patrol),
-                        catalogs.machines));
+                    const ActorId id =
+                        world.addActor(composePlacedActor(map, placement, catalogs, textureId));
                     actorDefinitionNames.emplace(id.value, placement.definitionName);
                     actorPlacementIds.emplace(id.value, placement.id);
                 }
@@ -191,7 +202,7 @@ namespace advanced_platformer
         const ActorId playerId = level.world.addActor(std::move(placed));
         level.actorDefinitionNames.emplace(playerId.value, catalogs.actors.player);
         level.world.setPlayer(playerId, level.playerSpawnFeet);
-        validateLevelActors(level.map, level.world, level.number);
+        validateLevelPlacements(level.map, level.world, level.number);
         return level;
     }
 
@@ -228,5 +239,117 @@ namespace advanced_platformer
             level = composeLevel(pieces, levelNumber, nextSeed, textureId, catalogs, player);
         }
         return level;
+    }
+
+    namespace
+    {
+        Cell mirroredCell(Cell cell, int width)
+        {
+            return {width - 1 - cell.x, cell.y};
+        }
+
+        RoomPiece mirroredPiece(const RoomPiece& piece, int width)
+        {
+            RoomPiece mirrored = piece;
+            for (std::string& row : mirrored.rows)
+            {
+                std::ranges::reverse(row);
+            }
+            for (ActorPlacement& actor : mirrored.actors)
+            {
+                actor.spawn = mirroredCell(actor.spawn, width);
+                if (actor.patrol.has_value())
+                {
+                    actor.patrol = PatrolPlacement{
+                        mirroredCell(actor.patrol->first, width),
+                        mirroredCell(actor.patrol->second, width)};
+                }
+            }
+            for (PickupPlacement& pickup : mirrored.pickups)
+            {
+                pickup.spawn = mirroredCell(pickup.spawn, width);
+            }
+            return mirrored;
+        }
+
+        void requireReachable(
+            const TileMap& map,
+            const Actor& actor,
+            glm::vec2 feet,
+            std::string_view place,
+            float stepSeconds)
+        {
+            if (!actorCanReach(map, actor, feet, stepSeconds))
+            {
+                throw std::invalid_argument(std::format("cannot reach its {}", place));
+            }
+        }
+
+        void validatePieceOrientation(
+            const RoomPiece& piece,
+            const RoomPieces& pieces,
+            const GameCatalogs& catalogs,
+            float stepSeconds,
+            std::string_view name)
+        {
+            const TileMap map = composeTileMap(piece.rows, pieces.tileLegend, catalogs.tiles);
+            for (const ActorPlacement& placement : piece.actors)
+            {
+                try
+                {
+                    const Actor actor = composePlacedActor(map, placement, catalogs, 0);
+                    validateActorPlacement(map, actor);
+                    if (actor.patrol.has_value())
+                    {
+                        requireReachable(
+                            map, actor, actor.patrol->firstFeet, "first patrol point", stepSeconds);
+                        requireReachable(
+                            map,
+                            actor,
+                            actor.patrol->secondFeet,
+                            "second patrol point",
+                            stepSeconds);
+                    }
+                }
+                catch (const std::invalid_argument& error)
+                {
+                    throw std::invalid_argument(
+                        std::format("{}: actor '{}': {}", name, placement.id, error.what()));
+                }
+            }
+            for (const PickupPlacement& placement : piece.pickups)
+            {
+                try
+                {
+                    validatePickupPlacement(
+                        map,
+                        composePlacedPickup(map, placement, catalogs.pickups, catalogs.items, 0));
+                }
+                catch (const std::invalid_argument& error)
+                {
+                    throw std::invalid_argument(
+                        std::format("{}: pickup '{}': {}", name, placement.id, error.what()));
+                }
+            }
+        }
+    }
+
+    void validateRoomPieces(const GameCatalogs& catalogs, float stepSeconds)
+    {
+        const RoomPieces& pieces = catalogs.pieces;
+        for (const RoomPiece& piece : pieces.pieces)
+        {
+            const std::string name = std::format("Room piece '{}'", piece.name);
+            validatePieceOrientation(piece, pieces, catalogs, stepSeconds, name);
+            if (piece.mirror)
+            {
+                validatePieceOrientation(
+                    mirroredPiece(piece, pieces.roomSize.width),
+                    pieces,
+                    catalogs,
+                    stepSeconds,
+                    name + " mirrored");
+            }
+        }
     }
 }

@@ -48,4 +48,5 @@ namespace advanced_platformer
         const GameCatalogs& catalogs,
         const Actor& player,
         float stepSeconds);
+    void validateRoomPieces(const GameCatalogs& catalogs, float stepSeconds);
 }

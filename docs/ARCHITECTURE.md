@@ -234,17 +234,23 @@ team, and life state, plus optional components.
 - A projectile breaks a tile only when its weapon `breaksTiles` and the tile names what it
   breaks into. The swap changes the cell's ID and the map logs the break.
   `updateProjectiles` alone takes a mutable map.
-- `validateLevelActors` checks every spawn, the player's spawn, and every patrol
-  endpoint for body clearance. Platformers also need ground support, except a climber's
-  patrol endpoints, which may be on a wall or ceiling. Errors name the level, actor, and
-  location.
-- `playerCanReachExit` finds a path for the player from its spawn to the exit, in a
-  cache of its own. Each time the search defers, the fill builds just the cell it asked
+- `validateActorPlacement` checks an actor's spawn and patrol endpoints for body
+  clearance. Platformers also need ground support, except a climber's patrol endpoints,
+  which may be on a wall or ceiling. An actor whose machine `needsPatrol` must have a
+  patrol. `validatePickupPlacement` checks a pickup's clearance.
+  `validateLevelPlacements` runs both over a level and checks the player's spawn; its
+  errors name the level, the actor or pickup, and the location.
+- `actorCanReach` finds a path for an actor to a point, in a cache of its own.
+  `playerCanReachExit` uses it from the player's spawn to the exit. Each time the search defers, the fill builds just the cell it asked
   for, so only the cells the search reaches are simulated. It ignores the exit's
   requirement and breakable tiles.
 - Starting a level runs it on each seed in turn until one passes, so a restart rebuilds a
   level the player can finish. A hot reload keeps the seed and runs the check once; a
   reload that cuts off the exit fails, so the layout never jumps while a piece is edited.
+- `validateRoomPieces` checks every piece's placements on the piece alone, and again
+  mirrored when the piece allows it, so a bad placement fails when content loads, not
+  when a level happens to use the piece. It also checks that each NPC can reach both ends
+  of its patrol. `Game` runs it when it starts and on every hot reload.
 
 ## NPC behaviour
 

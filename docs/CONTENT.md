@@ -145,6 +145,14 @@ Every cell is `[column, row]` inside the piece, counted from its top-left. An `i
 nonempty and unique among the piece's actors and pickups; the generator prefixes it with
 the room, as in `room3_zombie_1`.
 
+When content loads, every piece's placements are checked on the piece alone, and again
+mirrored when `mirror` allows it. An actor's spawn and patrol ends, and a pickup's spawn,
+must not overlap a blocked tile. A walker's spawn and patrol ends need ground under them;
+a climber's patrol ends may be on a wall or ceiling. An actor whose machine has
+`needsPatrol` must have a `patrol`, and must be able to reach both its ends from its
+spawn. Errors name the piece, `mirrored` when it is the flipped copy, and the placement's
+`id`.
+
 Each room needs a piece of its role with exactly its doors, so the shipped catalog
 covers every door set a room can have; a level that has a room no piece fits fails to
 build and names the doors. Tests check that the player can
@@ -257,6 +265,10 @@ one atlas pixel is one world pixel. To change how big something looks, change th
 | `to`    | The state to enter.                                                                                 |
 | `when`  | [Facts](#facts) and the value each must have. Empty always holds.                                   |
 | `after` | Optional seconds every condition must hold before the transition fires.                             |
+
+A machine may also set `needsPatrol` (default `false`) when its activities do nothing
+useful without a patrol. Every room piece placing an actor with that machine must then
+give it one.
 
 From one state, the first transition in the list whose conditions have held long enough
 fires.

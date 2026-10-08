@@ -1,10 +1,11 @@
 #include "advanced_platformer/world/level_validation.hpp"
 
+#include <cstddef>
 #include <format>
 #include <optional>
 #include <stdexcept>
-#include <string>
 #include <string_view>
+#include <vector>
 
 #include <glm/vec2.hpp>
 
@@ -19,6 +20,7 @@
 #include "advanced_platformer/navigation/platformer_connection_cache.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/world/level_exit.hpp"
+#include "advanced_platformer/world/pickup.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
 #include "advanced_platformer/world/world.hpp"
 
@@ -58,75 +60,130 @@ namespace advanced_platformer
             return false;
         }
 
-        std::string actorLocation(int level, ActorId actor, std::string_view place)
+        void requireClearance(const TileMap& map, const Aabb& bounds, std::string_view place)
         {
-            return std::format("Level {} actor {} {}", level, actor.value, place);
-        }
-
-        void validatePlacement(
-            const TileMap& map,
-            const Actor& actor,
-            const Aabb& bounds,
-            int level,
-            std::string_view place,
-            bool needsGround)
-        {
-            const std::string location = actorLocation(level, actor.id, place);
             if (!hasClearance(map, bounds))
             {
-                throw std::invalid_argument(std::format("{} overlaps a blocked tile", location));
-            }
-            if (needsGround && !hasGroundSupport(map, bounds))
-            {
-                throw std::invalid_argument(std::format("{} has no ground support", location));
+                throw std::invalid_argument(std::format("{} overlaps a blocked tile", place));
             }
         }
 
-        void validateAtFeet(
+        void requirePlacement(
             const TileMap& map,
-            const Actor& actor,
-            glm::vec2 feet,
-            int level,
+            const Aabb& bounds,
             std::string_view place,
             bool needsGround)
         {
-            const Aabb bounds = boxStandingOn(feet, actor.body.bounds.size);
-            validatePlacement(map, actor, bounds, level, place, needsGround);
+            requireClearance(map, bounds, place);
+            if (needsGround && !hasGroundSupport(map, bounds))
+            {
+                throw std::invalid_argument(std::format("{} has no ground support", place));
+            }
         }
 
         bool patrolNeedsGround(const Actor& actor)
         {
             return actor.platformerMovement.has_value() && !actor.surfaceClimb.has_value();
         }
+
+        void requirePlacementAtFeet(
+            const TileMap& map,
+            const Actor& actor,
+            glm::vec2 feet,
+            std::string_view place,
+            bool needsGround)
+        {
+            requirePlacement(map, boxStandingOn(feet, actor.body.bounds.size), place, needsGround);
+        }
     }
 
-    void validateLevelActors(const TileMap& map, const World& world, int level)
+    void validateActorPlacement(const TileMap& map, const Actor& actor)
+    {
+        requirePlacement(map, actor.body.bounds, "spawn", actor.platformerMovement.has_value());
+        if (!actor.patrol.has_value())
+        {
+            if (actor.machine.has_value() && actor.machine->definition.needsPatrol)
+            {
+                throw std::invalid_argument(
+                    std::format("machine '{}' needs a patrol", actor.machine->definition.name));
+            }
+            return;
+        }
+        const bool needsGround = patrolNeedsGround(actor);
+        requirePlacementAtFeet(
+            map, actor, actor.patrol->firstFeet, "first patrol point", needsGround);
+        requirePlacementAtFeet(
+            map, actor, actor.patrol->secondFeet, "second patrol point", needsGround);
+    }
+
+    void validatePickupPlacement(const TileMap& map, const Pickup& pickup)
+    {
+        requireClearance(map, pickup.body.bounds, "spawn");
+    }
+
+    bool actorCanReach(
+        const TileMap& map,
+        const Actor& actor,
+        glm::vec2 goalFeet,
+        float stepSeconds)
+    {
+        PlatformerConnectionCache cache;
+        std::optional<NavigationPathResult> result =
+            findActorPath(map, actor, goalFeet, stepSeconds, cache);
+        while (result.has_value() && result->status == NavigationPathStatus::Deferred)
+        {
+            advanceNavigationFill(map, cache, 1);
+            result = findActorPath(map, actor, goalFeet, stepSeconds, cache);
+        }
+        return result.has_value() && result->status == NavigationPathStatus::Found;
+    }
+
+    void validateLevelPlacements(const TileMap& map, const World& world, int level)
     {
         for (const Actor& actor : world.actors())
         {
-            const bool platformer = actor.platformerMovement.has_value();
-            validatePlacement(map, actor, actor.body.bounds, level, "spawn", platformer);
-            if (!actor.patrol.has_value())
+            try
             {
-                continue;
+                validateActorPlacement(map, actor);
             }
-            const bool needsGround = patrolNeedsGround(actor);
-            validateAtFeet(
-                map, actor, actor.patrol->firstFeet, level, "first patrol point", needsGround);
-            validateAtFeet(
-                map, actor, actor.patrol->secondFeet, level, "second patrol point", needsGround);
+            catch (const std::invalid_argument& error)
+            {
+                throw std::invalid_argument(
+                    std::format("Level {} actor {} {}", level, actor.id.value, error.what()));
+            }
+        }
+
+        const std::vector<Pickup>& pickups = world.pickups();
+        for (std::size_t index = 0; index < pickups.size(); ++index)
+        {
+            try
+            {
+                validatePickupPlacement(map, pickups[index]);
+            }
+            catch (const std::invalid_argument& error)
+            {
+                throw std::invalid_argument(
+                    std::format("Level {} pickup {} {}", level, index, error.what()));
+            }
         }
 
         const Actor* player = world.findActor(world.playerId());
         if (player != nullptr)
         {
-            validateAtFeet(
-                map,
-                *player,
-                world.playerSpawnFeet(),
-                level,
-                "respawn",
-                player->platformerMovement.has_value());
+            try
+            {
+                requirePlacementAtFeet(
+                    map,
+                    *player,
+                    world.playerSpawnFeet(),
+                    "respawn",
+                    player->platformerMovement.has_value());
+            }
+            catch (const std::invalid_argument& error)
+            {
+                throw std::invalid_argument(
+                    std::format("Level {} actor {} {}", level, player->id.value, error.what()));
+            }
         }
     }
 
@@ -144,15 +201,6 @@ namespace advanced_platformer
         }
         Actor atRespawn = *player;
         moveFeetTo(atRespawn.body.bounds, world.playerSpawnFeet());
-        const glm::vec2 goal = feetOf(exit->bounds);
-        PlatformerConnectionCache cache;
-        std::optional<NavigationPathResult> result =
-            findActorPath(map, atRespawn, goal, stepSeconds, cache);
-        while (result.has_value() && result->status == NavigationPathStatus::Deferred)
-        {
-            advanceNavigationFill(map, cache, 1);
-            result = findActorPath(map, atRespawn, goal, stepSeconds, cache);
-        }
-        return result.has_value() && result->status == NavigationPathStatus::Found;
+        return actorCanReach(map, atRespawn, feetOf(exit->bounds), stepSeconds);
     }
 }

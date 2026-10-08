@@ -19,7 +19,8 @@
     {
       "id": "rat_1",
       "definition": "rat",
-      "spawn": [8, 10]
+      "spawn": [8, 10],
+      "patrol": { "first": [7, 10], "second": [18, 10] }
     },
     {
       "id": "zombie_1",
