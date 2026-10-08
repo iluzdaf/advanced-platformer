@@ -17,27 +17,6 @@ namespace advanced_platformer
 {
     namespace
     {
-        bool bodyFits(const TileMap& map, const Aabb& bounds)
-        {
-            if (bounds.topLeft.x < 0.0F || rightOf(bounds) > map.pixelWidth() ||
-                bottomOf(bounds) > map.pixelHeight())
-            {
-                return false;
-            }
-            const CellRange cells = cellsCovered(map.tileSize(), bounds);
-            for (int row = cells.first.y; row <= cells.last.y; ++row)
-            {
-                for (int column = cells.first.x; column <= cells.last.x; ++column)
-                {
-                    if (map.blocksMovement({column, row}))
-                    {
-                        return false;
-                    }
-                }
-            }
-            return true;
-        }
-
         void requireBodySize(glm::vec2 bodySize)
         {
             if (!isFinitePositive(bodySize))
@@ -45,6 +24,27 @@ namespace advanced_platformer
                 throw std::invalid_argument("Navigation body size must be finite and positive");
             }
         }
+    }
+
+    bool bodyFits(const TileMap& map, const Aabb& bounds)
+    {
+        if (bounds.topLeft.x < 0.0F || rightOf(bounds) > map.pixelWidth() ||
+            bottomOf(bounds) > map.pixelHeight())
+        {
+            return false;
+        }
+        const CellRange cells = cellsCovered(map.tileSize(), bounds);
+        for (int row = cells.first.y; row <= cells.last.y; ++row)
+        {
+            for (int column = cells.first.x; column <= cells.last.x; ++column)
+            {
+                if (map.blocksMovement({column, row}))
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     bool canStandAt(const TileMap& map, Cell cell, glm::vec2 bodySize)

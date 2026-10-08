@@ -234,17 +234,23 @@ team, and life state, plus optional components.
 - A projectile breaks a tile only when its weapon `breaksTiles` and the tile names what it
   breaks into. The swap changes the cell's ID and the map logs the break.
   `updateProjectiles` alone takes a mutable map.
-- `validateLevelActors` checks every spawn, the player's spawn, and every patrol
-  endpoint for body clearance. Platformers also need ground support, except a climber's
-  patrol endpoints, which may be on a wall or ceiling. Errors name the level, actor, and
-  location.
-- `playerCanReachExit` finds a path for the player from its spawn to the exit, in a
-  cache of its own. Each time the search defers, the fill builds just the cell it asked
+- `validateActorPlacement` checks an actor's spawn and patrol endpoints for body
+  clearance. Platformers also need ground support, except a climber's patrol endpoints,
+  which may be on a wall or ceiling. `validatePickupPlacement` checks a pickup's clearance.
+  `validateLevelPlacements` runs both over a level and checks the player's spawn; its
+  errors name the level, the actor or pickup, and the location.
+- `actorCanReach` finds a path for an actor to a point, in a cache of its own.
+  `playerCanReachExit` uses it from the player's spawn to the exit. Each time the search defers, the fill builds just the cell it asked
   for, so only the cells the search reaches are simulated. It ignores the exit's
   requirement and breakable tiles.
 - Starting a level runs it on each seed in turn until one passes, so a restart rebuilds a
   level the player can finish. A hot reload keeps the seed and runs the check once; a
   reload that cuts off the exit fails, so the layout never jumps while a piece is edited.
+- `validateRoomPieces` checks every piece's placements on the piece alone, and again
+  mirrored when the piece allows it, so a bad placement fails when content loads, not
+  when a level happens to use the piece. It also checks that each NPC can reach both ends
+  of its patrol. The session and the playtest run it right after loading content, so a
+  hot reload with a bad piece fails before it reaches `Game`.
 
 ## NPC behaviour
 
@@ -440,14 +446,15 @@ to the traversal profile. The search itself does not change.
 
 ### Data-driven level boundary
 
-| Step                 | Owner                                 | Result                                                                                                                                                                                         |
-| -------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Load shared catalogs | `game/content/game_catalogs.cpp`      | Definitions and the room pieces, kept for the session                                                                                                                                          |
-| Check the atlas      | `app/session/atlas_regions.cpp`       | Every sprite region inside the atlas the session uploaded; the session runs it after each load                                                                                                 |
-| Load scripts         | `game/content/npc_script_catalog.cpp` | Each script a machine names, with every named activity present                                                                                                                                 |
-| Generate a level     | `core/src/level/level_generator.cpp`  | Room pieces laid out from the seed and stitched into a `GeneratedLevel`                                                                                                                        |
-| Compose the level    | `composeLevel`                        | Names resolved into a map, world, and placed objects, with the player at its spawn                                                                                                             |
-| Enter the level      | `Game::enterLevel`                    | `composePlayableLevel` moves to the next seed until the player can reach the exit; then the old actors' scripts are forgotten, the camera follows the player and the navigation fill is queued |
+| Step                  | Owner                                 | Result                                                                                                                                                                                         |
+| --------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Load shared catalogs  | `game/content/game_catalogs.cpp`      | Definitions and the room pieces, kept for the session                                                                                                                                          |
+| Check the atlas       | `app/session/atlas_regions.cpp`       | Every sprite region inside the atlas the session uploaded; the session runs it after each load                                                                                                 |
+| Check the room pieces | `validateRoomPieces`                  | Every placement clear and every patrol reachable in each piece; the session and the playtest run it after each load                                                                            |
+| Load scripts          | `game/content/npc_script_catalog.cpp` | Each script a machine names, with every named activity present                                                                                                                                 |
+| Generate a level      | `core/src/level/level_generator.cpp`  | Room pieces laid out from the seed and stitched into a `GeneratedLevel`                                                                                                                        |
+| Compose the level     | `composeLevel`                        | Names resolved into a map, world, and placed objects, with the player at its spawn                                                                                                             |
+| Enter the level       | `Game::enterLevel`                    | `composePlayableLevel` moves to the next seed until the player can reach the exit; then the old actors' scripts are forgotten, the camera follows the player and the navigation fill is queued |
 
 - JSON stays in `game/content`; the core receives C++ values. Each file is read with
   Glaze through `content_glaze` into structs that mirror it, so unknown keys, missing

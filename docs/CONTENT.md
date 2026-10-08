@@ -145,6 +145,13 @@ Every cell is `[column, row]` inside the piece, counted from its top-left. An `i
 nonempty and unique among the piece's actors and pickups; the generator prefixes it with
 the room, as in `room3_zombie_1`.
 
+When content loads, every piece's placements are checked on the piece alone, and again
+mirrored when `mirror` allows it. An actor's spawn and patrol ends, and a pickup's spawn,
+must not overlap a blocked tile. A walker's spawn and patrol ends need ground under them;
+a climber's patrol ends may be on a wall or ceiling. An actor with a `patrol` must be able
+to reach both its ends from its spawn. Errors name the piece, `mirrored` when it is the flipped copy, and the placement's
+`id`.
+
 Each room needs a piece of its role with exactly its doors, so the shipped catalog
 covers every door set a room can have; a level that has a room no piece fits fails to
 build and names the doors. Tests check that the player can

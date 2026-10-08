@@ -24,12 +24,8 @@
     {
       "id": "rat_1",
       "definition": "rat",
-      "spawn": [4, 10]
-    },
-    {
-      "id": "rat_2",
-      "definition": "rat",
-      "spawn": [13, 10]
+      "spawn": [4, 10],
+      "patrol": { "first": [1, 10], "second": [6, 10] }
     }
   ]
 }

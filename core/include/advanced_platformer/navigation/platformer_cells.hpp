@@ -13,6 +13,8 @@ namespace advanced_platformer
 {
     class TileMap;
 
+    bool bodyFits(const TileMap& map, const Aabb& bounds);
+
     bool canStandAt(const TileMap& map, Cell cell, glm::vec2 bodySize);
 
     bool canClimbAt(const TileMap& map, Cell cell, glm::vec2 bodySize);

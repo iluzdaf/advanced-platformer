@@ -10,6 +10,7 @@
 #include "advanced_platformer/math/coordinates.hpp"
 #include "advanced_platformer/world/level_exit.hpp"
 #include "advanced_platformer/world/level_validation.hpp"
+#include "advanced_platformer/world/pickup.hpp"
 #include "advanced_platformer/world/world.hpp"
 #include "support/actor_builder.hpp"
 #include "support/add_player.hpp"
@@ -51,7 +52,7 @@ TEST_CASE("Level actors require clear spawn positions", "[world][level-validatio
     world.addActor(makePlatformer({24.0F, 32.0F}));
 
     REQUIRE_THROWS_AS(
-        advanced_platformer::validateLevelActors(map, world, 1), std::invalid_argument);
+        advanced_platformer::validateLevelPlacements(map, world, 1), std::invalid_argument);
 }
 
 TEST_CASE("Platformer spawns and patrol points require ground support", "[world][level-validation]")
@@ -63,7 +64,7 @@ TEST_CASE("Platformer spawns and patrol points require ground support", "[world]
         advanced_platformer::World world;
         world.addActor(makePlatformer({24.0F, 16.0F}));
         REQUIRE_THROWS_AS(
-            advanced_platformer::validateLevelActors(map, world, 1), std::invalid_argument);
+            advanced_platformer::validateLevelPlacements(map, world, 1), std::invalid_argument);
     }
 
     SECTION("patrol point")
@@ -72,7 +73,7 @@ TEST_CASE("Platformer spawns and patrol points require ground support", "[world]
         world.addActor(
             makePlatformer({24.0F, 32.0F}).thinking({}).patrolling({16.0F, 32.0F}, {16.0F, 16.0F}));
         REQUIRE_THROWS_AS(
-            advanced_platformer::validateLevelActors(map, world, 1), std::invalid_argument);
+            advanced_platformer::validateLevelPlacements(map, world, 1), std::invalid_argument);
     }
 }
 
@@ -87,7 +88,7 @@ TEST_CASE("The player respawn requires clearance and ground support", "[world][l
         world.setPlayer(player, {24.0F, 48.0F});
 
         REQUIRE_THROWS_WITH(
-            advanced_platformer::validateLevelActors(map, world, 7),
+            advanced_platformer::validateLevelPlacements(map, world, 7),
             "Level 7 actor 1 respawn overlaps a blocked tile");
     }
 
@@ -98,7 +99,7 @@ TEST_CASE("The player respawn requires clearance and ground support", "[world][l
         world.setPlayer(player, {24.0F, 16.0F});
 
         REQUIRE_THROWS_WITH(
-            advanced_platformer::validateLevelActors(map, world, 7),
+            advanced_platformer::validateLevelPlacements(map, world, 7),
             "Level 7 actor 1 respawn has no ground support");
     }
 }
@@ -110,7 +111,7 @@ TEST_CASE("Flying actors require clearance but not ground support", "[world][lev
     world.addActor(
         makeFlyer({24.0F, 16.0F}).thinking({}).patrolling({24.0F, 16.0F}, {32.0F, 24.0F}));
 
-    REQUIRE_NOTHROW(advanced_platformer::validateLevelActors(map, world, 1));
+    REQUIRE_NOTHROW(advanced_platformer::validateLevelPlacements(map, world, 1));
 }
 
 TEST_CASE("A climber's patrol points need clearance but not ground", "[world][level-validation]")
@@ -126,7 +127,7 @@ TEST_CASE("A climber's patrol points need clearance but not ground", "[world][le
     {
         advanced_platformer::World world;
         world.addActor(climber);
-        REQUIRE_NOTHROW(advanced_platformer::validateLevelActors(map, world, 1));
+        REQUIRE_NOTHROW(advanced_platformer::validateLevelPlacements(map, world, 1));
     }
 
     SECTION("spawn in the air")
@@ -135,9 +136,44 @@ TEST_CASE("A climber's patrol points need clearance but not ground", "[world][le
         advanced_platformer::World world;
         world.addActor(climber);
         REQUIRE_THROWS_WITH(
-            advanced_platformer::validateLevelActors(map, world, 1),
+            advanced_platformer::validateLevelPlacements(map, world, 1),
             "Level 1 actor 1 spawn has no ground support");
     }
+}
+
+TEST_CASE("Level pickups require clear spawn positions", "[world][level-validation]")
+{
+    const advanced_platformer::TileMap map = tests::TileMapBuilder({"...", ".#.", "###"});
+    advanced_platformer::World world({{1, "Coin", {}, 5}});
+    advanced_platformer::Pickup pickup;
+    pickup.body.bounds = advanced_platformer::boxStandingOn({24.0F, 32.0F}, {8.0F, 8.0F});
+    pickup.stack = {1, 1};
+    world.addPickup(pickup);
+
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::validateLevelPlacements(map, world, 3),
+        "Level 3 pickup 0 spawn overlaps a blocked tile");
+}
+
+TEST_CASE("An NPC reaches only the places its own moves lead to", "[world][level-validation]")
+{
+    const advanced_platformer::TileMap map = tests::TileMapBuilder(
+        {"##########", "#....#...#", "#....#...#", "#....#...#", "##########"});
+    const advanced_platformer::Actor walker =
+        makePlatformer(advanced_platformer::feetInCell(tests::TileSize, {1, 3}));
+
+    REQUIRE(
+        advanced_platformer::actorCanReach(
+            map,
+            walker,
+            advanced_platformer::feetInCell(tests::TileSize, {4, 3}),
+            tests::FixedStepSeconds));
+    REQUIRE_FALSE(
+        advanced_platformer::actorCanReach(
+            map,
+            walker,
+            advanced_platformer::feetInCell(tests::TileSize, {7, 3}),
+            tests::FixedStepSeconds));
 }
 
 TEST_CASE("The player can reach an exit it can walk and jump to", "[world][level-validation]")
