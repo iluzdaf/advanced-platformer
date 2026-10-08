@@ -249,7 +249,8 @@ team, and life state, plus optional components.
 - `validateRoomPieces` checks every piece's placements on the piece alone, and again
   mirrored when the piece allows it, so a bad placement fails when content loads, not
   when a level happens to use the piece. It also checks that each NPC can reach both ends
-  of its patrol. `Game` runs it when it starts and on every hot reload.
+  of its patrol. The session and the playtest run it right after loading content, so a
+  hot reload with a bad piece fails before it reaches `Game`.
 
 ## NPC behaviour
 
@@ -445,14 +446,15 @@ to the traversal profile. The search itself does not change.
 
 ### Data-driven level boundary
 
-| Step                 | Owner                                 | Result                                                                                                                                                                                         |
-| -------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Load shared catalogs | `game/content/game_catalogs.cpp`      | Definitions and the room pieces, kept for the session                                                                                                                                          |
-| Check the atlas      | `app/session/atlas_regions.cpp`       | Every sprite region inside the atlas the session uploaded; the session runs it after each load                                                                                                 |
-| Load scripts         | `game/content/npc_script_catalog.cpp` | Each script a machine names, with every named activity present                                                                                                                                 |
-| Generate a level     | `core/src/level/level_generator.cpp`  | Room pieces laid out from the seed and stitched into a `GeneratedLevel`                                                                                                                        |
-| Compose the level    | `composeLevel`                        | Names resolved into a map, world, and placed objects, with the player at its spawn                                                                                                             |
-| Enter the level      | `Game::enterLevel`                    | `composePlayableLevel` moves to the next seed until the player can reach the exit; then the old actors' scripts are forgotten, the camera follows the player and the navigation fill is queued |
+| Step                  | Owner                                 | Result                                                                                                                                                                                         |
+| --------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Load shared catalogs  | `game/content/game_catalogs.cpp`      | Definitions and the room pieces, kept for the session                                                                                                                                          |
+| Check the atlas       | `app/session/atlas_regions.cpp`       | Every sprite region inside the atlas the session uploaded; the session runs it after each load                                                                                                 |
+| Check the room pieces | `validateRoomPieces`                  | Every placement clear and every patrol reachable in each piece; the session and the playtest run it after each load                                                                            |
+| Load scripts          | `game/content/npc_script_catalog.cpp` | Each script a machine names, with every named activity present                                                                                                                                 |
+| Generate a level      | `core/src/level/level_generator.cpp`  | Room pieces laid out from the seed and stitched into a `GeneratedLevel`                                                                                                                        |
+| Compose the level     | `composeLevel`                        | Names resolved into a map, world, and placed objects, with the player at its spawn                                                                                                             |
+| Enter the level       | `Game::enterLevel`                    | `composePlayableLevel` moves to the next seed until the player can reach the exit; then the old actors' scripts are forgotten, the camera follows the player and the navigation fill is queued |
 
 - JSON stays in `game/content`; the core receives C++ values. Each file is read with
   Glaze through `content_glaze` into structs that mirror it, so unknown keys, missing

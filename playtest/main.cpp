@@ -15,6 +15,7 @@
 
 #include "content/game_content.hpp"
 #include "game.hpp"
+#include "level/level_composition.hpp"
 #include "playtest.hpp"
 #include "advanced_platformer/timing/fixed_step.hpp"
 
@@ -95,6 +96,7 @@ namespace
         constexpr auto StepSeconds = static_cast<float>(advanced_platformer::FixedDeltaSeconds);
         advanced_platformer::GameContent content = advanced_platformer::playtestContent(
             advanced_platformer::loadGameContent(AssetDirectory), parsed.botDirectory);
+        advanced_platformer::validateRoomPieces(content.gameCatalogs, StepSeconds);
         advanced_platformer::Game game{
             0,
             std::move(content.gameCatalogs),

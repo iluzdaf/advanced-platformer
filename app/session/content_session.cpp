@@ -11,8 +11,10 @@
 #include "content/game_content.hpp"
 #include "diagnostics/console_log.hpp"
 #include "game.hpp"
+#include "level/level_composition.hpp"
 #include "level/level_reload.hpp"
 #include "graphics/sprite_renderer.hpp"
+#include "advanced_platformer/timing/fixed_step.hpp"
 
 namespace advanced_platformer
 {
@@ -31,6 +33,7 @@ namespace advanced_platformer
         {
             GameContent content = loadGameContent(assetDirectory);
             validateAtlasRegions(content.gameCatalogs, atlasSize, assetDirectory / "catalogs");
+            validateRoomPieces(content.gameCatalogs, static_cast<float>(FixedDeltaSeconds));
             return content;
         }
     }
