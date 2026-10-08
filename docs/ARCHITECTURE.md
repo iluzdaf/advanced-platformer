@@ -597,8 +597,9 @@ to the traversal profile. The search itself does not change.
 | `npcsNear`      | Live NPCs within the bot's notice distance                                                            |
 | `npcsTargeting` | Live NPCs targeting the bot                                                                           |
 | `noticed`       | Each NPC that started targeting the bot since the last sample, with `npc` and its distance in `cells` |
-| `collected`     | Pickups collected since the last sample                                                               |
+| `collected`     | The item name of each pickup collected since the last sample                                          |
 | `piece`         | The piece of the room the player stands in                                                            |
+| `cell`          | The cell the player's feet are in, as `[x, y]`                                                        |
 
 ## Error handling and validation
 

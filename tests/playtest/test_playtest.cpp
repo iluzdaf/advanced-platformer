@@ -52,6 +52,30 @@ TEST_CASE("A playtest samples the level's pacing every half second")
     }
 }
 
+TEST_CASE("A playtest names each pickup the bot collects")
+{
+    advanced_platformer::Game game = tests::fixtureGame(
+        advanced_platformer::playtestContent(
+            tests::fixtureContent("tests/fixtures/rooms/pickup_placement/pieces.json"),
+            ADVANCED_PLATFORMER_SOURCE_PLAYTEST_ASSETS));
+
+    const std::vector<advanced_platformer::LevelPlaytest> results =
+        advanced_platformer::playtestRun(game, 1, 60.0F, tests::FixedStepSeconds);
+
+    REQUIRE(results.size() == 1);
+    REQUIRE(results.front().pickupsCollected > 0);
+    int named = 0;
+    for (const advanced_platformer::PacingSample& sample : results.front().pacing)
+    {
+        for (const std::string& item : sample.collected)
+        {
+            ++named;
+            CHECK_FALSE(item.empty());
+        }
+    }
+    CHECK(named == results.front().pickupsCollected);
+}
+
 TEST_CASE("A playtest records each NPC that starts targeting the bot")
 {
     advanced_platformer::GameContent content = tests::fixtureContent();
@@ -111,8 +135,9 @@ TEST_CASE("A level playtest is written as one JSON line")
              .npcsNear = 2,
              .npcsTargeting = 1,
              .noticed = {{.npc = "rat", .cells = 2.5F}},
-             .collected = 1,
-             .piece = "den"}}};
+             .collected = {"Health potion"},
+             .piece = "den",
+             .cell = {5, 6}}}};
 
     const std::string text = advanced_platformer::formatLevelPlaytest(level);
 
@@ -123,6 +148,6 @@ TEST_CASE("A level playtest is written as one JSON line")
     CHECK(
         text.find(
             R"("pacing":[{"seconds":0.5,"health":3,"damage":1,"npcsNear":2,"npcsTargeting":1,)"
-            R"("noticed":[{"npc":"rat","cells":2.5}],"collected":1,"piece":"den"}])") !=
-        std::string::npos);
+            R"("noticed":[{"npc":"rat","cells":2.5}],"collected":["Health potion"],"piece":"den",)"
+            R"("cell":[5,6]}])") != std::string::npos);
 }

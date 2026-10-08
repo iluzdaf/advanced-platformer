@@ -39,6 +39,13 @@
 #include "advanced_platformer/world/tile_map.hpp"
 #include "advanced_platformer/world/world.hpp"
 
+template <> struct glz::meta<advanced_platformer::Cell>
+{
+    using T = advanced_platformer::Cell;
+    // NOLINTNEXTLINE(readability-identifier-naming)
+    static constexpr auto value = glz::array(&T::x, &T::y);
+};
+
 namespace advanced_platformer
 {
     struct LevelPlaytestJson
@@ -96,8 +103,8 @@ namespace advanced_platformer
             int damageSinceSample = 0;
             std::vector<ActorId> targeting;
             std::vector<NpcNotice> noticedSinceSample;
-            int pickupsLeft = 0;
-            int collectedSinceSample = 0;
+            std::map<std::size_t, std::string> pickupsLeft;
+            std::vector<std::string> collectedSinceSample;
         };
 
         const Actor& playerOf(const GameLevel& level)
@@ -216,13 +223,14 @@ namespace advanced_platformer
 
         PacingSample pacingSample(const GameLevel& level, const Actor& player, float seconds)
         {
+            const Cell cell = cellAtFeet(level.map.tileSize(), feetOf(player.body.bounds));
             return {
                 .seconds = seconds,
                 .health = healthOf(player),
                 .npcsNear = npcsNear(level, player),
                 .npcsTargeting = npcsTargeting(level, player),
-                .piece =
-                    pieceAt(level, cellAtFeet(level.map.tileSize(), feetOf(player.body.bounds)))};
+                .piece = pieceAt(level, cell),
+                .cell = cell};
         }
     }
 
@@ -260,11 +268,18 @@ namespace advanced_platformer
 
     namespace
     {
-        int placedPickupsLeft(const GameLevel& level)
+        std::map<std::size_t, std::string> placedPickupsLeft(const GameLevel& level)
         {
-            return static_cast<int>(std::ranges::count_if(
-                level.world.pickups(),
-                [](const Pickup& pickup) { return pickup.placement.has_value(); }));
+            std::map<std::size_t, std::string> left;
+            for (const Pickup& pickup : level.world.pickups())
+            {
+                if (pickup.placement.has_value())
+                {
+                    left.emplace(
+                        *pickup.placement, level.world.itemDefinition(pickup.stack.item).name);
+                }
+            }
+            return left;
         }
     }
 
@@ -301,10 +316,17 @@ namespace advanced_platformer
 
             result.healthLeft = health;
             result.endCell = cellAtFeet(level.map.tileSize(), feet);
-            const int pickupsLeft = placedPickupsLeft(level);
-            watch.collectedSinceSample += std::max(0, watch.pickupsLeft - pickupsLeft);
-            watch.pickupsLeft = pickupsLeft;
-            result.pickupsCollected = result.pickupsPlaced - pickupsLeft;
+            std::map<std::size_t, std::string> pickupsLeft = placedPickupsLeft(level);
+            for (const auto& [placement, item] : watch.pickupsLeft)
+            {
+                if (!pickupsLeft.contains(placement))
+                {
+                    watch.collectedSinceSample.push_back(item);
+                }
+            }
+            watch.pickupsLeft = std::move(pickupsLeft);
+            result.pickupsCollected =
+                result.pickupsPlaced - static_cast<int>(watch.pickupsLeft.size());
         }
     }
 
@@ -326,7 +348,7 @@ namespace advanced_platformer
                 pacingSample(level, playerOf(level), watchedSeconds(watch, stepSeconds));
             sample.damage = std::exchange(watch.damageSinceSample, 0);
             sample.noticed = std::exchange(watch.noticedSinceSample, {});
-            sample.collected = std::exchange(watch.collectedSinceSample, 0);
+            sample.collected = std::exchange(watch.collectedSinceSample, {});
             result.pacing.push_back(std::move(sample));
         }
     }
@@ -351,7 +373,7 @@ namespace advanced_platformer
                 std::max(1, static_cast<int>(std::lround(PacingSeconds / stepSeconds)));
             PlaytestWatch watch;
             watch.lastHealth = healthOf(playerOf(level));
-            watch.pickupsLeft = result.pickupsPlaced;
+            watch.pickupsLeft = placedPickupsLeft(level);
             observeStep(watch, level, 0.0F, result);
             recordPacing(watch, level, stepSeconds, result);
 
@@ -376,7 +398,7 @@ namespace advanced_platformer
                     last.health = 0;
                     last.damage = watch.damageSinceSample + healthBefore;
                     last.noticed = std::move(watch.noticedSinceSample);
-                    last.collected = watch.collectedSinceSample;
+                    last.collected = std::move(watch.collectedSinceSample);
                     result.pacing.push_back(std::move(last));
                     return result;
                 }
@@ -386,7 +408,7 @@ namespace advanced_platformer
                     last.seconds = watchedSeconds(watch, stepSeconds);
                     last.damage = watch.damageSinceSample;
                     last.noticed = std::move(watch.noticedSinceSample);
-                    last.collected = watch.collectedSinceSample;
+                    last.collected = std::move(watch.collectedSinceSample);
                     result.pacing.push_back(std::move(last));
                     return result;
                 }
