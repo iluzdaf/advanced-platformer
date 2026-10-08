@@ -29,6 +29,7 @@
 #include "level/level_composition.hpp"
 #include "lua_script_diagnostic.hpp"
 #include "advanced_platformer/actor/actor.hpp"
+#include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/level/level_generator.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
@@ -93,6 +94,8 @@ namespace advanced_platformer
             float secondsSinceProgress = 0.0F;
             int steps = 0;
             int damageSinceSample = 0;
+            std::vector<ActorId> targeting;
+            std::vector<NpcNotice> noticedSinceSample;
         };
 
         const Actor& playerOf(const GameLevel& level)
@@ -147,6 +150,43 @@ namespace advanced_platformer
             return nearest;
         }
 
+        bool targetsPlayer(const GameLevel& level, const Actor& actor, const Actor& player)
+        {
+            return actor.id != player.id && actor.life == LifeState::Alive &&
+                   level.actorDefinitionNames.contains(actor.id.value) && actor.brain.has_value() &&
+                   actor.brain->target == player.id;
+        }
+
+        int npcsTargeting(const GameLevel& level, const Actor& player)
+        {
+            return static_cast<int>(std::ranges::count_if(
+                level.world.actors(),
+                [&](const Actor& actor) { return targetsPlayer(level, actor, player); }));
+        }
+
+        void observeNotices(PlaytestWatch& watch, const GameLevel& level, const Actor& player)
+        {
+            std::vector<ActorId> targeting;
+            for (const Actor& actor : level.world.actors())
+            {
+                if (!targetsPlayer(level, actor, player))
+                {
+                    continue;
+                }
+                targeting.push_back(actor.id);
+                if (std::ranges::find(watch.targeting, actor.id) == watch.targeting.end())
+                {
+                    const float cells =
+                        glm::distance(centerOf(player.body.bounds), centerOf(actor.body.bounds)) /
+                        static_cast<float>(level.map.tileSize());
+                    watch.noticedSinceSample.push_back(
+                        {.npc = level.actorDefinitionNames.at(actor.id.value),
+                         .cells = std::round(cells * 10.0F) / 10.0F});
+                }
+            }
+            watch.targeting = std::move(targeting);
+        }
+
         int npcsNear(const GameLevel& level, const Actor& player)
         {
             const glm::vec2 center = centerOf(player.body.bounds);
@@ -178,6 +218,7 @@ namespace advanced_platformer
                 .seconds = seconds,
                 .health = healthOf(player),
                 .npcsNear = npcsNear(level, player),
+                .npcsTargeting = npcsTargeting(level, player),
                 .piece =
                     pieceAt(level, cellAtFeet(level.map.tileSize(), feetOf(player.body.bounds)))};
         }
@@ -242,6 +283,7 @@ namespace advanced_platformer
                 watch.damageSinceSample += watch.lastHealth - health;
             }
             watch.lastHealth = health;
+            observeNotices(watch, level, player);
 
             const glm::vec2 feet = feetOf(player.body.bounds);
             const float exitDistance = glm::distance(feet, exitFeet(level));
@@ -278,6 +320,7 @@ namespace advanced_platformer
             PacingSample sample =
                 pacingSample(level, playerOf(level), watchedSeconds(watch, stepSeconds));
             sample.damage = std::exchange(watch.damageSinceSample, 0);
+            sample.noticed = std::exchange(watch.noticedSinceSample, {});
             result.pacing.push_back(std::move(sample));
         }
     }
@@ -325,6 +368,7 @@ namespace advanced_platformer
                     last.seconds = watchedSeconds(watch, stepSeconds);
                     last.health = 0;
                     last.damage = watch.damageSinceSample + healthBefore;
+                    last.noticed = std::move(watch.noticedSinceSample);
                     result.pacing.push_back(std::move(last));
                     return result;
                 }
@@ -333,6 +377,7 @@ namespace advanced_platformer
                     result.outcome = PlaytestOutcome::Exit;
                     last.seconds = watchedSeconds(watch, stepSeconds);
                     last.damage = watch.damageSinceSample;
+                    last.noticed = std::move(watch.noticedSinceSample);
                     result.pacing.push_back(std::move(last));
                     return result;
                 }

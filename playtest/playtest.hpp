@@ -21,12 +21,20 @@ namespace advanced_platformer
         Timeout
     };
 
+    struct NpcNotice
+    {
+        std::string npc;
+        float cells = 0.0F;
+    };
+
     struct PacingSample
     {
         float seconds = 0.0F;
         int health = 0;
         int damage = 0;
         int npcsNear = 0;
+        int npcsTargeting = 0;
+        std::vector<NpcNotice> noticed;
         std::string piece;
     };
 
