@@ -250,8 +250,11 @@ team, and life state, plus optional components.
   mirrored when the piece allows it, so a bad placement fails when content loads, not
   when a level happens to use the piece. It also checks that each NPC can reach both ends
   of its patrol, that no flyer spawns resting on a tile, and that the player can reach each
-  pickup from the player spawn or a door (or where it falls once a breakable tile under it
-  breaks). The session and the playtest run it right after loading content, so a
+  pickup from the player spawn or from where it lands after coming through a door. A
+  pickup the player cannot reach still passes when it sits on a breakable tile and the
+  player can reach where it lands once that tile breaks. Both landings come from running
+  the game's own movement (`updatePlatformerMovement`, `updatePickupMovement`) until the
+  body stops, so they follow any change to gravity. The session and the playtest run it right after loading content, so a
   hot reload with a bad piece fails before it reaches `Game`.
 
 ## NPC behaviour
