@@ -15,6 +15,7 @@
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "lua_npc_scripts.hpp"
 #include "lua_presentation_script.hpp"
+#include "support/fixed_step.hpp"
 
 namespace
 {
@@ -46,6 +47,15 @@ TEST_CASE("Every run level can be composed until the rooms stop growing", "[app]
         REQUIRE(content.number == number);
         REQUIRE(content.world.exit().has_value());
     }
+}
+
+TEST_CASE(
+    "Every shipped room piece places its actors and pickups where they can be",
+    "[app][content]")
+{
+    REQUIRE_NOTHROW(
+        advanced_platformer::validateRoomPieces(
+            advanced_platformer::loadGameCatalogs("assets/catalogs"), tests::FixedStepSeconds));
 }
 
 TEST_CASE("Every shipped Lua activity resolves", "[app][content][lua]")
