@@ -11,6 +11,7 @@
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/navigation/traversal.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
+#include "advanced_platformer/render/sprite.hpp"
 
 #include "diagnostics/navigation_debug.hpp"
 
@@ -31,8 +32,7 @@ namespace advanced_platformer
     struct ActorSpriteDebugInfo
     {
         Aabb bounds;
-        std::size_t atlasFrame = 0;
-        glm::vec2 atlasPosition = {0.0F, 0.0F};
+        SpriteRegion atlasRegion;
     };
 
     struct PathConnectionDebugInfo
@@ -50,7 +50,6 @@ namespace advanced_platformer
         bool hasPath = false;
         std::size_t nextStep = 0;
         std::size_t stepCount = 0;
-        // Resolved to feet here, like the connections, so the UI draws without cell maths.
         std::optional<glm::vec2> goalFeet;
         std::vector<PathConnectionDebugInfo> connections;
     };
@@ -99,8 +98,6 @@ namespace advanced_platformer
         std::string itemName;
     };
 
-    // The machine of the NPC the machine window follows: its definition to draw, which
-    // state is active and which transition fired last.
     struct MachineDebugInfo
     {
         ActorId actor;
@@ -109,31 +106,22 @@ namespace advanced_platformer
         std::optional<std::size_t> lastFired;
     };
 
-    // What the overlay shows of the world: only what the camera can see, a tile beyond
-    // its edges, so a large level does not fill the text column with actors off screen.
     struct DebugOverlay
     {
         std::vector<ActorDebugInfo> actors;
         std::vector<ProjectileDebugInfo> projectiles;
         std::vector<PickupDebugInfo> pickups;
         std::optional<NavigationCacheDebugInfo> navigationCache;
-        // The cell under the cursor when its tile can break, for the hint that B breaks it.
         std::optional<Aabb> breakableCellUnderCursor;
-        // The locked machine, otherwise the one under the cursor or nearest the player.
         std::optional<MachineDebugInfo> machine;
         Aabb cameraBounds;
         Aabb cameraDeadZone;
     };
 
-    // simulationStepSeconds is the fixed step the world is simulated with; predicted jump
-    // arcs are replayed at it so they match what the actor will do. The navigation view
-    // says which cell and which body the cache is shown for, and its cursor also picks
-    // the NPC whose machine is shown.
     DebugOverlay makeDebugOverlay(
         const World& world,
         const TileMap& map,
         const CameraController& cameraController,
-        float atlasWidth,
         float simulationStepSeconds,
         const NavigationDebugView& navigation = {},
         std::optional<ActorId> lockedMachineActor = std::nullopt);

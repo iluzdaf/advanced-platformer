@@ -48,25 +48,19 @@ namespace advanced_platformer
             return ActorDebugKind::Actor;
         }
 
-        ActorSpriteDebugInfo spriteDebugInfo(
-            const Actor& actor,
-            const Sprite& sprite,
-            float atlasWidth)
+        ActorSpriteDebugInfo spriteDebugInfo(const Actor& actor, const Sprite& sprite)
         {
             if (!isFiniteNonNegative(sprite.region.position) ||
-                !isFinitePositive(sprite.region.size) || atlasWidth < sprite.region.size.x)
+                !isFinitePositive(sprite.region.size))
             {
                 throw std::logic_error("Debug overlay requires a valid sprite region");
             }
 
             const Aabb bounds = placeActorSprite(actor).visible;
-            const std::size_t atlasColumns =
-                static_cast<std::size_t>(atlasWidth / sprite.region.size.x);
-            const std::size_t atlasColumn =
-                static_cast<std::size_t>(sprite.region.position.x / sprite.region.size.x);
-            const std::size_t atlasRow =
-                static_cast<std::size_t>(sprite.region.position.y / sprite.region.size.y);
-            return {bounds, atlasRow * atlasColumns + atlasColumn + 1, sprite.region.position};
+            return ActorSpriteDebugInfo{
+                .bounds = bounds,
+                .atlasRegion = sprite.region,
+            };
         }
 
         std::vector<glm::vec2> sampleAirborneTraversal(
@@ -229,7 +223,6 @@ namespace advanced_platformer
         const World& world,
         const TileMap& map,
         const CameraController& cameraController,
-        float atlasWidth,
         float simulationStepSeconds,
         const NavigationDebugView& navigation,
         std::optional<ActorId> lockedMachineActor)
@@ -238,10 +231,6 @@ namespace advanced_platformer
         {
             throw std::invalid_argument(
                 "Debug overlay simulation step must be finite and positive");
-        }
-        if (!isFinitePositive(atlasWidth))
-        {
-            throw std::invalid_argument("Debug overlay atlas width must be positive and finite");
         }
 
         DebugOverlay scene;
@@ -268,7 +257,7 @@ namespace advanced_platformer
             info.collider = actor.body.bounds;
             if (actor.sprite.has_value())
             {
-                info.sprite = spriteDebugInfo(actor, actor.sprite.value(), atlasWidth);
+                info.sprite = spriteDebugInfo(actor, actor.sprite.value());
             }
             if (actor.animator.has_value())
             {

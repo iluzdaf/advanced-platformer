@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <optional>
-#include <stdexcept>
 #include <vector>
 
 #include <glm/vec2.hpp>
@@ -57,7 +56,7 @@ TEST_CASE("Debug overlay data reports player presentation and NPC state", "[app]
     const advanced_platformer::CameraController cameraController{
         advanced_platformer::Camera{{0.0F, 100.0F}}, {80.0F, 40.0F}};
     const advanced_platformer::DebugOverlay debug = advanced_platformer::makeDebugOverlay(
-        world, map, cameraController, 128.0F, tests::FixedStepSeconds);
+        world, map, cameraController, tests::FixedStepSeconds);
 
     REQUIRE(debug.actors.size() == 2);
     const advanced_platformer::ActorDebugInfo& playerDebug = debug.actors.front();
@@ -68,8 +67,8 @@ TEST_CASE("Debug overlay data reports player presentation and NPC state", "[app]
         playerDebug.sprite.value_or(advanced_platformer::ActorSpriteDebugInfo{});
     REQUIRE(spriteDebug.bounds.topLeft == glm::vec2{22.0F, 184.0F});
     REQUIRE(spriteDebug.bounds.size == glm::vec2{32.0F, 24.0F});
-    REQUIRE(spriteDebug.atlasFrame == 7);
-    REQUIRE(spriteDebug.atlasPosition == region.position);
+    REQUIRE(spriteDebug.atlasRegion.position == region.position);
+    REQUIRE(spriteDebug.atlasRegion.size == region.size);
 
     const advanced_platformer::ActorDebugInfo& npcDebug = debug.actors.back();
     REQUIRE(npcDebug.id == npcId);
@@ -98,7 +97,7 @@ TEST_CASE("Debug overlay data supports actors without presentation components", 
     const advanced_platformer::CameraController cameraController{camera, {80.0F, 40.0F}};
 
     const advanced_platformer::DebugOverlay debug = advanced_platformer::makeDebugOverlay(
-        world, map, cameraController, 128.0F, tests::FixedStepSeconds);
+        world, map, cameraController, tests::FixedStepSeconds);
 
     REQUIRE(debug.cameraBounds.topLeft == camera.position);
     REQUIRE(debug.cameraBounds.size == camera.viewportSize);
@@ -122,7 +121,7 @@ TEST_CASE("Game debug data retains actor definition names", "[app][debug]")
 {
     advanced_platformer::Game game = tests::fixtureGame("tests/fixtures/catalogs/pieces.json");
 
-    const advanced_platformer::DebugOverlay debug = game.debugOverlay(128.0F, std::nullopt, 0);
+    const advanced_platformer::DebugOverlay debug = game.debugOverlay(std::nullopt, 0);
     const auto npc = std::ranges::find_if(
         debug.actors,
         [](const advanced_platformer::ActorDebugInfo& actor)
@@ -143,7 +142,7 @@ TEST_CASE("Debug overlay data names a climbing NPC's navigation profile", "[app]
     advanced_platformer::Game game =
         tests::fixtureGame("tests/fixtures/rooms/climber_placement/pieces.json");
 
-    const advanced_platformer::DebugOverlay debug = game.debugOverlay(128.0F, std::nullopt, 0);
+    const advanced_platformer::DebugOverlay debug = game.debugOverlay(std::nullopt, 0);
     REQUIRE(debug.navigationCache.has_value());
     REQUIRE(
         debug.navigationCache.value_or(advanced_platformer::NavigationCacheDebugInfo{}).actorName ==
@@ -166,7 +165,7 @@ TEST_CASE("Debug overlay data describes NPC patrol points", "[app][debug]")
         advanced_platformer::Camera{}, {80.0F, 40.0F}};
 
     const advanced_platformer::DebugOverlay debug = advanced_platformer::makeDebugOverlay(
-        world, map, cameraController, 128.0F, tests::FixedStepSeconds);
+        world, map, cameraController, tests::FixedStepSeconds);
 
     REQUIRE(debug.actors.front().patrol.has_value());
     const advanced_platformer::PatrolDebugInfo patrol =
@@ -208,7 +207,7 @@ TEST_CASE("Debug overlay data describes visible and remembered targets", "[app][
     const advanced_platformer::CameraController cameraController{
         advanced_platformer::Camera{}, {80.0F, 40.0F}};
     const advanced_platformer::DebugOverlay debug = advanced_platformer::makeDebugOverlay(
-        world, map, cameraController, 128.0F, tests::FixedStepSeconds);
+        world, map, cameraController, tests::FixedStepSeconds);
 
     REQUIRE_FALSE(debug.actors[0].sensor.has_value());
     const advanced_platformer::SensorDebugInfo visible =
@@ -250,7 +249,7 @@ TEST_CASE("Debug overlay data shows only an active bite hitbox", "[app][debug]")
         advanced_platformer::Camera{}, {80.0F, 40.0F}};
 
     const advanced_platformer::DebugOverlay debug = advanced_platformer::makeDebugOverlay(
-        world, map, cameraController, 128.0F, tests::FixedStepSeconds);
+        world, map, cameraController, tests::FixedStepSeconds);
 
     REQUIRE(debug.actors[0].biteHitbox.has_value());
     const advanced_platformer::Aabb hitbox =
@@ -281,7 +280,7 @@ TEST_CASE("Debug overlay data describes projectiles", "[app][debug]")
     const advanced_platformer::CameraController cameraController{
         advanced_platformer::Camera{}, {80.0F, 40.0F}};
     const advanced_platformer::DebugOverlay debug = advanced_platformer::makeDebugOverlay(
-        world, map, cameraController, 128.0F, tests::FixedStepSeconds);
+        world, map, cameraController, tests::FixedStepSeconds);
 
     REQUIRE(debug.projectiles.size() == 2);
     REQUIRE(debug.projectiles[0].bounds.topLeft == owned.bounds.topLeft);
@@ -302,7 +301,7 @@ TEST_CASE("Debug overlay data describes pickup bounds", "[app][debug]")
         advanced_platformer::Camera{}, {80.0F, 40.0F}};
 
     const advanced_platformer::DebugOverlay debug = advanced_platformer::makeDebugOverlay(
-        world, map, cameraController, 128.0F, tests::FixedStepSeconds);
+        world, map, cameraController, tests::FixedStepSeconds);
 
     REQUIRE(debug.pickups.size() == 1);
     REQUIRE(debug.pickups.front().bounds.topLeft == bounds.topLeft);
@@ -323,7 +322,7 @@ TEST_CASE("Debug overlay data marks a breakable tile under the cursor", "[app][d
         advanced_platformer::NavigationDebugView view;
         view.cursorWorld = cursor;
         return advanced_platformer::makeDebugOverlay(
-            world, map, cameraController, 128.0F, tests::FixedStepSeconds, view);
+            world, map, cameraController, tests::FixedStepSeconds, view);
     };
 
     REQUIRE_FALSE(overlayWithCursor(std::nullopt).breakableCellUnderCursor.has_value());
@@ -359,7 +358,7 @@ TEST_CASE("The overlay shows only what the camera can see", "[app][debug]")
     const advanced_platformer::CameraController cameraController{
         advanced_platformer::Camera{}, {80.0F, 40.0F}};
     const advanced_platformer::DebugOverlay debug = advanced_platformer::makeDebugOverlay(
-        world, map, cameraController, 128.0F, tests::FixedStepSeconds);
+        world, map, cameraController, tests::FixedStepSeconds);
 
     REQUIRE(debug.actors.size() == 1);
     REQUIRE(debug.actors.front().id == beyondEdge);
@@ -367,17 +366,4 @@ TEST_CASE("The overlay shows only what the camera can see", "[app][debug]")
     REQUIRE(debug.projectiles.front().bounds.topLeft == shown.bounds.topLeft);
     REQUIRE(debug.pickups.size() == 1);
     REQUIRE(debug.pickups.front().bounds.topLeft == glm::vec2{20.0F, 40.0F});
-}
-
-TEST_CASE("Debug overlay data rejects an invalid atlas width", "[app][debug]")
-{
-    const advanced_platformer::World world;
-    const advanced_platformer::TileMap map = tests::TileMapBuilder({"....", "####"});
-    const advanced_platformer::CameraController cameraController{
-        advanced_platformer::Camera{}, {80.0F, 40.0F}};
-
-    REQUIRE_THROWS_AS(
-        advanced_platformer::makeDebugOverlay(
-            world, map, cameraController, 0.0F, tests::FixedStepSeconds),
-        std::invalid_argument);
 }

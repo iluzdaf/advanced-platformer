@@ -51,7 +51,7 @@ TEST_CASE("Debug overlay data describes path connections and progress", "[app][d
         advanced_platformer::Camera{}, {80.0F, 40.0F}};
 
     const advanced_platformer::DebugOverlay debug = advanced_platformer::makeDebugOverlay(
-        world, map, cameraController, 128.0F, tests::FixedStepSeconds);
+        world, map, cameraController, tests::FixedStepSeconds);
 
     REQUIRE(debug.actors.size() == 1);
     REQUIRE(debug.actors.front().pathFollower.has_value());
@@ -116,7 +116,7 @@ TEST_CASE("Debug overlay data samples the simulated jump curve", "[app][debug]")
         advanced_platformer::Camera{}, {80.0F, 40.0F}};
 
     const advanced_platformer::DebugOverlay debug = advanced_platformer::makeDebugOverlay(
-        world, map, cameraController, 128.0F, tests::FixedStepSeconds);
+        world, map, cameraController, tests::FixedStepSeconds);
     const advanced_platformer::PathFollowerDebugInfo path =
         debug.actors.front().pathFollower.value_or(advanced_platformer::PathFollowerDebugInfo{});
 
@@ -143,7 +143,7 @@ TEST_CASE("The overlay shows only navigation cells near the camera", "[app][debu
         advanced_platformer::Camera{}, {80.0F, 40.0F}};
 
     const advanced_platformer::DebugOverlay debug = advanced_platformer::makeDebugOverlay(
-        world, map, cameraController, 128.0F, tests::FixedStepSeconds);
+        world, map, cameraController, tests::FixedStepSeconds);
 
     REQUIRE(debug.navigationCache.has_value());
     const advanced_platformer::NavigationCacheDebugInfo navigation =
