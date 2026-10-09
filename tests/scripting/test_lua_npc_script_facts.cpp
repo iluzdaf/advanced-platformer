@@ -171,8 +171,8 @@ TEST_CASE("Script facts must be named functions that the engine does not answer"
     }
     SECTION("A fact that is not a function")
     {
-        source =
-            "return { facts = { near = true }, activities = { idle = { update = function() end } } }";
+        source = "return { facts = { near = true }, activities = { idle = { update = function() "
+                 "end } } }";
         expected = "fact 'near' that is not a function";
     }
     SECTION("A fact the engine already answers")
