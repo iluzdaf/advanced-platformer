@@ -217,22 +217,13 @@ namespace advanced_platformer
                       .climb = definition.surfaceClimb}});
             }
         }
-        DebugOverlay overlay = makeDebugOverlay(
+        return makeDebugOverlay(
             level.world,
             level.map,
             cameraControllerValue(),
             simulationStepSeconds,
             navigation,
             lockedMachineActor);
-        for (ActorDebugInfo& actor : overlay.actors)
-        {
-            const auto definition = level.actorDefinitionNames.find(actor.id.value);
-            if (definition != level.actorDefinitionNames.end())
-            {
-                actor.definitionName = definition->second;
-            }
-        }
-        return overlay;
     }
 
     std::optional<ActorId> Game::machineActorAt(glm::vec2 internalPosition) const

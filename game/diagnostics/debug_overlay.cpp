@@ -254,6 +254,10 @@ namespace advanced_platformer
             ActorDebugInfo info;
             info.id = actor.id;
             info.kind = kindOf(actor, world.playerId());
+            if (!actor.definitionName.empty())
+            {
+                info.definitionName = actor.definitionName;
+            }
             info.collider = actor.body.bounds;
             if (actor.sprite.has_value())
             {

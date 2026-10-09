@@ -306,6 +306,7 @@ or `nil`. [`common.lua`](../game/assets/scripts/common.lua) has `idle`, `patrol`
 | `targetFeet`          | The target's known feet, while it is known.                                                                                                                                       |
 | `lastKnownTargetFeet` | Where the target was last seen or heard; `{0, 0}` before any.                                                                                                                     |
 | `targetCenter`        | The living target's body centre now, seen or not.                                                                                                                                 |
+| `targetKind`          | The living target's name in `actors.json`, such as `bat` or `player`.                                                                                                             |
 | `patrol`              | `firstFeet`, `secondFeet` and `headingToSecond`, when the NPC has a patrol.                                                                                                       |
 | `footing`             | `left` and `right`: whether a walker could stand a body width that way.                                                                                                           |
 | `facts`               | The [facts](#facts).                                                                                                                                                              |

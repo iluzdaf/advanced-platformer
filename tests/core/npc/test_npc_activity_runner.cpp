@@ -255,6 +255,7 @@ TEST_CASE("The engine fills an activity's snapshot from the world", "[npc][lua]"
                     "acting", advanced_platformer::NpcActivity{"fixture", "act"})));
     world.setExit({.bounds = {{96.0F, 16.0F}, {16.0F, 16.0F}}});
     world.addPickup({{{{40.0F, 24.0F}, {8.0F, 8.0F}}}, {1, 2}});
+    world.findActor(player)->definitionName = "test_player";
     tests::RecordingNpcScripts scripts;
 
     advanced_platformer::updateNpcSenses(map, world, tests::FixedStepSeconds);
@@ -273,6 +274,7 @@ TEST_CASE("The engine fills an activity's snapshot from the world", "[npc][lua]"
     REQUIRE(
         snapshot.targetCenter.value_or(glm::vec2{}) ==
         advanced_platformer::centerOf(actor(world, player).body.bounds));
+    REQUIRE(snapshot.targetKind == "test_player");
     REQUIRE(snapshot.footing.has_value());
     REQUIRE(snapshot.footing.value_or(advanced_platformer::NpcFooting{}).left);
     REQUIRE_FALSE(snapshot.footing.value_or(advanced_platformer::NpcFooting{}).right);
@@ -336,6 +338,7 @@ TEST_CASE("A flyer has no footing, and the last known target feet outlast the ta
     REQUIRE_FALSE(snapshot.footing.has_value());
     REQUIRE_FALSE(snapshot.targetFeet.has_value());
     REQUIRE_FALSE(snapshot.targetCenter.has_value());
+    REQUIRE_FALSE(snapshot.targetKind.has_value());
     REQUIRE(snapshot.lastKnownTargetFeet == glm::vec2{72.0F, 32.0F});
 }
 

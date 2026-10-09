@@ -46,8 +46,9 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 | `playtest`            | The playtest runner; `playtest/assets` holds the bot's machine and Lua activities                          |
 | `game/assets`         | Catalogs, room pieces, Lua scripts, and the atlas                                                          |
 
-- `GameLevel` keeps the level number, map, world, player spawn, actor definition names,
-  and the placement id of each actor and pickup together. Replacing it starts a fresh
+- `GameLevel` keeps the level number, map, world, player spawn, and the placement id of
+  each actor and pickup together. Each composed actor carries its definition name, such
+  as `bat`, which reloads keep and NPC snapshots pass on. Replacing it starts a fresh
   world. It keeps its seed, so a restart or reload builds the same level. `Game` keeps the
   run seed that each level's seed follows from. `Game::changeLevel` holds the four ways a
   level changes (new run, next level, restart, reroll): which level, which seed, and
