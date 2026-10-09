@@ -209,6 +209,11 @@ return {
 
     activities = {
         travel = {
+            description = "Route to the level exit, asking for a fresh route when the route "
+                .. "ends short of it or the bot has stood still for a second; on the "
+                .. "way, shoot the breakable tile under the nearest pickup within "
+                .. "LootShootDistance, shoot the opponent in sight and drink a potion "
+                .. "at 1 health.",
             update = function(_, snapshot, step, memory)
                 local exit = snapshot.exitFeet
                 local command = exit == nil and { clearRoute = true }
@@ -218,6 +223,9 @@ return {
         },
 
         loot = {
+            description = "Entered while freedLootNearby: route to the pickup the bot shot "
+                .. "free while it stays within LootChaseDistance, doing the same on "
+                .. "the way as travel.",
             update = function(_, snapshot, step, memory)
                 local pickup = nearestPickupOf(snapshot, memory.freedItem)
                 local command = routeWithReplan(memory, snapshot, step, pickup)
@@ -226,6 +234,10 @@ return {
         },
 
         kite = {
+            description = "Entered while targetClosingIn: back away from an opponent in sight"
+                .. " on the same surface that is within KiteDistance and closing in, "
+                .. "aiming and firing at it, for at most KiteSecondsLimit per "
+                .. "approach.",
             update = function(_, snapshot, step, memory)
                 memory.kiteSeconds = (memory.kiteSeconds or 0) + step
                 return drinkWhenLow(snapshot, backAway(snapshot))
@@ -233,6 +245,9 @@ return {
         },
 
         hold = {
+            description = "Entered while nonRatInRange: stand and shoot at an opponent in "
+                .. "sight that is not a rat while it is in primary range on the same "
+                .. "surface, for at most HoldSecondsLimit per opponent.",
             update = function(_, snapshot, step, memory)
                 memory.holdSeconds = (memory.holdSeconds or 0) + step
                 return drinkWhenLow(snapshot, {
@@ -244,6 +259,9 @@ return {
         },
 
         dodge = {
+            description = "Entered while batDiving: run from a bat in sight that is within "
+                .. "DodgeDistance and closing in, aiming and firing at it, for at most"
+                .. " DodgeSecondsLimit per dive.",
             update = function(_, snapshot, step, memory)
                 memory.dodgeSeconds = (memory.dodgeSeconds or 0) + step
                 return drinkWhenLow(snapshot, backAway(snapshot))
@@ -251,6 +269,9 @@ return {
         },
 
         keepAway = {
+            description = "Entered while spiderNear: back away from a spider in sight within "
+                .. "PounceKeepAway, aiming and firing at it, for at most "
+                .. "KeepAwaySecondsLimit per sighting.",
             update = function(_, snapshot, step, memory)
                 memory.keepAwaySeconds = (memory.keepAwaySeconds or 0) + step
                 return drinkWhenLow(snapshot, backAway(snapshot))

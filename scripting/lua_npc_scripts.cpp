@@ -406,7 +406,17 @@ namespace advanced_platformer
             names.insert(name);
             const sol::table activity = activityObject.as<sol::table>();
             rejectUnknownFields(
-                activity, {"enter", "update", "exit"}, std::format("Lua activity '{}'", name));
+                activity,
+                {"description", "enter", "update", "exit"},
+                std::format("Lua activity '{}'", name));
+            if (const sol::object description = activity.get<sol::object>("description");
+                description.valid() && description.get_type() != sol::type::lua_nil &&
+                description.get_type() != sol::type::string)
+            {
+                fail(
+                    activityDescription(script, name, sourceName),
+                    " has a description that is not text");
+            }
             if (!activity.get<sol::object>("update").is<sol::function>())
             {
                 fail(activityDescription(script, name, sourceName), " needs an update function");
