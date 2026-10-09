@@ -27,6 +27,14 @@ namespace advanced_platformer
         float cells = 0.0F;
     };
 
+    struct NpcNearby
+    {
+        std::string npc;
+        std::string state;
+        float right = 0.0F;
+        float above = 0.0F;
+    };
+
     struct PacingSample
     {
         float seconds = 0.0F;
@@ -34,6 +42,7 @@ namespace advanced_platformer
         int damage = 0;
         int npcsNear = 0;
         int npcsTargeting = 0;
+        std::vector<NpcNearby> npcs;
         std::vector<NpcNotice> noticed;
         std::vector<std::string> collected;
         std::string piece;
