@@ -103,6 +103,33 @@ TEST_CASE("A playtest records each NPC that starts targeting the bot")
     CHECK(notices > 0);
 }
 
+TEST_CASE("A playtest lists each NPC near the bot with its state and offset")
+{
+    advanced_platformer::GameContent content = tests::fixtureContent();
+    content.gameCatalogs.actors.definitions.at("test_guard").team =
+        advanced_platformer::Team::Enemy;
+    advanced_platformer::Game game = tests::fixtureGame(
+        advanced_platformer::playtestContent(
+            std::move(content), ADVANCED_PLATFORMER_SOURCE_PLAYTEST_ASSETS));
+
+    const std::vector<advanced_platformer::LevelPlaytest> results =
+        advanced_platformer::playtestRun(game, 1, 60.0F, tests::FixedStepSeconds);
+
+    REQUIRE(results.size() == 1);
+    int listed = 0;
+    for (const advanced_platformer::PacingSample& sample : results.front().pacing)
+    {
+        CHECK(static_cast<int>(sample.npcs.size()) == sample.npcsNear);
+        for (const advanced_platformer::NpcNearby& npc : sample.npcs)
+        {
+            ++listed;
+            CHECK(npc.npc == "test_guard");
+            CHECK_FALSE(npc.state.empty());
+        }
+    }
+    CHECK(listed > 0);
+}
+
 TEST_CASE("A playtest moves on to the next level after a timeout")
 {
     advanced_platformer::Game game = tests::fixtureGame(
@@ -148,6 +175,7 @@ TEST_CASE("A level playtest is written as one JSON line")
              .damage = 1,
              .npcsNear = 2,
              .npcsTargeting = 1,
+             .npcs = {{.npc = "rat", .state = "chase", .right = -1.5F, .above = 2.0F}},
              .noticed = {{.npc = "rat", .cells = 2.5F}},
              .collected = {"Health potion"},
              .piece = "den",
@@ -162,6 +190,7 @@ TEST_CASE("A level playtest is written as one JSON line")
     CHECK(
         text.find(
             R"("pacing":[{"seconds":0.5,"health":3,"damage":1,"npcsNear":2,"npcsTargeting":1,)"
+            R"("npcs":[{"npc":"rat","state":"chase","right":-1.5,"above":2}],)"
             R"("noticed":[{"npc":"rat","cells":2.5}],"collected":["Health potion"],"piece":"den",)"
             R"("cell":[5,6]}])") != std::string::npos);
 }

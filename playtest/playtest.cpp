@@ -34,6 +34,7 @@
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "advanced_platformer/npc/npc.hpp"
+#include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "advanced_platformer/world/level_exit.hpp"
 #include "advanced_platformer/world/pickup.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
@@ -186,17 +187,38 @@ namespace advanced_platformer
             watch.targeting = std::move(targeting);
         }
 
-        int npcsNear(const GameLevel& level, const Actor& player)
+        bool nearPlayer(const GameLevel& level, const Actor& actor, const Actor& player)
+        {
+            return actor.id != player.id && actor.life == LifeState::Alive &&
+                   level.actorDefinitionNames.contains(actor.id.value) &&
+                   glm::distance(centerOf(player.body.bounds), centerOf(actor.body.bounds)) <=
+                       BotNoticeDistance;
+        }
+
+        float tenthsOfCells(float pixels, int tileSize)
+        {
+            return std::round(pixels / static_cast<float>(tileSize) * 10.0F) / 10.0F;
+        }
+
+        std::vector<NpcNearby> npcsNearby(const GameLevel& level, const Actor& player)
         {
             const glm::vec2 center = centerOf(player.body.bounds);
-            return static_cast<int>(std::ranges::count_if(
-                level.world.actors(),
-                [&](const Actor& actor)
+            std::vector<NpcNearby> nearby;
+            for (const Actor& actor : level.world.actors())
+            {
+                if (!nearPlayer(level, actor, player))
                 {
-                    return actor.id != player.id && actor.life == LifeState::Alive &&
-                           level.actorDefinitionNames.contains(actor.id.value) &&
-                           glm::distance(center, centerOf(actor.body.bounds)) <= BotNoticeDistance;
-                }));
+                    continue;
+                }
+                const glm::vec2 offset = centerOf(actor.body.bounds) - center;
+                nearby.push_back(
+                    {.npc = level.actorDefinitionNames.at(actor.id.value),
+                     .state = actor.machine.has_value() ? activeNpcMachineState(*actor.machine).name
+                                                        : "",
+                     .right = tenthsOfCells(offset.x, level.map.tileSize()),
+                     .above = tenthsOfCells(-offset.y, level.map.tileSize())});
+            }
+            return nearby;
         }
 
         std::string pieceAt(const GameLevel& level, Cell cell)
@@ -214,11 +236,14 @@ namespace advanced_platformer
         PacingSample pacingSample(const GameLevel& level, const Actor& player, float seconds)
         {
             const Cell cell = cellAtFeet(level.map.tileSize(), feetOf(player.body.bounds));
+            std::vector<NpcNearby> npcs = npcsNearby(level, player);
+            const int near = static_cast<int>(npcs.size());
             return {
                 .seconds = seconds,
                 .health = healthOf(player),
-                .npcsNear = npcsNear(level, player),
+                .npcsNear = near,
                 .npcsTargeting = npcsTargeting(level, player),
+                .npcs = std::move(npcs),
                 .piece = pieceAt(level, cell),
                 .cell = cell};
         }

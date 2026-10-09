@@ -594,17 +594,18 @@ to the traversal profile. The search itself does not change.
   placed and collected, Lua script errors, and the level's pacing: a sample every half
   second, and one when the level ends.
 
-| Pacing field    | Meaning                                                                                               |
-| --------------- | ----------------------------------------------------------------------------------------------------- |
-| `seconds`       | Seconds since the level started                                                                       |
-| `health`        | The player's health                                                                                   |
-| `damage`        | Damage taken since the last sample                                                                    |
-| `npcsNear`      | Live NPCs within the bot's notice distance                                                            |
-| `npcsTargeting` | Live NPCs targeting the bot                                                                           |
-| `noticed`       | Each NPC that started targeting the bot since the last sample, with `npc` and its distance in `cells` |
-| `collected`     | The item name of each pickup collected since the last sample                                          |
-| `piece`         | The piece of the room the player stands in                                                            |
-| `cell`          | The cell the player's feet are in, as `[x, y]`                                                        |
+| Pacing field    | Meaning                                                                                                               |
+| --------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `seconds`       | Seconds since the level started                                                                                       |
+| `health`        | The player's health                                                                                                   |
+| `damage`        | Damage taken since the last sample                                                                                    |
+| `npcsNear`      | Live NPCs within the bot's notice distance                                                                            |
+| `npcsTargeting` | Live NPCs targeting the bot                                                                                           |
+| `npcs`          | Each NPC counted in `npcsNear`: `npc`, its machine `state`, and its offset from the bot in cells, `right` and `above` |
+| `noticed`       | Each NPC that started targeting the bot since the last sample, with `npc` and its distance in `cells`                 |
+| `collected`     | The item name of each pickup collected since the last sample                                                          |
+| `piece`         | The piece of the room the player stands in                                                                            |
+| `cell`          | The cell the player's feet are in, as `[x, y]`                                                                        |
 
 ## Error handling and validation
 
