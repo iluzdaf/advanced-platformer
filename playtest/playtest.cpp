@@ -9,10 +9,10 @@
 #include <format>
 #include <limits>
 #include <map>
-#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -97,7 +97,7 @@ namespace advanced_platformer
         struct PlaytestWatch
         {
             int lastHealth = 0;
-            float bestExitDistance = std::numeric_limits<float>::max();
+            std::unordered_set<Cell, CellHash> visitedCells;
             float secondsSinceProgress = 0.0F;
             int steps = 0;
             int damageSinceSample = 0;
@@ -124,16 +124,6 @@ namespace advanced_platformer
                 throw std::logic_error("A playtest needs a player with health");
             }
             return player.health->current;
-        }
-
-        glm::vec2 exitFeet(const GameLevel& level)
-        {
-            const std::optional<LevelExit>& exit = level.world.exit();
-            if (!exit.has_value())
-            {
-                throw std::logic_error("A playtest needs a level with an exit");
-            }
-            return feetOf(exit->bounds);
         }
 
         std::string nearestNpcName(const GameLevel& level, const Actor& player)
@@ -303,10 +293,9 @@ namespace advanced_platformer
             observeNotices(watch, level, player);
 
             const glm::vec2 feet = feetOf(player.body.bounds);
-            const float exitDistance = glm::distance(feet, exitFeet(level));
-            if (exitDistance < watch.bestExitDistance - static_cast<float>(level.map.tileSize()))
+            const Cell cell = cellAtFeet(level.map.tileSize(), feet);
+            if (watch.visitedCells.insert(cell).second)
             {
-                watch.bestExitDistance = exitDistance;
                 watch.secondsSinceProgress = 0.0F;
             }
             else
@@ -315,7 +304,7 @@ namespace advanced_platformer
             }
 
             result.healthLeft = health;
-            result.endCell = cellAtFeet(level.map.tileSize(), feet);
+            result.endCell = cell;
             std::map<std::size_t, std::string> pickupsLeft = placedPickupsLeft(level);
             for (const auto& [placement, item] : watch.pickupsLeft)
             {

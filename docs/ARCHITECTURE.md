@@ -585,8 +585,10 @@ to the traversal profile. The search itself does not change.
   `fightNearest`. `playtestContent` builds that content on top of the shipped catalogs, so
   nothing of the bot ships with the game.
 - A level ends at the exit, when the player is defeated (which ends the run, as in the
-  game), when the player gets no closer to the exit for 15 seconds (stuck), or at the
-  time limit. After stuck or a timeout the run moves on to the next level.
+  game), when the player stands in no new cell for 15 seconds (stuck), or at the time
+  limit. After stuck or a timeout the run moves on to the next level. Stuck counts new
+  cells rather than distance to the exit because many routes, through shafts above all,
+  first lead away from the exit.
 - Each line holds the run and level seeds, the outcome, seconds, damage counted against
   the nearest live NPC's definition, health left, the cell the player ended in, pickups
   placed and collected, Lua script errors, and the level's pacing: a sample every half

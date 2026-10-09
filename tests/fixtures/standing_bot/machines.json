@@ -1,0 +1,8 @@
+{
+  "machines": {
+    "bot": {
+      "states": [{ "name": "play", "does": { "script": "bot", "activity": "play" } }],
+      "transitions": []
+    }
+  }
+}

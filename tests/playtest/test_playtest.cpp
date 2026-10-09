@@ -119,6 +119,20 @@ TEST_CASE("A playtest moves on to the next level after a timeout")
     CHECK(results[1].runSeed == results[0].runSeed);
 }
 
+TEST_CASE("A playtest calls a level stuck after 15 seconds in no new cell")
+{
+    advanced_platformer::Game game = tests::fixtureGame(
+        advanced_platformer::playtestContent(
+            tests::fixtureContent(), "tests/fixtures/standing_bot"));
+
+    const std::vector<advanced_platformer::LevelPlaytest> results =
+        advanced_platformer::playtestRun(game, 1, 60.0F, tests::FixedStepSeconds);
+
+    REQUIRE(results.size() == 1);
+    CHECK(results.front().outcome == advanced_platformer::PlaytestOutcome::Stuck);
+    CHECK(results.front().seconds == Catch::Approx(15.0F).margin(0.1));
+}
+
 TEST_CASE("A level playtest is written as one JSON line")
 {
     const advanced_platformer::LevelPlaytest level{
