@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <optional>
 #include <string>
 #include <vector>
@@ -78,6 +79,12 @@ namespace advanced_platformer
             ActorId actor,
             const NpcActivity& activity,
             const NpcActivitySnapshot& snapshot) = 0;
+        virtual bool hasFacts(const std::string& script) const = 0;
+        virtual std::map<std::string, bool> facts(
+            ActorId actor,
+            const std::string& script,
+            const NpcActivitySnapshot& snapshot,
+            float deltaTime) = 0;
         virtual void forget(ActorId actor) = 0;
     };
 }

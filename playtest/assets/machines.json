@@ -1,8 +1,63 @@
 {
   "machines": {
     "bot": {
-      "states": [{ "name": "play", "does": { "script": "bot", "activity": "play" } }],
-      "transitions": []
+      "states": [
+        { "name": "travel", "does": { "script": "bot", "activity": "travel" } },
+        { "name": "loot", "does": { "script": "bot", "activity": "loot" } },
+        { "name": "kite", "does": { "script": "bot", "activity": "kite" } },
+        { "name": "hold", "does": { "script": "bot", "activity": "hold" } },
+        { "name": "dodge", "does": { "script": "bot", "activity": "dodge" } },
+        { "name": "keepAway", "does": { "script": "bot", "activity": "keepAway" } }
+      ],
+      "transitions": [
+        {
+          "from": ["travel", "loot", "hold", "dodge", "keepAway"],
+          "to": "kite",
+          "when": { "targetClosingIn": true }
+        },
+        {
+          "from": ["travel", "loot", "kite", "dodge", "keepAway"],
+          "to": "hold",
+          "when": { "targetClosingIn": false, "nonRatInRange": true }
+        },
+        {
+          "from": ["travel", "loot", "kite", "hold", "keepAway"],
+          "to": "dodge",
+          "when": { "targetClosingIn": false, "nonRatInRange": false, "batDiving": true }
+        },
+        {
+          "from": ["travel", "loot", "kite", "hold", "dodge"],
+          "to": "keepAway",
+          "when": {
+            "targetClosingIn": false,
+            "nonRatInRange": false,
+            "batDiving": false,
+            "spiderNear": true
+          }
+        },
+        {
+          "from": ["travel", "kite", "hold", "dodge", "keepAway"],
+          "to": "loot",
+          "when": {
+            "targetClosingIn": false,
+            "nonRatInRange": false,
+            "batDiving": false,
+            "spiderNear": false,
+            "freedLootNearby": true
+          }
+        },
+        {
+          "from": ["loot", "kite", "hold", "dodge", "keepAway"],
+          "to": "travel",
+          "when": {
+            "targetClosingIn": false,
+            "nonRatInRange": false,
+            "batDiving": false,
+            "spiderNear": false,
+            "freedLootNearby": false
+          }
+        }
+      ]
     }
   }
 }

@@ -264,7 +264,7 @@ one atlas pixel is one world pixel. To change how big something looks, change th
 | `does`  | The Lua activity it runs: `script`, a file in `game/assets/scripts` without `.lua`, and `activity`. |
 | `from`  | A state, or a list of states for one transition from each.                                          |
 | `to`    | The state to enter.                                                                                 |
-| `when`  | [Facts](#facts) and the value each must have. Empty always holds.                                   |
+| `when`  | [Facts](#facts) or [script facts](#script-facts) and the value each must have. Empty always holds.  |
 | `after` | Optional seconds every condition must hold before the transition fires.                             |
 
 From one state, the first transition in the list whose conditions have held long enough
@@ -293,10 +293,12 @@ fires.
 
 ### Lua activities
 
-A script returns `{ activities = { name = { enter, update, exit } } }`. `update` is
-required, and `enter` and `exit` are optional. Each hook gets `self`, a table kept for
-the visit, and a snapshot. `update` also gets the step in seconds, and returns a command
-or `nil`. [`common.lua`](../game/assets/scripts/common.lua) has `idle`, `patrol`, `chase`,
+A script returns `{ activities = { name = { enter, update, exit } }, facts = { ... } }`.
+`update` is required, and `enter`, `exit` and `description`, text saying what the activity
+does and when it runs, are optional. Each hook gets `self`, a table
+kept for the visit, and a snapshot. `update` also gets the step in seconds, and returns a
+command or `nil`. Every hook gets `memory` last: one table per NPC and script, kept across
+states, which the script's facts share. [`common.lua`](../game/assets/scripts/common.lua) has `idle`, `patrol`, `chase`,
 `attack`, `search`, `retreat` and `watch`.
 
 | Snapshot              | Meaning                                                                                                                                                                           |
@@ -333,6 +335,21 @@ Positions are `vec2` values, made with `vec2(x, y)`. They have `x` and `y`, `+`,
 `*` and `/` by a number, `==`, `tostring`, and the methods `length()`, `distance(v)`,
 `distanceSquared(v)` and `dot(v)`. A command's vectors also accept `{x, y}` tables. Scripts
 have the base, math, string and table libraries.
+
+### Script facts
+
+A script's optional `facts` table names yes-or-no questions its machine's transitions may
+ask beside the [facts](#facts), such as the bot's `targetClosingIn`. Each is
+`function(memory, snapshot, step)` returning `true` or `false`. Every update, before the
+machine chooses a state, each fact of every script the machine's states use runs once, in
+name order, and its answer also appears in `snapshot.facts`. A fact may keep what it needs
+in `memory`, such as the last distance to the target or how long a state has run this
+approach. A fact cannot share a name with an engine fact, and two scripts of one machine
+cannot declare the same fact.
+
+A behaviour moves from one actor to another as a state: copy its activity and the facts
+its transitions ask into the other actor's script, then add the state and its transitions
+to that actor's machine.
 
 ## Presentation script
 

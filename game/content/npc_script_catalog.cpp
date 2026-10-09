@@ -5,11 +5,13 @@
 
 #include <filesystem>
 #include <format>
+#include <map>
 #include <set>
 #include <stdexcept>
 #include <string>
 
 #include "advanced_platformer/npc/npc_activity.hpp"
+#include "advanced_platformer/npc/npc_fact_rows.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 
 namespace advanced_platformer
@@ -25,6 +27,56 @@ namespace advanced_platformer
                 throw std::invalid_argument(
                     std::format(
                         "Lua NPC script name '{}' must be a file stem, not a path", script));
+            }
+        }
+    }
+
+    namespace
+    {
+        void requireAnsweredConditions(
+            const LuaNpcScripts& scripts,
+            const std::string& machineName,
+            const NpcStateMachine& machine)
+        {
+            std::map<std::string, std::string> scriptFacts;
+            std::set<std::string> visited;
+            for (const NpcMachineState& state : machine.states)
+            {
+                const std::string& script = state.does.script;
+                if (!visited.insert(script).second)
+                {
+                    continue;
+                }
+                for (const std::string& fact : scripts.factNames(script))
+                {
+                    if (const auto [found, added] = scriptFacts.emplace(fact, script); !added)
+                    {
+                        throw std::invalid_argument(
+                            std::format(
+                                "Machine '{}' has the fact '{}' in both '{}' and '{}'",
+                                machineName,
+                                fact,
+                                found->second,
+                                script));
+                    }
+                }
+            }
+            for (const NpcMachineTransition& transition : machine.transitions)
+            {
+                for (const auto& [fact, asked] : transition.when)
+                {
+                    if (npcFactRow(fact) == nullptr && !scriptFacts.contains(fact))
+                    {
+                        throw std::invalid_argument(
+                            std::format(
+                                "The transition from '{}' to '{}' in machine '{}' asks about "
+                                "'{}', which neither the engine nor its scripts answer",
+                                transition.from,
+                                transition.to,
+                                machineName,
+                                fact));
+                    }
+                }
             }
         }
     }
@@ -52,6 +104,7 @@ namespace advanced_platformer
 
         for (const auto& [machineName, machine] : machines)
         {
+            requireAnsweredConditions(scripts, machineName, machine);
             for (const NpcMachineState& state : machine.states)
             {
                 const NpcActivity& activity = state.does;

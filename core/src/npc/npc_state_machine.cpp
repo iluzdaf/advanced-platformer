@@ -37,19 +37,26 @@ namespace advanced_platformer
             return false;
         }
 
-        // Whether every condition holds for these facts. A fact no row answers is an error.
+        bool factHolds(const std::string& fact, const NpcFacts& facts)
+        {
+            if (const NpcFactRow* row = npcFactRow(fact); row != nullptr)
+            {
+                return row->holds(facts);
+            }
+            const auto scripted = facts.scripted.find(fact);
+            if (scripted == facts.scripted.end())
+            {
+                throw std::logic_error(
+                    std::format("A condition asks about \"{}\", and there is no such fact", fact));
+            }
+            return scripted->second;
+        }
+
         bool conditionsHold(const std::map<std::string, bool>& when, const NpcFacts& facts)
         {
             for (const auto& [fact, asked] : when)
             {
-                const NpcFactRow* row = npcFactRow(fact);
-                if (row == nullptr)
-                {
-                    throw std::logic_error(
-                        std::format(
-                            "A condition asks about \"{}\", and there is no such fact", fact));
-                }
-                if (row->holds(facts) != asked)
+                if (factHolds(fact, facts) != asked)
                 {
                     return false;
                 }
@@ -98,17 +105,6 @@ namespace advanced_platformer
             {
                 throw std::invalid_argument(
                     std::format("{} leads to a state the machine lacks", describe(transition)));
-            }
-            for (const auto& [fact, asked] : transition.when)
-            {
-                if (npcFactRow(fact) == nullptr)
-                {
-                    throw std::invalid_argument(
-                        std::format(
-                            "{} asks about \"{}\", and there is no such fact",
-                            describe(transition),
-                            fact));
-                }
             }
             if (!isFiniteNonNegative(transition.after))
             {

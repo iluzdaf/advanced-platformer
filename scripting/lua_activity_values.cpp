@@ -224,6 +224,10 @@ namespace advanced_platformer
         facts["hasPatrol"] = snapshot.facts.hasPatrol;
         facts["searches"] = snapshot.facts.searches;
         facts["searchTimeUp"] = snapshot.facts.searchTimeUp;
+        for (const auto& [name, holds] : snapshot.facts.scripted)
+        {
+            facts[name] = holds;
+        }
         result["facts"] = facts;
         return result;
     }

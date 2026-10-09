@@ -50,6 +50,7 @@ belong to.
 | Brain               | What an NPC knows between updates: its target and its memory of where the target was.                                                        |
 | Target              | The actor an NPC is after, usually the player. Not the same as a goal.                                                                       |
 | Fact                | A yes-or-no answer about an NPC this update, such as `targetVisible` or `hasPatrol`, that its transitions test.                              |
+| Script fact         | A fact a Lua script answers for its machine's transitions, such as the bot's `targetClosingIn`.                                              |
 | State               | What an NPC is doing, such as patrol, chase or bite: a named state in its machine.                                                           |
 | Activity            | What a state does each step, written in Lua.                                                                                                 |
 | Patrol              | Two points an NPC walks or flies between while it has no target.                                                                             |

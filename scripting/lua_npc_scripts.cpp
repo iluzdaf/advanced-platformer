@@ -3,6 +3,7 @@
 #include "lua_activity_values.hpp"
 #include "lua_sandbox.hpp"
 
+#include <algorithm>
 #include <cstdint>
 #include <filesystem>
 #include <format>
@@ -23,6 +24,7 @@
 #include <sol/sol.hpp>
 
 #include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/npc/npc_fact_rows.hpp"
 
 namespace advanced_platformer
 {
@@ -37,11 +39,26 @@ namespace advanced_platformer
             auto operator<=>(const ActivityOwner&) const = default;
         };
 
+        struct ScriptFact
+        {
+            std::string name;
+            sol::protected_function answer;
+        };
+
         struct LoadedScript
         {
             std::string source;
             sol::environment environment;
             sol::table activities;
+            std::vector<ScriptFact> facts;
+        };
+
+        struct MemoryOwner
+        {
+            std::uint32_t actor = 0;
+            std::string script;
+
+            auto operator<=>(const MemoryOwner&) const = default;
         };
 
         void requireValidCall(ActorId actor, const NpcActivity& activity)
@@ -127,6 +144,7 @@ namespace advanced_platformer
         sol::state lua;
         std::map<std::string, LoadedScript> scripts;
         std::map<ActivityOwner, sol::table> selves;
+        std::map<MemoryOwner, sol::table> memories;
         std::vector<LuaScriptDiagnostic> reported;
         std::optional<Call> calling;
 
@@ -218,8 +236,32 @@ namespace advanced_platformer
                  std::move(message)});
         }
 
+        sol::table memoryOf(ActorId actor, const std::string& script)
+        {
+            const MemoryOwner owner{actor.value, script};
+            const auto found = memories.find(owner);
+            if (found != memories.end())
+            {
+                return found->second;
+            }
+            sol::table memory = lua.create_table();
+            memories.emplace(owner, memory);
+            return memory;
+        }
+
         void discardScriptState(std::string_view script)
         {
+            for (auto entry = memories.begin(); entry != memories.end();)
+            {
+                if (entry->first.script == script)
+                {
+                    entry = memories.erase(entry);
+                }
+                else
+                {
+                    ++entry;
+                }
+            }
             for (auto entry = selves.begin(); entry != selves.end();)
             {
                 if (entry->first.script == script)
@@ -255,6 +297,51 @@ namespace advanced_platformer
         std::ostringstream source;
         source << input.rdbuf();
         loadScriptText(script, source.str(), path.string());
+    }
+
+    namespace
+    {
+        std::vector<ScriptFact> scriptFacts(
+            const sol::table& root,
+            std::string_view script,
+            std::string_view sourceName)
+        {
+            std::vector<ScriptFact> facts;
+            const sol::object factsObject = root.get<sol::object>("facts");
+            if (!factsObject.valid() || factsObject.get_type() == sol::type::lua_nil)
+            {
+                return facts;
+            }
+            if (!factsObject.is<sol::table>())
+            {
+                fail(
+                    scriptDescription(script, sourceName),
+                    " has a facts value that is not a table");
+            }
+            for (const auto& [nameObject, answerObject] : factsObject.as<sol::table>())
+            {
+                if (!nameObject.is<std::string>() || nameObject.as<std::string>().empty())
+                {
+                    fail(scriptDescription(script, sourceName), " needs named facts");
+                }
+                const std::string name = nameObject.as<std::string>();
+                if (!answerObject.is<sol::function>())
+                {
+                    fail(
+                        scriptDescription(script, sourceName),
+                        std::format(" has a fact '{}' that is not a function", name));
+                }
+                if (npcFactRow(name) != nullptr)
+                {
+                    fail(
+                        scriptDescription(script, sourceName),
+                        std::format(" has a fact '{}' that the engine already answers", name));
+                }
+                facts.push_back({name, answerObject.as<sol::protected_function>()});
+            }
+            std::ranges::sort(facts, {}, &ScriptFact::name);
+            return facts;
+        }
     }
 
     void LuaNpcScripts::loadScriptText(
@@ -294,7 +381,7 @@ namespace advanced_platformer
             fail(scriptDescription(script, sourceName), " must return a table");
         }
         const sol::table root = returned.as<sol::table>();
-        rejectUnknownFields(root, {"activities"}, "a Lua script");
+        rejectUnknownFields(root, {"activities", "facts"}, "a Lua script");
         const sol::object activitiesObject = root.get<sol::object>("activities");
         if (!activitiesObject.is<sol::table>())
         {
@@ -319,7 +406,17 @@ namespace advanced_platformer
             names.insert(name);
             const sol::table activity = activityObject.as<sol::table>();
             rejectUnknownFields(
-                activity, {"enter", "update", "exit"}, std::format("Lua activity '{}'", name));
+                activity,
+                {"description", "enter", "update", "exit"},
+                std::format("Lua activity '{}'", name));
+            if (const sol::object description = activity.get<sol::object>("description");
+                description.valid() && description.get_type() != sol::type::lua_nil &&
+                description.get_type() != sol::type::string)
+            {
+                fail(
+                    activityDescription(script, name, sourceName),
+                    " has a description that is not text");
+            }
             if (!activity.get<sol::object>("update").is<sol::function>())
             {
                 fail(activityDescription(script, name, sourceName), " needs an update function");
@@ -342,14 +439,79 @@ namespace advanced_platformer
             fail(scriptDescription(script, sourceName), " needs at least one activity");
         }
 
+        std::vector<ScriptFact> facts = scriptFacts(root, script, sourceName);
         implementation->discardScriptState(script);
         implementation->scripts.insert_or_assign(
-            script, LoadedScript{std::move(sourceName), std::move(fresh), activities});
+            script,
+            LoadedScript{std::move(sourceName), std::move(fresh), activities, std::move(facts)});
     }
 
     bool LuaNpcScripts::hasActivity(const NpcActivity& activity) const
     {
         return implementation->activityTable(activity).has_value();
+    }
+
+    std::vector<std::string> LuaNpcScripts::factNames(const std::string& script) const
+    {
+        std::vector<std::string> names;
+        if (const LoadedScript* loaded = implementation->scriptNamed(script); loaded != nullptr)
+        {
+            for (const ScriptFact& fact : loaded->facts)
+            {
+                names.push_back(fact.name);
+            }
+        }
+        return names;
+    }
+
+    bool LuaNpcScripts::hasFacts(const std::string& script) const
+    {
+        const LoadedScript* loaded = implementation->scriptNamed(script);
+        return loaded != nullptr && !loaded->facts.empty();
+    }
+
+    std::map<std::string, bool> LuaNpcScripts::facts(
+        ActorId actor,
+        const std::string& script,
+        const NpcActivitySnapshot& snapshot,
+        float deltaTime)
+    {
+        requireSeconds(deltaTime, "NPC script fact time step");
+        std::map<std::string, bool> answers;
+        const LoadedScript* loaded = implementation->scriptNamed(script);
+        if (loaded == nullptr || loaded->facts.empty())
+        {
+            return answers;
+        }
+        requireValidCall(actor, {script, loaded->facts.front().name});
+        const sol::table memory = implementation->memoryOf(actor, script);
+        const sol::table view = luaSnapshot(implementation->lua, snapshot);
+        for (const ScriptFact& fact : loaded->facts)
+        {
+            const NpcActivity asked{script, fact.name};
+            sol::protected_function_result result;
+            {
+                const Implementation::CallScope call(
+                    *implementation, implementation->callTo(actor, asked, "fact"));
+                const InstructionBudget budget(implementation->lua.lua_state());
+                result = fact.answer(memory, view, deltaTime);
+            }
+            bool holds = false;
+            if (!result.valid())
+            {
+                implementation->report(actor, asked, "fact", resultError(result));
+            }
+            else if (const sol::object returned = result; returned.is<bool>())
+            {
+                holds = returned.as<bool>();
+            }
+            else
+            {
+                implementation->report(actor, asked, "fact", "must return true or false");
+            }
+            answers.emplace(fact.name, holds);
+        }
+        return answers;
     }
 
     void LuaNpcScripts::enter(
@@ -380,7 +542,10 @@ namespace advanced_platformer
             const Implementation::CallScope call(
                 *implementation, implementation->callTo(actor, activity, "enter"));
             const InstructionBudget budget(implementation->lua.lua_state());
-            result = hook(self, luaSnapshot(implementation->lua, snapshot));
+            result = hook(
+                self,
+                luaSnapshot(implementation->lua, snapshot),
+                implementation->memoryOf(actor, activity.script));
         }
         if (!result.valid())
         {
@@ -418,7 +583,11 @@ namespace advanced_platformer
             const Implementation::CallScope call(
                 *implementation, implementation->callTo(actor, activity, "update"));
             const InstructionBudget budget(implementation->lua.lua_state());
-            result = hook(self->second, luaSnapshot(implementation->lua, snapshot), deltaTime);
+            result = hook(
+                self->second,
+                luaSnapshot(implementation->lua, snapshot),
+                deltaTime,
+                implementation->memoryOf(actor, activity.script));
         }
         if (!result.valid())
         {
@@ -463,7 +632,10 @@ namespace advanced_platformer
                     const Implementation::CallScope call(
                         *implementation, implementation->callTo(actor, activity, "exit"));
                     const InstructionBudget budget(implementation->lua.lua_state());
-                    result = hook(self->second, luaSnapshot(implementation->lua, snapshot));
+                    result = hook(
+                        self->second,
+                        luaSnapshot(implementation->lua, snapshot),
+                        implementation->memoryOf(actor, activity.script));
                 }
                 if (!result.valid())
                 {
@@ -476,6 +648,18 @@ namespace advanced_platformer
 
     void LuaNpcScripts::forget(ActorId actor)
     {
+        for (auto entry = implementation->memories.begin();
+             entry != implementation->memories.end();)
+        {
+            if (entry->first.actor == actor.value)
+            {
+                entry = implementation->memories.erase(entry);
+            }
+            else
+            {
+                ++entry;
+            }
+        }
         for (auto entry = implementation->selves.begin(); entry != implementation->selves.end();)
         {
             if (entry->first.actor == actor.value)

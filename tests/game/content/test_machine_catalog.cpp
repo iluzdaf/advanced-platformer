@@ -69,11 +69,6 @@ TEST_CASE("Machine JSON rejects what the engine cannot run, naming where", "[app
         machine["states"][0]["does"]["kind"] = "lua";
         expected = "unknown field 'kind'";
     }
-    SECTION("Unknown fact")
-    {
-        machine["transitions"][0]["when"]["cornered"] = true;
-        expected = "asks about \"cornered\"";
-    }
     SECTION("A transition to a state the machine lacks")
     {
         machine["transitions"][0]["to"] = "pounce";

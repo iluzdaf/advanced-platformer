@@ -14,11 +14,14 @@ namespace advanced_platformer
     struct NpcUpdate;
     struct PathFollower;
 
-    // A machine state's Lua activity, run through the update's scripts, which it requires.
-    // Each hook hands the script a copied snapshot of the actor, its living target, if it has
-    // one, and its facts.
+    void addNpcScriptFacts(
+        const NpcUpdate& update,
+        const Actor& actor,
+        const NpcBrain& brain,
+        const PathFollower& follower,
+        const Actor* target,
+        NpcFacts& facts);
 
-    // Drops the old path, as every activity change does, then runs the script's enter.
     void enterNpcActivity(
         const NpcUpdate& update,
         const Actor& actor,
@@ -28,8 +31,6 @@ namespace advanced_platformer
         const NpcActivity& activity,
         const NpcFacts& facts);
 
-    // Runs the script's update and applies its command as this tick's intentions: a route
-    // to follow, a route to drop, an aim, and turning the patrol round.
     void updateNpcActivity(
         const NpcUpdate& update,
         Actor& actor,
@@ -48,6 +49,5 @@ namespace advanced_platformer
         const NpcActivity& activity,
         const NpcFacts& facts);
 
-    // Discards script-owned state before queued actor removals are applied to World.
     void forgetNpcActivities(const std::vector<ActorId>& actors, NpcActivityScripts& scripts);
 }

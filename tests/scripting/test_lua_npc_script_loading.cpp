@@ -40,6 +40,24 @@ TEST_CASE("Lua scripts reject activities without an update function", "[lua][npc
         Catch::Matchers::ContainsSubstring("example.wait"));
 }
 
+TEST_CASE("A Lua activity may describe itself in text", "[lua][npc]")
+{
+    advanced_platformer::LuaNpcScripts scripts;
+    scripts.loadScriptText(
+        "example",
+        "return {activities={wait={description='Stand still', update=function() end}}}",
+        "described.lua");
+    REQUIRE(scripts.hasActivity({"example", "wait"}));
+
+    REQUIRE_THROWS_WITH(
+        scripts.loadScriptText(
+            "example",
+            "return {activities={wait={description=3, update=function() end}}}",
+            "numbered.lua"),
+        Catch::Matchers::ContainsSubstring("example.wait") &&
+            Catch::Matchers::ContainsSubstring("description that is not text"));
+}
+
 TEST_CASE("A Lua script that cannot be read is reported by its full path", "[lua][npc]")
 {
     advanced_platformer::LuaNpcScripts scripts;

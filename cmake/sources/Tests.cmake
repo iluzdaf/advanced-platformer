@@ -94,6 +94,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/core/render/test_level_object_render.cpp
         ${PROJECT_SOURCE_DIR}/tests/core/render/test_presentation.cpp
         ${PROJECT_SOURCE_DIR}/tests/core/render/test_render_scene.cpp
+        ${PROJECT_SOURCE_DIR}/tests/scripting/test_lua_npc_script_facts.cpp
         ${PROJECT_SOURCE_DIR}/tests/scripting/test_lua_npc_script_loading.cpp
         ${PROJECT_SOURCE_DIR}/tests/scripting/test_lua_npc_script_output.cpp
         ${PROJECT_SOURCE_DIR}/tests/scripting/test_lua_npc_script_validation.cpp

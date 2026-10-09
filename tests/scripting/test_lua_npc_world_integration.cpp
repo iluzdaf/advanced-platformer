@@ -47,6 +47,61 @@ TEST_CASE("An NPC machine invokes a loaded Lua activity", "[lua][npc][integratio
 }
 
 TEST_CASE(
+    "A script fact moves an NPC machine in the update it first holds",
+    "[lua][npc][integration]")
+{
+    advanced_platformer::LuaNpcScripts scripts;
+    scripts.loadScriptText("counter", R"(
+        return {
+            facts = {
+                counted = function(memory)
+                    memory.updates = (memory.updates or 0) + 1
+                    return memory.updates >= 2
+                end
+            },
+            activities = {
+                wait = {update = function() return {} end},
+                leave = {
+                    update = function(_, snapshot, _, memory)
+                        return {direction = {x = memory.updates, y = 0},
+                                jumpHeld = snapshot.facts.counted}
+                    end
+                }
+            }
+        }
+    )");
+    const advanced_platformer::TileMap map = tests::TileMapBuilder({"...", "...", "###"});
+    advanced_platformer::World world;
+    const advanced_platformer::ActorId npc = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({24.0F, 32.0F})
+            .flying(20.0F)
+            .thinking({})
+            .running(
+                tests::NpcMachineBuilder::named("counter")
+                    .state("waiting", advanced_platformer::NpcActivity{"counter", "wait"})
+                    .state("leaving", advanced_platformer::NpcActivity{"counter", "leave"})
+                    .transition("waiting", "leaving")
+                    .when("counted", true)));
+    advanced_platformer::WorldRequests requests;
+
+    advanced_platformer::updateNpcBehaviour(map, world, requests, 0.1F, scripts);
+    REQUIRE(
+        advanced_platformer::activeNpcMachineState(
+            tests::component<advanced_platformer::NpcMachine>(world, npc))
+            .name == "waiting");
+
+    advanced_platformer::updateNpcBehaviour(map, world, requests, 0.1F, scripts);
+    REQUIRE(
+        advanced_platformer::activeNpcMachineState(
+            tests::component<advanced_platformer::NpcMachine>(world, npc))
+            .name == "leaving");
+    REQUIRE(tests::actor(world, npc).intentions.direction == glm::vec2{2.0F, 0.0F});
+    REQUIRE(tests::actor(world, npc).intentions.jumpHeld);
+    REQUIRE(scripts.diagnostics().empty());
+}
+
+TEST_CASE(
     "Scripted walking and contact damage stop through a blocked-movement transition",
     "[lua][npc][integration]")
 {
