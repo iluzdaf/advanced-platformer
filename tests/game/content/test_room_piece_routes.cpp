@@ -112,9 +112,10 @@ namespace
         std::vector<Cell> slots;
         Orientation tested;
         Cell testedSlot;
+        Cell exitSlot;
     };
 
-    Cell originOf(const RoomPieces& catalog, const Route& route)
+    Cell originOf(const RoomPieces& catalog, const Route& route, Cell room)
     {
         Cell least = route.slots.front();
         for (const Cell slot : route.slots)
@@ -122,8 +123,23 @@ namespace
             least = {std::min(least.x, slot.x), std::min(least.y, slot.y)};
         }
         return {
-            (route.testedSlot.x - least.x) * (catalog.roomSize.width - 1),
-            (route.testedSlot.y - least.y) * (catalog.roomSize.height - 1)};
+            (room.x - least.x) * (catalog.roomSize.width - 1),
+            (room.y - least.y) * (catalog.roomSize.height - 1)};
+    }
+
+    bool roomAt(const GeneratedLevel& level, const Route& route, Cell slot, RoomRole role)
+    {
+        const Cell origin = originOf(route.catalog, route, slot);
+        return std::ranges::any_of(
+            level.rooms,
+            [&](const advanced_platformer::GeneratedRoom& room)
+            {
+                return room.origin == origin &&
+                       std::ranges::any_of(
+                           route.catalog.pieces,
+                           [&](const RoomPiece& piece)
+                           { return piece.name == room.piece && piece.role == role; });
+            });
     }
 
     std::optional<GeneratedLevel> generateRoute(Route route)
@@ -142,8 +158,11 @@ namespace
             {
                 continue;
             }
-            if (isMirroredAt(level, route.tested.piece, originOf(route.catalog, route)) ==
-                route.tested.mirrored)
+            if (roomAt(level, route, route.slots.front(), RoomRole::Start) &&
+                roomAt(level, route, route.exitSlot, RoomRole::Exit) &&
+                isMirroredAt(
+                    level, route.tested.piece, originOf(route.catalog, route, route.testedSlot)) ==
+                    route.tested.mirrored)
             {
                 return level;
             }
@@ -239,6 +258,7 @@ namespace
                             const RoomSide facing = advanced_platformer::oppositeOf(door);
                             if (door == to)
                             {
+                                route.exitSlot = route.slots.back();
                                 addPiecesWithOnlyDoor(
                                     route.catalog, shipped, RoomRole::Exit, facing);
                             }
@@ -285,6 +305,7 @@ namespace
                     const RoomSide facing = advanced_platformer::oppositeOf(door);
                     if (door == side)
                     {
+                        route.exitSlot = route.slots.back();
                         addPiecesWithOnlyDoor(route.catalog, shipped, RoomRole::Exit, facing);
                     }
                     else
@@ -318,7 +339,8 @@ namespace
                     .catalog = emptyCatalog(shipped),
                     .slots = {Centre, exitSlot},
                     .tested = piece,
-                    .testedSlot = exitSlot};
+                    .testedSlot = exitSlot,
+                    .exitSlot = exitSlot};
                 addPiecesWithOnlyDoor(route.catalog, shipped, RoomRole::Start, towardsExit);
                 route.catalog.pieces.push_back(piece.piece);
                 routes.push_back(std::move(route));
