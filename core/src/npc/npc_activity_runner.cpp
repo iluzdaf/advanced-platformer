@@ -85,6 +85,7 @@ namespace advanced_platformer
             if (target != nullptr)
             {
                 snapshot.targetCenter = centerOf(target->body.bounds);
+                snapshot.targetKind = target->definitionName;
             }
             if (const std::optional<LevelExit>& exit = update.world.exit(); exit.has_value())
             {

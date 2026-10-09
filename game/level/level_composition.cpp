@@ -70,13 +70,15 @@ namespace advanced_platformer
             const GameCatalogs& catalogs,
             int textureId)
         {
-            return composeActor(
+            Actor actor = composeActor(
                 actorDefinition(catalogs.actors, placement.definitionName),
                 catalogs.animations,
                 textureId,
                 feetInCell(map.tileSize(), placement.spawn),
                 composePatrol(map, placement.patrol),
                 catalogs.machines);
+            actor.definitionName = placement.definitionName;
+            return actor;
         }
 
         LevelExit composePlacedExit(
@@ -111,7 +113,6 @@ namespace advanced_platformer
             const auto& pickups = catalogs.pickups;
             TileMap map = composeTileMap(generated.mapRows, generated.tileLegend, catalogs.tiles);
             World world(composeItems(items, textureId));
-            std::unordered_map<std::uint32_t, std::string> actorDefinitionNames;
             std::unordered_map<std::uint32_t, std::string> actorPlacementIds;
             std::vector<std::string> pickupPlacementIds;
             std::set<std::string> placedIds;
@@ -121,7 +122,6 @@ namespace advanced_platformer
                 {
                     const ActorId id =
                         world.addActor(composePlacedActor(map, placement, catalogs, textureId));
-                    actorDefinitionNames.emplace(id.value, placement.definitionName);
                     actorPlacementIds.emplace(id.value, placement.id);
                 }
                 catch (const std::invalid_argument& error)
@@ -164,7 +164,6 @@ namespace advanced_platformer
                 std::move(map),
                 std::move(world),
                 playerSpawnFeet,
-                std::move(actorDefinitionNames),
                 std::move(actorPlacementIds),
                 std::move(pickupPlacementIds),
                 std::move(placedIds),
@@ -176,13 +175,15 @@ namespace advanced_platformer
     Actor composePlayer(const GameCatalogs& catalogs, int textureId)
     {
         const auto& actors = catalogs.actors;
-        return composeActor(
+        Actor player = composeActor(
             actorDefinition(actors, actors.player),
             catalogs.animations,
             textureId,
             {},
             std::nullopt,
             catalogs.machines);
+        player.definitionName = actors.player;
+        return player;
     }
 
     GameLevel composeLevel(
@@ -200,7 +201,6 @@ namespace advanced_platformer
         Actor placed = player;
         moveFeetTo(placed.body.bounds, level.playerSpawnFeet);
         const ActorId playerId = level.world.addActor(std::move(placed));
-        level.actorDefinitionNames.emplace(playerId.value, catalogs.actors.player);
         level.world.setPlayer(playerId, level.playerSpawnFeet);
         validateLevelPlacements(level.map, level.world, level.number);
         return level;

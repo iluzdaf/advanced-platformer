@@ -197,8 +197,6 @@ namespace advanced_platformer
             const ActorId freshPlayerId = fresh.world.playerId();
             *player = carryActorState(actorIn(fresh.world, freshPlayerId), *player, itemIds, world);
             world.setPlayer(playerId, fresh.playerSpawnFeet);
-            live.actorDefinitionNames[playerId.value] =
-                fresh.actorDefinitionNames.at(freshPlayerId.value);
         }
 
         void reloadActors(
@@ -228,7 +226,6 @@ namespace advanced_platformer
                         world.removeActor(id);
                         result.removed.push_back(entry->second);
                     }
-                    live.actorDefinitionNames.erase(entry->first);
                     entry = live.actorPlacementIds.erase(entry);
                     continue;
                 }
@@ -236,8 +233,6 @@ namespace advanced_platformer
                 {
                     *actor = carryActorState(
                         actorIn(fresh.world, match->second), *actor, itemIds, world);
-                    live.actorDefinitionNames[entry->first] =
-                        fresh.actorDefinitionNames.at(match->second.value);
                     ++result.kept;
                 }
                 ++entry;
@@ -252,7 +247,6 @@ namespace advanced_platformer
                 Actor spawned = actorIn(fresh.world, freshId);
                 spawned.id = {};
                 const ActorId id = world.addActor(std::move(spawned));
-                live.actorDefinitionNames[id.value] = fresh.actorDefinitionNames.at(freshId.value);
                 live.actorPlacementIds[id.value] = placement;
                 result.spawned.push_back(placement);
             }

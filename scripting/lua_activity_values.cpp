@@ -163,6 +163,9 @@ namespace advanced_platformer
         result["targetFeet"] = optionalVector(snapshot.targetFeet);
         result["lastKnownTargetFeet"] = luaVector(lua, snapshot.lastKnownTargetFeet);
         result["targetCenter"] = optionalVector(snapshot.targetCenter);
+        result["targetKind"] = snapshot.targetKind.has_value()
+                                   ? sol::make_object(lua, *snapshot.targetKind)
+                                   : sol::make_object(lua, sol::lua_nil);
         if (snapshot.patrol.has_value())
         {
             result["patrol"] = lua.create_table_with(

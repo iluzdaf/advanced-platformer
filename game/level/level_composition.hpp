@@ -24,7 +24,6 @@ namespace advanced_platformer
         TileMap map;
         World world;
         glm::vec2 playerSpawnFeet = {0.0F, 0.0F};
-        std::unordered_map<std::uint32_t, std::string> actorDefinitionNames;
         std::unordered_map<std::uint32_t, std::string> actorPlacementIds;
         std::vector<std::string> pickupPlacementIds;
         std::set<std::string> placedIds;

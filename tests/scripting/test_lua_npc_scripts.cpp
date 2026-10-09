@@ -144,6 +144,35 @@ TEST_CASE(
     REQUIRE(scripts.diagnostics().empty());
 }
 
+TEST_CASE("A snapshot names the kind of actor its NPC targets", "[lua][npc]")
+{
+    LuaNpcScripts scripts;
+    scripts.loadScriptText(
+        "example",
+        R"(
+            return {
+                activities = {
+                    decide = {
+                        update = function(self, snapshot)
+                            return { useItem = snapshot.targetKind }
+                        end
+                    }
+                }
+            }
+        )",
+        "command.lua");
+
+    NpcActivitySnapshot hunter = commandSnapshot();
+    hunter.targetKind = "test_flyer";
+    scripts.enter(FirstActor, Activity, hunter);
+    REQUIRE(scripts.update(FirstActor, Activity, hunter, 0.5F).useItem == "test_flyer");
+
+    NpcActivitySnapshot idle = commandSnapshot();
+    scripts.enter(SecondActor, Activity, idle);
+    REQUIRE_FALSE(scripts.update(SecondActor, Activity, idle, 0.5F).useItem.has_value());
+    REQUIRE(scripts.diagnostics().empty());
+}
+
 TEST_CASE("A snapshot's exit and pickups reach Lua with the item each pickup holds", "[lua][npc]")
 {
     LuaNpcScripts scripts;

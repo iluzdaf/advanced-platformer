@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <string>
 
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/combat/attack.hpp"
@@ -34,6 +35,7 @@ namespace advanced_platformer
     struct Actor
     {
         ActorId id;
+        std::string definitionName;
         Body body;
         InputIntentions intentions;
         std::optional<PlatformerMovement> platformerMovement;

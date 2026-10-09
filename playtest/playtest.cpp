@@ -134,8 +134,7 @@ namespace advanced_platformer
             float nearestDistance = std::numeric_limits<float>::max();
             for (const Actor& actor : level.world.actors())
             {
-                const auto name = level.actorDefinitionNames.find(actor.id.value);
-                if (actor.id == player.id || name == level.actorDefinitionNames.end() ||
+                if (actor.id == player.id || actor.definitionName.empty() ||
                     actor.life != LifeState::Alive)
                 {
                     continue;
@@ -144,16 +143,16 @@ namespace advanced_platformer
                 if (distance < nearestDistance)
                 {
                     nearestDistance = distance;
-                    nearest = name->second;
+                    nearest = actor.definitionName;
                 }
             }
             return nearest;
         }
 
-        bool targetsPlayer(const GameLevel& level, const Actor& actor, const Actor& player)
+        bool targetsPlayer(const Actor& actor, const Actor& player)
         {
             return actor.id != player.id && actor.life == LifeState::Alive &&
-                   level.actorDefinitionNames.contains(actor.id.value) && actor.brain.has_value() &&
+                   !actor.definitionName.empty() && actor.brain.has_value() &&
                    actor.brain->target == player.id;
         }
 
@@ -161,7 +160,7 @@ namespace advanced_platformer
         {
             return static_cast<int>(std::ranges::count_if(
                 level.world.actors(),
-                [&](const Actor& actor) { return targetsPlayer(level, actor, player); }));
+                [&](const Actor& actor) { return targetsPlayer(actor, player); }));
         }
 
         void observeNotices(PlaytestWatch& watch, const GameLevel& level, const Actor& player)
@@ -169,7 +168,7 @@ namespace advanced_platformer
             std::vector<ActorId> targeting;
             for (const Actor& actor : level.world.actors())
             {
-                if (!targetsPlayer(level, actor, player))
+                if (!targetsPlayer(actor, player))
                 {
                     continue;
                 }
@@ -180,17 +179,16 @@ namespace advanced_platformer
                         glm::distance(centerOf(player.body.bounds), centerOf(actor.body.bounds)) /
                         static_cast<float>(level.map.tileSize());
                     watch.noticedSinceSample.push_back(
-                        {.npc = level.actorDefinitionNames.at(actor.id.value),
-                         .cells = std::round(cells * 10.0F) / 10.0F});
+                        {.npc = actor.definitionName, .cells = std::round(cells * 10.0F) / 10.0F});
                 }
             }
             watch.targeting = std::move(targeting);
         }
 
-        bool nearPlayer(const GameLevel& level, const Actor& actor, const Actor& player)
+        bool nearPlayer(const Actor& actor, const Actor& player)
         {
             return actor.id != player.id && actor.life == LifeState::Alive &&
-                   level.actorDefinitionNames.contains(actor.id.value) &&
+                   !actor.definitionName.empty() &&
                    glm::distance(centerOf(player.body.bounds), centerOf(actor.body.bounds)) <=
                        BotNoticeDistance;
         }
@@ -206,13 +204,13 @@ namespace advanced_platformer
             std::vector<NpcNearby> nearby;
             for (const Actor& actor : level.world.actors())
             {
-                if (!nearPlayer(level, actor, player))
+                if (!nearPlayer(actor, player))
                 {
                     continue;
                 }
                 const glm::vec2 offset = centerOf(actor.body.bounds) - center;
                 nearby.push_back(
-                    {.npc = level.actorDefinitionNames.at(actor.id.value),
+                    {.npc = actor.definitionName,
                      .state = actor.machine.has_value() ? activeNpcMachineState(*actor.machine).name
                                                         : "",
                      .right = tenthsOfCells(offset.x, level.map.tileSize()),

@@ -94,17 +94,14 @@ namespace
                        .where('g', tests::Tile().blocksMovement().breaksInto('.')),
             .world = advanced_platformer::World(std::move(definitions)),
             .playerSpawnFeet = SpawnFeet,
-            .actorDefinitionNames = {},
             .actorPlacementIds = {},
             .pickupPlacementIds = {},
             .placedIds = {}};
         const advanced_platformer::ActorId playerId = result.world.addActor(std::move(playerActor));
         result.world.setPlayer(playerId, SpawnFeet);
-        result.actorDefinitionNames.emplace(playerId.value, "player");
         for (auto& [placement, actor] : actors)
         {
             const advanced_platformer::ActorId id = result.world.addActor(std::move(actor));
-            result.actorDefinitionNames.emplace(id.value, "guard");
             result.actorPlacementIds.emplace(id.value, placement);
             result.placedIds.insert(placement);
         }

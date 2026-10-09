@@ -40,6 +40,7 @@ namespace advanced_platformer
         std::optional<glm::vec2> targetFeet;
         glm::vec2 lastKnownTargetFeet = {0.0F, 0.0F};
         std::optional<glm::vec2> targetCenter;
+        std::optional<std::string> targetKind;
         std::optional<Patrol> patrol;
         std::optional<NpcFooting> footing;
         NpcFacts facts;
