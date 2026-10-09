@@ -3,11 +3,13 @@
 
 #include <optional>
 #include <stdexcept>
+#include <string>
 
 #include "level/level_composition.hpp"
 #include "content/game_catalogs.hpp"
 #include "content/room_pieces.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "advanced_platformer/world/level_exit.hpp"
@@ -55,6 +57,31 @@ TEST_CASE("A level composes an actor from its catalog definition", "[app][actors
     REQUIRE(
         tests::component<advanced_platformer::PlatformerMovement>(actor).config.maximumSpeed == 23);
     REQUIRE(advanced_platformer::feetOf(actor.body.bounds).x == 152);
+}
+
+TEST_CASE("A climber placed off the ground spawns clinging to a ceiling or wall", "[app][actors]")
+{
+    const auto pieces =
+        advanced_platformer::loadRoomPieceCatalog("tests/fixtures/rooms/climber_spawn/pieces.json");
+    const auto gameCatalogs = advanced_platformer::loadGameCatalogs("tests/fixtures/catalogs");
+    const auto level = advanced_platformer::composeLevel(
+        pieces, 1, 1, 0, gameCatalogs, advanced_platformer::composePlayer(gameCatalogs, 0));
+    const auto surfaceOf = [&level](const std::string& placement)
+    {
+        for (const auto& actor : level.world.actors())
+        {
+            const auto id = level.actorPlacementIds.find(actor.id.value);
+            if (id != level.actorPlacementIds.end() && id->second.ends_with(placement) &&
+                actor.surfaceClimb.has_value())
+            {
+                return actor.surfaceClimb->surface;
+            }
+        }
+        throw std::logic_error("The climber spawn fixture must place " + placement);
+    };
+
+    REQUIRE(surfaceOf("test_climber_ceiling") == advanced_platformer::ClimbSurface::Ceiling);
+    REQUIRE(surfaceOf("test_climber_wall") == advanced_platformer::ClimbSurface::LeftWall);
 }
 
 TEST_CASE("Level composition reports unknown actor definitions", "[app][actors]")
@@ -132,6 +159,17 @@ TEST_CASE("A room piece rejects placements inside its walls", "[app][generation]
             advanced_platformer::validateRoomPieces(catalogs, tests::FixedStepSeconds),
             "Room piece 'start': pickup 'medicine_box_1': spawn overlaps a blocked tile");
     }
+}
+
+TEST_CASE("A room piece rejects a climber with nothing to cling to", "[app][generation]")
+{
+    auto catalogs = patrolPlacementCatalogs();
+    startPiece(catalogs).actors.push_back({"test_climber_1", "test_climber", {2, 2}, std::nullopt});
+
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::validateRoomPieces(catalogs, tests::FixedStepSeconds),
+        "Room piece 'start': actor 'test_climber_1': spawn has no ground, wall or ceiling to "
+        "cling to");
 }
 
 TEST_CASE("A room piece rejects a flyer that spawns resting on a tile", "[app][generation]")

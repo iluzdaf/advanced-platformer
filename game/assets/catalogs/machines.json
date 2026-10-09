@@ -485,6 +485,53 @@
           }
         }
       ]
+    },
+    "dodger": {
+      "states": [
+        {
+          "name": "wait",
+          "does": {
+            "script": "bat_dodger",
+            "activity": "wait"
+          }
+        },
+        {
+          "name": "dive",
+          "does": {
+            "script": "bat_dodger",
+            "activity": "dive"
+          }
+        },
+        {
+          "name": "climb",
+          "does": {
+            "script": "bat_dodger",
+            "activity": "climb"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "from": "wait",
+          "to": "dive",
+          "when": {
+            "targetVisible": true,
+            "targetWithinStandoffDistance": true
+          }
+        },
+        {
+          "from": "dive",
+          "to": "climb",
+          "when": {},
+          "after": 0.6
+        },
+        {
+          "from": "climb",
+          "to": "wait",
+          "when": {},
+          "after": 0.6
+        }
+      ]
     }
   }
 }

@@ -1,0 +1,14 @@
+{
+  "roomSize": [8, 6],
+  "run": {
+    "grid": [2, 1],
+    "firstRooms": 2,
+    "roomsPerLevel": 0,
+    "maxRooms": 2
+  },
+  "tileLegend": {
+    ".": "empty",
+    "#": "stone",
+    "c": "climbable_stone"
+  }
+}

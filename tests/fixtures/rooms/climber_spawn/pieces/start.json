@@ -1,0 +1,19 @@
+{
+  "role": "start",
+  "doors": ["left"],
+  "mirror": false,
+  "map": ["cccccccc", "c....c.c", ".....c.c", ".....c.c", ".....c.c", "cccccccc"],
+  "playerSpawn": [2, 4],
+  "actors": [
+    {
+      "id": "test_climber_ceiling",
+      "definition": "test_climber",
+      "spawn": [6, 1]
+    },
+    {
+      "id": "test_climber_wall",
+      "definition": "test_climber",
+      "spawn": [6, 3]
+    }
+  ]
+}

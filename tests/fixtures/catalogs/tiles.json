@@ -6,6 +6,12 @@
       "sprite": { "position": [0, 0] },
       "blocksMovement": true,
       "blocksSight": true
+    },
+    "climbable_stone": {
+      "sprite": { "position": [0, 0] },
+      "blocksMovement": true,
+      "blocksSight": true,
+      "climbable": true
     }
   }
 }
