@@ -2,6 +2,7 @@
 
 #include <optional>
 #include <stdexcept>
+#include <utility>
 
 #include <glm/geometric.hpp>
 #include <glm/vec2.hpp>
@@ -46,6 +47,7 @@ namespace advanced_platformer
 
             NpcFacts facts =
                 gatherNpcFacts(update.map, actor, brain, perception, target, machine.stateElapsed);
+            addNpcScriptFacts(update, actor, brain, follower, target, facts);
             const NpcActivity previous = activeNpcMachineState(machine).does;
             if (advanceNpcMachine(machine, facts, update.deltaTime).has_value())
             {
@@ -54,8 +56,10 @@ namespace advanced_platformer
                     exitNpcActivity(update, actor, brain, follower, target, previous, facts);
                     machine.activityEntered = false;
                 }
-                facts = gatherNpcFacts(
+                NpcFacts entered = gatherNpcFacts(
                     update.map, actor, brain, perception, target, machine.stateElapsed);
+                entered.scripted = std::move(facts.scripted);
+                facts = std::move(entered);
             }
 
             const NpcActivity& activity = activeNpcMachineState(machine).does;

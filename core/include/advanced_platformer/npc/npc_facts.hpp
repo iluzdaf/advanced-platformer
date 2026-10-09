@@ -1,5 +1,8 @@
 #pragma once
 
+#include <map>
+#include <string>
+
 namespace advanced_platformer
 {
     class TileMap;
@@ -26,6 +29,7 @@ namespace advanced_platformer
         bool searches = false;
         bool searchTimeUp = false;
         float stateElapsed = 0.0F;
+        std::map<std::string, bool> scripted;
     };
 
     NpcFacts gatherNpcFacts(

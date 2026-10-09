@@ -111,6 +111,22 @@ TEST_CASE("A transition fires when every fact answers as asked", "[npc][fsm]")
     REQUIRE(fires({}, facts));
 }
 
+TEST_CASE("A transition asks a script fact as it asks an engine fact", "[npc][fsm]")
+{
+    advanced_platformer::NpcFacts facts = NpcFactsBuilder::facts().knowingTarget();
+    facts.scripted = {{"cornered", true}, {"perched", false}};
+    REQUIRE(fires({{"cornered", true}, {"targetKnown", true}}, facts));
+    REQUIRE(fires({{"perched", false}}, facts));
+    REQUIRE_FALSE(fires({{"cornered", false}}, facts));
+}
+
+TEST_CASE("A condition no engine or script fact answers stops the machine", "[npc][fsm]")
+{
+    REQUIRE_THROWS_WITH(
+        fires({{"cornered", true}}, NpcFactsBuilder::facts()),
+        ContainsSubstring("asks about \"cornered\", and there is no such fact"));
+}
+
 TEST_CASE("Machine conditions compose surface and range facts independently", "[npc][fsm]")
 {
     advanced_platformer::NpcFacts facts;
@@ -185,11 +201,6 @@ TEST_CASE("A state machine rejects states and transitions it cannot run", "[npc]
     {
         machine.transitions[0].to = "pounce";
         expected = "leads to a state the machine lacks";
-    }
-    SECTION("A condition on a fact no row answers")
-    {
-        machine.transitions[1].when["cornered"] = true;
-        expected = "asks about \"cornered\", and there is no such fact";
     }
     SECTION("A negative hold")
     {

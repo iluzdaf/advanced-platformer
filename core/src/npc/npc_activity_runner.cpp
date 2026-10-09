@@ -1,5 +1,6 @@
 #include "advanced_platformer/npc/npc_activity_runner.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <optional>
 #include <string>
@@ -20,6 +21,7 @@
 #include "advanced_platformer/npc/npc_activity_scripts.hpp"
 #include "advanced_platformer/npc/npc_facts.hpp"
 #include "advanced_platformer/npc/npc_navigation.hpp"
+#include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "advanced_platformer/npc/npc_update.hpp"
 #include "advanced_platformer/world/level_exit.hpp"
 #include "advanced_platformer/world/pickup.hpp"
@@ -102,6 +104,41 @@ namespace advanced_platformer
                         .breakableBelow = breakableTileBelow(update.map, feet)});
             }
             return snapshot;
+        }
+    }
+
+    void addNpcScriptFacts(
+        const NpcUpdate& update,
+        const Actor& actor,
+        const NpcBrain& brain,
+        const PathFollower& follower,
+        const Actor* target,
+        NpcFacts& facts)
+    {
+        if (!actor.machine.has_value())
+        {
+            return;
+        }
+        std::vector<std::string> scripts;
+        for (const NpcMachineState& state : actor.machine->definition.states)
+        {
+            const std::string& script = state.does.script;
+            if (std::ranges::find(scripts, script) == scripts.end() &&
+                update.scripts.hasFacts(script))
+            {
+                scripts.push_back(script);
+            }
+        }
+        if (scripts.empty())
+        {
+            return;
+        }
+        const NpcActivitySnapshot snapshot =
+            activitySnapshot(update, actor, brain, follower, target, facts);
+        for (const std::string& script : scripts)
+        {
+            facts.scripted.merge(
+                update.scripts.facts(actor.id, script, snapshot, update.deltaTime));
         }
     }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <map>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -29,6 +30,7 @@ namespace advanced_platformer
             std::string_view source,
             std::string sourceName = "Lua script");
         bool hasActivity(const NpcActivity& activity) const;
+        std::vector<std::string> factNames(const std::string& script) const;
 
         void enter(ActorId actor, const NpcActivity& activity, const NpcActivitySnapshot& snapshot)
             override;
@@ -39,6 +41,12 @@ namespace advanced_platformer
             float deltaTime) override;
         void exit(ActorId actor, const NpcActivity& activity, const NpcActivitySnapshot& snapshot)
             override;
+        bool hasFacts(const std::string& script) const override;
+        std::map<std::string, bool> facts(
+            ActorId actor,
+            const std::string& script,
+            const NpcActivitySnapshot& snapshot,
+            float deltaTime) override;
         void forget(ActorId actor) override;
 
         const std::vector<LuaScriptDiagnostic>& diagnostics() const;

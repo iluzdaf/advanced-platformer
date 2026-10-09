@@ -287,7 +287,7 @@ team, and life state, plus optional components.
 Each NPC update has three steps:
 
 1. `gatherNpcFacts` collects sensing, memory, movement, attacks, and state time into
-   `NpcFacts`.
+   `NpcFacts`, and `addNpcScriptFacts` adds the answers of the machine's script facts.
 2. `advanceNpcMachine` chooses the state. A transition fires once every fact in its
    `when` has held for `after` seconds; at most one fires per update.
 3. A transition exits the old activity, resets the state's time, clears the route, and
@@ -296,8 +296,14 @@ Each NPC update has three steps:
    later in the same step. An item use from the bag goes into `WorldRequests`.
 
 - Loading rejects a machine with no states, a repeated state name, a transition from or
-  to an unknown state, a condition no fact row answers, or a hold that is not finite and
-  non-negative, and names the transition.
+  to an unknown state, or a hold that is not finite and non-negative, and names the
+  transition. Loading the machine's scripts then rejects a condition that neither a fact
+  row nor one of those scripts' facts answers.
+- Script facts let content ask questions the engine has no row for, such as the target's
+  kind or whether it is closing in, without the engine learning any one actor's policy.
+  They run every update, before the machine advances, so a fact that keeps memory sees
+  every step whatever the state; the answers join `NpcFacts` and do not run again after a
+  transition fires in the same update.
 - The engine supplies facts, routes, movement, and combat. Machines and scripts hold
   every policy.
 
@@ -310,7 +316,10 @@ Each NPC update has three steps:
   string, and table libraries, no `require`, no files. Positions are `glm::vec2` bound
   as `vec2`, copied in and out; its constructor is a read-only global.
 - Returned commands reject unknown fields, wrong types, and non-finite vectors.
-- Each visit has a `self` table keyed by `ActorId`, script, and activity. Calls are
+- Each visit has a `self` table keyed by `ActorId`, script, and activity. Each actor also
+  has a `memory` table per script, which its facts and every activity of that script
+  share across states, so a behaviour split into states keeps what phases inside one
+  activity used to keep in `self`. Calls are
   protected and have an instruction budget. An error or invalid command records its
   source, script, activity, hook, and actor and yields no command. `print` is recorded
   the same way.
@@ -575,15 +584,13 @@ to the traversal profile. The search itself does not change.
   plays a run headless through `Game`, with the shipped content, and prints one JSON line
   per level.
 - The bot is the player actor with senses and the `bot` machine from the bot directory's
-  `machines.json`, whose one activity is in its `bot.lua`. The directory is
+  `machines.json`, whose activities and facts are in its `bot.lua`. The directory is
   `playtest/assets` unless `--bot` names another, so a bot can be edited and replayed
-  without a rebuild. It senses, thinks and moves exactly as an NPC does. `bot.lua` keeps a
-  `skills` table, each skill a description and a `run(self, snapshot, step, ...)` that
-  returns a command: `goToExit` routes to the exit and asks for a fresh route when the
-  route ends short of it or the bot has stood still for a second, `fightNearest` aims and
-  shoots at the opponent it sees on top of another skill's command, and `collect` routes
-  to the nearest pickup of a named item. The `play` activity composes `goToExit` and
-  `fightNearest`. `playtestContent` builds that content on top of the shipped catalogs, so
+  without a rebuild. It senses, thinks and moves exactly as an NPC does, so each of its
+  behaviours is a state with transitions that an NPC's machine can take over: `travel`
+  routes to the exit, `loot` collects a pickup it shot free, and `kite`, `hold`, `dodge`
+  and `keepAway` answer an opponent, each entered on a script fact and limited per
+  approach. `playtestContent` builds that content on top of the shipped catalogs, so
   nothing of the bot ships with the game.
 - A level ends at the exit, when the player is defeated (which ends the run, as in the
   game), when the player stands in no new cell for 15 seconds (stuck), or at the time

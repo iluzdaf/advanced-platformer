@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -17,8 +18,6 @@ namespace tests
         advanced_platformer::NpcActivitySnapshot snapshot;
     };
 
-    // Stands in for the Lua runtime: records every hook it is called with, and answers
-    // each update with the same command.
     class RecordingNpcScripts final : public advanced_platformer::NpcActivityScripts
     {
     public:
@@ -49,12 +48,28 @@ namespace tests
             calls.push_back({"exit", actor, activity, snapshot});
         }
 
+        bool hasFacts(const std::string& script) const override
+        {
+            return factAnswers.contains(script);
+        }
+
+        std::map<std::string, bool> facts(
+            advanced_platformer::ActorId actor,
+            const std::string& script,
+            const advanced_platformer::NpcActivitySnapshot& snapshot,
+            float) override
+        {
+            calls.push_back({"fact", actor, {script, {}}, snapshot});
+            return factAnswers.at(script);
+        }
+
         void forget(advanced_platformer::ActorId actor) override
         {
             forgotten.push_back(actor);
         }
 
         advanced_platformer::NpcActivityCommand command;
+        std::map<std::string, std::map<std::string, bool>> factAnswers;
         std::vector<ScriptCall> calls;
         std::vector<float> updateSteps;
         std::vector<advanced_platformer::ActorId> forgotten;
