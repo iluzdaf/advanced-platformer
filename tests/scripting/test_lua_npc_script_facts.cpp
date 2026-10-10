@@ -36,12 +36,14 @@ namespace
                     },
                     activities = {
                         count = {
+                            description = 'Test activity count',
                             update = function(_, _, _, memory)
                                 memory.counted = (memory.counted or 0) + 1
                                 return { jumpPressed = memory.counted == 2, jumpHeld = memory.order == "abab" }
                             end,
                         },
                         check = {
+                            description = 'Test activity check',
                             enter = function(_, _, memory)
                                 memory.entered = memory.counted
                             end,
@@ -133,7 +135,7 @@ TEST_CASE("A script fact that fails or answers with no boolean is reported and f
                     failing = function() error("no answer") end,
                     vague = function() return 1 end,
                 },
-                activities = { idle = { update = function() return nil end } },
+                activities = { idle = { description = 'Test activity idle', update = function() return nil end } },
             }
         )",
         "broken.lua");
@@ -152,7 +154,10 @@ TEST_CASE("A script without facts answers none", "[lua][npc]")
 {
     LuaNpcScripts scripts;
     scripts.loadScriptText(
-        "plain", "return { activities = { idle = { update = function() end } } }", "plain.lua");
+        "plain",
+        "return { activities = { idle = { description = 'Test activity idle', update = function() "
+        "end } } }",
+        "plain.lua");
 
     REQUIRE_FALSE(scripts.hasFacts("plain"));
     REQUIRE_FALSE(scripts.hasFacts("missing"));
@@ -166,19 +171,22 @@ TEST_CASE("Script facts must be named functions that the engine does not answer"
     const char* expected = "";
     SECTION("Facts that are not a table")
     {
-        source = "return { facts = 1, activities = { idle = { update = function() end } } }";
+        source = "return { facts = 1, activities = { idle = { description = 'Test activity idle', "
+                 "update = function() end } } }";
         expected = "facts value that is not a table";
     }
     SECTION("A fact that is not a function")
     {
-        source = "return { facts = { near = true }, activities = { idle = { update = function() "
+        source = "return { facts = { near = true }, activities = { idle = { description = 'Test "
+                 "activity idle', update = function() "
                  "end } } }";
         expected = "fact 'near' that is not a function";
     }
     SECTION("A fact the engine already answers")
     {
         source = "return { facts = { targetKnown = function() return true end }, "
-                 "activities = { idle = { update = function() end } } }";
+                 "activities = { idle = { description = 'Test activity idle', update = function() "
+                 "end } } }";
         expected = "fact 'targetKnown' that the engine already answers";
     }
     REQUIRE_THROWS_WITH(

@@ -3,6 +3,8 @@ local CaughtDistance = 16
 return {
     activities = {
         flee = {
+            description = "Run from the target along the floor without stepping off a ledge; when "
+                .. "caught or cornered, stop and face it.",
             update = function(self, snapshot)
                 local threat = snapshot.targetFeet
                 if threat == nil then

@@ -295,8 +295,8 @@ fires.
 ### Lua activities
 
 A script returns `{ activities = { name = { enter, update, exit } }, facts = { ... } }`.
-`update` is required, and `enter`, `exit` and `description`, text saying what the activity
-does and when it runs, are optional. Each hook gets `self`, a table
+`update` and `description`, nonempty text saying what the activity does and when it
+runs, are required, and `enter` and `exit` are optional. Each hook gets `self`, a table
 kept for the visit, and a snapshot. `update` also gets the step in seconds, and returns a
 command or `nil`. Every hook gets `memory` last: one table per NPC and script, kept across
 states, which the script's facts share. [`common.lua`](../game/assets/scripts/common.lua) has `idle`, `patrol`, `chase`,

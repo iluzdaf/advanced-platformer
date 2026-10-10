@@ -52,6 +52,7 @@ TEST_CASE("A Lua activity reads a copied snapshot and returns a command", "[lua]
             return {
                 activities = {
                     decide = {
+                        description = 'Test activity decide',
                         update = function(self, snapshot, dt)
                             snapshot.feet.x = 999
                             return {
@@ -104,6 +105,7 @@ TEST_CASE(
             return {
                 activities = {
                     decide = {
+                        description = 'Test activity decide',
                         update = function(self, snapshot)
                             if snapshot.footing == nil then
                                 return { jumpPressed = snapshot.targetCenter == nil }
@@ -153,6 +155,7 @@ TEST_CASE("A snapshot names the kind of actor its NPC targets", "[lua][npc]")
             return {
                 activities = {
                     decide = {
+                        description = 'Test activity decide',
                         update = function(self, snapshot)
                             return { useItem = snapshot.targetKind }
                         end
@@ -182,6 +185,7 @@ TEST_CASE("A snapshot's exit and pickups reach Lua with the item each pickup hol
             return {
                 activities = {
                     decide = {
+                        description = 'Test activity decide',
                         update = function(self, snapshot)
                             for _, pickup in ipairs(snapshot.pickups) do
                                 if pickup.breakableBelow ~= nil then
@@ -230,6 +234,7 @@ TEST_CASE("A script reads its health and asks to use an item by name", "[lua][np
             return {
                 activities = {
                     decide = {
+                        description = 'Test activity decide',
                         update = function(self, snapshot)
                             if snapshot.health and snapshot.health.current < snapshot.health.maximum then
                                 return { useItem = "Potion" }
@@ -259,7 +264,7 @@ TEST_CASE("Lua receives independent surface and range facts", "[lua][npc]")
 {
     LuaNpcScripts scripts;
     scripts.loadScriptText("example", R"(
-        return {activities={decide={update=function(self, snapshot)
+        return {activities={decide={description = 'Test activity decide', update=function(self, snapshot)
             return {jumpHeld=snapshot.facts.targetOnSameSurface,
                     primaryAttackPressed=snapshot.facts.targetWithinNoticeDistance}
         end}}}
@@ -289,6 +294,7 @@ TEST_CASE("Each actor and each visit has its own Lua activity memory", "[lua][np
             return {
                 activities = {
                     decide = {
+                        description = 'Test activity decide',
                         enter = function(self) self.updates = 10 end,
                         update = function(self)
                             self.updates = self.updates + 1

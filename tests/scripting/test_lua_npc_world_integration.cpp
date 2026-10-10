@@ -24,7 +24,7 @@ TEST_CASE("An NPC machine invokes a loaded Lua activity", "[lua][npc][integratio
     advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScriptText(
         "fixture",
-        "return {activities={flee={update=function() return "
+        "return {activities={flee={description = 'Test activity flee', update=function() return "
         "{direction={x=-1,y=0},jumpHeld=true} end}}}",
         "fixture.lua");
     const advanced_platformer::TileMap map = tests::TileMapBuilder({"...", "...", "###"});
@@ -60,8 +60,9 @@ TEST_CASE(
                 end
             },
             activities = {
-                wait = {update = function() return {} end},
+                wait = {description = 'Test activity wait', update = function() return {} end},
                 leave = {
+                    description = 'Test activity leave',
                     update = function(_, snapshot, _, memory)
                         return {direction = {x = memory.updates, y = 0},
                                 jumpHeld = snapshot.facts.counted}
@@ -109,13 +110,14 @@ TEST_CASE(
     scripts.loadScriptText("walker", R"(
         return {activities = {
             walk = {
+                description = 'Test activity walk',
                 enter = function(self) self.direction = 1 end,
                 update = function(self)
                     return {direction = {x = self.direction, y = 0},
                             avoidLedges = true, primaryAttackPressed = true}
                 end
             },
-            rest = {update = function() return {} end}
+            rest = {description = 'Test activity rest', update = function() return {} end}
         }}
     )");
     advanced_platformer::TileMap map = tests::TileMapBuilder({"........", "........", "###..###"});

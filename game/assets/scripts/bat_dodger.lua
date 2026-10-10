@@ -17,6 +17,8 @@ end
 return {
     activities = {
         wait = {
+            description = "Hover in place; while the target is known, weave left and right and aim at "
+                .. "it.",
             update = function(self, snapshot)
                 if not snapshot.facts.targetKnown then
                     return { clearRoute = true }
@@ -30,6 +32,7 @@ return {
             end,
         },
         dive = {
+            description = "Fly straight at the target, biting.",
             update = function(self, snapshot)
                 local target = targetOf(snapshot)
                 return {
@@ -41,6 +44,7 @@ return {
             end,
         },
         climb = {
+            description = "Fly up and away from the side the target was on when the dive ended.",
             enter = function(self, snapshot)
                 self.side = targetOf(snapshot).x < snapshot.center.x and 1 or -1
             end,

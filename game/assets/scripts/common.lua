@@ -20,12 +20,15 @@ end
 return {
     activities = {
         idle = {
+            description = "Stand still and do nothing.",
             update = function()
                 return nil
             end,
         },
 
         patrol = {
+            description = "Walk to one patrol end, then turn and walk to the other; without a patrol, "
+                .. "stand still.",
             update = function(self, snapshot)
                 local patrol = snapshot.patrol
                 if patrol == nil then
@@ -43,6 +46,7 @@ return {
         },
 
         chase = {
+            description = "Route to where the target was last seen or heard, aiming at that spot.",
             update = function(self, snapshot)
                 local goal = snapshot.lastKnownTargetFeet
                 return { routeTo = goal, aimAt = goal }
@@ -50,6 +54,7 @@ return {
         },
 
         attack = {
+            description = "Aim at the target, attacking while it is in primary range.",
             update = function(self, snapshot)
                 local target = snapshot.targetCenter
                 local command = { aimAt = target or snapshot.lastKnownTargetFeet }
@@ -61,6 +66,8 @@ return {
         },
 
         search = {
+            description = "Route to where the target was last known, then look left and right in turn."
+                .. "Route to where the target was last known, then look left and right in turn.",
             update = function(self, snapshot)
                 local goal = snapshot.lastKnownTargetFeet
                 local command = { routeTo = goal }
@@ -73,6 +80,8 @@ return {
         },
 
         retreat = {
+            description = "Step away from where the target was last known without leaving the floor, "
+                .. "firing at it.",
             update = function(self, snapshot)
                 local threat = snapshot.lastKnownTargetFeet
                 local away = snapshot.feet - threat
@@ -91,6 +100,7 @@ return {
         },
 
         watch = {
+            description = "Stand still and look left and right in turn.",
             update = function(self, snapshot)
                 return { aimDirection = lookAbout(snapshot) }
             end,
