@@ -3,8 +3,12 @@
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
+#include <utility>
+
+#include <glm/vec2.hpp>
 
 #include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/validation.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
 #include "advanced_platformer/physics/body.hpp"
@@ -15,7 +19,6 @@ namespace advanced_platformer
 {
     namespace
     {
-        // Whether the contacts include the wall or ceiling.
         bool touchesSurface(ClimbSurface surface, const CollisionContacts& contacts)
         {
             switch (surface)
@@ -81,6 +84,30 @@ namespace advanced_platformer
     bool touchesClimbable(const TileMap& map, const Aabb& bounds, ClimbSurface surface)
     {
         return touchesSurface(surface, touchingClimbableSurfaces(map, bounds));
+    }
+
+    void gripNearbySurface(const TileMap& map, Aabb& bounds, SurfaceClimb& climb)
+    {
+        if (touchingSurfaces(map, bounds).ground)
+        {
+            return;
+        }
+        const auto reach = static_cast<float>(map.tileSize());
+        for (const auto& [surface, toward] :
+             {std::pair{ClimbSurface::Ceiling, glm::vec2{0.0F, -1.0F}},
+              std::pair{ClimbSurface::LeftWall, glm::vec2{-1.0F, 0.0F}},
+              std::pair{ClimbSurface::RightWall, glm::vec2{1.0F, 0.0F}}})
+        {
+            Aabb moved = bounds;
+            moveAndCollide(map, moved, toward * reach);
+            if (touchesClimbable(map, moved, surface))
+            {
+                bounds = moved;
+                climb.surface = surface;
+                climb.wallHeading = WallHeading::Up;
+                return;
+            }
+        }
     }
 
     void validateSurfaceClimbConfig(const SurfaceClimbConfig& config)

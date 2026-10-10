@@ -114,31 +114,55 @@ TEST_CASE("Flying actors require clearance but not ground support", "[world][lev
     REQUIRE_NOTHROW(advanced_platformer::validateLevelPlacements(map, world, 1));
 }
 
+TEST_CASE("A climber spawns on the ground, a wall or a ceiling", "[world][level-validation]")
+{
+    const advanced_platformer::TileMap map =
+        tests::TileMapBuilder({"ccccc", "c....", "c....", "c....", "#####"})
+            .where('c', tests::Tile{}.blocksMovement().climbable());
+
+    SECTION("ground")
+    {
+        advanced_platformer::World world;
+        world.addActor(makePlatformer({40.0F, 64.0F}).climbing());
+        REQUIRE_NOTHROW(advanced_platformer::validateLevelPlacements(map, world, 1));
+    }
+
+    SECTION("ceiling")
+    {
+        advanced_platformer::World world;
+        world.addActor(makePlatformer({40.0F, 36.0F}).climbing());
+        REQUIRE_NOTHROW(advanced_platformer::validateLevelPlacements(map, world, 1));
+    }
+
+    SECTION("wall")
+    {
+        advanced_platformer::World world;
+        world.addActor(makePlatformer({22.0F, 48.0F}).climbing());
+        REQUIRE_NOTHROW(advanced_platformer::validateLevelPlacements(map, world, 1));
+    }
+
+    SECTION("air")
+    {
+        advanced_platformer::World world;
+        world.addActor(makePlatformer({40.0F, 48.0F}).climbing());
+        REQUIRE_THROWS_WITH(
+            advanced_platformer::validateLevelPlacements(map, world, 1),
+            "Level 1 actor 1 spawn has no ground, wall or ceiling to cling to");
+    }
+}
+
 TEST_CASE("A climber's patrol points need clearance but not ground", "[world][level-validation]")
 {
     const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"#####", ".....", ".....", ".....", "#####"});
-    advanced_platformer::Actor climber = makePlatformer({24.0F, 64.0F})
-                                             .climbing()
-                                             .thinking({})
-                                             .patrolling({24.0F, 64.0F}, {40.0F, 48.0F});
+    const advanced_platformer::Actor climber = makePlatformer({24.0F, 64.0F})
+                                                   .climbing()
+                                                   .thinking({})
+                                                   .patrolling({24.0F, 64.0F}, {40.0F, 48.0F});
+    advanced_platformer::World world;
+    world.addActor(climber);
 
-    SECTION("patrol point in the air")
-    {
-        advanced_platformer::World world;
-        world.addActor(climber);
-        REQUIRE_NOTHROW(advanced_platformer::validateLevelPlacements(map, world, 1));
-    }
-
-    SECTION("spawn in the air")
-    {
-        climber.body.bounds.topLeft.y -= 16.0F;
-        advanced_platformer::World world;
-        world.addActor(climber);
-        REQUIRE_THROWS_WITH(
-            advanced_platformer::validateLevelPlacements(map, world, 1),
-            "Level 1 actor 1 spawn has no ground support");
-    }
+    REQUIRE_NOTHROW(advanced_platformer::validateLevelPlacements(map, world, 1));
 }
 
 TEST_CASE("Level pickups require clear spawn positions", "[world][level-validation]")

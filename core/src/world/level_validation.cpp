@@ -66,9 +66,29 @@ namespace advanced_platformer
         }
     }
 
+    namespace
+    {
+        void requireSpawnSupport(const TileMap& map, const Actor& actor)
+        {
+            if (!actor.surfaceClimb.has_value())
+            {
+                requirePlacement(
+                    map, actor.body.bounds, "spawn", actor.platformerMovement.has_value());
+                return;
+            }
+            requireClearance(map, actor.body.bounds, "spawn");
+            const CollisionContacts climbable = touchingClimbableSurfaces(map, actor.body.bounds);
+            if (!touchingSurfaces(map, actor.body.bounds).ground && !climbable.ceiling &&
+                !climbable.left && !climbable.right)
+            {
+                throw std::invalid_argument("spawn has no ground, wall or ceiling to cling to");
+            }
+        }
+    }
+
     void validateActorPlacement(const TileMap& map, const Actor& actor)
     {
-        requirePlacement(map, actor.body.bounds, "spawn", actor.platformerMovement.has_value());
+        requireSpawnSupport(map, actor);
         if (!actor.patrol.has_value())
         {
             return;

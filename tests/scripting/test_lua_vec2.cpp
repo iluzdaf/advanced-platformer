@@ -24,7 +24,7 @@ TEST_CASE("Snapshot positions are vec2 values with glm's arithmetic", "[lua][npc
 {
     LuaNpcScripts scripts;
     scripts.loadScriptText("example", R"lua(
-        return {activities={decide={update=function(self, snapshot)
+        return {activities={decide={description = 'Test activity decide', update=function(self, snapshot)
             local feet = snapshot.feet
             local target = snapshot.targetFeet
             assert(feet.x == 1 and feet.y == 2)
@@ -61,17 +61,17 @@ TEST_CASE("A Lua script cannot change vec2 for others", "[lua][npc][vec2]")
     LuaNpcScripts scripts;
     // One script tries to replace a method; another shadows vec2 in its own environment.
     scripts.loadScriptText("breaker", R"(
-        return {activities={decide={update=function()
+        return {activities={decide={description = 'Test activity decide', update=function()
             vec2.distanceSquared = function() return 0 end
             return {}
         end}}}
     )");
     scripts.loadScriptText("shadower", R"(
         vec2 = function() return {x = 0, y = 0} end
-        return {activities={decide={update=function() return {} end}}}
+        return {activities={decide={description = 'Test activity decide', update=function() return {} end}}}
     )");
     scripts.loadScriptText("example", R"(
-        return {activities={decide={update=function()
+        return {activities={decide={description = 'Test activity decide', update=function()
             return {direction={x=vec2(0, 0):distanceSquared(vec2(3, 4)), y=0}}
         end}}}
     )");
@@ -90,7 +90,7 @@ TEST_CASE("A Lua command rejects a vec2 that is not finite", "[lua][npc][vec2]")
 {
     LuaNpcScripts scripts;
     scripts.loadScriptText("example", R"(
-        return {activities={decide={update=function()
+        return {activities={decide={description = 'Test activity decide', update=function()
             return {aimAt = vec2(math.huge, 0)}
         end}}}
     )");

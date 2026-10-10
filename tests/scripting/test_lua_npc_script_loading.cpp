@@ -40,7 +40,7 @@ TEST_CASE("Lua scripts reject activities without an update function", "[lua][npc
         Catch::Matchers::ContainsSubstring("example.wait"));
 }
 
-TEST_CASE("A Lua activity may describe itself in text", "[lua][npc]")
+TEST_CASE("A Lua activity must describe itself in text", "[lua][npc]")
 {
     advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScriptText(
@@ -49,13 +49,35 @@ TEST_CASE("A Lua activity may describe itself in text", "[lua][npc]")
         "described.lua");
     REQUIRE(scripts.hasActivity({"example", "wait"}));
 
-    REQUIRE_THROWS_WITH(
-        scripts.loadScriptText(
-            "example",
-            "return {activities={wait={description=3, update=function() end}}}",
-            "numbered.lua"),
-        Catch::Matchers::ContainsSubstring("example.wait") &&
-            Catch::Matchers::ContainsSubstring("description that is not text"));
+    SECTION("missing")
+    {
+        REQUIRE_THROWS_WITH(
+            scripts.loadScriptText(
+                "example", "return {activities={wait={update=function() end}}}", "bare.lua"),
+            Catch::Matchers::ContainsSubstring("example.wait") &&
+                Catch::Matchers::ContainsSubstring("needs a description"));
+    }
+
+    SECTION("empty")
+    {
+        REQUIRE_THROWS_WITH(
+            scripts.loadScriptText(
+                "example",
+                "return {activities={wait={description='', update=function() end}}}",
+                "empty.lua"),
+            Catch::Matchers::ContainsSubstring("needs a description"));
+    }
+
+    SECTION("not text")
+    {
+        REQUIRE_THROWS_WITH(
+            scripts.loadScriptText(
+                "example",
+                "return {activities={wait={description=3, update=function() end}}}",
+                "numbered.lua"),
+            Catch::Matchers::ContainsSubstring("example.wait") &&
+                Catch::Matchers::ContainsSubstring("description that is not text"));
+    }
 }
 
 TEST_CASE("A Lua script that cannot be read is reported by its full path", "[lua][npc]")
@@ -72,7 +94,8 @@ TEST_CASE("A broken reload leaves the working Lua script in place", "[lua][npc]"
     advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScriptText(
         "example",
-        "return {activities={decide={update=function() return {jumpPressed=true} end}}}",
+        "return {activities={decide={description = 'Test activity decide', update=function() "
+        "return {jumpPressed=true} end}}}",
         "working.lua");
 
     REQUIRE_THROWS_WITH(

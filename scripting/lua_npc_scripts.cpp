@@ -409,17 +409,24 @@ namespace advanced_platformer
                 activity,
                 {"description", "enter", "update", "exit"},
                 std::format("Lua activity '{}'", name));
-            if (const sol::object description = activity.get<sol::object>("description");
-                description.valid() && description.get_type() != sol::type::lua_nil &&
-                description.get_type() != sol::type::string)
+            if (!activity.get<sol::object>("update").is<sol::function>())
+            {
+                fail(activityDescription(script, name, sourceName), " needs an update function");
+            }
+            const sol::object description = activity.get<sol::object>("description");
+            if (!description.valid() || description.get_type() == sol::type::lua_nil)
+            {
+                fail(activityDescription(script, name, sourceName), " needs a description");
+            }
+            if (description.get_type() != sol::type::string)
             {
                 fail(
                     activityDescription(script, name, sourceName),
                     " has a description that is not text");
             }
-            if (!activity.get<sol::object>("update").is<sol::function>())
+            if (description.as<std::string>().empty())
             {
-                fail(activityDescription(script, name, sourceName), " needs an update function");
+                fail(activityDescription(script, name, sourceName), " needs a description");
             }
             for (std::string_view optional : {std::string_view{"enter"}, std::string_view{"exit"}})
             {

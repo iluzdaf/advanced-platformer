@@ -21,7 +21,8 @@ TEST_CASE("A failing Lua update reports its context and asks for nothing", "[lua
     advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScriptText(
         "example",
-        "return {activities={decide={update=function() error('boom') end}}}",
+        "return {activities={decide={description = 'Test activity decide', update=function() "
+        "error('boom') end}}}",
         "failing.lua");
     const advanced_platformer::NpcActivitySnapshot snapshot;
     scripts.enter(FirstActor, Activity, snapshot);
@@ -49,7 +50,8 @@ TEST_CASE("Lua commands reject unknown fields and non-finite vectors", "[lua][np
     {
         scripts.loadScriptText(
             "example",
-            "return {activities={decide={update=function() return {teleport=true} end}}}");
+            "return {activities={decide={description = 'Test activity decide', update=function() "
+            "return {teleport=true} end}}}");
         scripts.enter(FirstActor, Activity, snapshot);
 
         REQUIRE_FALSE(scripts.update(FirstActor, Activity, snapshot, 0.1F).intentions.jumpPressed);
@@ -61,7 +63,8 @@ TEST_CASE("Lua commands reject unknown fields and non-finite vectors", "[lua][np
     {
         scripts.loadScriptText(
             "example",
-            "return {activities={decide={update=function() return "
+            "return {activities={decide={description = 'Test activity decide', update=function() "
+            "return "
             "{direction={x=0/0,y=0}} end}}}");
         scripts.enter(FirstActor, Activity, snapshot);
 
@@ -85,7 +88,10 @@ TEST_CASE("Lua movement and contact requests require booleans", "[lua][npc]")
     }
     advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScriptText(
-        "example", "return {activities={decide={update=function() return {" + field + "=1} end}}}");
+        "example",
+        "return {activities={decide={description = 'Test activity decide', update=function() "
+        "return {" +
+            field + "=1} end}}}");
     const advanced_platformer::NpcActivitySnapshot snapshot;
     scripts.enter(FirstActor, Activity, snapshot);
     const auto command = scripts.update(FirstActor, Activity, snapshot, 0.1F);
@@ -98,7 +104,9 @@ TEST_CASE("A Lua item use names an item", "[lua][npc]")
 {
     advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScriptText(
-        "example", "return {activities={decide={update=function() return {useItem=2} end}}}");
+        "example",
+        "return {activities={decide={description = 'Test activity decide', update=function() "
+        "return {useItem=2} end}}}");
     const advanced_platformer::NpcActivitySnapshot snapshot;
     scripts.enter(FirstActor, Activity, snapshot);
     const auto command = scripts.update(FirstActor, Activity, snapshot, 0.1F);
@@ -122,7 +130,9 @@ TEST_CASE("A Lua climb grip is named, and keeps the grip when left out", "[lua][
     advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScriptText(
         "example",
-        "return {activities={decide={update=function() return {climbGrip=" + value + "} end}}}");
+        "return {activities={decide={description = 'Test activity decide', update=function() "
+        "return {climbGrip=" +
+            value + "} end}}}");
     const advanced_platformer::NpcActivitySnapshot snapshot;
     scripts.enter(FirstActor, Activity, snapshot);
     const auto command = scripts.update(FirstActor, Activity, snapshot, 0.1F);
@@ -137,7 +147,9 @@ TEST_CASE("A Lua command that leaves out the climb grip keeps it", "[lua][npc]")
 {
     advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScriptText(
-        "example", "return {activities={decide={update=function() return {} end}}}");
+        "example",
+        "return {activities={decide={description = 'Test activity decide', update=function() "
+        "return {} end}}}");
     const advanced_platformer::NpcActivitySnapshot snapshot;
     scripts.enter(FirstActor, Activity, snapshot);
     const auto command = scripts.update(FirstActor, Activity, snapshot, 0.1F);
@@ -154,6 +166,7 @@ TEST_CASE("Lua activities cannot use filesystem or system libraries", "[lua][npc
             return {
                 activities = {
                     decide = {
+                        description = 'Test activity decide',
                         update = function()
                             local exposed = io or os or package or debug or dofile or loadfile or load
                             return {direction = {x = exposed and 1 or 0, y = 0}}
@@ -173,7 +186,8 @@ TEST_CASE("A Lua activity cannot run past its instruction budget", "[lua][npc]")
     advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScriptText(
         "example",
-        "return {activities={decide={update=function() while true do end end}}}",
+        "return {activities={decide={description = 'Test activity decide', update=function() while "
+        "true do end end}}}",
         "loop.lua");
     const advanced_platformer::NpcActivitySnapshot snapshot;
     scripts.enter(FirstActor, Activity, snapshot);
@@ -188,7 +202,9 @@ TEST_CASE("A Lua activity rejects an invalid update time step", "[lua][npc]")
 {
     advanced_platformer::LuaNpcScripts scripts;
     scripts.loadScriptText(
-        "example", "return {activities={decide={update=function() return {} end}}}");
+        "example",
+        "return {activities={decide={description = 'Test activity decide', update=function() "
+        "return {} end}}}");
     const advanced_platformer::NpcActivitySnapshot snapshot;
     scripts.enter(FirstActor, Activity, snapshot);
 

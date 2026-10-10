@@ -26,6 +26,7 @@
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/world/level_exit.hpp"
 #include "advanced_platformer/world/pickup.hpp"
@@ -78,6 +79,10 @@ namespace advanced_platformer
                 composePatrol(map, placement.patrol),
                 catalogs.machines);
             actor.definitionName = placement.definitionName;
+            if (actor.surfaceClimb.has_value())
+            {
+                gripNearbySurface(map, actor.body.bounds, *actor.surfaceClimb);
+            }
             return actor;
         }
 

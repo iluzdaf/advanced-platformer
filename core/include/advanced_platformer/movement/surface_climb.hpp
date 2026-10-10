@@ -18,15 +18,12 @@ namespace advanced_platformer
         Ceiling
     };
 
-    // Which way a climber's head points along a wall.
     enum class WallHeading
     {
         Up,
         Down
     };
 
-    // Its member names are the keys of an actor's "surfaceClimb" object in actors.json, so
-    // renaming one renames the key.
     struct SurfaceClimbConfig
     {
         float speed = 60.0F;
@@ -34,28 +31,23 @@ namespace advanced_platformer
         bool operator==(const SurfaceClimbConfig&) const = default;
     };
 
-    // Optional capability for a platformer actor. The surface is runtime state; the
-    // intentions' climbGrip decides whether it grabs, stays attached or lets go.
     struct SurfaceClimb
     {
         SurfaceClimbConfig config;
         ClimbSurface surface = ClimbSurface::None;
-        // Kept while the climber holds still on a wall, so it does not turn round.
         WallHeading wallHeading = WallHeading::Up;
     };
 
     void validateSurfaceClimbConfig(const SurfaceClimbConfig& config);
 
-    // On a wall, the way the intentions climb, or the current heading when they hold
-    // still. Off a wall, Up, which is where a climber heads on the next wall until it moves.
     WallHeading wallHeadingFor(
         ClimbSurface surface,
         const InputIntentions& intentions,
         WallHeading current);
 
-    // Whether a body with these bounds is against a climbable tile on the surface's side.
-    // The floor is not a climb surface.
     bool touchesClimbable(const TileMap& map, const Aabb& bounds, ClimbSurface surface);
+
+    void gripNearbySurface(const TileMap& map, Aabb& bounds, SurfaceClimb& climb);
 
     CollisionContacts updateSurfaceClimbMovement(
         const TileMap& map,

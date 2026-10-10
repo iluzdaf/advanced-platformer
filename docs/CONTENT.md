@@ -147,8 +147,9 @@ the room, as in `room3_zombie_1`.
 
 When content loads, every piece's placements are checked on the piece alone, and again
 mirrored when `mirror` allows it. An actor's spawn and patrol ends, and a pickup's spawn,
-must not overlap a blocked tile. A walker's spawn and patrol ends need ground under them;
-a climber's patrol ends may be on a wall or ceiling. An actor with a `patrol` must be able
+must not overlap a blocked tile. A walker's spawn and patrol ends need ground under them.
+A climber may instead spawn in a cell under a climbable ceiling or beside a climbable
+wall, and starts holding it, the ceiling first; its patrol ends may be on a wall or ceiling. An actor with a `patrol` must be able
 to reach both its ends from its spawn. A flyer must spawn in open air, with no blocked tile
 right under it. Errors name the piece, `mirrored` when it is the flipped copy, and the placement's
 `id`. Every pickup must be within the player's reach, or rest on a breakable tile that
@@ -294,8 +295,8 @@ fires.
 ### Lua activities
 
 A script returns `{ activities = { name = { enter, update, exit } }, facts = { ... } }`.
-`update` is required, and `enter`, `exit` and `description`, text saying what the activity
-does and when it runs, are optional. Each hook gets `self`, a table
+`update` and `description`, nonempty text saying what the activity does and when it
+runs, are required, and `enter` and `exit` are optional. Each hook gets `self`, a table
 kept for the visit, and a snapshot. `update` also gets the step in seconds, and returns a
 command or `nil`. Every hook gets `memory` last: one table per NPC and script, kept across
 states, which the script's facts share. [`common.lua`](../game/assets/scripts/common.lua) has `idle`, `patrol`, `chase`,

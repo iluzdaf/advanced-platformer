@@ -6,6 +6,7 @@ return {
     },
     activities = {
         idle = {
+            description = "Do nothing.",
             update = function()
                 return nil
             end,

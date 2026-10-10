@@ -236,8 +236,12 @@ team, and life state, plus optional components.
   breaks into. The swap changes the cell's ID and the map logs the break.
   `updateProjectiles` alone takes a mutable map.
 - `validateActorPlacement` checks an actor's spawn and patrol endpoints for body
-  clearance. Platformers also need ground support, except a climber's patrol endpoints,
-  which may be on a wall or ceiling. `validatePickupPlacement` checks a pickup's clearance.
+  clearance. Platformers also need ground support, except a climber, whose spawn may
+  touch a climbable wall or ceiling instead and whose patrol endpoints may be on one.
+  When composition places a climber off the ground, `gripNearbySurface` moves it against
+  a climbable ceiling within a tile, else a wall, and holds it, so it does not fall on its
+  first step. Climbing owns that rule; composition only calls it, as it calls
+  `boxStandingOn` for a walker. `validatePickupPlacement` checks a pickup's clearance.
   `validateLevelPlacements` runs both over a level and checks the player's spawn; its
   errors name the level, the actor or pickup, and the location.
 - `actorCanReach` finds a path for an actor to a point, in a cache of its own.

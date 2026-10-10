@@ -30,6 +30,7 @@ TEST_CASE("A script's print is recorded with the call that printed it", "[lua][n
         R"(
             print("loading", 2)
             return {activities = {talk = {
+                description = 'Test activity talk',
                 enter = function() print("hello") end,
                 update = function(self, snapshot) print(snapshot.feet.x, true, nil) end,
             }}}
@@ -61,7 +62,8 @@ TEST_CASE("Taking the diagnostics empties them", "[lua][npc]")
 {
     LuaNpcScripts scripts;
     scripts.loadScriptText(
-        "talker", R"(return {activities = {talk = {update = function() error("boom") end}}})");
+        "talker",
+        R"(return {activities = {talk = {description = 'Test activity talk', update = function() error("boom") end}}})");
     scripts.enter(Actor, Talk, {});
     scripts.update(Actor, Talk, {}, 0.1F);
 

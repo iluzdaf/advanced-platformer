@@ -46,6 +46,18 @@
       "machine": "pursuer",
       "primaryAttack": { "bite": {} }
     },
+    "bat_dodger": {
+      "bodySize": [12, 8],
+      "team": "enemy",
+      "facing": "left",
+      "animations": "bat",
+      "spriteAnchor": "center",
+      "health": 1,
+      "movement": { "flying": { "speed": 100 } },
+      "senses": { "noticeDistance": 160, "targetMemoryDuration": 2.0, "standoffDistance": 56 },
+      "machine": "dodger",
+      "primaryAttack": { "bite": {} }
+    },
     "rat": {
       "bodySize": [8, 8],
       "team": "enemy",

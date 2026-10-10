@@ -13,8 +13,8 @@ namespace tests
                     return headingToSecond and patrol.secondFeet or patrol.firstFeet
                 end
                 return {activities = {
-                    idle = {update = function() return nil end},
-                    patrol = {update = function(self, snapshot)
+                    idle = {description = 'Do nothing.', update = function() return nil end},
+                    patrol = {description = 'Walk between the patrol ends.', update = function(self, snapshot)
                         local patrol = snapshot.patrol
                         if snapshot.routeComplete then
                             return {turnPatrol = true, clearRoute = true,
@@ -22,11 +22,11 @@ namespace tests
                         end
                         return {routeTo = patrolGoal(patrol, patrol.headingToSecond)}
                     end},
-                    chase = {update = function(self, snapshot)
+                    chase = {description = 'Route to where the target was last known.', update = function(self, snapshot)
                         local goal = snapshot.lastKnownTargetFeet
                         return {routeTo = goal, aimAt = goal}
                     end},
-                    shoot = {update = function(self, snapshot)
+                    shoot = {description = 'Fire at the target.', update = function(self, snapshot)
                         return {aimDirection = snapshot.targetCenter - snapshot.center,
                                 primaryAttackPressed = true}
                     end}
