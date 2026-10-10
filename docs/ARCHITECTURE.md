@@ -27,6 +27,18 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 | `advanced_platformer_playtest`  | A headless playtest: a bot plays generated levels and prints one JSON line per level                                    | Game                                                               |
 | `advanced_platformer_tests`     | Catch2 tests for the core, scripting, the game, and the application code that needs no window                           | Game, Catch2                                                       |
 
+`advanced_platformer_music` is a standalone authoring tool linking Game and
+miniaudio, without graphics. `game/content/music_song.cpp` reads and validates
+JSON; the core renders phrases, note gates, envelopes, patterns, and arrangement
+into one immutable 44,100 Hz buffer. Release tails wrap into the beginning of
+the arrangement. This first milestone prepares the whole loop on the producer
+thread, rather than sequencing notes inside the callback. It shares
+`AudioDevice` and `AudioPlayback` with the game. The callback can repeat a buffer
+without gaps; one ordered replacement command changes it during audition reload.
+Stopped buffers are released only after producer collection, just like finished
+effects. The tool can export a WAV without a device. Gameplay does not select or
+start music yet.
+
 ### Folders
 
 | Location              | Responsibility                                                                                             |

@@ -108,3 +108,14 @@ belong to.
 | Voice          | One sound buffer playing from its own sample position.                                                    |
 | Mixer          | Adds active voices into the device buffer, interpolates sample rates, and clamps the sum.                 |
 | Audio callback | The device thread that consumes playback commands and renders samples; it never accesses gameplay or Lua. |
+
+Music authoring uses these terms:
+
+| Term             | Meaning                                                                          |
+| ---------------- | -------------------------------------------------------------------------------- |
+| Music instrument | Named waveform and attack, decay, sustain, release, and gain settings.           |
+| Gate             | How long a musical note is held before its release begins, measured in beats.    |
+| Phrase           | Reusable sequence of notes and rests.                                            |
+| Pattern          | A length in beats and the phrases assigned to tracks for that section.           |
+| Arrangement      | Ordered pattern names forming a complete song loop.                              |
+| Track            | Named musical part assigned to one instrument; notes can overlap during release. |

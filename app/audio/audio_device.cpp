@@ -63,9 +63,19 @@ namespace advanced_platformer
 
     AudioDevice::~AudioDevice() = default;
 
-    bool AudioDevice::play(std::shared_ptr<const SoundBuffer> sound)
+    bool AudioDevice::play(std::shared_ptr<const SoundBuffer> sound, bool loop)
     {
-        return implementation->playback.play(std::move(sound));
+        return implementation->playback.play(std::move(sound), loop);
+    }
+
+    bool AudioDevice::replace(std::shared_ptr<const SoundBuffer> sound, bool loop)
+    {
+        return implementation->playback.replace(std::move(sound), loop);
+    }
+
+    bool AudioDevice::stop()
+    {
+        return implementation->playback.stop();
     }
 
     void AudioDevice::collectFinished()

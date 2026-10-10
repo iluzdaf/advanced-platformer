@@ -5,6 +5,7 @@ function(verify_project_source_registration)
         advanced_platformer_game
         advanced_platformer
         advanced_platformer_playtest
+        advanced_platformer_music
     )
     set(project_source_patterns
         ${PROJECT_SOURCE_DIR}/app/*.cpp

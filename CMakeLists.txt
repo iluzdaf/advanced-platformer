@@ -100,6 +100,16 @@ add_custom_target(
 )
 add_dependencies(advanced_platformer_playtest game_assets playtest_assets)
 
+add_executable(advanced_platformer_music)
+include(cmake/sources/Music.cmake)
+target_compile_features(advanced_platformer_music PRIVATE cxx_std_26)
+target_include_directories(advanced_platformer_music PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
+target_link_libraries(
+    advanced_platformer_music
+    PRIVATE advanced_platformer_game advanced_platformer_miniaudio
+)
+enable_project_warnings(advanced_platformer_music)
+
 include(cmake/Quality.cmake)
 
 include(CTest)

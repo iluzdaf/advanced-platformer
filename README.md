@@ -59,6 +59,16 @@ file there changes. See [Hot reload](docs/CONTENT.md#hot-reload).
 Shots play a procedural effect from `game/assets/catalogs/sounds.json`; debug builds
 reload sound patches with the rest of the content. See [Sound effects](docs/CONTENT.md#sound-effects).
 
+Music can be composed in JSON and auditioned independently of gameplay:
+
+```sh
+build/mac-debug/advanced_platformer_music game/assets/music/first-loop.json --watch
+```
+
+Use `--solo bass` to listen to a track, `--pattern opening` to select a section,
+or `--output build/first-loop.wav` to export a listening preview. See
+[Music authoring](docs/CONTENT.md#music-authoring) for the format and controls.
+
 Press F1 in the game to open the [debug overlay](#debug-overlay), which shows frame
 timings among other things. For performance numbers, build and run the release preset
 instead. The debug build has no optimisation, so its timings may not be an accurate

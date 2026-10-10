@@ -14,7 +14,8 @@ namespace advanced_platformer
     class SoundMixer
     {
     public:
-        void play(std::size_t slot, const SoundBuffer& sound) noexcept;
+        void play(std::size_t slot, const SoundBuffer& sound, bool loop = false) noexcept;
+        void stop() noexcept;
         bool playing(std::size_t slot) const noexcept;
         void render(std::span<float> output) noexcept;
 
@@ -23,6 +24,7 @@ namespace advanced_platformer
         {
             const SoundBuffer* sound = nullptr;
             double position = 0;
+            bool loop = false;
         };
 
         std::array<Voice, SoundVoiceCount> voices{};
