@@ -33,6 +33,23 @@ TEST_CASE("A voice continues across callback buffers", "[audio][mixer]")
     REQUIRE_FALSE(mixer.playing(0));
 }
 
+TEST_CASE("A looping voice wraps continuously across callback buffers", "[audio][mixer]")
+{
+    advanced_platformer::SoundMixer mixer;
+    const advanced_platformer::SoundBuffer sound{{0.1F, 0.2F, 0.3F}, 44100};
+    mixer.play(0, sound, true);
+    std::array<float, 4> output{};
+    mixer.render(output);
+    REQUIRE(output == std::array{0.1F, 0.2F, 0.3F, 0.1F});
+    mixer.render(output);
+    REQUIRE(output == std::array{0.2F, 0.3F, 0.1F, 0.2F});
+    REQUIRE(mixer.playing(0));
+    mixer.stop();
+    mixer.render(output);
+    REQUIRE(output == std::array{0.0F, 0.0F, 0.0F, 0.0F});
+    REQUIRE_FALSE(mixer.playing(0));
+}
+
 TEST_CASE("A lower-rate sound is interpolated at the device rate", "[audio][mixer]")
 {
     advanced_platformer::SoundMixer mixer;
@@ -42,6 +59,16 @@ TEST_CASE("A lower-rate sound is interpolated at the device rate", "[audio][mixe
     mixer.render(output);
     REQUIRE(output == std::array{0.0F, 0.5F, 1.0F, 0.5F, 0.0F, 0.0F});
     REQUIRE_FALSE(mixer.playing(0));
+}
+
+TEST_CASE("Loop interpolation blends the final sample into the first", "[audio][mixer]")
+{
+    advanced_platformer::SoundMixer mixer;
+    const advanced_platformer::SoundBuffer sound{{0.0F, 1.0F}, 22050};
+    mixer.play(0, sound, true);
+    std::array<float, 6> output{};
+    mixer.render(output);
+    REQUIRE(output == std::array{0.0F, 0.5F, 1.0F, 0.5F, 0.0F, 0.5F});
 }
 
 TEST_CASE("An empty mixer clears the device buffer and invalid slots are ignored", "[audio][mixer]")

@@ -33,38 +33,28 @@ TEST_CASE(
     REQUIRE(lifetime.expired());
 }
 
-TEST_CASE("Reloaded sound buffers cannot invalidate a playing voice", "[audio][playback][reload]")
+TEST_CASE(
+    "Loop playback keeps its buffer until a stop is consumed and collected",
+    "[audio][playback]")
 {
     advanced_platformer::AudioPlayback playback;
     auto sound = std::make_shared<const advanced_platformer::SoundBuffer>(
         advanced_platformer::SoundBuffer{{0.1F, 0.2F}, 44100});
-    REQUIRE(playback.play(sound));
-    sound = std::make_shared<const advanced_platformer::SoundBuffer>(
-        advanced_platformer::SoundBuffer{{0.4F, 0.5F}, 44100});
-    REQUIRE(playback.play(sound));
-    std::array<float, 2> output{};
+    const std::weak_ptr<const advanced_platformer::SoundBuffer> lifetime = sound;
+    const bool queued = playback.play(std::move(sound), true);
+    REQUIRE(queued);
+    std::array<float, 3> output{};
     playback.render(output);
-    REQUIRE(output == std::array{0.5F, 0.7F});
-}
-
-TEST_CASE(
-    "The bounded audio queue refuses excess voices and reuses completed slots",
-    "[audio][playback]")
-{
-    advanced_platformer::AudioPlayback playback;
-    const auto sound = std::make_shared<const advanced_platformer::SoundBuffer>(
-        advanced_platformer::SoundBuffer{{0.01F}, 44100});
-    for (std::size_t index = 0; index < advanced_platformer::SoundVoiceCount; ++index)
-    {
-        REQUIRE(playback.play(sound));
-    }
-    REQUIRE_FALSE(playback.play(sound));
-    std::array<float, 1> output{};
+    REQUIRE(output == std::array{0.1F, 0.2F, 0.1F});
+    playback.collectFinished();
+    REQUIRE_FALSE(lifetime.expired());
+    REQUIRE(playback.stop());
+    REQUIRE_FALSE(lifetime.expired());
     playback.render(output);
-    REQUIRE(playback.play(sound));
-    playback.render(output);
-    REQUIRE(output[0] == 0.01F);
-    REQUIRE_FALSE(playback.play({}));
+    REQUIRE(output == std::array{0.0F, 0.0F, 0.0F});
+    REQUIRE_FALSE(lifetime.expired());
+    playback.collectFinished();
+    REQUIRE(lifetime.expired());
 }
 
 TEST_CASE(
@@ -110,4 +100,114 @@ TEST_CASE(
     playback.collectFinished();
     REQUIRE_FALSE(wrongThread.load());
     REQUIRE(released.load() == 1000);
+}
+
+TEST_CASE("Reloaded sound buffers cannot invalidate a playing voice", "[audio][playback][reload]")
+{
+    advanced_platformer::AudioPlayback playback;
+    auto sound = std::make_shared<const advanced_platformer::SoundBuffer>(
+        advanced_platformer::SoundBuffer{{0.1F, 0.2F}, 44100});
+    REQUIRE(playback.play(sound));
+    sound = std::make_shared<const advanced_platformer::SoundBuffer>(
+        advanced_platformer::SoundBuffer{{0.4F, 0.5F}, 44100});
+    REQUIRE(playback.play(sound));
+    std::array<float, 2> output{};
+    playback.render(output);
+    REQUIRE(output == std::array{0.5F, 0.7F});
+}
+
+TEST_CASE(
+    "Stop and replacement commands preserve order within a callback",
+    "[audio][playback][reload]")
+{
+    advanced_platformer::AudioPlayback playback;
+    const auto oldSound = std::make_shared<const advanced_platformer::SoundBuffer>(
+        advanced_platformer::SoundBuffer{{0.1F}, 44100});
+    const auto newSound = std::make_shared<const advanced_platformer::SoundBuffer>(
+        advanced_platformer::SoundBuffer{{0.4F, 0.5F}, 44100});
+    REQUIRE(playback.play(oldSound, true));
+    REQUIRE(playback.stop());
+    REQUIRE(playback.play(newSound, true));
+    std::array<float, 3> output{};
+    playback.render(output);
+    REQUIRE(output == std::array{0.4F, 0.5F, 0.4F});
+    REQUIRE(playback.stop());
+    playback.render(output);
+    playback.collectFinished();
+    REQUIRE(playback.play(newSound));
+}
+
+TEST_CASE(
+    "A replacement changes loops together and preserves the old buffer until collection",
+    "[audio][playback][reload]")
+{
+    advanced_platformer::AudioPlayback playback;
+    auto oldSound = std::make_shared<const advanced_platformer::SoundBuffer>(
+        advanced_platformer::SoundBuffer{{0.1F}, 44100});
+    const std::weak_ptr<const advanced_platformer::SoundBuffer> oldLifetime = oldSound;
+    const bool queued = playback.play(std::move(oldSound), true);
+    REQUIRE(queued);
+    std::array<float, 2> output{};
+    playback.render(output);
+    const auto replacement = std::make_shared<const advanced_platformer::SoundBuffer>(
+        advanced_platformer::SoundBuffer{{0.4F, 0.5F}, 44100});
+    REQUIRE(playback.replace(replacement, true));
+    playback.render(output);
+    REQUIRE(output == std::array{0.4F, 0.5F});
+    REQUIRE_FALSE(oldLifetime.expired());
+    playback.collectFinished();
+    REQUIRE(oldLifetime.expired());
+    REQUIRE_FALSE(playback.replace({}));
+    playback.render(output);
+    REQUIRE(output == std::array{0.4F, 0.5F});
+}
+
+TEST_CASE("A rejected replacement leaves the existing loop playing", "[audio][playback][reload]")
+{
+    advanced_platformer::AudioPlayback playback;
+    const auto sound = std::make_shared<const advanced_platformer::SoundBuffer>(
+        advanced_platformer::SoundBuffer{{0.1F}, 44100});
+    REQUIRE(playback.play(sound, true));
+    std::array<float, 1> output{};
+    playback.render(output);
+    for (std::size_t index = 1; index < advanced_platformer::SoundVoiceCount; ++index)
+    {
+        REQUIRE(playback.play(sound, true));
+    }
+    REQUIRE_FALSE(playback.replace(sound, true));
+    playback.render(output);
+    REQUIRE(output.front() == 1.0F);
+}
+
+TEST_CASE(
+    "The bounded audio queue refuses excess voices and reuses completed slots",
+    "[audio][playback]")
+{
+    advanced_platformer::AudioPlayback playback;
+    const auto sound = std::make_shared<const advanced_platformer::SoundBuffer>(
+        advanced_platformer::SoundBuffer{{0.01F}, 44100});
+    for (std::size_t index = 0; index < advanced_platformer::SoundVoiceCount; ++index)
+    {
+        REQUIRE(playback.play(sound));
+    }
+    REQUIRE_FALSE(playback.play(sound));
+    std::array<float, 1> output{};
+    playback.render(output);
+    REQUIRE(playback.play(sound));
+    playback.render(output);
+    REQUIRE(output[0] == 0.01F);
+    REQUIRE_FALSE(playback.play({}));
+}
+
+TEST_CASE("Stop refuses a full command queue and succeeds after consumption", "[audio][playback]")
+{
+    advanced_platformer::AudioPlayback playback;
+    for (std::size_t index = 0; index < advanced_platformer::SoundVoiceCount; ++index)
+    {
+        REQUIRE(playback.stop());
+    }
+    REQUIRE_FALSE(playback.stop());
+    std::array<float, 1> output{};
+    playback.render(output);
+    REQUIRE(playback.stop());
 }

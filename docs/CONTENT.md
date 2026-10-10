@@ -545,3 +545,101 @@ Editing a patch or the presentation script triggers the normal debug hot reload.
 A failed patch load keeps the running content. Old sounds finish using their old
 samples while subsequent events use the new ones. Music sequencing and an in-game
 patch editor are outside this first audio milestone.
+
+## Music authoring
+
+Music is authored as JSON under `game/assets/music/`. The first example,
+[`first-loop.json`](../game/assets/music/first-loop.json), is an eight-bar loop at
+120 beats per minute, with bass, melody, and percussion. Music currently belongs
+to the standalone audition tool; it does not start automatically in the game.
+
+A song has six required fields:
+
+| Field         | Meaning                                                             |
+| ------------- | ------------------------------------------------------------------- |
+| `tempo`       | Beats per minute, from 20 to 400. A beat is a quarter note.         |
+| `instruments` | Named procedural instruments.                                       |
+| `tracks`      | Track names mapped to instrument names.                             |
+| `phrases`     | Named sequences of notes and rests.                                 |
+| `patterns`    | Pattern lengths in beats, and track names mapped to phrase names.   |
+| `arrangement` | Pattern names in playback order. The whole arrangement is the loop. |
+
+For example:
+
+```json
+{
+  "tempo": 120,
+  "instruments": {
+    "soft": { "wave": "triangle", "gain": 0.2, "release": 0.1 }
+  },
+  "tracks": { "bass": "soft" },
+  "phrases": {
+    "root": {
+      "notes": [
+        { "pitch": "C2", "beats": 1, "gate": 0.75 },
+        { "pitch": "rest", "beats": 1 }
+      ]
+    }
+  },
+  "patterns": { "opening": { "beats": 2, "tracks": { "bass": "root" } } },
+  "arrangement": ["opening", "opening"]
+}
+```
+
+A note's `beats` determines when the next entry starts. Its optional `gate`
+determines how many beats the note is held before release; it defaults to
+`beats` and must not exceed it. A long duration holds one note without
+retriggering. `volume` defaults to 1 and ranges from 0 to 1. `rest` advances
+musical time without triggering a note; previous release tails can still be
+heard. Pitch names use uppercase letters, optional `#` or `b`, and an octave,
+such as `C4`, `F#3`, and `Bb2`. A4 is 440 Hz. Pitches above the output frequency
+limit are rejected. Beats and gates must be at least 1/64 beat.
+
+Each track plays one phrase per pattern. Missing tracks and any unused time
+at the end of a shorter phrase produce no new notes. A phrase cannot exceed its
+pattern. A new note retriggers its oscillator and envelope; previous notes may
+still be releasing. Shared phrases can appear on different tracks and in
+multiple patterns. Every reference and definition is validated, including unused
+ones. Songs support up to 32 tracks and at most 120 seconds per arrangement.
+
+Instruments are independent of jsfxr sound-effect patches:
+
+| Field     | Default | Meaning                                                                    |
+| --------- | ------- | -------------------------------------------------------------------------- |
+| `wave`    | `sine`  | `sine`, `triangle`, `square`, or deterministic `noise`.                    |
+| `attack`  | 0.01    | Seconds rising from silence to full level.                                 |
+| `decay`   | 0.08    | Seconds falling from full level to sustain.                                |
+| `sustain` | 0.65    | Held level, from 0 to 1.                                                   |
+| `release` | 0.08    | Seconds falling from the current envelope level to silence after the gate. |
+| `gain`    | 0.2     | Instrument output level, from 0 to 1.                                      |
+
+Attack, decay, and release each range from 0 to 5 seconds. Zero skips that stage.
+Tune gains to leave room for track sums; the final output clamps to [-1, 1].
+
+### Audition and preview
+
+Build the `advanced_platformer_music` target, then run from the project root:
+
+```sh
+cmake --build --preset mac-debug --target advanced_platformer_music
+build/mac-debug/advanced_platformer_music game/assets/music/first-loop.json
+build/mac-debug/advanced_platformer_music game/assets/music/first-loop.json --watch
+build/mac-debug/advanced_platformer_music game/assets/music/first-loop.json --solo bass --loop
+build/mac-debug/advanced_platformer_music game/assets/music/first-loop.json --pattern opening --loop
+build/mac-debug/advanced_platformer_music game/assets/music/first-loop.json --output build/first-loop.wav
+```
+
+Without options, the tool plays one arrangement and exits. `--loop` repeats
+until Ctrl-C. `--watch` also repeats and prepares changed JSON while the current
+loop plays. A valid change restarts playback from the beginning; an invalid
+change reports a diagnostic and keeps the previous loop. `--solo` selects a
+track and `--pattern` selects a section; they also work with `--watch` and
+`--output`. Reload is intended for auditioning and can have a discontinuity.
+
+`--output` exports one complete loop as a mono 44,100 Hz float WAV without
+opening an audio device. It cannot be combined with `--loop` or `--watch`.
+WAV is a disposable listening preview; JSON remains the authored source.
+The renderer wraps release tails past the arrangement end into its beginning,
+so the preview represents a repeating loop, including those tails on its first
+play. It rounds absolute musical positions to samples, avoiding accumulated
+rounding drift. Repetition runs on the audio callback's sample clock.
