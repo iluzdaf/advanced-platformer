@@ -603,8 +603,9 @@ to the traversal profile. The search itself does not change.
   first lead away from the exit.
 - Each line holds the run and level seeds, the outcome, seconds, damage counted against
   the nearest live NPC's definition, health left, the cell the player ended in, pickups
-  placed and collected, Lua script errors, and the level's pacing: a sample every half
-  second, and one when the level ends.
+  placed and collected, Lua script errors, the level's tiles as it starts (`map`, one
+  string per row: `#` blocks movement, `X` breaks, `G` hides whoever stands in it, `.` is
+  open), and the level's pacing: a sample every half second, and one when the level ends.
 
 | Pacing field    | Meaning                                                                                                               |
 | --------------- | --------------------------------------------------------------------------------------------------------------------- |

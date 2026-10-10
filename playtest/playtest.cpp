@@ -62,6 +62,7 @@ namespace advanced_platformer
         int pickupsPlaced = 0;
         int pickupsCollected = 0;
         std::vector<std::string> scriptErrors;
+        std::vector<std::string> map;
         std::vector<PacingSample> pacing;
     };
 
@@ -370,6 +371,35 @@ namespace advanced_platformer
         constexpr float StuckSeconds = 15.0F;
         constexpr float PacingSeconds = 0.5F;
 
+        char tileLetter(const TileDefinition& tile)
+        {
+            if (tile.breaksIntoTileId.has_value())
+            {
+                return 'X';
+            }
+            if (tile.blocksMovement)
+            {
+                return '#';
+            }
+            return tile.blocksSight ? 'G' : '.';
+        }
+
+        std::vector<std::string> levelMap(const TileMap& map)
+        {
+            std::vector<std::string> rows(
+                static_cast<std::size_t>(map.height()),
+                std::string(static_cast<std::size_t>(map.width()), '.'));
+            for (int y = 0; y < map.height(); ++y)
+            {
+                for (int x = 0; x < map.width(); ++x)
+                {
+                    rows[static_cast<std::size_t>(y)][static_cast<std::size_t>(x)] =
+                        tileLetter(map.definitionAt({x, y}));
+                }
+            }
+            return rows;
+        }
+
         LevelPlaytest playtestLevel(Game& game, float secondsPerLevel, float stepSeconds)
         {
             const GameLevel& level = game.currentLevel();
@@ -379,7 +409,8 @@ namespace advanced_platformer
                 .runSeed = runSeed,
                 .level = levelNumber,
                 .levelSeed = game.levelSeed(),
-                .pickupsPlaced = static_cast<int>(level.pickupPlacementIds.size())};
+                .pickupsPlaced = static_cast<int>(level.pickupPlacementIds.size()),
+                .map = levelMap(level.map)};
 
             const int stepsPerSample =
                 std::max(1, static_cast<int>(std::lround(PacingSeconds / stepSeconds)));
@@ -497,6 +528,7 @@ namespace advanced_platformer
             .pickupsPlaced = level.pickupsPlaced,
             .pickupsCollected = level.pickupsCollected,
             .scriptErrors = level.scriptErrors,
+            .map = level.map,
             .pacing = level.pacing};
         std::string text;
         if (const auto error = glz::write_json(json, text))

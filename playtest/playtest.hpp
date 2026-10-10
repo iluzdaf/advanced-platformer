@@ -62,6 +62,7 @@ namespace advanced_platformer
         int pickupsPlaced = 0;
         int pickupsCollected = 0;
         std::vector<std::string> scriptErrors;
+        std::vector<std::string> map;
         std::vector<PacingSample> pacing;
     };
 
