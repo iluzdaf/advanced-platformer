@@ -38,3 +38,7 @@
 	path = external/glaze
 	url = https://github.com/stephenberry/glaze.git
 	shallow = true
+[submodule "miniaudio"]
+	path = external/miniaudio
+	url = https://github.com/mackron/miniaudio.git
+	shallow = true

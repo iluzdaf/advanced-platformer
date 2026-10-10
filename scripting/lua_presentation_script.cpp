@@ -14,6 +14,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+#include <unordered_set>
 
 // NOLINTBEGIN(misc-include-cleaner)
 #include <sol/sol.hpp>
@@ -70,35 +71,6 @@ namespace advanced_platformer
             return value;
         }
 
-        PresentationEffects effectsFrom(const sol::object& object)
-        {
-            PresentationEffects effects;
-            if (!object.valid() || object.get_type() == sol::type::lua_nil)
-            {
-                return effects;
-            }
-            if (!object.is<sol::table>())
-            {
-                throw std::invalid_argument("presentation effects must be a table or nil");
-            }
-            const sol::table table = object.as<sol::table>();
-            rejectUnknownFields(table, {"shake"}, "presentation effects");
-            const sol::object shake = table.get<sol::object>("shake");
-            if (shake.valid() && shake.get_type() != sol::type::lua_nil)
-            {
-                if (!shake.is<sol::table>())
-                {
-                    throw std::invalid_argument("shake must be a table");
-                }
-                const sol::table shakeTable = shake.as<sol::table>();
-                rejectUnknownFields(shakeTable, {"duration", "magnitude"}, "shake");
-                effects.shake = CameraShakeEffect{
-                    positiveNumber(shakeTable.get<sol::object>("duration"), "shake.duration"),
-                    positiveNumber(shakeTable.get<sol::object>("magnitude"), "shake.magnitude")};
-            }
-            return effects;
-        }
-
         std::string_view presentationHookName(WorldEventKind kind)
         {
             switch (kind)
@@ -119,6 +91,7 @@ namespace advanced_platformer
         sol::state lua;
         std::optional<LoadedScript> script;
         std::vector<LuaScriptDiagnostic> reported;
+        std::unordered_set<std::string> soundNames;
         std::string callingHook;
         std::string callingSource;
 
@@ -230,6 +203,60 @@ namespace advanced_platformer
         return implementation->script.has_value();
     }
 
+    void LuaPresentationScript::setSoundNames(const std::vector<std::string>& names)
+    {
+        implementation->soundNames = {names.begin(), names.end()};
+    }
+
+    namespace
+    {
+        PresentationEffects effectsFrom(const sol::object& object)
+        {
+            PresentationEffects effects;
+            if (!object.valid() || object.get_type() == sol::type::lua_nil)
+            {
+                return effects;
+            }
+            if (!object.is<sol::table>())
+            {
+                throw std::invalid_argument("presentation effects must be a table or nil");
+            }
+            const sol::table table = object.as<sol::table>();
+            rejectUnknownFields(table, {"shake", "sound"}, "presentation effects");
+            const sol::object shake = table.get<sol::object>("shake");
+            if (shake.valid() && shake.get_type() != sol::type::lua_nil)
+            {
+                if (!shake.is<sol::table>())
+                {
+                    throw std::invalid_argument("shake must be a table");
+                }
+                const sol::table shakeTable = shake.as<sol::table>();
+                rejectUnknownFields(shakeTable, {"duration", "magnitude"}, "shake");
+                effects.shake = CameraShakeEffect{
+                    positiveNumber(shakeTable.get<sol::object>("duration"), "shake.duration"),
+                    positiveNumber(shakeTable.get<sol::object>("magnitude"), "shake.magnitude")};
+            }
+            const sol::object sound = table.get<sol::object>("sound");
+            if (sound.valid() && sound.get_type() != sol::type::lua_nil)
+            {
+                if (!sound.is<sol::table>())
+                {
+                    throw std::invalid_argument("sound must be a table");
+                }
+                const sol::table soundTable = sound.as<sol::table>();
+                rejectUnknownFields(soundTable, {"name"}, "sound");
+                const sol::object name = soundTable.get<sol::object>("name");
+                if (name.get_type() != sol::type::string || name.as<std::string>().empty())
+                {
+                    throw std::invalid_argument("sound.name must be a non-empty string");
+                }
+                effects.sound = SoundEffect{name.as<std::string>()};
+            }
+            return effects;
+        }
+
+    }
+
     PresentationEffects LuaPresentationScript::onEvent(const WorldEvent& event, bool player)
     {
         if (!implementation->script.has_value())
@@ -272,6 +299,13 @@ namespace advanced_platformer
         {
             const sol::object returned = result;
             const PresentationEffects effects = effectsFrom(returned);
+            if (effects.sound.has_value() &&
+                !implementation->soundNames.contains(effects.sound->name))
+            {
+                throw std::invalid_argument(
+                    std::format(
+                        "sound.name '{}' is not in the sound catalog", effects.sound->name));
+            }
             implementation->callingHook.clear();
             return effects;
         }

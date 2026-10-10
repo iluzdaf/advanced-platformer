@@ -13,6 +13,7 @@
 #include "machine_catalog.hpp"
 #include "pickup_catalog.hpp"
 #include "tile_catalog.hpp"
+#include "sound_catalog.hpp"
 
 namespace advanced_platformer
 {
@@ -27,6 +28,7 @@ namespace advanced_platformer
         ExitCatalog exits;
         HudIcons hudIcons;
         CameraSettings camera;
+        SoundCatalog sounds;
         RoomPieces pieces;
     };
 

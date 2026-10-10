@@ -10,6 +10,7 @@
 #include "pickup_catalog.hpp"
 #include "room_pieces.hpp"
 #include "tile_catalog.hpp"
+#include "sound_catalog.hpp"
 
 #include <filesystem>
 
@@ -27,6 +28,7 @@ namespace advanced_platformer
         catalogs.pickups = loadPickupCatalog(catalogDirectory / "pickups.json", catalogs.items);
         catalogs.exits = loadExitCatalog(catalogDirectory / "exits.json");
         catalogs.hudIcons = loadHudIcons(catalogDirectory / "hud.json");
+        catalogs.sounds = loadSoundCatalog(catalogDirectory / "sounds.json");
         catalogs.camera = loadCameraSettings(catalogDirectory / "camera.json");
         catalogs.pieces = loadRoomPieceCatalog(catalogDirectory / "pieces.json");
         return catalogs;

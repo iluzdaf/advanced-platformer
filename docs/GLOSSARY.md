@@ -98,3 +98,13 @@ belong to.
 | Run                 | Generated levels played one after another from level 1, each with more rooms, until the player dies. See `pieces.json`.                               |
 | Run seed            | The number a run's level seeds follow from. Each defeat starts a new run with the next run seed.                                                      |
 | Defeat              | The player's death timer running out. It stops the world, and the game starts a new run.                                                              |
+
+## Audio
+
+| Term           | Meaning                                                                                                   |
+| -------------- | --------------------------------------------------------------------------------------------------------- |
+| Sound patch    | jsfxr parameters describing one procedural effect. Rendered when content loads.                           |
+| Sound buffer   | Immutable mono float samples and their sample rate. Shared until every playing voice finishes.            |
+| Voice          | One sound buffer playing from its own sample position.                                                    |
+| Mixer          | Adds active voices into the device buffer, interpolates sample rates, and clamps the sum.                 |
+| Audio callback | The device thread that consumes playback commands and renders samples; it never accesses gameplay or Lua. |

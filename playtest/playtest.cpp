@@ -428,6 +428,7 @@ namespace advanced_platformer
                 PacingSample last = pacingSample(level, player, 0.0F);
 
                 game.update({}, stepSeconds);
+                game.takeSounds();
                 result.seconds += stepSeconds;
                 ++watch.steps;
                 recordScriptErrors(game, result);

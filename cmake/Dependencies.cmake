@@ -116,3 +116,32 @@ set_source_files_properties(
     ${PROJECT_SOURCE_DIR}/external/imgui-node-editor/crude_json.cpp
     PROPERTIES COMPILE_OPTIONS "-include;exception"
 )
+
+add_library(advanced_platformer_miniaudio ${PROJECT_SOURCE_DIR}/external/miniaudio_impl.c)
+target_include_directories(
+    advanced_platformer_miniaudio
+    SYSTEM
+    PUBLIC ${PROJECT_SOURCE_DIR}/external/miniaudio
+)
+target_compile_definitions(
+    advanced_platformer_miniaudio
+    PUBLIC
+        MA_NO_DECODING
+        MA_NO_ENCODING
+        MA_NO_RESOURCE_MANAGER
+        MA_NO_NODE_GRAPH
+        MA_NO_ENGINE
+        MA_NO_GENERATION
+)
+find_package(Threads REQUIRED)
+target_link_libraries(advanced_platformer_miniaudio PRIVATE Threads::Threads ${CMAKE_DL_LIBS})
+if(APPLE)
+    target_compile_definitions(
+        advanced_platformer_miniaudio
+        PUBLIC MA_ENABLE_ONLY_SPECIFIC_BACKENDS MA_ENABLE_COREAUDIO
+    )
+    target_link_libraries(
+        advanced_platformer_miniaudio
+        PRIVATE "-framework CoreAudio" "-framework AudioToolbox" "-framework CoreFoundation"
+    )
+endif()

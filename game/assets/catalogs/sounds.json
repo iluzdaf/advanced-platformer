@@ -1,0 +1,14 @@
+{
+  "sounds": {
+    "shot": {
+      "wave_type": 0,
+      "p_env_attack": 0,
+      "p_env_sustain": 0.08,
+      "p_env_decay": 0.18,
+      "p_base_freq": 0.65,
+      "p_freq_ramp": -0.45,
+      "p_duty": 0.25,
+      "sound_vol": 0.2
+    }
+  }
+}

@@ -1,3 +1,4 @@
+#include "audio/audio_device.hpp"
 #include "application.hpp"
 #include "application_context.hpp"
 
@@ -236,6 +237,7 @@ namespace advanced_platformer
             std::move(loaded.presentation),
             static_cast<float>(fixedStep.stepSeconds()),
             std::random_device{}());
+        AudioDevice audio;
         DebugTools debugTools;
         Stopwatch frameClock;
 
@@ -290,6 +292,14 @@ namespace advanced_platformer
                  ImGui::GetIO().WantCaptureKeyboard},
                 profile);
 
+            audio.collectFinished();
+            for (auto& sound : game.takeSounds())
+            {
+                if (!audio.play(std::move(sound)))
+                {
+                    console.write(ConsoleLevel::Info, "Audio voice limit reached; sound skipped");
+                }
+            }
             writeScriptDiagnostics(game, console);
             renderGame(game, renderer, reading.framebufferSize, profile);
 
