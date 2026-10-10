@@ -1,6 +1,8 @@
 #pragma once
 
 #include <optional>
+#include <memory>
+#include "advanced_platformer/audio/sound_patch.hpp"
 #include <vector>
 #include <cstddef>
 #include <cstdint>
@@ -74,6 +76,7 @@ namespace advanced_platformer
         std::optional<Sprite> lockedExitHintIcon() const;
         const HudIcons& hudIcons() const;
         std::vector<LuaScriptDiagnostic> takeScriptDiagnostics();
+        std::vector<std::shared_ptr<const SoundBuffer>> takeSounds();
         Camera currentCamera() const;
         Camera renderCamera() const;
 
@@ -90,6 +93,7 @@ namespace advanced_platformer
         GameLevel level;
         std::optional<CameraController> cameraController;
         CameraShake cameraShake;
+        std::vector<std::shared_ptr<const SoundBuffer>> pendingSounds;
         int atlasTextureId = 0;
         float simulationStepSeconds = 0.0F;
         std::uint32_t currentRunSeed = 0;

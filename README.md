@@ -3,7 +3,7 @@
 Advanced Platformer is a C++26 engine and example game built from independently
 testable systems. The current implementation includes platformer movement, tile collision,
 scrolling, composed actors, NPC state machines with Lua activities, flying and platformer
-pathfinding, projectiles, animation, inventory, automatic pickups, an endless run of
+pathfinding, procedural sound effects, projectiles, animation, inventory, automatic pickups, an endless run of
 generated levels, and ImGui debugging tools.
 
 ## Documentation
@@ -55,6 +55,9 @@ cd build/mac-debug
 
 Debug builds read `game/assets/` from the source tree and reload it while the game runs when a
 file there changes. See [Hot reload](docs/CONTENT.md#hot-reload).
+
+Shots play a procedural effect from `game/assets/catalogs/sounds.json`; debug builds
+reload sound patches with the rest of the content. See [Sound effects](docs/CONTENT.md#sound-effects).
 
 Press F1 in the game to open the [debug overlay](#debug-overlay), which shows frame
 timings among other things. For performance numbers, build and run the release preset
@@ -296,7 +299,7 @@ cmake --build --preset mac-debug --target header_self_containment
 ## Repository layout
 
 ```text
-app/           application shell, content session, graphics, UI, and debug tools
+app/           application shell, content session, graphics, audio output, UI, and debug tools
 cmake/         dependencies, quality rules, and explicit target source manifests
 core/          the simulation and level generation library: include/ holds its public headers, src/ its implementations
 game/          the headless game library: content loaders and catalogs, level composition, Game, diagnostics

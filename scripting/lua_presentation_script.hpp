@@ -25,6 +25,7 @@ namespace advanced_platformer
         void loadScript(const std::filesystem::path& path);
         void loadScriptText(std::string_view source, std::string sourceName = "Lua script");
         bool loaded() const;
+        void setSoundNames(const std::vector<std::string>& names);
 
         PresentationEffects onEvent(const WorldEvent& event, bool player) override;
 

@@ -18,14 +18,14 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
   save games, an editor, an animation graph, a general ECS, and homing or piercing
   projectiles.
 
-| Target                          | What it owns                                                                                                            | Dependencies                                            |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `advanced_platformer_core`      | Simulation, navigation, and plain render-scene data                                                                     | GLM; no window, graphics API, JSON, or Lua              |
-| `advanced_platformer_scripting` | The Lua runtime behind the NPC activity boundary; `lua_npc_scripts.hpp` is its interface, its other headers are private | Core, Lua, sol2                                         |
-| `advanced_platformer_game`      | Content loading, catalogs, level composition, `Game`, and the diagnostics it records; headless                          | Core, scripting, Glaze                                  |
-| `advanced_platformer`           | Application, content session, graphics, UI, and debug tools                                                             | Game, GLFW, glad, ImGui, ImPlot, imgui-node-editor, stb |
-| `advanced_platformer_playtest`  | A headless playtest: a bot plays generated levels and prints one JSON line per level                                    | Game                                                    |
-| `advanced_platformer_tests`     | Catch2 tests for the core, scripting, the game, and the application code that needs no window                           | Game, Catch2                                            |
+| Target                          | What it owns                                                                                                            | Dependencies                                                       |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `advanced_platformer_core`      | Simulation, navigation, and plain render-scene data                                                                     | GLM; no window, graphics API, JSON, or Lua                         |
+| `advanced_platformer_scripting` | The Lua runtime behind the NPC activity boundary; `lua_npc_scripts.hpp` is its interface, its other headers are private | Core, Lua, sol2                                                    |
+| `advanced_platformer_game`      | Content loading, catalogs, level composition, `Game`, and the diagnostics it records; headless                          | Core, scripting, Glaze                                             |
+| `advanced_platformer`           | Application, content session, graphics, audio device, UI, and debug tools                                               | Game, GLFW, glad, ImGui, ImPlot, imgui-node-editor, stb, miniaudio |
+| `advanced_platformer_playtest`  | A headless playtest: a bot plays generated levels and prints one JSON line per level                                    | Game                                                               |
+| `advanced_platformer_tests`     | Catch2 tests for the core, scripting, the game, and the application code that needs no window                           | Game, Catch2                                                       |
 
 ### Folders
 
@@ -532,8 +532,10 @@ to the traversal profile. The search itself does not change.
   a knockback the velocity. Senses take the audible kinds; `Game` takes them all after
   the step.
 - `updateWorldPresentation` offers each event to `PresentationScripts`, an interface
-  the core owns and the Lua script implements, and applies the effects it returns. The
-  one effect is `shake`, with a duration and a magnitude.
+  the core owns and the Lua script implements, and applies the effects it returns.
+  Effects include `shake`, with a duration and a magnitude, and `sound`, with a
+  catalog name. Presentation returns sound requests to `Game`; playback belongs to
+  the application.
 - Continuous presentation derived from world state, such as animation and cover fades,
   is engine code. Discrete effects answering an event are the script's decision.
 
@@ -542,6 +544,47 @@ to the traversal profile. The search itself does not change.
 | `onLanding`   | A platformer actor landed |
 | `onShot`      | A ranged weapon fired     |
 | `onKnockback` | A hit threw its target    |
+
+### Audio
+
+The core synthesises one-shot effects from `SoundPatch` into immutable mono
+`SoundBuffer` samples. It has no device, thread, JSON, or Lua dependency.
+`game/content/sound_catalog.cpp` reads `catalogs/sounds.json` and prepares every
+patch when content loads, including on hot reload. `Game` collects the buffers
+requested by presentation effects, and the application drains them with
+`Game::takeSounds` after simulation. Headless tests and playtests use the same
+content and presentation flow without opening an audio device.
+
+`app/audio/AudioDevice` owns a miniaudio playback device. Its callback renders
+32 simultaneous voices through `SoundMixer`, at 44,100 mono float samples per
+second. miniaudio converts that stream to the hardware format. Lower-rate patches
+are interpolated by the mixer. Voice sums are clamped to [-1, 1]; tune patch
+volume so ordinary overlaps do not clip.
+
+The game thread posts a buffer pointer and voice slot through a bounded
+single-producer, single-consumer ring. It retains each buffer with a shared
+pointer until the callback reports completion with an atomic flag. Only the game
+thread releases those references, so an old catalog can go away while its sounds
+finish. The callback owns the mixer and voice cursors; it reads no game, catalog,
+Lua, or graphics state. It allocates nothing, destroys no buffers, takes no locks,
+and performs no logging or file work. All synchronisation uses lock-free atomics.
+A full voice pool skips the new sound and reports that on the game thread. Device
+shutdown stops and joins the callback before releasing retained samples.
+
+Sounds run on the device clock: an effect already playing finishes during pause
+or a level change; paused simulation produces no new events. Reloads prepare new
+buffers before replacing content, so rejected content leaves the previous sounds
+and presentation script in use. Device initialisation or startup failure reports
+an error and fails application startup; the application does not pretend it has
+working audio output.
+
+The parameter model and synthesis follow jsfxr revision
+`b7b6aa27d62f8f356db267276bf54b451555c49d`. Synthesis uses double precision and
+8x oversampling, then stores float samples. Noise uses a seeded 32-bit generator
+instead of JavaScript's unspecified `Math.random`; zero-length envelope stages
+are skipped instead of dividing by zero. Fixtures compare all samples of a
+seeded reference patch for each waveform, including slides, vibrato, change,
+repeat, filters, and phaser. The float output is not quantised by `sample_size`.
 
 ### Animation
 

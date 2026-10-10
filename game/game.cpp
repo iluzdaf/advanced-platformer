@@ -16,6 +16,10 @@
 #include <iterator>
 #include <cmath>
 #include <optional>
+#include <string>
+#include <memory>
+#include "advanced_platformer/audio/sound_patch.hpp"
+#include "advanced_platformer/render/presentation_scripts.hpp"
 #include <variant>
 #include <vector>
 #include <stdexcept>
@@ -72,6 +76,12 @@ namespace advanced_platformer
         {
             throw std::invalid_argument("The game's simulation step must be finite and positive");
         }
+        std::vector<std::string> soundNames;
+        for (const auto& [name, sound] : this->gameCatalogs.sounds)
+        {
+            soundNames.push_back(name);
+        }
+        this->presentation.setSoundNames(soundNames);
         prepareLevel();
     }
 
@@ -122,6 +132,7 @@ namespace advanced_platformer
             npcScripts.forget(actor.id);
         }
         level = std::move(next);
+        pendingSounds.clear();
         prepareLevel();
     }
 
@@ -166,7 +177,11 @@ namespace advanced_platformer
             throw std::logic_error("The game has no player after lifecycle update");
         }
         followTarget(cameraControllerValue(), level.map, player->body.bounds);
-        updateWorldPresentation(level.map, level.world, deltaTime, presentation, cameraShake);
+        for (const SoundEffect& effect :
+             updateWorldPresentation(level.map, level.world, deltaTime, presentation, cameraShake))
+        {
+            pendingSounds.push_back(gameCatalogs.sounds.at(effect.name));
+        }
     }
 
     glm::vec2 Game::playerAimDirection(glm::vec2 screenPosition) const
@@ -313,6 +328,12 @@ namespace advanced_platformer
         LevelReload result = reloadLevel(
             next, std::move(fresh), matchItemIds(gameCatalogs.items, content.gameCatalogs.items));
 
+        std::vector<std::string> soundNames;
+        for (const auto& [name, sound] : content.gameCatalogs.sounds)
+        {
+            soundNames.push_back(name);
+        }
+        content.presentation.setSoundNames(soundNames);
         level = std::move(next);
         gameCatalogs = std::move(content.gameCatalogs);
         npcScripts = std::move(content.npcScripts);
@@ -406,6 +427,11 @@ namespace advanced_platformer
             std::make_move_iterator(effects.begin()),
             std::make_move_iterator(effects.end()));
         return diagnostics;
+    }
+
+    std::vector<std::shared_ptr<const SoundBuffer>> Game::takeSounds()
+    {
+        return std::exchange(pendingSounds, {});
     }
 
     Camera Game::renderCamera() const

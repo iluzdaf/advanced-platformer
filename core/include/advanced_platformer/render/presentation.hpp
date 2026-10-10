@@ -1,5 +1,9 @@
 #pragma once
 
+#include <vector>
+
+#include "advanced_platformer/render/presentation_scripts.hpp"
+
 namespace advanced_platformer
 {
     class CameraShake;
@@ -7,7 +11,7 @@ namespace advanced_platformer
     class TileMap;
     class World;
 
-    void updateWorldPresentation(
+    std::vector<SoundEffect> updateWorldPresentation(
         const TileMap& map,
         World& world,
         float deltaTime,

@@ -51,6 +51,7 @@ again from the next seed, also keeping health and items.
 | [`catalogs/pickups.json`](../game/assets/catalogs/pickups.json)       | World pickups                                  | [`pickup_catalog.cpp`](../game/content/pickup_catalog.cpp)                                                                    |
 | [`catalogs/exits.json`](../game/assets/catalogs/exits.json)           | Exit bodies and sprites                        | [`exit_catalog.cpp`](../game/content/exit_catalog.cpp)                                                                        |
 | [`catalogs/hud.json`](../game/assets/catalogs/hud.json)               | HUD icon regions                               | [`hud_catalog.cpp`](../game/content/hud_catalog.cpp)                                                                          |
+| [`catalogs/sounds.json`](../game/assets/catalogs/sounds.json)         | Procedural sound patches                       | [`sound_catalog.cpp`](../game/content/sound_catalog.cpp)                                                                      |
 | [`catalogs/camera.json`](../game/assets/catalogs/camera.json)         | Camera dead zone                               | [`camera_settings.cpp`](../game/content/camera_settings.cpp)                                                                  |
 
 Every catalog is required, even when empty. Every sprite region, frame and icon must lie
@@ -474,3 +475,73 @@ before the camera follows.
 ```json
 { "deadZone": [80, 45] }
 ```
+
+## Sound effects
+
+`catalogs/sounds.json` is required, even if it contains only `{"sounds": {}}`.
+Each name maps to a jsfxr parameter object; omitted parameters use jsfxr defaults.
+Unknown fields are errors. Copy a JSON patch from [jsfxr](https://sfxr.me/) into a
+named entry:
+
+```json
+{
+  "sounds": {
+    "shot": {
+      "wave_type": 0,
+      "p_env_attack": 0,
+      "p_env_sustain": 0.08,
+      "p_env_decay": 0.18,
+      "p_base_freq": 0.65,
+      "p_freq_ramp": -0.45,
+      "sound_vol": 0.2
+    }
+  }
+}
+```
+
+The waveform is 0 for square, 1 for the jsfxr saw, 2 for sine, or 3 for noise.
+The parameter values are jsfxr slider values, not seconds or hertz.
+
+| Parameters                                     | Range and meaning                                                                                                      |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `p_env_attack`, `p_env_sustain`, `p_env_decay` | [0, 1]; each stage lasts floor(value squared times 100,000) ticks at 44,100 Hz. At least one stage must last a sample. |
+| `p_env_punch`                                  | [0, 1]; sustain punch.                                                                                                 |
+| `p_base_freq`, `p_freq_limit`                  | [0, 1]; initial pitch and optional lower cutoff.                                                                       |
+| `p_freq_ramp`, `p_freq_dramp`                  | [-1, 1]; frequency slide and its acceleration.                                                                         |
+| `p_vib_strength`, `p_vib_speed`                | [0, 1]; vibrato depth and speed.                                                                                       |
+| `p_arp_mod`, `p_arp_speed`                     | Amount [-1, 1], speed [0, 1]; one pitch change.                                                                        |
+| `p_duty`, `p_duty_ramp`                        | Duty [0, 1], sweep [-1, 1].                                                                                            |
+| `p_repeat_speed`                               | [0, 1]; retrigger pitch controls, with zero disabling repeat.                                                          |
+| `p_pha_offset`, `p_pha_ramp`                   | [-1, 1]; phaser offset and sweep.                                                                                      |
+| `p_lpf_freq`, `p_lpf_resonance`, `p_hpf_freq`  | [0, 1]; low-pass cutoff, resonance, and high-pass cutoff.                                                              |
+| `p_lpf_ramp`, `p_hpf_ramp`                     | [-1, 1]; filter sweeps.                                                                                                |
+| `sound_vol`                                    | [0, 1]; gain is exp(value) minus one. Keep it low enough for overlapping sounds.                                       |
+| `sample_rate`                                  | 44,100 (default), 22,050, or 11,025 Hz.                                                                                |
+| `sample_size`                                  | 8 (default) or 16; accepted export metadata. Playback uses unquantised floats.                                         |
+| `oldParams`                                    | Must be true when supplied; identifies the jsfxr slider parameter format.                                              |
+
+All numeric parameters must be finite. Noise renders with a fixed seed, so loading
+or reloading a patch produces the same samples. Patches are prepared in memory
+when content loads; they require no WAV files.
+
+Presentation hooks request sounds by name:
+
+```lua
+return {
+    onShot = function()
+        return { sound = { name = "shot" } }
+    end,
+}
+```
+
+A sound can accompany `shake` in the same returned table. `sound` accepts only
+`name`, a non-empty string in the loaded sound catalog. The name is checked when
+the hook returns, including dynamically constructed names. An invalid name or
+malformed effect is reported with the script source and hook, and the returned
+effects are ignored. Content validation exercises the shipped hooks; loading a
+Lua function alone cannot validate all names it might construct later.
+
+Editing a patch or the presentation script triggers the normal debug hot reload.
+A failed patch load keeps the running content. Old sounds finish using their old
+samples while subsequent events use the new ones. Music sequencing and an in-game
+patch editor are outside this first audio milestone.

@@ -1,6 +1,14 @@
 target_sources(
     advanced_platformer_tests
     PRIVATE
+        ${PROJECT_SOURCE_DIR}/tests/scripting/test_lua_sound_effect.cpp
+        ${PROJECT_SOURCE_DIR}/tests/game/content/test_audio_content_integrity.cpp
+        ${PROJECT_SOURCE_DIR}/tests/core/audio/test_sound_patch.cpp
+        ${PROJECT_SOURCE_DIR}/tests/core/audio/test_sound_mixer.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/audio/test_audio_playback.cpp
+        ${PROJECT_SOURCE_DIR}/tests/game/content/test_sound_catalog.cpp
+        ${PROJECT_SOURCE_DIR}/tests/game/test_game_audio.cpp
+        ${PROJECT_SOURCE_DIR}/app/audio/audio_playback.cpp
         ${PROJECT_SOURCE_DIR}/app/application_context.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/debug_cursor.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/frame_axes.cpp

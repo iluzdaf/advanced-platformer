@@ -1,6 +1,7 @@
 #include "advanced_platformer/render/presentation.hpp"
 
 #include <optional>
+#include <vector>
 
 #include "advanced_platformer/render/animation_system.hpp"
 #include "advanced_platformer/render/camera.hpp"
@@ -11,17 +12,22 @@
 
 namespace advanced_platformer
 {
-    void updateWorldPresentation(
+    std::vector<SoundEffect> updateWorldPresentation(
         const TileMap& map,
         World& world,
         float deltaTime,
         PresentationScripts& scripts,
         CameraShake& shake)
     {
+        std::vector<SoundEffect> sounds;
         for (const WorldEvent& event : world.takeEvents())
         {
             const PresentationEffects effects =
                 scripts.onEvent(event, event.actor == world.playerId());
+            if (effects.sound.has_value())
+            {
+                sounds.push_back(*effects.sound);
+            }
             if (effects.shake.has_value())
             {
                 shake.start(effects.shake->duration, effects.shake->magnitude);
@@ -30,9 +36,10 @@ namespace advanced_platformer
         shake.update(deltaTime);
         if (exitOpening(world))
         {
-            return;
+            return sounds;
         }
         updateWorldAnimations(world, deltaTime);
         updateCoverFades(map, world, deltaTime);
+        return sounds;
     }
 }

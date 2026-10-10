@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <string>
 
 namespace advanced_platformer
 {
@@ -12,9 +13,15 @@ namespace advanced_platformer
         float magnitude = 0.0F;
     };
 
+    struct SoundEffect
+    {
+        std::string name;
+    };
+
     struct PresentationEffects
     {
         std::optional<CameraShakeEffect> shake;
+        std::optional<SoundEffect> sound;
     };
 
     class PresentationScripts

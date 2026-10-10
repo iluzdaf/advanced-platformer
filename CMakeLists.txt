@@ -55,6 +55,7 @@ target_link_libraries(
     advanced_platformer
     PRIVATE
         advanced_platformer_game
+        advanced_platformer_miniaudio
         advanced_platformer_glad
         advanced_platformer_imgui
         advanced_platformer_stb
