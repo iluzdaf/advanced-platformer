@@ -113,6 +113,7 @@ namespace
         Orientation tested;
         Cell testedSlot;
         Cell exitSlot;
+        std::vector<std::pair<Cell, std::string>> pinnedRooms;
     };
 
     Cell originOf(const RoomPieces& catalog, const Route& route, Cell room)
@@ -125,6 +126,19 @@ namespace
         return {
             (room.x - least.x) * (catalog.roomSize.width - 1),
             (room.y - least.y) * (catalog.roomSize.height - 1)};
+    }
+
+    bool pieceAt(
+        const GeneratedLevel& level,
+        const Route& route,
+        Cell slot,
+        const std::string& name)
+    {
+        const Cell origin = originOf(route.catalog, route, slot);
+        return std::ranges::any_of(
+            level.rooms,
+            [&](const advanced_platformer::GeneratedRoom& room)
+            { return room.origin == origin && room.piece == name; });
     }
 
     bool roomAt(const GeneratedLevel& level, const Route& route, Cell slot, RoomRole role)
@@ -160,6 +174,10 @@ namespace
             }
             if (roomAt(level, route, route.slots.front(), RoomRole::Start) &&
                 roomAt(level, route, route.exitSlot, RoomRole::Exit) &&
+                std::ranges::all_of(
+                    route.pinnedRooms,
+                    [&](const auto& pinned)
+                    { return pieceAt(level, route, pinned.first, pinned.second); }) &&
                 isMirroredAt(
                     level, route.tested.piece, originOf(route.catalog, route, route.testedSlot)) ==
                     route.tested.mirrored)
@@ -372,6 +390,182 @@ TEST_CASE(
     {
         INFO(route.name);
         CHECK(routeWorks(route));
+    }
+}
+
+namespace
+{
+    struct ReturnRoute
+    {
+        Route route;
+        Cell leftSlot;
+        RoomSide leftThrough = RoomSide::Left;
+    };
+
+    std::vector<ReturnRoute> startReturnRoutes(const RoomPieces& shipped)
+    {
+        std::vector<ReturnRoute> routes;
+        for (const Route& route : startRoutes(shipped))
+        {
+            const RoomDoors doors = doorsOf(route.tested);
+            for (const RoomSide side : AllSides)
+            {
+                const Cell slot = advanced_platformer::stepTowards(Centre, side);
+                if (!hasDoor(doors, side) || slot == route.exitSlot)
+                {
+                    continue;
+                }
+                RoomPieces fillers = emptyCatalog(shipped);
+                addFillersWithOnlyDoor(fillers, shipped, advanced_platformer::oppositeOf(side));
+                for (const RoomPiece& filler : fillers.pieces)
+                {
+                    ReturnRoute returning{.route = route, .leftSlot = slot, .leftThrough = side};
+                    returning.route.pinnedRooms = {{slot, filler.name}};
+                    RoomPieces& catalog = returning.route.catalog;
+                    catalog = emptyCatalog(shipped);
+                    catalog.pieces.push_back(route.tested.piece);
+                    for (const RoomSide door : AllSides)
+                    {
+                        const Cell next = advanced_platformer::stepTowards(Centre, door);
+                        const RoomSide facing = advanced_platformer::oppositeOf(door);
+                        if (!hasDoor(doors, door) || door == side)
+                        {
+                            continue;
+                        }
+                        if (next == route.exitSlot)
+                        {
+                            addPiecesWithOnlyDoor(catalog, shipped, RoomRole::Exit, facing);
+                        }
+                        else
+                        {
+                            addFillersWithOnlyDoor(catalog, shipped, facing);
+                        }
+                    }
+                    if (std::ranges::none_of(
+                            catalog.pieces,
+                            [&](const RoomPiece& piece) { return piece.name == filler.name; }))
+                    {
+                        catalog.pieces.push_back(filler);
+                    }
+                    returning.route.name = route.name + " after leaving through " +
+                                           std::string(advanced_platformer::nameOf(side)) +
+                                           " into " + filler.name;
+                    routes.push_back(std::move(returning));
+                }
+            }
+        }
+        return routes;
+    }
+
+    bool standable(const advanced_platformer::TileMap& map, Cell cell)
+    {
+        return !map.blocksMovement(cell) && !map.blocksMovement({cell.x, cell.y - 1}) &&
+               map.blocksMovement({cell.x, cell.y + 1});
+    }
+
+    Cell doorway(
+        const advanced_platformer::TileMap& map,
+        const RoomPieces& catalog,
+        const ReturnRoute& returning)
+    {
+        const Cell origin = originOf(catalog, returning.route, Centre);
+        const int width = catalog.roomSize.width - 1;
+        const int height = catalog.roomSize.height - 1;
+        const bool sideways =
+            returning.leftThrough == RoomSide::Left || returning.leftThrough == RoomSide::Right;
+        const Cell first =
+            returning.leftThrough == RoomSide::Right  ? Cell{origin.x + width, origin.y}
+            : returning.leftThrough == RoomSide::Down ? Cell{origin.x, origin.y + height}
+                                                      : origin;
+        std::vector<Cell> open;
+        for (int step = 0; step <= (sideways ? height : width); ++step)
+        {
+            const Cell cell =
+                sideways ? Cell{first.x, first.y + step} : Cell{first.x + step, first.y};
+            if (!map.blocksMovement(cell))
+            {
+                open.push_back(cell);
+            }
+        }
+        if (sideways)
+        {
+            return open.back();
+        }
+        return open[open.size() / 2];
+    }
+
+    std::optional<Cell> firstLandingOutside(
+        const GeneratedLevel& level,
+        const ReturnRoute& returning,
+        const advanced_platformer::GameCatalogs& catalogs)
+    {
+        const RoomPieces& catalog = returning.route.catalog;
+        const advanced_platformer::TileMap map =
+            advanced_platformer::composeTileMap(level.mapRows, level.tileLegend, catalogs.tiles);
+        const Cell origin = originOf(catalog, returning.route, returning.leftSlot);
+        const Cell door = doorway(map, catalog, returning);
+        std::vector<Cell> cells;
+        for (int y = origin.y + 1; y < origin.y + catalog.roomSize.height - 1; ++y)
+        {
+            for (int x = origin.x + 1; x < origin.x + catalog.roomSize.width - 1; ++x)
+            {
+                if (standable(map, {x, y}))
+                {
+                    cells.push_back({x, y});
+                }
+            }
+        }
+        std::ranges::sort(
+            cells,
+            {},
+            [&](Cell cell)
+            {
+                const int dx = cell.x - door.x;
+                const int dy = cell.y - door.y;
+                return dx * dx + dy * dy;
+            });
+        advanced_platformer::Actor player = advanced_platformer::composePlayer(catalogs, 0);
+        advanced_platformer::moveFeetTo(
+            player.body.bounds, advanced_platformer::feetInCell(map.tileSize(), level.playerSpawn));
+        for (const Cell cell : cells)
+        {
+            if (advanced_platformer::actorCanReach(
+                    map,
+                    player,
+                    advanced_platformer::feetInCell(map.tileSize(), cell),
+                    tests::FixedStepSeconds))
+            {
+                return cell;
+            }
+        }
+        return std::nullopt;
+    }
+}
+
+TEST_CASE(
+    "Every shipped start room lets the player back in through each door they leave by",
+    "[app][content][generation]")
+{
+    const advanced_platformer::GameCatalogs catalogs =
+        advanced_platformer::loadGameCatalogs("assets/catalogs");
+    for (const ReturnRoute& returning : startReturnRoutes(shippedPieces()))
+    {
+        INFO(returning.route.name);
+        const std::optional<GeneratedLevel> level = generateRoute(returning.route);
+        CHECK(level.has_value());
+        if (!level.has_value())
+        {
+            continue;
+        }
+        const std::optional<Cell> landing = firstLandingOutside(*level, returning, catalogs);
+        CHECK(landing.has_value());
+        if (!landing.has_value())
+        {
+            continue;
+        }
+        GeneratedLevel outside = *level;
+        outside.playerSpawn = *landing;
+        CHECK(tests::playerReachesExit(outside, catalogs));
     }
 }
 
