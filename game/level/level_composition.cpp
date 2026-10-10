@@ -27,10 +27,7 @@
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
-#include "advanced_platformer/navigation/platformer_cells.hpp"
-#include "advanced_platformer/navigation/route.hpp"
 #include "advanced_platformer/npc/npc.hpp"
-#include "advanced_platformer/physics/collision.hpp"
 #include "advanced_platformer/world/level_exit.hpp"
 #include "advanced_platformer/world/pickup.hpp"
 #include "advanced_platformer/world/level_validation.hpp"
@@ -68,26 +65,6 @@ namespace advanced_platformer
                 true};
         }
 
-        void clingAtSpawn(const TileMap& map, Cell spawn, Actor& actor)
-        {
-            if (!actor.surfaceClimb.has_value() || touchingSurfaces(map, actor.body.bounds).ground)
-            {
-                return;
-            }
-            for (const ClimbSurface surface :
-                 {ClimbSurface::Ceiling, ClimbSurface::LeftWall, ClimbSurface::RightWall})
-            {
-                const RouteLocation location{spawn, surface};
-                if (canOccupy(map, location, actor.body.bounds.size))
-                {
-                    actor.body.bounds =
-                        boundsAtSurface(map.tileSize(), location, actor.body.bounds.size);
-                    actor.surfaceClimb->surface = surface;
-                    return;
-                }
-            }
-        }
-
         Actor composePlacedActor(
             const TileMap& map,
             const ActorPlacement& placement,
@@ -102,7 +79,10 @@ namespace advanced_platformer
                 composePatrol(map, placement.patrol),
                 catalogs.machines);
             actor.definitionName = placement.definitionName;
-            clingAtSpawn(map, placement.spawn, actor);
+            if (actor.surfaceClimb.has_value())
+            {
+                gripNearbySurface(map, actor.body.bounds, *actor.surfaceClimb);
+            }
             return actor;
         }
 

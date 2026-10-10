@@ -3,6 +3,7 @@
 #include <stdexcept>
 
 #include "advanced_platformer/input/input_state.hpp"
+#include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/physics/body.hpp"
@@ -52,7 +53,6 @@ TEST_CASE("A climb request holds and moves along a wall", "[movement][climb]")
     REQUIRE_NEAR(body.bounds.topLeft.y, 36.0F);
     REQUIRE(climb.wallHeading == WallHeading::Down);
 
-    // Holding still keeps the way it last climbed.
     intentions.direction = {};
     advanced_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
     REQUIRE(climb.wallHeading == WallHeading::Down);
@@ -151,7 +151,6 @@ TEST_CASE("Keeping the grip stays on a held wall and never grabs one", "[movemen
     InputIntentions intentions;
     REQUIRE(intentions.climbGrip == ClimbGrip::Keep);
 
-    // Touching the wall without holding it: Keep leaves the actor off, so it falls.
     advanced_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
     REQUIRE(climb.surface == ClimbSurface::None);
 
@@ -160,7 +159,6 @@ TEST_CASE("Keeping the grip stays on a held wall and never grabs one", "[movemen
     advanced_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
     REQUIRE(climb.surface == ClimbSurface::LeftWall);
 
-    // Holding it: Keep stays on, without moving.
     intentions.climbGrip = ClimbGrip::Keep;
     advanced_platformer::updateSurfaceClimbMovement(Wall, body, movement, climb, intentions, 0.1F);
     REQUIRE(climb.surface == ClimbSurface::LeftWall);
@@ -235,6 +233,49 @@ TEST_CASE("A climb request cannot attach to an unmarked solid ceiling", "[moveme
 
     REQUIRE(climb.surface == ClimbSurface::None);
     REQUIRE(body.velocity.y > 0.0F);
+}
+
+TEST_CASE("A climber off the ground grips a nearby ceiling, else a wall", "[movement][climb]")
+{
+    const advanced_platformer::TileMap room =
+        tests::TileMapBuilder({"cccccc", "c.....", "c.....", "c.....", "######"})
+            .where('c', tests::Tile{}.blocksMovement().climbable());
+    SurfaceClimb climb{{60.0F}};
+
+    SECTION("under a ceiling")
+    {
+        advanced_platformer::Aabb bounds{{34.0F, 20.0F}, {12.0F, 12.0F}};
+        advanced_platformer::gripNearbySurface(room, bounds, climb);
+        REQUIRE(climb.surface == ClimbSurface::Ceiling);
+        REQUIRE_NEAR(bounds.topLeft.y, 16.0F);
+        REQUIRE_NEAR(bounds.topLeft.x, 34.0F);
+    }
+
+    SECTION("beside a wall")
+    {
+        advanced_platformer::Aabb bounds{{18.0F, 36.0F}, {12.0F, 12.0F}};
+        advanced_platformer::gripNearbySurface(room, bounds, climb);
+        REQUIRE(climb.surface == ClimbSurface::LeftWall);
+        REQUIRE_NEAR(bounds.topLeft.x, 16.0F);
+        REQUIRE_NEAR(bounds.topLeft.y, 36.0F);
+    }
+
+    SECTION("on the ground")
+    {
+        advanced_platformer::Aabb bounds{{18.0F, 52.0F}, {12.0F, 12.0F}};
+        advanced_platformer::gripNearbySurface(room, bounds, climb);
+        REQUIRE(climb.surface == ClimbSurface::None);
+        REQUIRE_NEAR(bounds.topLeft.x, 18.0F);
+    }
+
+    SECTION("nothing in reach")
+    {
+        advanced_platformer::Aabb bounds{{50.0F, 36.0F}, {12.0F, 12.0F}};
+        advanced_platformer::gripNearbySurface(room, bounds, climb);
+        REQUIRE(climb.surface == ClimbSurface::None);
+        REQUIRE_NEAR(bounds.topLeft.x, 50.0F);
+        REQUIRE_NEAR(bounds.topLeft.y, 36.0F);
+    }
 }
 
 TEST_CASE("Climbing ends when the surface ends", "[movement][climb]")
