@@ -23,8 +23,8 @@ return {
             end,
         },
         stunned = {
-            description = "Stand still, facing the target while it is on the same floor within notice "
-                .. "distance.",
+            description = "Stand still, facing the target while it is on the same floor within "
+                .. "notice distance.",
             update = function(self, snapshot)
                 if
                     snapshot.facts.targetOnSameSurface

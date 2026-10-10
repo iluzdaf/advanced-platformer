@@ -27,8 +27,8 @@ return {
         },
 
         patrol = {
-            description = "Walk to one patrol end, then turn and walk to the other; without a patrol, "
-                .. "stand still.",
+            description = "Walk to one patrol end, then turn and walk to the other; without a "
+                .. "patrol, stand still.",
             update = function(self, snapshot)
                 local patrol = snapshot.patrol
                 if patrol == nil then
@@ -66,8 +66,8 @@ return {
         },
 
         search = {
-            description = "Route to where the target was last known, then look left and right in turn."
-                .. "Route to where the target was last known, then look left and right in turn.",
+            description = "Route to where the target was last known, then look left and right in "
+                .. "turn.",
             update = function(self, snapshot)
                 local goal = snapshot.lastKnownTargetFeet
                 local command = { routeTo = goal }
@@ -80,8 +80,8 @@ return {
         },
 
         retreat = {
-            description = "Step away from where the target was last known without leaving the floor, "
-                .. "firing at it.",
+            description = "Step away from where the target was last known without leaving the "
+                .. "floor, firing at it.",
             update = function(self, snapshot)
                 local threat = snapshot.lastKnownTargetFeet
                 local away = snapshot.feet - threat

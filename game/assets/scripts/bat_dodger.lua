@@ -17,8 +17,8 @@ end
 return {
     activities = {
         wait = {
-            description = "Hover in place; while the target is known, weave left and right and aim at "
-                .. "it.",
+            description = "Hover in place; while the target is known, weave left and right and "
+                .. "aim at it.",
             update = function(self, snapshot)
                 if not snapshot.facts.targetKnown then
                     return { clearRoute = true }
