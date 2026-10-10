@@ -1,6 +1,7 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <utility>
 #include <string>
@@ -9,6 +10,7 @@
 #include "content/game_content.hpp"
 #include "game.hpp"
 #include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
 #include "playtest.hpp"
 #include "support/fixed_step.hpp"
 #include "support/fixture_game.hpp"
@@ -50,6 +52,30 @@ TEST_CASE("A playtest samples the level's pacing every half second")
         CHECK(pacing[sample].seconds - pacing[sample - 1].seconds <= Catch::Approx(0.5F));
         CHECK_FALSE(pacing[sample].piece.empty());
     }
+}
+
+TEST_CASE("A playtest records the level's tiles as it starts")
+{
+    advanced_platformer::Game game = tests::fixtureGame(
+        advanced_platformer::playtestContent(
+            tests::fixtureContent(), ADVANCED_PLATFORMER_SOURCE_PLAYTEST_ASSETS));
+    const advanced_platformer::TileMap& map = game.currentLevel().map;
+    const auto width = static_cast<std::size_t>(map.width());
+    const auto height = static_cast<std::size_t>(map.height());
+
+    const std::vector<advanced_platformer::LevelPlaytest> results =
+        advanced_platformer::playtestRun(game, 1, 60.0F, tests::FixedStepSeconds);
+
+    REQUIRE(results.size() == 1);
+    const std::vector<std::string>& rows = results.front().map;
+    REQUIRE(rows.size() == height);
+    for (const std::string& row : rows)
+    {
+        CHECK(row.size() == width);
+        CHECK(row.find_first_not_of("#XG.") == std::string::npos);
+    }
+    CHECK(rows.front().find('#') != std::string::npos);
+    CHECK(std::ranges::any_of(rows, [](const std::string& row) { return row.contains('.'); }));
 }
 
 TEST_CASE("A playtest names each pickup the bot collects")
@@ -169,6 +195,7 @@ TEST_CASE("A level playtest is written as one JSON line")
         .outcome = advanced_platformer::PlaytestOutcome::Stuck,
         .damageByNearestNpc = {{"rat", 2}},
         .endCell = {3, 4},
+        .map = {"#.", "XG"},
         .pacing = {
             {.seconds = 0.5F,
              .health = 3,
@@ -187,6 +214,7 @@ TEST_CASE("A level playtest is written as one JSON line")
     CHECK(text.find(R"("outcome":"stuck")") != std::string::npos);
     CHECK(text.find(R"("damageByNearestNpc":{"rat":2})") != std::string::npos);
     CHECK(text.find(R"("endCell":[3,4])") != std::string::npos);
+    CHECK(text.find(R"("map":["#.","XG"])") != std::string::npos);
     CHECK(
         text.find(
             R"("pacing":[{"seconds":0.5,"health":3,"damage":1,"npcsNear":2,"npcsTargeting":1,)"
