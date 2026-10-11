@@ -73,6 +73,11 @@ namespace advanced_platformer
         return implementation->playback.replace(std::move(sound), loop);
     }
 
+    bool AudioDevice::setMusic(std::shared_ptr<const SoundBuffer> sound)
+    {
+        return implementation->playback.setMusic(std::move(sound));
+    }
+
     bool AudioDevice::stop()
     {
         return implementation->playback.stop();

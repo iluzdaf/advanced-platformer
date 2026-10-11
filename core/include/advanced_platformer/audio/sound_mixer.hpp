@@ -16,6 +16,7 @@ namespace advanced_platformer
     public:
         void play(std::size_t slot, const SoundBuffer& sound, bool loop = false) noexcept;
         void stop() noexcept;
+        void stop(std::size_t slot) noexcept;
         bool playing(std::size_t slot) const noexcept;
         void render(std::span<float> output) noexcept;
 

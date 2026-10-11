@@ -52,6 +52,7 @@ again from the next seed, also keeping health and items.
 | [`catalogs/exits.json`](../game/assets/catalogs/exits.json)           | Exit bodies and sprites                        | [`exit_catalog.cpp`](../game/content/exit_catalog.cpp)                                                                        |
 | [`catalogs/hud.json`](../game/assets/catalogs/hud.json)               | HUD icon regions                               | [`hud_catalog.cpp`](../game/content/hud_catalog.cpp)                                                                          |
 | [`catalogs/sounds.json`](../game/assets/catalogs/sounds.json)         | Procedural sound patches                       | [`sound_catalog.cpp`](../game/content/sound_catalog.cpp)                                                                      |
+| [`catalogs/music.json`](../game/assets/catalogs/music.json)           | Background song selection or silence           | [`music_song.cpp`](../game/content/music_song.cpp)                                                                            |
 | [`catalogs/camera.json`](../game/assets/catalogs/camera.json)         | Camera dead zone                               | [`camera_settings.cpp`](../game/content/camera_settings.cpp)                                                                  |
 
 Every catalog is required, even when empty. Every sprite region, frame and icon must lie
@@ -550,8 +551,21 @@ patch editor are outside this first audio milestone.
 
 Music is authored as JSON under `game/assets/music/`. The first example,
 [`first-loop.json`](../game/assets/music/first-loop.json), is an eight-bar loop at
-120 beats per minute, with bass, melody, and percussion. Music currently belongs
-to the standalone audition tool; it does not start automatically in the game.
+120 beats per minute, with bass, melody, and percussion. The game selects its background loop through `catalogs/music.json`:
+
+```json
+{ "song": "first-loop" }
+```
+
+The name selects `music/first-loop.json`. Set `song` to `null` to disable music.
+Names use letters, digits, hyphens, and underscores. The selected song renders
+at content load, and starts automatically through the game's existing audio
+device. Debug hot reload updates music along with the other content; invalid
+content preserves the previous loop. Music continues during pauses and level
+changes. Unchanged rendered music keeps its playback position across reloads;
+changed music restarts from the beginning without stopping effects.
+
+The standalone tool auditions songs independently of the game's selection.
 
 A song has six required fields:
 

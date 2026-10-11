@@ -1,6 +1,9 @@
 #pragma once
 
 #include <filesystem>
+#include <memory>
+
+#include "advanced_platformer/audio/sound_patch.hpp"
 
 #include "advanced_platformer/level/room_pieces.hpp"
 
@@ -29,6 +32,7 @@ namespace advanced_platformer
         HudIcons hudIcons;
         CameraSettings camera;
         SoundCatalog sounds;
+        std::shared_ptr<const SoundBuffer> music;
         RoomPieces pieces;
     };
 

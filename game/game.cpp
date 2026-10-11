@@ -429,6 +429,11 @@ namespace advanced_platformer
         return diagnostics;
     }
 
+    const std::shared_ptr<const SoundBuffer>& Game::backgroundMusic() const
+    {
+        return gameCatalogs.music;
+    }
+
     std::vector<std::shared_ptr<const SoundBuffer>> Game::takeSounds()
     {
         return std::exchange(pendingSounds, {});

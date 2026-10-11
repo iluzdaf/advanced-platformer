@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
 
 #include <array>
 #include <atomic>
@@ -100,6 +101,81 @@ TEST_CASE(
     playback.collectFinished();
     REQUIRE_FALSE(wrongThread.load());
     REQUIRE(released.load() == 1000);
+}
+
+TEST_CASE(
+    "Background music repeats alongside effects and replaces only its own voice",
+    "[audio][playback][music]")
+{
+    advanced_platformer::AudioPlayback playback;
+    const auto oldMusic = std::make_shared<const advanced_platformer::SoundBuffer>(
+        advanced_platformer::SoundBuffer{{0.1F, 0.2F}, 44100});
+    const auto nextMusic = std::make_shared<const advanced_platformer::SoundBuffer>(
+        advanced_platformer::SoundBuffer{{0.4F}, 44100});
+    const auto effect = std::make_shared<const advanced_platformer::SoundBuffer>(
+        advanced_platformer::SoundBuffer{{0.3F, 0.3F, 0.3F, 0.3F}, 44100});
+    REQUIRE(playback.setMusic(oldMusic));
+    REQUIRE(playback.play(effect));
+    std::array<float, 2> output{};
+    playback.render(output);
+    REQUIRE(output == std::array{0.4F, 0.5F});
+    REQUIRE(playback.setMusic(nextMusic));
+    playback.render(output);
+    REQUIRE(output[0] == Catch::Approx(0.7F));
+    REQUIRE(output[1] == Catch::Approx(0.7F));
+    playback.render(output);
+    REQUIRE(output == std::array{0.4F, 0.4F});
+    REQUIRE(playback.setMusic({}));
+    playback.render(output);
+    REQUIRE(output == std::array{0.0F, 0.0F});
+}
+
+TEST_CASE(
+    "Stopping background music preserves effects and releases its buffer on collection",
+    "[audio][playback][music]")
+{
+    advanced_platformer::AudioPlayback playback;
+    auto music = std::make_shared<const advanced_platformer::SoundBuffer>(
+        advanced_platformer::SoundBuffer{{0.1F}, 44100});
+    const std::weak_ptr<const advanced_platformer::SoundBuffer> lifetime = music;
+    const bool queued = playback.setMusic(std::move(music));
+    REQUIRE(queued);
+    const auto effect = std::make_shared<const advanced_platformer::SoundBuffer>(
+        advanced_platformer::SoundBuffer{{0.3F, 0.3F}, 44100});
+    REQUIRE(playback.play(effect));
+    std::array<float, 1> output{};
+    playback.render(output);
+    REQUIRE(playback.setMusic({}));
+    playback.render(output);
+    REQUIRE(output.front() == 0.3F);
+    REQUIRE_FALSE(lifetime.expired());
+    playback.collectFinished();
+    REQUIRE(lifetime.expired());
+}
+
+TEST_CASE(
+    "A saturated background music update leaves its previous loop running",
+    "[audio][playback][music]")
+{
+    advanced_platformer::AudioPlayback playback;
+    const auto sound = std::make_shared<const advanced_platformer::SoundBuffer>(
+        advanced_platformer::SoundBuffer{{0.01F}, 44100});
+    REQUIRE(playback.setMusic(sound));
+    std::array<float, 1> output{};
+    playback.render(output);
+    for (std::size_t slot = 1; slot < advanced_platformer::SoundVoiceCount; ++slot)
+    {
+        REQUIRE(playback.play(sound));
+    }
+    REQUIRE_FALSE(playback.setMusic(sound));
+    playback.render(output);
+    playback.collectFinished();
+    REQUIRE(playback.setMusic(sound));
+    playback.render(output);
+    REQUIRE(output.front() == 0.01F);
+    REQUIRE_FALSE(playback.setMusic(std::make_shared<const advanced_platformer::SoundBuffer>()));
+    playback.render(output);
+    REQUIRE(output.front() == 0.01F);
 }
 
 TEST_CASE("Reloaded sound buffers cannot invalidate a playing voice", "[audio][playback][reload]")

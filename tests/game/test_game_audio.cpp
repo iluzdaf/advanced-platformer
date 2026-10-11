@@ -74,3 +74,39 @@ TEST_CASE("An unknown presentation sound is diagnosed without queuing audio", "[
         diagnostics.front().message,
         Catch::Matchers::ContainsSubstring("not in the sound catalog"));
 }
+
+TEST_CASE(
+    "Background music survives level changes and updates after a successful content reload",
+    "[audio][game][music]")
+{
+    auto content = tests::fixtureContent();
+    const auto music = std::make_shared<const advanced_platformer::SoundBuffer>(
+        advanced_platformer::SoundBuffer{{0.1F}, 44100});
+    content.gameCatalogs.music = music;
+    auto game = tests::fixtureGame(std::move(content));
+    REQUIRE(game.backgroundMusic() == music);
+    game.changeLevel(advanced_platformer::LevelChange::Restart);
+    REQUIRE(game.backgroundMusic() == music);
+    auto replacement = tests::fixtureContent();
+    const auto next = std::make_shared<const advanced_platformer::SoundBuffer>(
+        advanced_platformer::SoundBuffer{{0.2F}, 44100});
+    replacement.gameCatalogs.music = next;
+    game.reload(std::move(replacement));
+    REQUIRE(game.backgroundMusic() == next);
+    auto disabled = tests::fixtureContent();
+    game.reload(std::move(disabled));
+    REQUIRE_FALSE(game.backgroundMusic());
+}
+
+TEST_CASE("Rejected level content preserves the current background music", "[audio][game][music]")
+{
+    auto content = tests::fixtureContent();
+    const auto music = std::make_shared<const advanced_platformer::SoundBuffer>(
+        advanced_platformer::SoundBuffer{{0.1F}, 44100});
+    content.gameCatalogs.music = music;
+    auto game = tests::fixtureGame(std::move(content));
+    auto broken = tests::fixtureContent();
+    broken.gameCatalogs.actors.definitions.erase("test_player");
+    REQUIRE_THROWS(game.reload(std::move(broken)));
+    REQUIRE(game.backgroundMusic() == music);
+}

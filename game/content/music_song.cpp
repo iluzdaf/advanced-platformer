@@ -3,6 +3,11 @@
 #include <filesystem>
 #include <functional>
 #include <map>
+#include <memory>
+#include <optional>
+#include <algorithm>
+
+#include "advanced_platformer/audio/sound_patch.hpp"
 #include <string>
 #include <string_view>
 #include <utility>
@@ -28,6 +33,40 @@ namespace advanced_platformer
         std::map<std::string, MusicPattern, std::less<>> patterns;
         std::vector<std::string> arrangement;
     };
+
+    struct BackgroundMusicJson
+    {
+        std::optional<std::string> song;
+    };
+
+    std::shared_ptr<const SoundBuffer> loadBackgroundMusic(
+        const std::filesystem::path& assetDirectory)
+    {
+        const auto path = assetDirectory / "catalogs" / "music.json";
+        const auto settings =
+            readContent<BackgroundMusicJson>(loadContentText(path), path.string());
+        if (!settings.song)
+        {
+            return {};
+        }
+        if (settings.song->empty() || !std::ranges::all_of(
+                                          *settings.song,
+                                          [](char character)
+                                          {
+                                              return (character >= 'a' && character <= 'z') ||
+                                                     (character >= 'A' && character <= 'Z') ||
+                                                     (character >= '0' && character <= '9') ||
+                                                     character == '-' || character == '_';
+                                          }))
+        {
+            failJson(
+                path.string(),
+                "song",
+                "use a song filename stem containing letters, digits, - or _");
+        }
+        return std::make_shared<const SoundBuffer>(
+            renderMusic(loadMusicSong(assetDirectory / "music" / (*settings.song + ".json"))));
+    }
 
     MusicSong parseMusicSong(std::string_view text, std::string_view sourceName)
     {

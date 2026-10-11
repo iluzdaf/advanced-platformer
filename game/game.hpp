@@ -77,6 +77,7 @@ namespace advanced_platformer
         const HudIcons& hudIcons() const;
         std::vector<LuaScriptDiagnostic> takeScriptDiagnostics();
         std::vector<std::shared_ptr<const SoundBuffer>> takeSounds();
+        const std::shared_ptr<const SoundBuffer>& backgroundMusic() const;
         Camera currentCamera() const;
         Camera renderCamera() const;
 
