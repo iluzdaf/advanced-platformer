@@ -24,6 +24,84 @@ namespace advanced_platformer
         {
             return static_cast<std::size_t>(std::llround(seconds * SoundOutputRate));
         }
+
+        void requireRange(double value, double minimum, double maximum, const std::string& path)
+        {
+            if (!std::isfinite(value) || value < minimum || value > maximum)
+            {
+                throw std::invalid_argument(path + ": value is outside its allowed range");
+            }
+        }
+
+        double envelopeAt(const MusicInstrument& instrument, double seconds)
+        {
+            if (instrument.attack > 0 && seconds < instrument.attack)
+            {
+                return seconds / instrument.attack;
+            }
+            if (instrument.decay > 0 && seconds < instrument.attack + instrument.decay)
+            {
+                return 1 +
+                       (instrument.sustain - 1) * (seconds - instrument.attack) / instrument.decay;
+            }
+            return instrument.sustain;
+        }
+
+        void addNote(
+            SoundBuffer& output,
+            const MusicInstrument& instrument,
+            const MusicNote& note,
+            double startSeconds,
+            double secondsPerBeat)
+        {
+            const double frequency = musicPitchFrequency(note.pitch);
+            const double gate = note.gate.value_or(note.beats) * secondsPerBeat;
+            const std::size_t start = sampleAt(startSeconds);
+            const std::size_t end = sampleAt(startSeconds + gate + instrument.release);
+            const double releaseLevel = envelopeAt(instrument, gate);
+            std::uint32_t noiseState = 1;
+            constexpr int Oversampling = 8;
+            for (std::size_t sample = start; sample < end; ++sample)
+            {
+                const double seconds = static_cast<double>(sample - start) / SoundOutputRate;
+                const double envelope =
+                    seconds < gate
+                        ? envelopeAt(instrument, seconds)
+                        : (instrument.release > 0
+                               ? releaseLevel *
+                                     std::max(0.0, 1 - (seconds - gate) / instrument.release)
+                               : 0);
+                double wave = 0;
+                for (int sub = 0; sub < Oversampling; ++sub)
+                {
+                    const double phase =
+                        frequency *
+                        (seconds + static_cast<double>(sub) / (SoundOutputRate * Oversampling));
+                    const double fraction = phase - std::floor(phase);
+                    if (instrument.wave == "sine")
+                    {
+                        wave += std::sin(2 * std::numbers::pi * fraction);
+                    }
+                    else if (instrument.wave == "triangle")
+                    {
+                        wave += 1 - 4 * std::abs(fraction - 0.5);
+                    }
+                    else if (instrument.wave == "square")
+                    {
+                        wave += fraction < 0.5 ? 1 : -1;
+                    }
+                    else
+                    {
+                        noiseState = noiseState * 1664525U + 1013904223U;
+                        wave += 2 * static_cast<double>(noiseState) /
+                                    std::numeric_limits<std::uint32_t>::max() -
+                                1;
+                    }
+                }
+                output.samples[sample % output.samples.size()] += static_cast<float>(
+                    wave / Oversampling * envelope * instrument.gain * note.volume);
+            }
+        }
     }
 
     double musicPitchFrequency(std::string_view pitch)
@@ -55,18 +133,6 @@ namespace advanced_platformer
             throw std::invalid_argument("pitch exceeds the output frequency limit");
         }
         return frequency;
-    }
-
-    namespace
-    {
-        void requireRange(double value, double minimum, double maximum, const std::string& path)
-        {
-            if (!std::isfinite(value) || value < minimum || value > maximum)
-            {
-                throw std::invalid_argument(path + ": value is outside its allowed range");
-            }
-        }
-
     }
 
     void validateMusicSong(const MusicSong& song)
@@ -178,83 +244,6 @@ namespace advanced_platformer
         }
         requireRange(
             beats * 60 / song.tempo, 0, MaximumSongSeconds, "arrangement duration (seconds)");
-    }
-
-    namespace
-    {
-        double envelopeAt(const MusicInstrument& instrument, double seconds)
-        {
-            if (instrument.attack > 0 && seconds < instrument.attack)
-            {
-                return seconds / instrument.attack;
-            }
-            if (instrument.decay > 0 && seconds < instrument.attack + instrument.decay)
-            {
-                return 1 +
-                       (instrument.sustain - 1) * (seconds - instrument.attack) / instrument.decay;
-            }
-            return instrument.sustain;
-        }
-
-    }
-
-    namespace
-    {
-        void addNote(
-            SoundBuffer& output,
-            const MusicInstrument& instrument,
-            const MusicNote& note,
-            double startSeconds,
-            double secondsPerBeat)
-        {
-            const double frequency = musicPitchFrequency(note.pitch);
-            const double gate = note.gate.value_or(note.beats) * secondsPerBeat;
-            const std::size_t start = sampleAt(startSeconds);
-            const std::size_t end = sampleAt(startSeconds + gate + instrument.release);
-            const double releaseLevel = envelopeAt(instrument, gate);
-            std::uint32_t noiseState = 1;
-            constexpr int Oversampling = 8;
-            for (std::size_t sample = start; sample < end; ++sample)
-            {
-                const double seconds = static_cast<double>(sample - start) / SoundOutputRate;
-                const double envelope =
-                    seconds < gate
-                        ? envelopeAt(instrument, seconds)
-                        : (instrument.release > 0
-                               ? releaseLevel *
-                                     std::max(0.0, 1 - (seconds - gate) / instrument.release)
-                               : 0);
-                double wave = 0;
-                for (int sub = 0; sub < Oversampling; ++sub)
-                {
-                    const double phase =
-                        frequency *
-                        (seconds + static_cast<double>(sub) / (SoundOutputRate * Oversampling));
-                    const double fraction = phase - std::floor(phase);
-                    if (instrument.wave == "sine")
-                    {
-                        wave += std::sin(2 * std::numbers::pi * fraction);
-                    }
-                    else if (instrument.wave == "triangle")
-                    {
-                        wave += 1 - 4 * std::abs(fraction - 0.5);
-                    }
-                    else if (instrument.wave == "square")
-                    {
-                        wave += fraction < 0.5 ? 1 : -1;
-                    }
-                    else
-                    {
-                        noiseState = noiseState * 1664525U + 1013904223U;
-                        wave += 2 * static_cast<double>(noiseState) /
-                                    std::numeric_limits<std::uint32_t>::max() -
-                                1;
-                    }
-                }
-                output.samples[sample % output.samples.size()] += static_cast<float>(
-                    wave / Oversampling * envelope * instrument.gain * note.volume);
-            }
-        }
     }
 
     SoundBuffer renderMusic(const MusicSong& song, std::string_view soloTrack)
