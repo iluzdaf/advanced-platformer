@@ -598,6 +598,16 @@ Music follows the same content, synthesis, and playback boundaries.
 absolute musical time to avoid accumulating rounding error, and release tails
 wrap past the arrangement end into its beginning to form a repeating loop.
 The callback repeats the prepared buffer rather than sequencing notes itself.
+`catalogs/music.json` selects the game's song, or disables music with `null`.
+`GameCatalogs` carries the prepared buffer; `Game::backgroundMusic` exposes it
+without opening a device. The application compares it with its accepted music,
+keeps identical samples playing across reloads, and queues changes through
+`AudioDevice::setMusic`. This command replaces only the music voice, preserving
+effects and releasing old samples on the producer thread after callback
+acknowledgement. If the queue or retained-buffer pool is full, the application
+retries on a later frame while the previous music continues. The loop occupies
+one of the 32 retained-buffer slots, leaving up to 31 for effects while it plays.
+Music continues during simulation pauses and level changes.
 
 `music/main.cpp` owns the standalone audition workflow and shares
 `advanced_platformer_audio` with the game. On reload, it prepares the replacement

@@ -22,6 +22,14 @@ namespace advanced_platformer
         voices = {};
     }
 
+    void SoundMixer::stop(std::size_t slot) noexcept
+    {
+        if (slot < voices.size())
+        {
+            voices[slot] = {};
+        }
+    }
+
     bool SoundMixer::playing(std::size_t slot) const noexcept
     {
         return slot < voices.size() && voices[slot].sound != nullptr;

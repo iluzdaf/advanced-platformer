@@ -4,6 +4,7 @@
 #include <atomic>
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <span>
 
 #include "advanced_platformer/audio/sound_mixer.hpp"
@@ -17,20 +18,29 @@ namespace advanced_platformer
         AudioPlayback();
         bool play(std::shared_ptr<const SoundBuffer> sound, bool loop = false);
         bool replace(std::shared_ptr<const SoundBuffer> sound, bool loop = false);
+        bool setMusic(std::shared_ptr<const SoundBuffer> sound);
         bool stop();
         void collectFinished();
         void render(std::span<float> output) noexcept;
 
     private:
+        enum class CommandKind
+        {
+            Play,
+            Replace,
+            Music,
+            Stop
+        };
+
         struct Command
         {
             const SoundBuffer* sound = nullptr;
             std::size_t slot = 0;
             bool loop = false;
-            bool replace = false;
+            CommandKind kind = CommandKind::Stop;
         };
 
-        bool enqueue(std::shared_ptr<const SoundBuffer> sound, bool loop, bool replace);
+        bool enqueue(std::shared_ptr<const SoundBuffer> sound, bool loop, CommandKind kind);
 
         static constexpr std::size_t QueueSize = SoundVoiceCount + 1;
         std::array<Command, QueueSize> commands{};
@@ -40,5 +50,6 @@ namespace advanced_platformer
         std::array<std::atomic<bool>, SoundVoiceCount> finished;
         std::array<bool, SoundVoiceCount> active{};
         SoundMixer mixer;
+        std::optional<std::size_t> musicSlot;
     };
 }

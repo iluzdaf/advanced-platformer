@@ -2,6 +2,7 @@
 
 #include "game_catalogs.hpp"
 #include "npc_script_catalog.hpp"
+#include "music_song.hpp"
 
 #include <filesystem>
 #include <string>
@@ -13,6 +14,7 @@ namespace advanced_platformer
     {
         GameContent content;
         content.gameCatalogs = loadGameCatalogs(assetDirectory / "catalogs");
+        content.gameCatalogs.music = loadBackgroundMusic(assetDirectory);
         loadNpcActivityScripts(
             content.npcScripts, content.gameCatalogs.machines, assetDirectory / "scripts");
         std::vector<std::string> soundNames;

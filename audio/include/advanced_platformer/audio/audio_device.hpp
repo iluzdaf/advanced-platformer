@@ -16,6 +16,7 @@ namespace advanced_platformer
 
         bool play(std::shared_ptr<const SoundBuffer> sound, bool loop = false);
         bool replace(std::shared_ptr<const SoundBuffer> sound, bool loop = false);
+        bool setMusic(std::shared_ptr<const SoundBuffer> sound);
         bool stop();
         void collectFinished();
 

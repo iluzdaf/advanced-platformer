@@ -59,7 +59,8 @@ file there changes. See [Hot reload](docs/CONTENT.md#hot-reload).
 Shots play a procedural effect from `game/assets/catalogs/sounds.json`; debug builds
 reload sound patches with the rest of the content. See [Sound effects](docs/CONTENT.md#sound-effects).
 
-Music can be composed in JSON and auditioned independently of gameplay:
+The game loops the JSON song selected by `game/assets/catalogs/music.json`.
+Music can also be composed and auditioned independently of gameplay:
 
 ```sh
 build/mac-debug/advanced_platformer_music game/assets/music/first-loop.json --watch

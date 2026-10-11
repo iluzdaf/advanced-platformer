@@ -2,6 +2,7 @@
 #include <catch2/matchers/catch_matchers_string.hpp>
 
 #include <filesystem>
+#include <fstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -53,6 +54,30 @@ TEST_CASE("Music JSON rejects missing fields and spelling mistakes", "[audio][mu
     REQUIRE_THROWS_WITH(
         advanced_platformer::parseMusicSong(text, "song.json"),
         Catch::Matchers::ContainsSubstring("phrases.a.notes[0].pitch"));
+}
+
+TEST_CASE(
+    "Background music loads a selected JSON song or explicit silence",
+    "[audio][music][content]")
+{
+    const auto directory =
+        std::filesystem::temp_directory_path() / "advanced-platformer-music-content-test";
+    std::filesystem::create_directories(directory / "catalogs");
+    std::filesystem::create_directories(directory / "music");
+    std::ofstream(directory / "catalogs/music.json") << R"({"song":"fixture"})";
+    std::ofstream(directory / "music/fixture.json") << advanced_platformer::SongJson;
+    const auto sound = advanced_platformer::loadBackgroundMusic(directory);
+    REQUIRE(sound);
+    REQUIRE(sound->samples.size() == 44100);
+    std::ofstream(directory / "catalogs/music.json") << R"({"song":null})";
+    REQUIRE_FALSE(advanced_platformer::loadBackgroundMusic(directory));
+    std::ofstream(directory / "catalogs/music.json") << R"({"song":"../fixture"})";
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::loadBackgroundMusic(directory),
+        Catch::Matchers::ContainsSubstring("music.json: song"));
+    std::ofstream(directory / "catalogs/music.json") << R"({"song":"missing"})";
+    REQUIRE_THROWS_AS(advanced_platformer::loadBackgroundMusic(directory), std::invalid_argument);
+    std::filesystem::remove_all(directory);
 }
 
 TEST_CASE("Shipped music files have valid composition and references", "[audio][music][content]")

@@ -1,4 +1,6 @@
 #include "advanced_platformer/audio/audio_device.hpp"
+#include "advanced_platformer/audio/sound_patch.hpp"
+#include <memory>
 #include "application.hpp"
 #include "application_context.hpp"
 
@@ -238,6 +240,7 @@ namespace advanced_platformer
             static_cast<float>(fixedStep.stepSeconds()),
             std::random_device{}());
         AudioDevice audio;
+        std::shared_ptr<const SoundBuffer> playingMusic;
         DebugTools debugTools;
         Stopwatch frameClock;
 
@@ -293,6 +296,17 @@ namespace advanced_platformer
                 profile);
 
             audio.collectFinished();
+            const auto& requestedMusic = game.backgroundMusic();
+            if (requestedMusic != playingMusic)
+            {
+                const bool unchanged = requestedMusic && playingMusic &&
+                                       requestedMusic->sampleRate == playingMusic->sampleRate &&
+                                       requestedMusic->samples == playingMusic->samples;
+                if (unchanged || audio.setMusic(requestedMusic))
+                {
+                    playingMusic = requestedMusic;
+                }
+            }
             for (auto& sound : game.takeSounds())
             {
                 if (!audio.play(std::move(sound)))
