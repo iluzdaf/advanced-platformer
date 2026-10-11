@@ -2,6 +2,7 @@
   "machines": {
     "bot": {
       "states": [
+        { "name": "explore", "does": { "script": "bot", "activity": "explore" } },
         { "name": "travel", "does": { "script": "bot", "activity": "travel" } },
         { "name": "loot", "does": { "script": "bot", "activity": "loot" } },
         { "name": "kite", "does": { "script": "bot", "activity": "kite" } },
@@ -11,22 +12,22 @@
       ],
       "transitions": [
         {
-          "from": ["travel", "loot", "hold", "dodge", "keepAway"],
+          "from": ["explore", "travel", "loot", "hold", "dodge", "keepAway"],
           "to": "kite",
           "when": { "targetClosingIn": true }
         },
         {
-          "from": ["travel", "loot", "kite", "dodge", "keepAway"],
+          "from": ["explore", "travel", "loot", "kite", "dodge", "keepAway"],
           "to": "hold",
           "when": { "targetClosingIn": false, "nonRatInRange": true }
         },
         {
-          "from": ["travel", "loot", "kite", "hold", "keepAway"],
+          "from": ["explore", "travel", "loot", "kite", "hold", "keepAway"],
           "to": "dodge",
           "when": { "targetClosingIn": false, "nonRatInRange": false, "batDiving": true }
         },
         {
-          "from": ["travel", "loot", "kite", "hold", "dodge"],
+          "from": ["explore", "travel", "loot", "kite", "hold", "dodge"],
           "to": "keepAway",
           "when": {
             "targetClosingIn": false,
@@ -36,7 +37,7 @@
           }
         },
         {
-          "from": ["travel", "kite", "hold", "dodge", "keepAway"],
+          "from": ["explore", "travel", "kite", "hold", "dodge", "keepAway"],
           "to": "loot",
           "when": {
             "targetClosingIn": false,
@@ -47,14 +48,27 @@
           }
         },
         {
-          "from": ["loot", "kite", "hold", "dodge", "keepAway"],
+          "from": ["travel", "loot", "kite", "hold", "dodge", "keepAway"],
+          "to": "explore",
+          "when": {
+            "targetClosingIn": false,
+            "nonRatInRange": false,
+            "batDiving": false,
+            "spiderNear": false,
+            "freedLootNearby": false,
+            "exitKnown": false
+          }
+        },
+        {
+          "from": ["explore", "loot", "kite", "hold", "dodge", "keepAway"],
           "to": "travel",
           "when": {
             "targetClosingIn": false,
             "nonRatInRange": false,
             "batDiving": false,
             "spiderNear": false,
-            "freedLootNearby": false
+            "freedLootNearby": false,
+            "exitKnown": true
           }
         }
       ]

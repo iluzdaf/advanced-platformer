@@ -22,6 +22,7 @@
 #include "advanced_platformer/navigation/platformer_connection_cache.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/validation.hpp"
+#include "advanced_platformer/world/level_room.hpp"
 
 namespace advanced_platformer
 {
@@ -79,6 +80,23 @@ namespace advanced_platformer
     const std::vector<ItemDefinition>& World::items() const
     {
         return itemDefinitions;
+    }
+
+    void World::setRooms(std::vector<LevelRoom> rooms)
+    {
+        for (const LevelRoom& room : rooms)
+        {
+            if (room.size.width <= 0 || room.size.height <= 0)
+            {
+                throw std::invalid_argument("A level room must have a positive size");
+            }
+        }
+        levelRooms = std::move(rooms);
+    }
+
+    const std::vector<LevelRoom>& World::rooms() const
+    {
+        return levelRooms;
     }
 
     void World::requireWithinSimulationTime(const std::optional<double>& time, const char* what)

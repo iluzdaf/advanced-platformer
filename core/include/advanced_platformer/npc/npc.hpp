@@ -5,6 +5,7 @@
 #include <glm/vec2.hpp>
 
 #include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/npc/npc_room_discovery.hpp"
 
 namespace advanced_platformer
 {
@@ -13,6 +14,7 @@ namespace advanced_platformer
         std::optional<ActorId> target;
         glm::vec2 lastKnownTargetFeet = {0.0F, 0.0F};
         float targetMemoryRemaining = 0.0F;
+        RoomDiscovery discovery;
     };
 
     struct NpcPerception

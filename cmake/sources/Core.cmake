@@ -38,6 +38,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/core/src/npc/npc_fact_rows.cpp
         ${PROJECT_SOURCE_DIR}/core/src/npc/npc_facts.cpp
         ${PROJECT_SOURCE_DIR}/core/src/npc/npc_navigation.cpp
+        ${PROJECT_SOURCE_DIR}/core/src/npc/npc_room_discovery.cpp
         ${PROJECT_SOURCE_DIR}/core/src/npc/npc_state_machine.cpp
         ${PROJECT_SOURCE_DIR}/core/src/physics/body.cpp
         ${PROJECT_SOURCE_DIR}/core/src/physics/collision.cpp

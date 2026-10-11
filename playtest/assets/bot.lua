@@ -14,6 +14,8 @@ local DodgeSecondsLimit = 0.75
 local PouncerKind = "spider"
 local PounceKeepAway = 80.0
 local KeepAwaySecondsLimit = 1.0
+local DoorReplansLimit = 4
+local PushDistance = 48.0
 
 local function stillFor(memory, snapshot, step)
     local feet = snapshot.feet
@@ -113,8 +115,83 @@ local function nearestPickupOf(snapshot, item)
     return nearest
 end
 
+local function nearestOf(feet, points)
+    local nearest, nearestDistance
+    for _, point in ipairs(points) do
+        local distance = feet:distance(point)
+        if nearestDistance == nil or distance < nearestDistance then
+            nearest, nearestDistance = point, distance
+        end
+    end
+    return nearest
+end
+
+local function stillListed(point, points)
+    for _, listed in ipairs(points) do
+        if listed == point then
+            return true
+        end
+    end
+    return false
+end
+
+local function chooseDoor(memory, snapshot)
+    local doors = snapshot.unexploredDoors
+    local skipped = memory.skippedDoors or {}
+    memory.skippedDoors = skipped
+    local door = memory.door
+    if door ~= nil and stillListed(door, doors) and not skipped[tostring(door)] then
+        return door
+    end
+    local open = {}
+    for _, listed in ipairs(doors) do
+        if not skipped[tostring(listed)] then
+            open[#open + 1] = listed
+        end
+    end
+    if #open == 0 then
+        memory.skippedDoors = {}
+        open = doors
+    end
+    memory.door = nearestOf(snapshot.feet, open)
+    return memory.door
+end
+
+local function aimAtDoor(memory, door)
+    memory.routedDoor = door
+    memory.doorGoal = door
+    memory.doorTries = 0
+    memory.doorReplans = 0
+end
+
+local function pushedPast(snapshot, door, tries)
+    local away = door - snapshot.feet
+    local length = away:length()
+    local pushes = {
+        length > 0 and away * (PushDistance / length) or vec2(0, 0),
+        vec2(0, -PushDistance),
+        vec2(-PushDistance, 0),
+        vec2(PushDistance, 0),
+        vec2(0, PushDistance),
+    }
+    local push = pushes[tries]
+    return push ~= nil and door + push or nil
+end
+
+local function gaveUpOnGoal(memory, snapshot)
+    local goal = memory.doorGoal
+    local endedShort = snapshot.routeStatus == "unreachable"
+        and snapshot.routeComplete
+        and snapshot.feet:distance(goal) > ArrivalDistance
+    return endedShort or memory.doorReplans >= DoorReplansLimit
+end
+
 return {
     facts = {
+        exitKnown = function(_, snapshot)
+            return snapshot.exitFeet ~= nil
+        end,
+
         targetClosingIn = function(memory, snapshot, step)
             local facts = snapshot.facts
             local distance = targetDistance(snapshot)
@@ -208,12 +285,46 @@ return {
     },
 
     activities = {
+        explore = {
+            description = "Entered while exitKnown is false: route to the nearest door into a "
+                .. "room the bot has not entered, keeping that door while it stays "
+                .. "unexplored and asking for a fresh route as travel does. When the "
+                .. "route ends short as unreachable or has needed DoorReplansLimit "
+                .. "fresh routes, aim PushDistance past the door, away from the bot, "
+                .. "then skip the door if that fails too, until every door is "
+                .. "skipped. Stand still when no door is left, and do the same on "
+                .. "the way as travel.",
+            update = function(_, snapshot, step, memory)
+                local door = chooseDoor(memory, snapshot)
+                if door ~= memory.routedDoor then
+                    aimAtDoor(memory, door)
+                elseif door ~= nil and gaveUpOnGoal(memory, snapshot) then
+                    memory.doorTries = memory.doorTries + 1
+                    memory.doorReplans = 0
+                    memory.doorGoal = pushedPast(snapshot, door, memory.doorTries)
+                    if memory.doorGoal == nil then
+                        memory.skippedDoors[tostring(door)] = true
+                        door = chooseDoor(memory, snapshot)
+                        aimAtDoor(memory, door)
+                    end
+                end
+                if door == nil then
+                    return onTheWay(memory, snapshot, { clearRoute = true })
+                end
+                local command = routeWithReplan(memory, snapshot, step, memory.doorGoal)
+                if command.clearRoute then
+                    memory.doorReplans = memory.doorReplans + 1
+                end
+                return onTheWay(memory, snapshot, command)
+            end,
+        },
+
         travel = {
-            description = "Route to the level exit, asking for a fresh route when the route "
-                .. "ends short of it or the bot has stood still for a second; on the "
-                .. "way, shoot the breakable tile under the nearest pickup within "
-                .. "LootShootDistance, shoot the opponent in sight and drink a potion "
-                .. "at 1 health.",
+            description = "Entered while exitKnown: route to the level exit, asking for a fresh "
+                .. "route when the route ends short of it or the bot has stood still "
+                .. "for a second; on the way, shoot the breakable tile under the "
+                .. "nearest pickup within LootShootDistance, shoot the opponent in "
+                .. "sight and drink a potion at 1 health.",
             update = function(_, snapshot, step, memory)
                 local exit = snapshot.exitFeet
                 local command = exit == nil and { clearRoute = true }

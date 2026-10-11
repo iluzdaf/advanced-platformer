@@ -21,6 +21,7 @@
 #include "advanced_platformer/npc/npc_facts.hpp"
 #include "advanced_platformer/npc/npc_navigation.hpp"
 #include "advanced_platformer/npc/npc_activity_runner.hpp"
+#include "advanced_platformer/npc/npc_room_discovery.hpp"
 #include "advanced_platformer/npc/npc_senses.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "advanced_platformer/npc/npc_update.hpp"
@@ -43,6 +44,7 @@ namespace advanced_platformer
             const NpcPerception& perception = *actor.perception;
             PathFollower& follower = *actor.pathFollower;
             NpcMachine& machine = *actor.machine;
+            discoverRooms(brain.discovery, update.world.rooms(), update.map, actor.body.bounds);
             const Actor* target = livingTarget(update.world, brain);
 
             NpcFacts facts =

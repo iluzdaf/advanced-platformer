@@ -10,7 +10,7 @@ belong to.
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Actor         | Anything in the world that moves or acts: the player, an enemy, a projectile's owner. An actor is a set of components, not a class in a hierarchy. See [`actor.hpp`](../core/include/advanced_platformer/actor/actor.hpp).             |
 | Component     | One part of an actor, such as its body, its movement, its health or its brain. Most are optional; what an actor has decides what it can do.                                                                                            |
-| World         | Owns the actors, pickups, projectiles, level exit and world clock for one level. See [`world.hpp`](../core/include/advanced_platformer/world/world.hpp).                                                                               |
+| World         | Owns the actors, pickups, projectiles, level exit, rooms and world clock for one level. See [`world.hpp`](../core/include/advanced_platformer/world/world.hpp).                                                                        |
 | System        | A function that updates one kind of component for every actor that has it, such as movement, attacks or senses. `updateWorldSimulation` runs them in a fixed order.                                                                    |
 | Step, tick    | One fixed update of the simulation, 1/60 of a second. The two words mean the same thing.                                                                                                                                               |
 | `deltaTime`   | The length of the step a system is running, in seconds.                                                                                                                                                                                |
@@ -47,7 +47,9 @@ belong to.
 | NPC                 | An actor with a brain, which decides its intentions instead of a player.                                                                     |
 | Senses              | How far an NPC notices and how long it remembers. Tuned in content.                                                                          |
 | Perception          | What an NPC saw or heard in the latest sensing update. Replaced every update.                                                                |
-| Brain               | What an NPC knows between updates: its target and its memory of where the target was.                                                        |
+| Brain               | What an NPC knows between updates: its target, its memory of where the target was, and the rooms it has entered.                             |
+| Entered room        | A room an NPC's feet have been in this level, walls included. Only entered rooms show it the exit and pickups. See `RoomDiscovery`.          |
+| Unexplored door     | A doorway from an entered room into one the NPC has not entered.                                                                             |
 | Target              | The actor an NPC is after, usually the player. Not the same as a goal.                                                                       |
 | Fact                | A yes-or-no answer about an NPC this update, such as `targetVisible` or `hasPatrol`, that its transitions test.                              |
 | Script fact         | A fact a Lua script answers for its machine's transitions, such as the bot's `targetClosingIn`.                                              |

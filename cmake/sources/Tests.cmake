@@ -89,6 +89,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/core/npc/test_npc_activity_runner.cpp
         ${PROJECT_SOURCE_DIR}/tests/core/npc/test_npc_facts.cpp
         ${PROJECT_SOURCE_DIR}/tests/core/npc/test_npc_navigation.cpp
+        ${PROJECT_SOURCE_DIR}/tests/core/npc/test_npc_room_discovery.cpp
         ${PROJECT_SOURCE_DIR}/tests/core/npc/test_npc_senses.cpp
         ${PROJECT_SOURCE_DIR}/tests/core/npc/test_npc_state_machine.cpp
         ${PROJECT_SOURCE_DIR}/tests/core/npc/test_npc_system.cpp

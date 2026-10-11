@@ -225,6 +225,42 @@ TEST_CASE("A snapshot's exit and pickups reach Lua with the item each pickup hol
     REQUIRE(toGlass.aimAt == glm::vec2{40.0F, 42.0F});
 }
 
+TEST_CASE("A snapshot's unexplored doors reach Lua as positions", "[lua][npc]")
+{
+    LuaNpcScripts scripts;
+    scripts.loadScriptText(
+        "example",
+        R"(
+            return {
+                activities = {
+                    decide = {
+                        description = 'Test activity decide',
+                        update = function(self, snapshot)
+                            local doors = snapshot.unexploredDoors
+                            if #doors == 0 then
+                                return { clearRoute = true }
+                            end
+                            return { routeTo = doors[#doors] }
+                        end
+                    }
+                }
+            }
+        )",
+        "command.lua");
+
+    NpcActivitySnapshot snapshot = commandSnapshot();
+    snapshot.unexploredDoors = {{72.0F, 64.0F}, {136.0F, 64.0F}};
+    scripts.enter(FirstActor, Activity, snapshot);
+    REQUIRE(
+        scripts.update(FirstActor, Activity, snapshot, 0.5F).routeTo == glm::vec2{136.0F, 64.0F});
+
+    snapshot.unexploredDoors.clear();
+    const advanced_platformer::NpcActivityCommand none =
+        scripts.update(FirstActor, Activity, snapshot, 0.5F);
+    REQUIRE_FALSE(none.routeTo.has_value());
+    REQUIRE(none.clearRoute);
+}
+
 TEST_CASE("A script reads its health and asks to use an item by name", "[lua][npc]")
 {
     LuaNpcScripts scripts;
