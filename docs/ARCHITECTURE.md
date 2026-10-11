@@ -29,20 +29,6 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 | `advanced_platformer_music`     | Standalone music auditioning, reload, and preview export                                                                | Game, audio                                                    |
 | `advanced_platformer_tests`     | Catch2 tests for the core, scripting, the game, and the application code that needs no window                           | Game, audio, Catch2                                            |
 
-`advanced_platformer_music` is a standalone authoring tool under `music/`,
-linking Game and the shared audio library, without graphics. Both executables
-link `advanced_platformer_audio`; playback is compiled once and is independent
-of application UI. Wave export belongs to the authoring tool. `game/content/music_song.cpp` reads and validates
-JSON; the core renders phrases, note gates, envelopes, patterns, and arrangement
-into one immutable 44,100 Hz buffer. Release tails wrap into the beginning of
-the arrangement. This first milestone prepares the whole loop on the producer
-thread, rather than sequencing notes inside the callback. It shares
-`AudioDevice` and `AudioPlayback` with the game. The callback can repeat a buffer
-without gaps; one ordered replacement command changes it during audition reload.
-Stopped buffers are released only after producer collection, just like finished
-effects. The tool can export a WAV without a device. Gameplay does not select or
-start music yet.
-
 ### Folders
 
 | Location              | Responsibility                                                                                             |
@@ -580,9 +566,9 @@ second. miniaudio converts that stream to the hardware format. Lower-rate patche
 are interpolated by the mixer. Voice sums are clamped to [-1, 1]; tune patch
 volume so ordinary overlaps do not clip.
 
-The game thread posts a buffer pointer and voice slot through a bounded
+The producer thread posts a buffer pointer and voice slot through a bounded
 single-producer, single-consumer ring. It retains each buffer with a shared
-pointer until the callback reports completion with an atomic flag. Only the game
+pointer until the callback reports completion with an atomic flag. Only the producer
 thread releases those references, so an old catalog can go away while its sounds
 finish. The callback owns the mixer and voice cursors; it reads no game, catalog,
 Lua, or graphics state. It allocates nothing, destroys no buffers, takes no locks,
@@ -604,6 +590,21 @@ instead of JavaScript's unspecified `Math.random`; zero-length envelope stages
 are skipped instead of dividing by zero. Fixtures compare all samples of a
 seeded reference patch for each waveform, including slides, vibrato, change,
 repeat, filters, and phaser. The float output is not quantised by `sample_size`.
+
+Music follows the same content, synthesis, and playback boundaries.
+`game/content/music_song.cpp` reads and validates JSON into `MusicSong`;
+`renderMusic` in the core prepares the entire arrangement as an immutable
+44,100 Hz buffer on the producer thread. Note positions are rounded from
+absolute musical time to avoid accumulating rounding error, and release tails
+wrap past the arrangement end into its beginning to form a repeating loop.
+The callback repeats the prepared buffer rather than sequencing notes itself.
+
+`music/main.cpp` owns the standalone audition workflow and shares
+`advanced_platformer_audio` with the game. On reload, it prepares the replacement
+before posting one command that stops existing voices and starts the new buffer.
+A rejected edit or command leaves current playback running. `music/wave_file.cpp`
+owns device-free preview export. The song format, controls, and audible loop-tail
+behaviour are documented in [Music authoring](CONTENT.md#music-authoring).
 
 ### Animation
 

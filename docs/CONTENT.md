@@ -641,5 +641,5 @@ opening an audio device. It cannot be combined with `--loop` or `--watch`.
 WAV is a disposable listening preview; JSON remains the authored source.
 The renderer wraps release tails past the arrangement end into its beginning,
 so the preview represents a repeating loop, including those tails on its first
-play. It rounds absolute musical positions to samples, avoiding accumulated
-rounding drift. Repetition runs on the audio callback's sample clock.
+play. For rendering, timing, and playback ownership, see
+[Audio](ARCHITECTURE.md#audio).
