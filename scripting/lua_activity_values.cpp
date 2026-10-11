@@ -206,6 +206,12 @@ namespace advanced_platformer
             pickups.add(entry);
         }
         result["pickups"] = pickups;
+        sol::table doors = lua.create_table();
+        for (const glm::vec2 door : snapshot.unexploredDoors)
+        {
+            doors.add(luaVector(lua, door));
+        }
+        result["unexploredDoors"] = doors;
 
         sol::table facts = lua.create_table();
         facts["targetKnown"] = snapshot.facts.targetKnown;

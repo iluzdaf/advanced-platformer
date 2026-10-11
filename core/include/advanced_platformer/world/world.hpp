@@ -13,6 +13,7 @@
 #include "advanced_platformer/inventory/item.hpp"
 #include "advanced_platformer/navigation/platformer_connection_cache.hpp"
 #include "advanced_platformer/world/level_exit.hpp"
+#include "advanced_platformer/world/level_room.hpp"
 #include "advanced_platformer/world/pickup.hpp"
 
 namespace advanced_platformer
@@ -48,6 +49,8 @@ namespace advanced_platformer
         void setExit(LevelExit exit);
         const std::optional<LevelExit>& exit() const;
         std::optional<LevelExit>& exit();
+        void setRooms(std::vector<LevelRoom> rooms);
+        const std::vector<LevelRoom>& rooms() const;
         bool levelComplete() const;
         void completeLevel();
 
@@ -94,6 +97,7 @@ namespace advanced_platformer
         PlatformerConnectionCache platformerConnectionCache;
         std::vector<Pickup> pickupStorage;
         std::optional<LevelExit> levelExit;
+        std::vector<LevelRoom> levelRooms;
         bool completed = false;
         bool defeated = false;
         double elapsedSimulationTimeSeconds = 0.0;

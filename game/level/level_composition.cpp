@@ -29,6 +29,7 @@
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/npc/npc.hpp"
 #include "advanced_platformer/world/level_exit.hpp"
+#include "advanced_platformer/world/level_room.hpp"
 #include "advanced_platformer/world/pickup.hpp"
 #include "advanced_platformer/world/level_validation.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
@@ -163,6 +164,13 @@ namespace advanced_platformer
             {
                 throw std::invalid_argument(std::format("{}: exit: {}", levelName, error.what()));
             }
+            std::vector<LevelRoom> rooms;
+            rooms.reserve(generated.rooms.size());
+            for (const GeneratedRoom& room : generated.rooms)
+            {
+                rooms.push_back({.origin = room.origin, .size = room.size});
+            }
+            world.setRooms(std::move(rooms));
             const glm::vec2 playerSpawnFeet = feetInCell(map.tileSize(), generated.playerSpawn);
             return {
                 levelNumber,

@@ -401,6 +401,7 @@ namespace advanced_platformer
         reloadActors(live, fresh, placedBefore, itemIds, result);
         reloadPickups(live, fresh, placedBefore, itemIds, result);
         reloadExit(live.world, fresh.world);
+        live.world.setRooms(fresh.world.rooms());
 
         live.placedIds = placementsOf(fresh);
         std::ranges::sort(result.spawned);

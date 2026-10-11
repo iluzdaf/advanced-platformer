@@ -304,22 +304,23 @@ command or `nil`. Every hook gets `memory` last: one table per NPC and script, k
 states, which the script's facts share. [`common.lua`](../game/assets/scripts/common.lua) has `idle`, `patrol`, `chase`,
 `attack`, `search`, `retreat` and `watch`.
 
-| Snapshot              | Meaning                                                                                                                                                                           |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `feet`, `center`      | The NPC's feet and body centre.                                                                                                                                                   |
-| `health`              | `current` and `maximum`, when the NPC has health.                                                                                                                                 |
-| `targetFeet`          | The target's known feet, while it is known.                                                                                                                                       |
-| `lastKnownTargetFeet` | Where the target was last seen or heard; `{0, 0}` before any.                                                                                                                     |
-| `targetCenter`        | The living target's body centre now, seen or not.                                                                                                                                 |
-| `targetKind`          | The living target's name in `actors.json`, such as `bat` or `player`.                                                                                                             |
-| `patrol`              | `firstFeet`, `secondFeet` and `headingToSecond`, when the NPC has a patrol.                                                                                                       |
-| `footing`             | `left` and `right`: whether a walker could stand a body width that way.                                                                                                           |
-| `facts`               | The [facts](#facts).                                                                                                                                                              |
-| `stateElapsed`        | Seconds in this state.                                                                                                                                                            |
-| `routeStatus`         | `found`, `unreachable` (the route ends as close to the goal as the NPC can get) or `deferred` (the engine is still working it out); `nil` before any route or after `clearRoute`. |
-| `routeComplete`       | Whether the last route asked for has been followed to its end.                                                                                                                    |
-| `exitFeet`            | The level exit's feet, when the level has one.                                                                                                                                    |
-| `pickups`             | Every pickup in the level: `feet`, `item` (its name in `items.json`), `quantity`, and `breakableBelow`, the center of the breakable tile the pickup rests on (`nil` otherwise).   |
+| Snapshot              | Meaning                                                                                                                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `feet`, `center`      | The NPC's feet and body centre.                                                                                                                                                                  |
+| `health`              | `current` and `maximum`, when the NPC has health.                                                                                                                                                |
+| `targetFeet`          | The target's known feet, while it is known.                                                                                                                                                      |
+| `lastKnownTargetFeet` | Where the target was last seen or heard; `{0, 0}` before any.                                                                                                                                    |
+| `targetCenter`        | The living target's body centre now, seen or not.                                                                                                                                                |
+| `targetKind`          | The living target's name in `actors.json`, such as `bat` or `player`.                                                                                                                            |
+| `patrol`              | `firstFeet`, `secondFeet` and `headingToSecond`, when the NPC has a patrol.                                                                                                                      |
+| `footing`             | `left` and `right`: whether a walker could stand a body width that way.                                                                                                                          |
+| `facts`               | The [facts](#facts).                                                                                                                                                                             |
+| `stateElapsed`        | Seconds in this state.                                                                                                                                                                           |
+| `routeStatus`         | `found`, `unreachable` (the route ends as close to the goal as the NPC can get) or `deferred` (the engine is still working it out); `nil` before any route or after `clearRoute`.                |
+| `routeComplete`       | Whether the last route asked for has been followed to its end.                                                                                                                                   |
+| `exitFeet`            | The level exit's feet, once the NPC has entered the exit's room.                                                                                                                                 |
+| `pickups`             | Every pickup in a room the NPC has entered: `feet`, `item` (its name in `items.json`), `quantity`, and `breakableBelow`, the center of the breakable tile the pickup rests on (`nil` otherwise). |
+| `unexploredDoors`     | For each door from a room the NPC has entered into one it has not, the feet of the place to stand nearest the doorway on the far side.                                                           |
 
 | Command                                          | Meaning                                                                          |
 | ------------------------------------------------ | -------------------------------------------------------------------------------- |

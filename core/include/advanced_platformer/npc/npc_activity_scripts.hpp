@@ -49,6 +49,7 @@ namespace advanced_platformer
         bool routeComplete = false;
         std::optional<glm::vec2> exitFeet;
         std::vector<NpcPickupSnapshot> pickups;
+        std::vector<glm::vec2> unexploredDoors;
     };
 
     struct NpcActivityCommand

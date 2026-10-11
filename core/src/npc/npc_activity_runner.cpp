@@ -21,9 +21,11 @@
 #include "advanced_platformer/npc/npc_activity_scripts.hpp"
 #include "advanced_platformer/npc/npc_facts.hpp"
 #include "advanced_platformer/npc/npc_navigation.hpp"
+#include "advanced_platformer/npc/npc_room_discovery.hpp"
 #include "advanced_platformer/npc/npc_state_machine.hpp"
 #include "advanced_platformer/npc/npc_update.hpp"
 #include "advanced_platformer/world/level_exit.hpp"
+#include "advanced_platformer/world/level_room.hpp"
 #include "advanced_platformer/world/pickup.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
 #include "advanced_platformer/world/world.hpp"
@@ -89,13 +91,21 @@ namespace advanced_platformer
                 snapshot.targetCenter = centerOf(target->body.bounds);
                 snapshot.targetKind = target->definitionName;
             }
-            if (const std::optional<LevelExit>& exit = update.world.exit(); exit.has_value())
+            const std::vector<LevelRoom>& rooms = update.world.rooms();
+            const auto known = [&](glm::vec2 feet)
+            { return discovered(brain.discovery, rooms, cellAtFeet(update.map.tileSize(), feet)); };
+            if (const std::optional<LevelExit>& exit = update.world.exit();
+                exit.has_value() && known(feetOf(exit->bounds)))
             {
                 snapshot.exitFeet = feetOf(exit->bounds);
             }
             for (const Pickup& pickup : update.world.pickups())
             {
                 const glm::vec2 feet = feetOf(pickup.body.bounds);
+                if (!known(feet))
+                {
+                    continue;
+                }
                 snapshot.pickups.push_back(
                     NpcPickupSnapshot{
                         .feet = feet,
@@ -103,6 +113,7 @@ namespace advanced_platformer
                         .quantity = pickup.stack.quantity,
                         .breakableBelow = breakableTileBelow(update.map, feet)});
             }
+            snapshot.unexploredDoors = brain.discovery.unexploredDoors;
             return snapshot;
         }
     }

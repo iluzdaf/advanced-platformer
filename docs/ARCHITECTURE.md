@@ -147,8 +147,10 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 
 ## World ownership and identity
 
-- `World` owns actors, projectiles, bursts, pickups, item definitions, the exit, noise
-  events, the simulation clock, and the level's platformer connection cache.
+- `World` owns actors, projectiles, bursts, pickups, item definitions, the exit, the
+  level's rooms, noise events, the simulation clock, and the level's platformer
+  connection cache. `composeLevel` gives it each generated room's cells as a
+  `LevelRoom`; a reload takes the fresh level's rooms.
 - `TileMap` belongs to `GameLevel`, beside `World`.
 - `World::addActor` validates the actor and assigns an `ActorId`. Zero is invalid; IDs
   are not reused within a world.
@@ -271,7 +273,7 @@ team, and life state, plus optional components.
 | ------------------- | ------------------------------------------------------------------------------------------------------- |
 | `NpcSenses`         | Notice distance, standoff distance, memory duration, and search duration                                |
 | `NpcPerception`     | `targetVisible` and `heardLanding`, replaced each sensing update                                        |
-| `NpcBrain`          | The remembered target's ID, last known feet, and memory remaining                                       |
+| `NpcBrain`          | The remembered target's ID, last known feet, memory remaining, and its `RoomDiscovery`                  |
 | `NpcFacts`          | A snapshot gathered each update from perception, memory, movement, and attacks                          |
 | `NpcMachine`        | The machine from `machines.json`: active state, its elapsed time, and how long each transition has held |
 | `npc_fact_rows.cpp` | The names a machine's `when` may use, each answered from the facts                                      |
@@ -321,6 +323,10 @@ Each NPC update has three steps:
 - The core sees no Lua types. `NpcActivitySnapshot` is a copied view of what the NPC
   knows; `NpcActivityCommand` carries intentions and requests. Applying them, including
   pathfinding, is engine work.
+- Each NPC update starts with `discoverRooms`, which marks the rooms the NPC's feet are
+  in. When that or a broken tile changes anything, it works out the unexplored doors
+  again and keeps them in the brain's `RoomDiscovery`, so a snapshot copies them and
+  only filters the exit and pickups by room. A world without rooms hides nothing.
 - `LuaNpcScripts` loads each script into its own sandboxed environment: the base, math,
   string, and table libraries, no `require`, no files. Positions are `glm::vec2` bound
   as `vec2`, copied in and out; its constructor is a read-only global.
@@ -664,8 +670,9 @@ behaviour are documented in [Music authoring](CONTENT.md#music-authoring).
   `machines.json`, whose activities and facts are in its `bot.lua`. The directory is
   `playtest/assets` unless `--bot` names another, so a bot can be edited and replayed
   without a rebuild. It senses, thinks and moves exactly as an NPC does, so each of its
-  behaviours is a state with transitions that an NPC's machine can take over: `travel`
-  routes to the exit, `loot` collects a pickup it shot free, and `kite`, `hold`, `dodge`
+  behaviours is a state with transitions that an NPC's machine can take over: `explore`
+  routes to the nearest unexplored door until it has seen the exit's room, `travel`
+  then routes to the exit, `loot` collects a pickup it shot free, and `kite`, `hold`, `dodge`
   and `keepAway` answer an opponent, each entered on a script fact and limited per
   approach. `playtestContent` builds that content on top of the shipped catalogs, so
   nothing of the bot ships with the game.
