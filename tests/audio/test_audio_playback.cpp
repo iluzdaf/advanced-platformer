@@ -7,7 +7,7 @@
 #include <thread>
 #include <utility>
 
-#include "audio/audio_playback.hpp"
+#include "advanced_platformer/audio/audio_playback.hpp"
 #include "advanced_platformer/audio/sound_mixer.hpp"
 #include "advanced_platformer/audio/sound_patch.hpp"
 

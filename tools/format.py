@@ -9,8 +9,26 @@ from pathlib import Path, PurePosixPath
 ROOT = Path(__file__).resolve().parent.parent
 LLVM_BIN_DIRECTORIES = ("/opt/homebrew/opt/llvm/bin", "/usr/lib/llvm-{major}/bin")
 
-CPP_DIRECTORIES = ("app", "core", "game", "playtest", "scripting", "tests")
-HEADER_DIRECTORIES = ("app", "core", "game", "playtest", "scripting", "tests")
+CPP_DIRECTORIES = (
+    "app",
+    "audio",
+    "core",
+    "game",
+    "music",
+    "playtest",
+    "scripting",
+    "tests",
+)
+HEADER_DIRECTORIES = (
+    "app",
+    "audio",
+    "core",
+    "game",
+    "music",
+    "playtest",
+    "scripting",
+    "tests",
+)
 JSON_DIRECTORIES = ("game/assets", "playtest/assets", "tests/fixtures", ".vscode")
 JSON_ROOT_FILES = ("CMakePresets.json", ".luarc.json", ".prettierrc")
 YAML_ROOT_FILES = (".clang-format", ".clang-tidy", ".clangd", ".gersemirc")

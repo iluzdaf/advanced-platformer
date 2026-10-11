@@ -9,7 +9,7 @@
 #include <string>
 
 #include "advanced_platformer/audio/sound_patch.hpp"
-#include "audio/wave_file.hpp"
+#include "wave_file.hpp"
 
 TEST_CASE("Music previews export mono float WAV with exact samples", "[audio][music]")
 {

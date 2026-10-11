@@ -1,4 +1,4 @@
-#include "audio/wave_file.hpp"
+#include "wave_file.hpp"
 
 #include <bit>
 #include <cmath>

@@ -1,8 +1,6 @@
 target_sources(
     advanced_platformer
     PRIVATE
-        ${PROJECT_SOURCE_DIR}/app/audio/audio_device.cpp
-        ${PROJECT_SOURCE_DIR}/app/audio/audio_playback.cpp
         ${PROJECT_SOURCE_DIR}/app/application.cpp
         ${PROJECT_SOURCE_DIR}/app/application_context.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/console_ui.cpp

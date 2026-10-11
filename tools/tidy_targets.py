@@ -18,7 +18,18 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOTS = ("app", "core/src", "core/include", "game", "playtest", "scripting", "tests")
+ROOTS = (
+    "app",
+    "audio/src",
+    "audio/include",
+    "core/src",
+    "core/include",
+    "game",
+    "music",
+    "playtest",
+    "scripting",
+    "tests",
+)
 FULL_TREE_RULES = (
     ".clang-tidy",
     ".github/workflows/ci.yml",

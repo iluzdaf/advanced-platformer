@@ -13,8 +13,8 @@
 
 #include "advanced_platformer/audio/music.hpp"
 #include "advanced_platformer/audio/sound_patch.hpp"
-#include "audio/audio_device.hpp"
-#include "audio/wave_file.hpp"
+#include "advanced_platformer/audio/audio_device.hpp"
+#include "wave_file.hpp"
 #include "content/music_song.hpp"
 
 namespace advanced_platformer

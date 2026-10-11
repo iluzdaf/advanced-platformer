@@ -1,6 +1,7 @@
 function(verify_project_source_registration)
     set(project_targets
         advanced_platformer_core
+        advanced_platformer_audio
         advanced_platformer_scripting
         advanced_platformer_game
         advanced_platformer
@@ -9,6 +10,8 @@ function(verify_project_source_registration)
     )
     set(project_source_patterns
         ${PROJECT_SOURCE_DIR}/app/*.cpp
+        ${PROJECT_SOURCE_DIR}/audio/src/*.cpp
+        ${PROJECT_SOURCE_DIR}/music/*.cpp
         ${PROJECT_SOURCE_DIR}/core/src/*.cpp
         ${PROJECT_SOURCE_DIR}/game/*.cpp
         ${PROJECT_SOURCE_DIR}/playtest/*.cpp

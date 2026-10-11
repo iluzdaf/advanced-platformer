@@ -16,6 +16,21 @@ target_link_libraries(advanced_platformer_core PUBLIC advanced_platformer_glm)
 enable_project_warnings(advanced_platformer_core)
 enable_project_coverage(advanced_platformer_core)
 
+add_library(advanced_platformer_audio)
+include(cmake/sources/Audio.cmake)
+target_include_directories(
+    advanced_platformer_audio
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/audio/include
+)
+target_compile_features(advanced_platformer_audio PUBLIC cxx_std_26)
+target_link_libraries(
+    advanced_platformer_audio
+    PUBLIC advanced_platformer_core
+    PRIVATE advanced_platformer_miniaudio
+)
+enable_project_warnings(advanced_platformer_audio)
+enable_project_coverage(advanced_platformer_audio)
+
 add_library(advanced_platformer_scripting)
 include(cmake/sources/Scripting.cmake)
 target_include_directories(
@@ -55,7 +70,7 @@ target_link_libraries(
     advanced_platformer
     PRIVATE
         advanced_platformer_game
-        advanced_platformer_miniaudio
+        advanced_platformer_audio
         advanced_platformer_glad
         advanced_platformer_imgui
         advanced_platformer_stb
@@ -103,12 +118,13 @@ add_dependencies(advanced_platformer_playtest game_assets playtest_assets)
 add_executable(advanced_platformer_music)
 include(cmake/sources/Music.cmake)
 target_compile_features(advanced_platformer_music PRIVATE cxx_std_26)
-target_include_directories(advanced_platformer_music PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
+target_include_directories(advanced_platformer_music PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/music)
 target_link_libraries(
     advanced_platformer_music
-    PRIVATE advanced_platformer_game advanced_platformer_miniaudio
+    PRIVATE advanced_platformer_game advanced_platformer_audio
 )
 enable_project_warnings(advanced_platformer_music)
+enable_project_coverage(advanced_platformer_music)
 
 include(cmake/Quality.cmake)
 
@@ -131,6 +147,7 @@ if(BUILD_TESTING)
         PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/app
             ${CMAKE_CURRENT_SOURCE_DIR}/playtest
+            ${CMAKE_CURRENT_SOURCE_DIR}/music
             ${CMAKE_CURRENT_SOURCE_DIR}/tests
     )
     target_compile_definitions(
@@ -140,7 +157,7 @@ if(BUILD_TESTING)
     )
     target_link_libraries(
         advanced_platformer_tests
-        PRIVATE advanced_platformer_game Catch2::Catch2WithMain
+        PRIVATE advanced_platformer_game advanced_platformer_audio Catch2::Catch2WithMain
     )
     enable_project_warnings(advanced_platformer_tests)
     enable_project_coverage(advanced_platformer_tests)
