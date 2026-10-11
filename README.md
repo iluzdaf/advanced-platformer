@@ -59,6 +59,16 @@ file there changes. See [Hot reload](docs/CONTENT.md#hot-reload).
 Shots play a procedural effect from `game/assets/catalogs/sounds.json`; debug builds
 reload sound patches with the rest of the content. See [Sound effects](docs/CONTENT.md#sound-effects).
 
+Music can be composed in JSON and auditioned independently of gameplay:
+
+```sh
+build/mac-debug/advanced_platformer_music game/assets/music/first-loop.json --watch
+```
+
+Use `--solo bass` to listen to a track, `--pattern opening` to select a section,
+or `--output build/first-loop.wav` to export a listening preview. See
+[Music authoring](docs/CONTENT.md#music-authoring) for the format and controls.
+
 Press F1 in the game to open the [debug overlay](#debug-overlay), which shows frame
 timings among other things. For performance numbers, build and run the release preset
 instead. The debug build has no optimisation, so its timings may not be an accurate
@@ -190,7 +200,7 @@ cmake --build --preset mac-coverage --target coverage
 ```
 
 It runs the tests under instrumentation and prints line, function, region and branch
-coverage for `app/`, `core/`, `game/`, `playtest/` and `scripting/`, leaving out `external/` and
+coverage for `app/`, `audio/`, `core/`, `game/`, `music/`, `playtest/` and `scripting/`, leaving out `external/` and
 the tests themselves. The line-by-line report is at
 `build/mac-coverage/coverage/html/index.html`. Only code built into the test executable is
 counted, so the window, renderer and ImGui code does not appear. The table and the HTML report are `llvm-cov`'s own output; Clang's [Interpreting reports](https://clang.llvm.org/docs/SourceBasedCodeCoverage.html#interpreting-reports) explains their regions, functions, lines and branches.
@@ -278,7 +288,7 @@ the CI workflow, the global build configuration, the third-party libraries under
 `external/` (including a submodule moving to another commit), or
 `tools/tidy_targets.py`, which picks the files. Local `tidy` builds always check the
 whole tree. CMake configuration fails with a focused error if an `app/`, `core/`, `game/`,
-`playtest/`, or enabled `tests/` source is missing from its target's manifest.
+`audio/`, `music/`, `playtest/`, or enabled `tests/` source is missing from its target's manifest.
 
 To see which files CI will check for your branch, run the same script:
 
@@ -299,14 +309,16 @@ cmake --build --preset mac-debug --target header_self_containment
 ## Repository layout
 
 ```text
-app/           application shell, content session, graphics, audio output, UI, and debug tools
+app/           application shell, content session, graphics, UI, and debug tools
 cmake/         dependencies, quality rules, and explicit target source manifests
 core/          the simulation and level generation library: include/ holds its public headers, src/ its implementations
 game/          the headless game library: content loaders and catalogs, level composition, Game, diagnostics
   assets/      runtime game content: catalogs (room pieces in catalogs/pieces), Lua scripts, the atlas
+audio/         shared device and playback library, used by the game and authoring tool
+music/         standalone music authoring tool and listening-preview export
 playtest/      headless playtest runner, with the bot's own content in assets/
 scripting/     Lua scripting target: the NPC activity runtime and its sol2 bindings
-tests/         Catch2 tests, grouped like the code they test (core, game, app, playtest, scripting)
+tests/         Catch2 tests, grouped like the code they test (core, game, app, audio, music, playtest, scripting)
   fixtures/    example content mirroring game/assets catalogs and scripts, with room piece sets in rooms/
   support/     test-only builders and simulation helpers
 tools/         repository quality and maintenance scripts

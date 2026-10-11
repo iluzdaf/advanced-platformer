@@ -1,0 +1,464 @@
+{
+  "tempo": 120,
+  "instruments": {
+    "soft_bass": {
+      "wave": "triangle",
+      "attack": 0.008,
+      "decay": 0.08,
+      "sustain": 0.75,
+      "release": 0.08,
+      "gain": 0.23
+    },
+    "bright_lead": {
+      "wave": "triangle",
+      "attack": 0.015,
+      "decay": 0.12,
+      "sustain": 0.45,
+      "release": 0.12,
+      "gain": 0.18
+    },
+    "brush": {
+      "wave": "noise",
+      "attack": 0.001,
+      "decay": 0.045,
+      "sustain": 0,
+      "release": 0.025,
+      "gain": 0.25
+    }
+  },
+  "tracks": {
+    "bass": "soft_bass",
+    "melody": "bright_lead",
+    "percussion": "brush"
+  },
+  "phrases": {
+    "bass_c": {
+      "notes": [
+        {
+          "pitch": "C2",
+          "beats": 2,
+          "gate": 1.6
+        },
+        {
+          "pitch": "C3",
+          "beats": 2,
+          "gate": 1.6
+        },
+        {
+          "pitch": "G2",
+          "beats": 2,
+          "gate": 1.6
+        },
+        {
+          "pitch": "Bb2",
+          "beats": 2,
+          "gate": 1.6
+        }
+      ]
+    },
+    "bass_ab": {
+      "notes": [
+        {
+          "pitch": "Ab1",
+          "beats": 2,
+          "gate": 1.6
+        },
+        {
+          "pitch": "Ab2",
+          "beats": 2,
+          "gate": 1.6
+        },
+        {
+          "pitch": "Eb2",
+          "beats": 2,
+          "gate": 1.6
+        },
+        {
+          "pitch": "G2",
+          "beats": 2,
+          "gate": 1.6
+        }
+      ]
+    },
+    "bass_f": {
+      "notes": [
+        {
+          "pitch": "F2",
+          "beats": 2,
+          "gate": 1.6
+        },
+        {
+          "pitch": "F3",
+          "beats": 2,
+          "gate": 1.6
+        },
+        {
+          "pitch": "C3",
+          "beats": 2,
+          "gate": 1.6
+        },
+        {
+          "pitch": "Eb3",
+          "beats": 2,
+          "gate": 1.6
+        }
+      ]
+    },
+    "bass_g": {
+      "notes": [
+        {
+          "pitch": "G1",
+          "beats": 2,
+          "gate": 1.6
+        },
+        {
+          "pitch": "G2",
+          "beats": 2,
+          "gate": 1.6
+        },
+        {
+          "pitch": "D2",
+          "beats": 2,
+          "gate": 1.6
+        },
+        {
+          "pitch": "G2",
+          "beats": 2,
+          "gate": 1.6
+        }
+      ]
+    },
+    "theme": {
+      "notes": [
+        {
+          "pitch": "C4",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "Eb4",
+          "beats": 0.5,
+          "gate": 0.4
+        },
+        {
+          "pitch": "G4",
+          "beats": 0.5,
+          "gate": 0.4
+        },
+        {
+          "pitch": "Bb4",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "G4",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "Eb4",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "D4",
+          "beats": 0.5,
+          "gate": 0.4
+        },
+        {
+          "pitch": "C4",
+          "beats": 0.5,
+          "gate": 0.4
+        },
+        {
+          "pitch": "G3",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "rest",
+          "beats": 1
+        }
+      ]
+    },
+    "answer": {
+      "notes": [
+        {
+          "pitch": "Eb4",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "G4",
+          "beats": 0.5,
+          "gate": 0.4
+        },
+        {
+          "pitch": "Bb4",
+          "beats": 0.5,
+          "gate": 0.4
+        },
+        {
+          "pitch": "C5",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "Bb4",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "G4",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "Eb4",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "D4",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "rest",
+          "beats": 1
+        }
+      ]
+    },
+    "lift": {
+      "notes": [
+        {
+          "pitch": "F4",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "Ab4",
+          "beats": 0.5,
+          "gate": 0.4
+        },
+        {
+          "pitch": "C5",
+          "beats": 0.5,
+          "gate": 0.4
+        },
+        {
+          "pitch": "Eb5",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "C5",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "Ab4",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "G4",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "F4",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "rest",
+          "beats": 1
+        }
+      ]
+    },
+    "return": {
+      "notes": [
+        {
+          "pitch": "G4",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "F4",
+          "beats": 0.5,
+          "gate": 0.4
+        },
+        {
+          "pitch": "D4",
+          "beats": 0.5,
+          "gate": 0.4
+        },
+        {
+          "pitch": "B3",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "D4",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "G4",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "D4",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "C4",
+          "beats": 1,
+          "gate": 0.8
+        },
+        {
+          "pitch": "rest",
+          "beats": 1
+        }
+      ]
+    },
+    "pulse": {
+      "notes": [
+        {
+          "pitch": "C4",
+          "beats": 0.5,
+          "gate": 0.125,
+          "volume": 0.55
+        },
+        {
+          "pitch": "C4",
+          "beats": 0.5,
+          "gate": 0.125,
+          "volume": 0.35
+        },
+        {
+          "pitch": "C4",
+          "beats": 0.5,
+          "gate": 0.125,
+          "volume": 0.8
+        },
+        {
+          "pitch": "C4",
+          "beats": 0.5,
+          "gate": 0.125,
+          "volume": 0.35
+        },
+        {
+          "pitch": "C4",
+          "beats": 0.5,
+          "gate": 0.125,
+          "volume": 0.55
+        },
+        {
+          "pitch": "C4",
+          "beats": 0.5,
+          "gate": 0.125,
+          "volume": 0.35
+        },
+        {
+          "pitch": "C4",
+          "beats": 0.5,
+          "gate": 0.125,
+          "volume": 0.8
+        },
+        {
+          "pitch": "C4",
+          "beats": 0.5,
+          "gate": 0.125,
+          "volume": 0.35
+        },
+        {
+          "pitch": "C4",
+          "beats": 0.5,
+          "gate": 0.125,
+          "volume": 0.55
+        },
+        {
+          "pitch": "C4",
+          "beats": 0.5,
+          "gate": 0.125,
+          "volume": 0.35
+        },
+        {
+          "pitch": "C4",
+          "beats": 0.5,
+          "gate": 0.125,
+          "volume": 0.8
+        },
+        {
+          "pitch": "C4",
+          "beats": 0.5,
+          "gate": 0.125,
+          "volume": 0.35
+        },
+        {
+          "pitch": "C4",
+          "beats": 0.5,
+          "gate": 0.125,
+          "volume": 0.55
+        },
+        {
+          "pitch": "C4",
+          "beats": 0.5,
+          "gate": 0.125,
+          "volume": 0.35
+        },
+        {
+          "pitch": "C4",
+          "beats": 0.5,
+          "gate": 0.125,
+          "volume": 0.8
+        },
+        {
+          "pitch": "C4",
+          "beats": 0.5,
+          "gate": 0.125,
+          "volume": 0.35
+        }
+      ]
+    }
+  },
+  "patterns": {
+    "opening": {
+      "beats": 8,
+      "tracks": {
+        "bass": "bass_c",
+        "melody": "theme",
+        "percussion": "pulse"
+      }
+    },
+    "answer": {
+      "beats": 8,
+      "tracks": {
+        "bass": "bass_ab",
+        "melody": "answer",
+        "percussion": "pulse"
+      }
+    },
+    "lift": {
+      "beats": 8,
+      "tracks": {
+        "bass": "bass_f",
+        "melody": "lift",
+        "percussion": "pulse"
+      }
+    },
+    "return": {
+      "beats": 8,
+      "tracks": {
+        "bass": "bass_g",
+        "melody": "return",
+        "percussion": "pulse"
+      }
+    }
+  },
+  "arrangement": ["opening", "answer", "lift", "return"]
+}

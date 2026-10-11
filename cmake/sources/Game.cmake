@@ -1,6 +1,7 @@
 target_sources(
     advanced_platformer_game
     PRIVATE
+        ${PROJECT_SOURCE_DIR}/game/content/music_song.cpp
         ${PROJECT_SOURCE_DIR}/game/content/sound_catalog.cpp
         ${PROJECT_SOURCE_DIR}/game/content/actor_catalog.cpp
         ${PROJECT_SOURCE_DIR}/game/content/actor_definition.cpp

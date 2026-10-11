@@ -11,6 +11,22 @@ class TidyTargetSelectionTests(unittest.TestCase):
         cls.changed_source = Path("core/src/actor/actor_id.cpp")
         cls.manifest = Path("cmake/sources/Core.cmake")
 
+    def test_audio_and_music_sources_are_discovered(self):
+        self.assertIn(Path("audio/src/audio_device.cpp"), self.paths)
+        self.assertIn(
+            Path("audio/include/advanced_platformer/audio/audio_playback.hpp"),
+            self.paths,
+        )
+        self.assertIn(Path("music/main.cpp"), self.paths)
+
+    def test_audio_header_selects_both_executable_users(self):
+        selected = selected_paths(
+            self.paths,
+            [Path("audio/include/advanced_platformer/audio/audio_device.hpp")],
+        )
+        self.assertIn(Path("app/application.cpp"), selected)
+        self.assertIn(Path("music/main.cpp"), selected)
+
     def test_source_and_manifest_select_only_changed_code(self):
         self.assertEqual(
             selected_paths(self.paths, [self.changed_source, self.manifest]),

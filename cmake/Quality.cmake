@@ -6,6 +6,8 @@ file(
     GLOB_RECURSE PROJECT_CPP_FILES
     CONFIGURE_DEPENDS
     ${PROJECT_SOURCE_DIR}/app/*.cpp
+    ${PROJECT_SOURCE_DIR}/audio/src/*.cpp
+    ${PROJECT_SOURCE_DIR}/music/*.cpp
     ${PROJECT_SOURCE_DIR}/core/src/*.cpp
     ${PROJECT_SOURCE_DIR}/game/*.cpp
     ${PROJECT_SOURCE_DIR}/playtest/*.cpp
@@ -17,6 +19,8 @@ file(
     GLOB_RECURSE PROJECT_HEADERS
     CONFIGURE_DEPENDS
     ${PROJECT_SOURCE_DIR}/app/*.hpp
+    ${PROJECT_SOURCE_DIR}/audio/include/*.hpp
+    ${PROJECT_SOURCE_DIR}/music/*.hpp
     ${PROJECT_SOURCE_DIR}/core/include/*.hpp
     ${PROJECT_SOURCE_DIR}/game/*.hpp
     ${PROJECT_SOURCE_DIR}/playtest/*.hpp
@@ -25,7 +29,12 @@ file(
 )
 
 file(GLOB_RECURSE PROJECT_PUBLIC_HEADERS CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/core/include/*.hpp)
-list(APPEND PROJECT_PUBLIC_HEADERS ${PROJECT_SOURCE_DIR}/scripting/lua_npc_scripts.hpp)
+file(GLOB_RECURSE AUDIO_PUBLIC_HEADERS CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/audio/include/*.hpp)
+list(
+    APPEND PROJECT_PUBLIC_HEADERS
+    ${AUDIO_PUBLIC_HEADERS}
+    ${PROJECT_SOURCE_DIR}/scripting/lua_npc_scripts.hpp
+)
 
 file(GLOB_RECURSE PROJECT_PYTHON_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/tools/*.py)
 
@@ -76,7 +85,7 @@ endif()
 set_source_files_properties(${PROJECT_PUBLIC_HEADERS} PROPERTIES LANGUAGE CXX)
 add_library(header_self_containment OBJECT EXCLUDE_FROM_ALL ${PROJECT_PUBLIC_HEADERS})
 target_compile_features(header_self_containment PRIVATE cxx_std_26)
-target_link_libraries(header_self_containment PRIVATE advanced_platformer_core)
+target_link_libraries(header_self_containment PRIVATE advanced_platformer_audio)
 enable_project_warnings(header_self_containment)
 
 target_compile_options(

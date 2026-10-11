@@ -18,14 +18,16 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
   save games, an editor, an animation graph, a general ECS, and homing or piercing
   projectiles.
 
-| Target                          | What it owns                                                                                                            | Dependencies                                                       |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `advanced_platformer_core`      | Simulation, navigation, and plain render-scene data                                                                     | GLM; no window, graphics API, JSON, or Lua                         |
-| `advanced_platformer_scripting` | The Lua runtime behind the NPC activity boundary; `lua_npc_scripts.hpp` is its interface, its other headers are private | Core, Lua, sol2                                                    |
-| `advanced_platformer_game`      | Content loading, catalogs, level composition, `Game`, and the diagnostics it records; headless                          | Core, scripting, Glaze                                             |
-| `advanced_platformer`           | Application, content session, graphics, audio device, UI, and debug tools                                               | Game, GLFW, glad, ImGui, ImPlot, imgui-node-editor, stb, miniaudio |
-| `advanced_platformer_playtest`  | A headless playtest: a bot plays generated levels and prints one JSON line per level                                    | Game                                                               |
-| `advanced_platformer_tests`     | Catch2 tests for the core, scripting, the game, and the application code that needs no window                           | Game, Catch2                                                       |
+| Target                          | What it owns                                                                                                            | Dependencies                                                   |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `advanced_platformer_core`      | Simulation, navigation, synthesis, and plain render-scene data                                                          | GLM; no window, graphics API, JSON, or Lua                     |
+| `advanced_platformer_audio`     | Audio device, bounded playback commands, and buffer ownership shared by the executables                                 | Core, miniaudio                                                |
+| `advanced_platformer_scripting` | The Lua runtime behind the NPC activity boundary; `lua_npc_scripts.hpp` is its interface, its other headers are private | Core, Lua, sol2                                                |
+| `advanced_platformer_game`      | Content loading, catalogs, level composition, `Game`, and the diagnostics it records; headless                          | Core, scripting, Glaze                                         |
+| `advanced_platformer`           | Application, content session, graphics, audio device, UI, and debug tools                                               | Game, GLFW, glad, ImGui, ImPlot, imgui-node-editor, stb, audio |
+| `advanced_platformer_playtest`  | A headless playtest: a bot plays generated levels and prints one JSON line per level                                    | Game                                                           |
+| `advanced_platformer_music`     | Standalone music auditioning, reload, and preview export                                                                | Game, audio                                                    |
+| `advanced_platformer_tests`     | Catch2 tests for the core, scripting, the game, and the application code that needs no window                           | Game, audio, Catch2                                            |
 
 ### Folders
 
@@ -33,6 +35,9 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 | --------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `core/include`        | The core's public headers, under `advanced_platformer/`                                                    |
 | `core/src`            | The core's implementations                                                                                 |
+| `audio/include`       | Public device and playback interfaces, under `advanced_platformer/audio/`                                  |
+| `audio/src`           | Shared audio device and playback implementations                                                           |
+| `music`               | Standalone authoring tool and its WAV preview exporter                                                     |
 | `scripting`           | Lua VM, sandbox, `vec2` binding, and the activity adapter                                                  |
 | `game/content`        | Content definitions, Glaze loaders, catalogs, and validators                                               |
 | `game/level`          | Level composition and reload                                                                               |
@@ -555,15 +560,15 @@ requested by presentation effects, and the application drains them with
 `Game::takeSounds` after simulation. Headless tests and playtests use the same
 content and presentation flow without opening an audio device.
 
-`app/audio/AudioDevice` owns a miniaudio playback device. Its callback renders
+`AudioDevice` in `advanced_platformer_audio` owns a miniaudio playback device. Its callback renders
 32 simultaneous voices through `SoundMixer`, at 44,100 mono float samples per
 second. miniaudio converts that stream to the hardware format. Lower-rate patches
 are interpolated by the mixer. Voice sums are clamped to [-1, 1]; tune patch
 volume so ordinary overlaps do not clip.
 
-The game thread posts a buffer pointer and voice slot through a bounded
+The producer thread posts a buffer pointer and voice slot through a bounded
 single-producer, single-consumer ring. It retains each buffer with a shared
-pointer until the callback reports completion with an atomic flag. Only the game
+pointer until the callback reports completion with an atomic flag. Only the producer
 thread releases those references, so an old catalog can go away while its sounds
 finish. The callback owns the mixer and voice cursors; it reads no game, catalog,
 Lua, or graphics state. It allocates nothing, destroys no buffers, takes no locks,
@@ -585,6 +590,21 @@ instead of JavaScript's unspecified `Math.random`; zero-length envelope stages
 are skipped instead of dividing by zero. Fixtures compare all samples of a
 seeded reference patch for each waveform, including slides, vibrato, change,
 repeat, filters, and phaser. The float output is not quantised by `sample_size`.
+
+Music follows the same content, synthesis, and playback boundaries.
+`game/content/music_song.cpp` reads and validates JSON into `MusicSong`;
+`renderMusic` in the core prepares the entire arrangement as an immutable
+44,100 Hz buffer on the producer thread. Note positions are rounded from
+absolute musical time to avoid accumulating rounding error, and release tails
+wrap past the arrangement end into its beginning to form a repeating loop.
+The callback repeats the prepared buffer rather than sequencing notes itself.
+
+`music/main.cpp` owns the standalone audition workflow and shares
+`advanced_platformer_audio` with the game. On reload, it prepares the replacement
+before posting one command that stops existing voices and starts the new buffer.
+A rejected edit or command leaves current playback running. `music/wave_file.cpp`
+owns device-free preview export. The song format, controls, and audible loop-tail
+behaviour are documented in [Music authoring](CONTENT.md#music-authoring).
 
 ### Animation
 

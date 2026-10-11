@@ -15,7 +15,9 @@ namespace advanced_platformer
     {
     public:
         AudioPlayback();
-        bool play(std::shared_ptr<const SoundBuffer> sound);
+        bool play(std::shared_ptr<const SoundBuffer> sound, bool loop = false);
+        bool replace(std::shared_ptr<const SoundBuffer> sound, bool loop = false);
+        bool stop();
         void collectFinished();
         void render(std::span<float> output) noexcept;
 
@@ -24,7 +26,11 @@ namespace advanced_platformer
         {
             const SoundBuffer* sound = nullptr;
             std::size_t slot = 0;
+            bool loop = false;
+            bool replace = false;
         };
+
+        bool enqueue(std::shared_ptr<const SoundBuffer> sound, bool loop, bool replace);
 
         static constexpr std::size_t QueueSize = SoundVoiceCount + 1;
         std::array<Command, QueueSize> commands{};

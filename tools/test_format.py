@@ -14,6 +14,10 @@ class FormatterSelectionTests(unittest.TestCase):
             "clang-format",
             [
                 "app/application.cpp",
+                "audio/src/audio_device.cpp",
+                "audio/include/advanced_platformer/audio/audio_playback.hpp",
+                "music/main.cpp",
+                "music/wave_file.hpp",
                 "scripting/lua_npc_scripts.hpp",
                 "core/src/npc/npc_system.cpp",
                 "core/include/advanced_platformer/render/sprite.hpp",

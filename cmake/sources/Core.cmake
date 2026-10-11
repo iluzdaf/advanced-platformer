@@ -1,6 +1,7 @@
 target_sources(
     advanced_platformer_core
     PRIVATE
+        ${PROJECT_SOURCE_DIR}/core/src/audio/music.cpp
         ${PROJECT_SOURCE_DIR}/core/src/audio/sound_patch.cpp
         ${PROJECT_SOURCE_DIR}/core/src/audio/sound_mixer.cpp
         ${PROJECT_SOURCE_DIR}/core/src/actor/actor_id.cpp

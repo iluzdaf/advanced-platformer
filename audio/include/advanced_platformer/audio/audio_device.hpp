@@ -14,7 +14,9 @@ namespace advanced_platformer
         AudioDevice(const AudioDevice&) = delete;
         AudioDevice& operator=(const AudioDevice&) = delete;
 
-        bool play(std::shared_ptr<const SoundBuffer> sound);
+        bool play(std::shared_ptr<const SoundBuffer> sound, bool loop = false);
+        bool replace(std::shared_ptr<const SoundBuffer> sound, bool loop = false);
+        bool stop();
         void collectFinished();
 
     private:
