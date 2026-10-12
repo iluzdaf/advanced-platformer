@@ -4,11 +4,14 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <deque>
 #include <iterator>
 #include <optional>
 #include <ranges>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -26,6 +29,11 @@
 #include "content/room_pieces.hpp"
 #include "advanced_platformer/level/level_generator.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/navigation/actor_navigation.hpp"
+#include "advanced_platformer/navigation/navigation_fill.hpp"
+#include "advanced_platformer/navigation/platformer_connection_cache.hpp"
+#include "advanced_platformer/navigation/platformer_traversal_profile.hpp"
+#include "advanced_platformer/navigation/route.hpp"
 #include "advanced_platformer/world/level_validation.hpp"
 #include "advanced_platformer/world/pickup.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
@@ -660,5 +668,170 @@ TEST_CASE(
             INFO(route.name << ": " << pickup.id);
             CHECK(playerReachesPickup(*level, pickup, catalogs));
         }
+    }
+}
+
+namespace
+{
+    using advanced_platformer::RouteLocation;
+
+    struct RouteLocationHash
+    {
+        std::size_t operator()(const RouteLocation& location) const
+        {
+            return advanced_platformer::CellHash{}(location.cell) * 5 +
+                   static_cast<std::size_t>(location.surface);
+        }
+    };
+
+    using Locations = std::unordered_set<RouteLocation, RouteLocationHash>;
+    using Leaving =
+        std::unordered_map<RouteLocation, std::vector<RouteLocation>, RouteLocationHash>;
+
+    struct PlayerMoves
+    {
+        Leaving forward;
+        Leaving backward;
+    };
+
+    PlayerMoves playerMoves(
+        const advanced_platformer::TileMap& map,
+        const advanced_platformer::GameCatalogs& catalogs)
+    {
+        const advanced_platformer::PlatformerTraversalProfile profile =
+            advanced_platformer::platformerTraversalProfileFor(
+                advanced_platformer::composePlayer(catalogs, 0), tests::FixedStepSeconds);
+        advanced_platformer::PlatformerConnectionCache cache;
+        for (int y = 0; y < map.height(); ++y)
+        {
+            for (int x = 0; x < map.width(); ++x)
+            {
+                cache.queue({x, y}, profile);
+            }
+        }
+        while (cache.cellsPending(profile) > 0)
+        {
+            advanced_platformer::advanceNavigationFill(
+                map, cache, advanced_platformer::NavigationFillTicksPerStep);
+        }
+        PlayerMoves moves;
+        for (int y = 0; y < map.height(); ++y)
+        {
+            for (int x = 0; x < map.width(); ++x)
+            {
+                const std::vector<advanced_platformer::RouteConnection>* connections =
+                    cache.cachedConnections({x, y}, profile);
+                if (connections == nullptr)
+                {
+                    continue;
+                }
+                for (const advanced_platformer::RouteConnection& connection : *connections)
+                {
+                    const RouteLocation from{{x, y}, connection.sourceSurface};
+                    moves.forward[from].push_back(connection.step.destination);
+                    moves.backward[connection.step.destination].push_back(from);
+                }
+            }
+        }
+        return moves;
+    }
+
+    Locations reachableFrom(const Leaving& leaving, const std::vector<RouteLocation>& starts)
+    {
+        Locations reached(starts.begin(), starts.end());
+        std::deque<RouteLocation> waiting(starts.begin(), starts.end());
+        while (!waiting.empty())
+        {
+            const RouteLocation location = waiting.front();
+            waiting.pop_front();
+            const auto next = leaving.find(location);
+            if (next == leaving.end())
+            {
+                continue;
+            }
+            for (const RouteLocation& destination : next->second)
+            {
+                if (reached.insert(destination).second)
+                {
+                    waiting.push_back(destination);
+                }
+            }
+        }
+        return reached;
+    }
+
+    std::string spotIn(const GeneratedLevel& level, const RoomPieces& catalog, Cell cell)
+    {
+        for (const advanced_platformer::GeneratedRoom& room : level.rooms)
+        {
+            const Cell local{cell.x - room.origin.x, cell.y - room.origin.y};
+            if (local.x >= 0 && local.x < catalog.roomSize.width && local.y >= 0 &&
+                local.y < catalog.roomSize.height)
+            {
+                return room.piece + " cell " + std::to_string(local.x) + "," +
+                       std::to_string(local.y);
+            }
+        }
+        return "a cell outside every room";
+    }
+
+    std::vector<std::string> trappedSpots(
+        const GeneratedLevel& level,
+        const RoomPieces& catalog,
+        const advanced_platformer::GameCatalogs& catalogs)
+    {
+        const advanced_platformer::TileMap map =
+            advanced_platformer::composeTileMap(level.mapRows, level.tileLegend, catalogs.tiles);
+        const PlayerMoves moves = playerMoves(map, catalogs);
+        const Locations reached = reachableFrom(moves.forward, {{level.playerSpawn}});
+        std::vector<RouteLocation> atExit;
+        for (const RouteLocation& location : reached)
+        {
+            if (location.cell == level.exit.spawn)
+            {
+                atExit.push_back(location);
+            }
+        }
+        const Locations leadOut = reachableFrom(moves.backward, atExit);
+        std::vector<std::string> trapped;
+        for (const RouteLocation& location : reached)
+        {
+            if (!leadOut.contains(location))
+            {
+                trapped.push_back(spotIn(level, catalog, location.cell));
+            }
+        }
+        std::ranges::sort(trapped);
+        return trapped;
+    }
+}
+
+TEST_CASE(
+    "Every spot the player can reach in a route level still leads to its exit",
+    "[app][content][generation]")
+{
+    const advanced_platformer::GameCatalogs catalogs =
+        advanced_platformer::loadGameCatalogs("assets/catalogs");
+    const RoomPieces shipped = shippedPieces();
+    std::vector<Route> routes = doorPairRoutes(shipped);
+    std::ranges::move(startRoutes(shipped), std::back_inserter(routes));
+    std::ranges::move(exitRoutes(shipped), std::back_inserter(routes));
+    for (ReturnRoute& returning : startReturnRoutes(shipped))
+    {
+        routes.push_back(std::move(returning.route));
+    }
+    for (const Route& route : routes)
+    {
+        const std::optional<GeneratedLevel> level = generateRoute(route);
+        if (!level.has_value())
+        {
+            continue;
+        }
+        const std::vector<std::string> trapped = trappedSpots(*level, route.catalog, catalogs);
+        for (const std::string& spot : trapped)
+        {
+            UNSCOPED_INFO(route.name << ": the player is trapped in " << spot);
+        }
+        CHECK(trapped.empty());
     }
 }
