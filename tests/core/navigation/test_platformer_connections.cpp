@@ -38,6 +38,7 @@ namespace
     using advanced_platformer::Traversal;
 
     constexpr glm::vec2 SmallBody{12.0F, 12.0F};
+    constexpr glm::vec2 PlayerBody{12.0F, 20.0F};
 
     bool hasConnection(
         const std::vector<RouteConnection>& connections,
@@ -50,6 +51,18 @@ namespace
             {
                 return connection.step.destination.cell == destination &&
                        connection.step.traversal == traversal;
+            });
+    }
+
+    bool landsBeyond(const std::vector<RouteConnection>& connections, int column, int row)
+    {
+        return std::ranges::any_of(
+            connections,
+            [column, row](const RouteConnection& connection)
+            {
+                return connection.step.traversal == Traversal::Jump &&
+                       connection.step.destination.cell.x >= column &&
+                       connection.step.destination.cell.y == row;
             });
     }
 }
@@ -140,6 +153,98 @@ TEST_CASE("A recorded jump replays to the landing it promised", "[navigation][pl
         advanced_platformer::cellAtFeet(
             tests::TileSize, advanced_platformer::feetOf(body.bounds)) ==
         jump.step.destination.cell);
+}
+
+TEST_CASE(
+    "A running jump crosses a gap too wide to jump from a standstill",
+    "[navigation][platformer]")
+{
+    const advanced_platformer::TileMap map = tests::TileMapBuilder(
+        {"...............",
+         "...............",
+         "...............",
+         "...............",
+         ".........######",
+         "######...######",
+         "######...######"});
+    const PlatformerTraversalProfile profile{
+        .size = PlayerBody, .stepSeconds = tests::FixedStepSeconds};
+
+    const std::vector<RouteConnection> fromTheEdge =
+        tests::connectionsFrom(map, {5, 4}, profile).connections;
+    const std::vector<RouteConnection> withARunUp =
+        tests::connectionsFrom(map, {3, 4}, profile).connections;
+
+    REQUIRE_FALSE(landsBeyond(fromTheEdge, 9, 3));
+    REQUIRE(landsBeyond(withARunUp, 9, 3));
+}
+
+TEST_CASE(
+    "A jump that lands from only one exact takeoff is not offered",
+    "[navigation][platformer]")
+{
+    const advanced_platformer::TileMap map = tests::TileMapBuilder(
+        {"................",
+         "................",
+         "................",
+         "................",
+         "................",
+         "######....######",
+         "######....######"});
+    const PlatformerTraversalProfile profile{
+        .size = PlayerBody, .stepSeconds = tests::FixedStepSeconds};
+
+    for (int column = 0; column < 6; ++column)
+    {
+        const std::vector<RouteConnection> connections =
+            tests::connectionsFrom(map, {column, 4}, profile).connections;
+        REQUIRE_FALSE(landsBeyond(connections, 10, 4));
+    }
+}
+
+TEST_CASE("A running jump replays through the path follower", "[navigation][platformer]")
+{
+    const advanced_platformer::TileMap map = tests::TileMapBuilder(
+        {"...............",
+         "...............",
+         "...............",
+         "...............",
+         ".........######",
+         "######...######",
+         "######...######"});
+    const advanced_platformer::PlatformerMovementConfig config;
+    const PlatformerTraversalProfile profile{
+        .size = PlayerBody, .movement = config, .stepSeconds = tests::FixedStepSeconds};
+    const std::vector<RouteConnection> connections =
+        tests::connectionsFrom(map, {3, 4}, profile).connections;
+    const auto jump = std::ranges::find_if(
+        connections,
+        [](const RouteConnection& connection)
+        {
+            return connection.step.traversal == Traversal::Jump &&
+                   connection.step.destination.cell.x >= 9;
+        });
+    REQUIRE(jump != connections.end());
+
+    advanced_platformer::PathFollower follower;
+    advanced_platformer::setPath(follower, tests::floorPath({3, 4}, {jump->step}));
+    advanced_platformer::Body body{
+        advanced_platformer::boxInCell(tests::TileSize, {3, 4}, PlayerBody), {0.0F, 0.0F}};
+    advanced_platformer::PlatformerMovement movement{config, true, 0.0F, 0.0F};
+    for (int tick = 0; tick < 240 && !advanced_platformer::pathComplete(follower); ++tick)
+    {
+        const advanced_platformer::InputIntentions intentions =
+            advanced_platformer::followPlatformerPath(
+                body, movement, follower, tests::FixedStepSeconds);
+        advanced_platformer::updatePlatformerMovement(
+            map, body, movement, intentions, tests::FixedStepSeconds);
+    }
+
+    REQUIRE(advanced_platformer::pathComplete(follower));
+    REQUIRE(
+        advanced_platformer::cellAtFeet(
+            tests::TileSize, advanced_platformer::feetOf(body.bounds)) ==
+        jump->step.destination.cell);
 }
 
 TEST_CASE("Failed airborne attempts still count their simulated ticks", "[navigation][platformer]")

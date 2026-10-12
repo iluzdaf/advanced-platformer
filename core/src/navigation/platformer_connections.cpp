@@ -40,6 +40,8 @@ namespace advanced_platformer
         };
 
         constexpr int MaximumConnectionSimulationTicks = 120;
+        constexpr int RunUpCells = 2;
+        constexpr float RunningJumpMarginTiles = 0.25F;
         constexpr int MaximumClimbSimulationTicks = 240;
         constexpr float ClimbArrivalDistance = 0.02F;
         constexpr float FloorArrivalDistance = 1.0F;
@@ -112,6 +114,7 @@ namespace advanced_platformer
             Traversal traversal;
             int direction;
             int jumpHoldTicks = 0;
+            bool runUp = false;
         };
 
         InputIntentions makeTraversalIntentions(
@@ -157,12 +160,13 @@ namespace advanced_platformer
             const TileMap& map,
             Cell start,
             const PlatformerTraversalProfile& profile,
-            const TraversalAttempt& attempt)
+            const TraversalAttempt& attempt,
+            Body body,
+            PlatformerMovement movement,
+            InputProgram inputs)
         {
-            Body body{boxInCell(map.tileSize(), start, profile.size), {0.0F, 0.0F}};
-            PlatformerMovement movement{profile.movement, true, 0.0F, 0.0F};
             AirborneSimulationResult result{
-                std::nullopt, 0, {}, cellsCovered(map.tileSize(), body.bounds)};
+                std::nullopt, 0, std::move(inputs), cellsCovered(map.tileSize(), body.bounds)};
             bool leftGround = false;
             std::optional<Cell> landing;
             const float direction = static_cast<float>(attempt.direction);
@@ -200,7 +204,8 @@ namespace advanced_platformer
                     continue;
                 }
                 const Cell stoppedCell = cellAtFeet(map.tileSize(), feetOf(body.bounds));
-                if (stoppedCell != landing.value())
+                if (stoppedCell == start || stoppedCell.y != landing->y ||
+                    !canStandAt(map, stoppedCell, profile.size))
                 {
                     return result;
                 }
@@ -252,17 +257,30 @@ namespace advanced_platformer
 
             constexpr std::array<int, 2> Directions{-1, 1};
             constexpr std::array<int, 2> JumpHoldTicks{1, MaximumConnectionSimulationTicks};
-            plan.attempts.reserve(Directions.size() * (1 + JumpHoldTicks.size()));
+            plan.attempts.reserve(Directions.size() * (2 + JumpHoldTicks.size()));
             for (const int direction : Directions)
             {
-                const Cell adjacent{start.x + direction, start.y};
-                recordProbe(adjacent);
-                const Traversal ground =
-                    canStandAt(map, adjacent, bodySize) ? Traversal::Walk : Traversal::Fall;
-                plan.attempts.push_back({ground, direction});
+                bool runway = true;
+                for (int distance = 1; distance <= RunUpCells + 1; ++distance)
+                {
+                    const Cell ahead{start.x + distance * direction, start.y};
+                    recordProbe(ahead);
+                    const bool standable = canStandAt(map, ahead, bodySize);
+                    runway = runway && (distance > RunUpCells ? !standable : standable);
+                    if (distance == 1)
+                    {
+                        plan.attempts.push_back(
+                            {standable ? Traversal::Walk : Traversal::Fall, direction});
+                    }
+                }
                 for (const int holdTicks : JumpHoldTicks)
                 {
                     plan.attempts.push_back({Traversal::Jump, direction, holdTicks});
+                }
+                if (runway)
+                {
+                    plan.attempts.push_back(
+                        {Traversal::Jump, direction, MaximumConnectionSimulationTicks, true});
                 }
             }
             return plan;
@@ -307,14 +325,80 @@ namespace advanced_platformer
             return result;
         }
 
+        BuiltPlatformerConnections buildRunningJumpConnections(
+            const TileMap& map,
+            Cell start,
+            const PlatformerTraversalProfile& profile,
+            const TraversalAttempt& attempt)
+        {
+            const int tileSize = map.tileSize();
+            const float tile = static_cast<float>(tileSize);
+            const float direction = static_cast<float>(attempt.direction);
+            Body body{boxInCell(tileSize, start, profile.size), {0.0F, 0.0F}};
+            PlatformerMovement movement{profile.movement, true, 0.0F, 0.0F};
+            BuiltPlatformerConnections result{{}, cellsCovered(tileSize, body.bounds), {}, 0};
+            const float takeoffCentre =
+                feetInCell(tileSize, {start.x + RunUpCells * attempt.direction, start.y}).x;
+            InputIntentions run;
+            run.direction.x = direction;
+            InputProgram runUp;
+            std::optional<int> windowRow;
+            float windowStart = 0.0F;
+            bool windowRecorded = false;
+            for (int tick = 0; tick < MaximumConnectionSimulationTicks && movement.grounded; ++tick)
+            {
+                const float along = (feetOf(body.bounds).x - takeoffCentre) * direction;
+                if (along > tile)
+                {
+                    break;
+                }
+                if (along >= 0.0F)
+                {
+                    AirborneSimulationResult jump = simulateAirborneTraversal(
+                        map, start, profile, attempt, body, movement, runUp);
+                    result.simulatedTicks += jump.simulatedTicks;
+                    result.footprint = unionOf(result.footprint, jump.footprint);
+                    if (!jump.landingCell.has_value())
+                    {
+                        windowRow.reset();
+                    }
+                    else if (windowRow != jump.landingCell->y)
+                    {
+                        windowRow = jump.landingCell->y;
+                        windowStart = along;
+                        windowRecorded = false;
+                    }
+                    if (windowRow.has_value() && !windowRecorded &&
+                        along - windowStart >= RunningJumpMarginTiles * tile)
+                    {
+                        result.connections.push_back(
+                            {{{jump.landingCell.value()}, Traversal::Jump, std::move(jump.inputs)},
+                             tick + jump.simulatedTicks});
+                        windowRecorded = true;
+                    }
+                }
+                recordSimulationInput(runUp, run, profile.stepSeconds);
+                updatePlatformerMovement(map, body, movement, run, profile.stepSeconds);
+                includeCellsAroundBounds(result.footprint, tileSize, body.bounds);
+                ++result.simulatedTicks;
+            }
+            return result;
+        }
+
         BuiltPlatformerConnections buildAirborneConnection(
             const TileMap& map,
             Cell start,
             const PlatformerTraversalProfile& profile,
             const TraversalAttempt& attempt)
         {
-            AirborneSimulationResult simulated =
-                simulateAirborneTraversal(map, start, profile, attempt);
+            AirborneSimulationResult simulated = simulateAirborneTraversal(
+                map,
+                start,
+                profile,
+                attempt,
+                {boxInCell(map.tileSize(), start, profile.size), {0.0F, 0.0F}},
+                {profile.movement, true, 0.0F, 0.0F},
+                {});
             BuiltPlatformerConnections result{
                 {}, simulated.footprint, {}, simulated.simulatedTicks};
             if (simulated.landingCell.has_value())
@@ -580,7 +664,8 @@ namespace advanced_platformer
                 BuiltPlatformerConnections attemptResult =
                     attempt.traversal == Traversal::Walk
                         ? buildWalkConnections(map, cell, profile, walkCache, attempt.direction)
-                        : buildAirborneConnection(map, cell, profile, attempt);
+                    : attempt.runUp ? buildRunningJumpConnections(map, cell, profile, attempt)
+                                    : buildAirborneConnection(map, cell, profile, attempt);
                 combined.footprint = unionOf(combined.footprint, attemptResult.footprint);
                 combined.simulatedTicks += attemptResult.simulatedTicks;
                 for (RouteConnection& connection : attemptResult.connections)
