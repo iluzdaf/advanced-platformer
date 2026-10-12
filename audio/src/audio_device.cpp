@@ -5,6 +5,9 @@
 #include <span>
 #include <stdexcept>
 #include <utility>
+#include <string_view>
+
+#include "advanced_platformer/audio/music_playback.hpp"
 
 #include <miniaudio.h>
 
@@ -26,7 +29,8 @@ namespace advanced_platformer
             state->playback.render({static_cast<float*>(output), frames});
         }
 
-        Implementation()
+        explicit Implementation(std::unique_ptr<MusicPlayback> music)
+            : playback(std::move(music))
         {
             ma_device_config config = ma_device_config_init(ma_device_type_playback);
             config.playback.format = ma_format_f32;
@@ -57,7 +61,12 @@ namespace advanced_platformer
     };
 
     AudioDevice::AudioDevice()
-        : implementation(std::make_unique<Implementation>())
+        : AudioDevice(nullptr)
+    {
+    }
+
+    AudioDevice::AudioDevice(std::unique_ptr<MusicPlayback> music)
+        : implementation(std::make_unique<Implementation>(std::move(music)))
     {
     }
 
@@ -76,6 +85,11 @@ namespace advanced_platformer
     bool AudioDevice::setMusic(std::shared_ptr<const SoundBuffer> sound)
     {
         return implementation->playback.setMusic(std::move(sound));
+    }
+
+    bool AudioDevice::setPartActive(std::string_view track, bool enabled)
+    {
+        return implementation->playback.setPartActive(track, enabled);
     }
 
     bool AudioDevice::stop()

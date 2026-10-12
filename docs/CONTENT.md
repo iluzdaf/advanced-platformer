@@ -662,3 +662,39 @@ The renderer wraps release tails past the arrangement end into its beginning,
 so the preview represents a repeating loop, including those tails on its first
 play. For rendering, timing, and playback ownership, see
 [Audio](ARCHITECTURE.md#audio).
+
+### Synchronized parts audition
+
+`encounter-parts.json` is a two-bar composition with a continuous drum backing,
+a low, heavy NPC motif and a higher, quicker NPC motif. They share the same
+harmonic progression. Audition its parts from the project root:
+
+```sh
+build/mac-debug/advanced_platformer_music game/assets/music/encounter-parts.json --parts backing
+```
+
+The named backing starts immediately and stays active. All other tracks start
+muted. Type a command and press Enter:
+
+```text
+on npc_heavy
+on npc_light
+off npc_heavy
+off npc_light
+quit
+```
+
+Each accepted change begins at the next four-beat bar and fades over 50 ms.
+Every track follows the same arrangement position, including while muted;
+activating a track joins the current musical position rather than restarting it.
+Multiple changes before a boundary use the latest requested state for each
+track. Repeating the same pending request does not delay it. Requests consumed
+exactly at a bar boundary take effect at the following bar. Timing uses the audio
+device clock, independently of when terminal input arrives.
+
+`--parts` loops automatically and can use `--pattern` to audition one section.
+It cannot be combined with `--solo`, `--watch`, or `--output`. Unknown tracks,
+attempts to change the backing, and a full control queue report a rejected request.
+Ctrl-C, `quit`, or closed input ends the session. This milestone auditions authored
+parts; NPC engagement, progress changes, and Lua musical decisions are not yet
+connected to playback.

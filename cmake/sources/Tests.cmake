@@ -2,6 +2,7 @@ target_sources(
     advanced_platformer_tests
     PRIVATE
         ${PROJECT_SOURCE_DIR}/music/wave_file.cpp
+        ${PROJECT_SOURCE_DIR}/tests/audio/test_music_playback.cpp
         ${PROJECT_SOURCE_DIR}/tests/music/test_wave_file.cpp
         ${PROJECT_SOURCE_DIR}/tests/game/content/test_music_song.cpp
         ${PROJECT_SOURCE_DIR}/tests/core/audio/test_music.cpp

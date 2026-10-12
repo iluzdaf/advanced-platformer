@@ -291,4 +291,16 @@ namespace advanced_platformer
         }
         return output;
     }
+
+    MusicParts renderMusicParts(const MusicSong& song)
+    {
+        validateMusicSong(song);
+        MusicParts parts;
+        parts.tempo = song.tempo;
+        for (const auto& [track, instrument] : song.tracks)
+        {
+            parts.tracks.emplace(track, renderMusic(song, track));
+        }
+        return parts;
+    }
 }

@@ -1,0 +1,221 @@
+{
+  "tempo": 120,
+  "instruments": {
+    "drum": {
+      "wave": "noise",
+      "attack": 0.001,
+      "decay": 0.03,
+      "sustain": 0,
+      "release": 0.02,
+      "gain": 0.08
+    },
+    "heavy": {
+      "wave": "square",
+      "attack": 0.01,
+      "decay": 0.1,
+      "sustain": 0.35,
+      "release": 0.1,
+      "gain": 0.08
+    },
+    "light": {
+      "wave": "triangle",
+      "attack": 0.01,
+      "decay": 0.09,
+      "sustain": 0.3,
+      "release": 0.12,
+      "gain": 0.14
+    }
+  },
+  "tracks": {
+    "backing": "drum",
+    "npc_heavy": "heavy",
+    "npc_light": "light"
+  },
+  "phrases": {
+    "pulse": {
+      "notes": [
+        {
+          "pitch": "C2",
+          "beats": 0.5,
+          "gate": 0.04,
+          "volume": 1
+        },
+        {
+          "pitch": "C2",
+          "beats": 0.5,
+          "gate": 0.04,
+          "volume": 0.3
+        },
+        {
+          "pitch": "C2",
+          "beats": 0.5,
+          "gate": 0.04,
+          "volume": 0.5
+        },
+        {
+          "pitch": "C2",
+          "beats": 0.5,
+          "gate": 0.04,
+          "volume": 0.3
+        },
+        {
+          "pitch": "C2",
+          "beats": 0.5,
+          "gate": 0.04,
+          "volume": 1
+        },
+        {
+          "pitch": "C2",
+          "beats": 0.5,
+          "gate": 0.04,
+          "volume": 0.3
+        },
+        {
+          "pitch": "C2",
+          "beats": 0.5,
+          "gate": 0.04,
+          "volume": 0.7
+        },
+        {
+          "pitch": "C2",
+          "beats": 0.5,
+          "gate": 0.04,
+          "volume": 0.3
+        }
+      ]
+    },
+    "heavy_c": {
+      "notes": [
+        {
+          "pitch": "C2",
+          "beats": 2,
+          "gate": 1.4
+        },
+        {
+          "pitch": "G2",
+          "beats": 2,
+          "gate": 1.4
+        }
+      ]
+    },
+    "heavy_ab": {
+      "notes": [
+        {
+          "pitch": "Ab1",
+          "beats": 2,
+          "gate": 1.4
+        },
+        {
+          "pitch": "Eb2",
+          "beats": 2,
+          "gate": 1.4
+        }
+      ]
+    },
+    "light_c": {
+      "notes": [
+        {
+          "pitch": "C4",
+          "beats": 0.5,
+          "gate": 0.35
+        },
+        {
+          "pitch": "Eb4",
+          "beats": 0.5,
+          "gate": 0.35
+        },
+        {
+          "pitch": "G4",
+          "beats": 0.5,
+          "gate": 0.35
+        },
+        {
+          "pitch": "Bb4",
+          "beats": 0.5,
+          "gate": 0.35
+        },
+        {
+          "pitch": "G4",
+          "beats": 0.5,
+          "gate": 0.35
+        },
+        {
+          "pitch": "Eb4",
+          "beats": 0.5,
+          "gate": 0.35
+        },
+        {
+          "pitch": "D4",
+          "beats": 0.5,
+          "gate": 0.35
+        },
+        {
+          "pitch": "rest",
+          "beats": 0.5
+        }
+      ]
+    },
+    "light_ab": {
+      "notes": [
+        {
+          "pitch": "Ab3",
+          "beats": 0.5,
+          "gate": 0.35
+        },
+        {
+          "pitch": "C4",
+          "beats": 0.5,
+          "gate": 0.35
+        },
+        {
+          "pitch": "Eb4",
+          "beats": 0.5,
+          "gate": 0.35
+        },
+        {
+          "pitch": "G4",
+          "beats": 0.5,
+          "gate": 0.35
+        },
+        {
+          "pitch": "Eb4",
+          "beats": 0.5,
+          "gate": 0.35
+        },
+        {
+          "pitch": "C4",
+          "beats": 0.5,
+          "gate": 0.35
+        },
+        {
+          "pitch": "Bb3",
+          "beats": 0.5,
+          "gate": 0.35
+        },
+        {
+          "pitch": "rest",
+          "beats": 0.5
+        }
+      ]
+    }
+  },
+  "patterns": {
+    "c_minor": {
+      "beats": 4,
+      "tracks": {
+        "backing": "pulse",
+        "npc_heavy": "heavy_c",
+        "npc_light": "light_c"
+      }
+    },
+    "ab_major": {
+      "beats": 4,
+      "tracks": {
+        "backing": "pulse",
+        "npc_heavy": "heavy_ab",
+        "npc_light": "light_ab"
+      }
+    }
+  },
+  "arrangement": ["c_minor", "ab_major"]
+}

@@ -1,11 +1,15 @@
 #include "advanced_platformer/audio/audio_playback.hpp"
 
+#include <algorithm>
 #include <atomic>
 #include <cstddef>
 #include <memory>
 #include <optional>
 #include <span>
 #include <utility>
+#include <string_view>
+
+#include "advanced_platformer/audio/music_playback.hpp"
 
 #include "advanced_platformer/audio/sound_patch.hpp"
 
@@ -15,11 +19,24 @@ namespace advanced_platformer
     static_assert(std::atomic<bool>::is_always_lock_free);
 
     AudioPlayback::AudioPlayback()
+        : AudioPlayback(nullptr)
+    {
+    }
+
+    AudioPlayback::AudioPlayback(std::unique_ptr<MusicPlayback> music)
+        : musicParts(std::move(music))
     {
         for (auto& flag : finished)
         {
             flag.store(true, std::memory_order_relaxed);
         }
+    }
+
+    AudioPlayback::~AudioPlayback() = default;
+
+    bool AudioPlayback::setPartActive(std::string_view track, bool enabled)
+    {
+        return musicParts && musicParts->setPartActive(track, enabled);
     }
 
     void AudioPlayback::collectFinished()
@@ -123,6 +140,10 @@ namespace advanced_platformer
             else if (command.kind == CommandKind::Stop || command.kind == CommandKind::Replace)
             {
                 mixer.stop();
+                if (musicParts)
+                {
+                    musicParts->stop();
+                }
                 musicSlot.reset();
                 for (std::size_t slot = 0; slot < active.size(); ++slot)
                 {
@@ -142,6 +163,14 @@ namespace advanced_platformer
         }
         readIndex.store(read, std::memory_order_release);
         mixer.render(output);
+        if (musicParts)
+        {
+            musicParts->mix(output);
+            for (float& sample : output)
+            {
+                sample = std::clamp(sample, -1.0F, 1.0F);
+            }
+        }
         for (std::size_t slot = 0; slot < active.size(); ++slot)
         {
             if (active[slot] && !mixer.playing(slot))
