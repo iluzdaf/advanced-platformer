@@ -677,10 +677,12 @@ behaviour are documented in [Music authoring](CONTENT.md#music-authoring).
   approach. `playtestContent` builds that content on top of the shipped catalogs, so
   nothing of the bot ships with the game.
 - A level ends at the exit, when the player is defeated (which ends the run, as in the
-  game), when the player stands in no new cell for 15 seconds (stuck), or at the time
-  limit. After stuck or a timeout the run moves on to the next level. Stuck counts new
-  cells rather than distance to the exit because many routes, through shafts above all,
-  first lead away from the exit.
+  game), when for 15 seconds the player stands only in cells they were in during the
+  15 seconds before (stuck), or at the time limit. After stuck or a timeout the run moves
+  on to the next level. Stuck counts cells rather than distance to the exit because many
+  routes, through shafts above all, first lead away from the exit, and it lets a cell
+  count again once 15 seconds have passed so that walking back through rooms already
+  explored, as after a detour for a potion, is not mistaken for being stuck.
 - Each line holds the run and level seeds, the outcome, seconds, damage counted against
   the nearest live NPC's definition, health left, the cell the player ended in, pickups
   placed and collected, Lua script errors, the level's tiles as it starts (`map`, one

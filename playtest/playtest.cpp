@@ -12,7 +12,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <unordered_set>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -96,10 +96,12 @@ namespace advanced_platformer
 
     namespace
     {
+        constexpr float StuckSeconds = 15.0F;
+
         struct PlaytestWatch
         {
             int lastHealth = 0;
-            std::unordered_set<Cell, CellHash> visitedCells;
+            std::unordered_map<Cell, float, CellHash> lastVisitSeconds;
             float secondsSinceProgress = 0.0F;
             int steps = 0;
             int damageSinceSample = 0;
@@ -318,7 +320,9 @@ namespace advanced_platformer
 
             const glm::vec2 feet = feetOf(player.body.bounds);
             const Cell cell = cellAtFeet(level.map.tileSize(), feet);
-            if (watch.visitedCells.insert(cell).second)
+            const float now = static_cast<float>(watch.steps) * stepSeconds;
+            const auto [visit, firstVisit] = watch.lastVisitSeconds.try_emplace(cell, now);
+            if (firstVisit || now - visit->second >= StuckSeconds)
             {
                 watch.secondsSinceProgress = 0.0F;
             }
@@ -326,6 +330,7 @@ namespace advanced_platformer
             {
                 watch.secondsSinceProgress += stepSeconds;
             }
+            visit->second = now;
 
             result.healthLeft = health;
             result.endCell = cell;
@@ -368,7 +373,6 @@ namespace advanced_platformer
 
     namespace
     {
-        constexpr float StuckSeconds = 15.0F;
         constexpr float PacingSeconds = 0.5F;
 
         char tileLetter(const TileDefinition& tile)
