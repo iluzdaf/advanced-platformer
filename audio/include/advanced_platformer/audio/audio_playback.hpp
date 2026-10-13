@@ -4,6 +4,7 @@
 #include <atomic>
 #include <cstddef>
 #include <memory>
+#include <string_view>
 #include <optional>
 #include <span>
 
@@ -12,13 +13,18 @@
 
 namespace advanced_platformer
 {
+    class MusicPlayback;
+
     class AudioPlayback
     {
     public:
         AudioPlayback();
+        explicit AudioPlayback(std::unique_ptr<MusicPlayback> music);
+        ~AudioPlayback();
         bool play(std::shared_ptr<const SoundBuffer> sound, bool loop = false);
         bool replace(std::shared_ptr<const SoundBuffer> sound, bool loop = false);
         bool setMusic(std::shared_ptr<const SoundBuffer> sound);
+        bool setPartActive(std::string_view track, bool enabled);
         bool stop();
         void collectFinished();
         void render(std::span<float> output) noexcept;
@@ -50,6 +56,7 @@ namespace advanced_platformer
         std::array<std::atomic<bool>, SoundVoiceCount> finished;
         std::array<bool, SoundVoiceCount> active{};
         SoundMixer mixer;
+        std::unique_ptr<MusicPlayback> musicParts;
         std::optional<std::size_t> musicSlot;
     };
 }

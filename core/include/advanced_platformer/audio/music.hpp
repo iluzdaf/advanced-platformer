@@ -50,6 +50,13 @@ namespace advanced_platformer
         std::vector<std::string> arrangement;
     };
 
+    struct MusicParts
+    {
+        double tempo = 120;
+        std::map<std::string, SoundBuffer, std::less<>> tracks;
+    };
+
+    MusicParts renderMusicParts(const MusicSong& song);
     double musicPitchFrequency(std::string_view pitch);
     void validateMusicSong(const MusicSong& song);
     SoundBuffer renderMusic(const MusicSong& song, std::string_view soloTrack = {});

@@ -113,11 +113,14 @@ belong to.
 
 Music authoring uses these terms:
 
-| Term             | Meaning                                                                          |
-| ---------------- | -------------------------------------------------------------------------------- |
-| Music instrument | Named waveform and attack, decay, sustain, release, and gain settings.           |
-| Gate             | How long a musical note is held before its release begins, measured in beats.    |
-| Phrase           | Reusable sequence of notes and rests.                                            |
-| Pattern          | A length in beats and the phrases assigned to tracks for that section.           |
-| Arrangement      | Ordered pattern names forming a complete song loop.                              |
-| Track            | Named musical part assigned to one instrument; notes can overlap during release. |
+| Term                 | Meaning                                                                                             |
+| -------------------- | --------------------------------------------------------------------------------------------------- |
+| Music instrument     | Named waveform and attack, decay, sustain, release, and gain settings.                              |
+| Gate                 | How long a musical note is held before its release begins, measured in beats.                       |
+| Phrase               | Reusable sequence of notes and rests.                                                               |
+| Pattern              | A length in beats and the phrases assigned to tracks for that section.                              |
+| Arrangement          | Ordered pattern names forming a complete song loop.                                                 |
+| Track                | Named musical part assigned to one instrument; notes can overlap during release.                    |
+| Music part           | A separately rendered track whose gain can change while it follows the shared arrangement position. |
+| Bar                  | A musical grouping of beats; synchronized parts audition uses four beats per bar.                   |
+| Quantized transition | A requested musical change scheduled at a beat or bar boundary on the audio clock.                  |

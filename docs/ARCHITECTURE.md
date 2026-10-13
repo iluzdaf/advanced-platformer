@@ -622,6 +622,25 @@ A rejected edit or command leaves current playback running. `music/wave_file.cpp
 owns device-free preview export. The song format, controls, and audible loop-tail
 behaviour are documented in [Music authoring](CONTENT.md#music-authoring).
 
+`renderMusicParts` prepares each track separately with the same arrangement
+length. `MusicPlayback` owns those immutable buffers for an audition session,
+with one sample cursor shared by every track. `AudioDevice` can receive that
+session before starting its callback; shutdown joins the callback before the
+session and its buffers are destroyed. Parts do not consume the effect voice
+pool. The callback adds their gains to effects and clamps the final output.
+
+A separate bounded producer/consumer queue carries track activation requests.
+The callback schedules their gain changes at the next bar, deriving boundaries
+from absolute sample time and tempo rather than accumulating rounded bar lengths.
+Each part has one pending state; a newer state supersedes it, while repeating
+that state preserves its scheduled boundary. Linear gain ramps start from the
+current gain. Muted tracks retain musical position without being restarted.
+The audition interface uses four-beat bars and 50 ms fades; the playback component
+accepts other bar lengths and fade durations. It performs no allocation, locking,
+Lua execution, or buffer destruction on the callback. A global stop or replacement
+ends the parts session. Sessions are fixed at device creation; live content
+replacement and gameplay control remain later integration work.
+
 ### Animation
 
 - Clips come from `animations.json`. `selectAnimation` walks `AnimationPriority`,
