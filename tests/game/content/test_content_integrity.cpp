@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <vector>
 
+#include <glm/vec2.hpp>
+
 #include "content/game_catalogs.hpp"
 #include "advanced_platformer/level/level_generator.hpp"
 #include "advanced_platformer/level/room_pieces.hpp"
@@ -122,6 +124,7 @@ TEST_CASE("Every shipped Lua activity runs without errors", "[app][content][lua]
     situations[0].facts.targetKnown = true;
     situations[0].facts.targetVisible = true;
     situations[0].facts.targetInPrimaryRange = true;
+    situations[0].shots = {{situations[0].center - glm::vec2{40.0F, 0.0F}, {180.0F, 0.0F}}};
     situations[1].patrol = situations[0].patrol;
     situations[2].routeComplete = true;
     situations[2].patrol = situations[0].patrol;
