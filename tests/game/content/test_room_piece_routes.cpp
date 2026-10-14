@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <deque>
@@ -14,6 +15,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <glm/vec2.hpp>
@@ -32,6 +34,8 @@
 #include "content/room_pieces.hpp"
 #include "advanced_platformer/level/level_generator.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/combat/combat.hpp"
+#include "advanced_platformer/physics/segment_cast.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/navigation/actor_navigation.hpp"
 #include "advanced_platformer/navigation/navigation_fill.hpp"
@@ -850,9 +854,8 @@ TEST_CASE(
 
 namespace
 {
-    bool npcCanReachPlayer(
+    advanced_platformer::Actor placedNpc(
         const advanced_platformer::TileMap& map,
-        const GeneratedLevel& level,
         const advanced_platformer::ActorPlacement& placement,
         const advanced_platformer::GameCatalogs& catalogs)
     {
@@ -867,31 +870,95 @@ namespace
         {
             advanced_platformer::gripNearbySurface(map, npc.body.bounds, *npc.surfaceClimb);
         }
-        return advanced_platformer::actorCanReach(
-            map,
-            npc,
-            advanced_platformer::feetInCell(map.tileSize(), level.playerSpawn),
-            tests::FixedStepSeconds);
+        return npc;
     }
 
-    glm::vec2 cellCentre(const advanced_platformer::TileMap& map, Cell cell)
+    std::vector<Cell> standingCells(const Locations& reached, Cell nearest)
     {
-        const float half = static_cast<float>(map.tileSize()) / 2.0F;
-        return advanced_platformer::cellCorner(map.tileSize(), cell) + glm::vec2{half, half};
-    }
-
-    bool playerSeesNpc(
-        const advanced_platformer::TileMap& map,
-        const Locations& reached,
-        Cell spawn)
-    {
-        return std::ranges::any_of(
-            reached,
-            [&](const RouteLocation& location)
+        std::vector<Cell> cells;
+        for (const RouteLocation& location : reached)
+        {
+            if (std::ranges::find(cells, location.cell) == cells.end())
             {
-                return advanced_platformer::lineOfSight(
-                    map, cellCentre(map, location.cell), cellCentre(map, spawn));
+                cells.push_back(location.cell);
+            }
+        }
+        std::ranges::sort(
+            cells,
+            {},
+            [&](Cell cell) { return std::abs(cell.x - nearest.x) + std::abs(cell.y - nearest.y); });
+        return cells;
+    }
+
+    bool npcReachesPlayer(
+        const advanced_platformer::TileMap& map,
+        const advanced_platformer::Actor& npc,
+        const std::vector<Cell>& playerCells)
+    {
+        advanced_platformer::PlatformerConnectionCache cache;
+        return std::ranges::any_of(
+            playerCells,
+            [&](Cell cell)
+            {
+                const glm::vec2 goal = advanced_platformer::feetInCell(map.tileSize(), cell);
+                std::optional<advanced_platformer::NavigationPathResult> result =
+                    advanced_platformer::findActorPath(
+                        map, npc, goal, tests::FixedStepSeconds, cache);
+                while (result.has_value() &&
+                       result->status == advanced_platformer::NavigationPathStatus::Deferred)
+                {
+                    advanced_platformer::advanceNavigationFill(map, cache, 1);
+                    result = advanced_platformer::findActorPath(
+                        map, npc, goal, tests::FixedStepSeconds, cache);
+                }
+                return result.has_value() &&
+                       result->status == advanced_platformer::NavigationPathStatus::Found;
             });
+    }
+
+    bool shotReaches(
+        advanced_platformer::TileMap map,
+        const advanced_platformer::RangedWeapon& gun,
+        glm::vec2 from,
+        glm::vec2 to)
+    {
+        const glm::vec2 offset = to - from;
+        if (std::hypot(offset.x, offset.y) > gun.projectileSpeed * gun.projectileLifetime)
+        {
+            return false;
+        }
+        while (const std::optional<advanced_platformer::TileSegmentHit> hit =
+                   advanced_platformer::segmentCastMovementBlockingTiles(
+                       map, from, to, gun.projectileSize))
+        {
+            if (!gun.breaksTiles || !map.breakTile(hit->cell))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool playerShootsNpc(
+        const advanced_platformer::TileMap& map,
+        const advanced_platformer::Actor& player,
+        const advanced_platformer::Actor& npc,
+        const std::vector<Cell>& playerCells)
+    {
+        const auto* gun = std::get_if<advanced_platformer::RangedWeapon>(&*player.primaryAttack);
+        const glm::vec2 target = advanced_platformer::centerOf(npc.body.bounds);
+        const float halfHeight = player.body.bounds.size.y / 2.0F;
+        return gun != nullptr &&
+               std::ranges::any_of(
+                   playerCells,
+                   [&](Cell cell)
+                   {
+                       const glm::vec2 eyes =
+                           advanced_platformer::feetInCell(map.tileSize(), cell) -
+                           glm::vec2{0.0F, halfHeight};
+                       return advanced_platformer::lineOfSight(map, eyes, target) &&
+                              shotReaches(map, *gun, eyes, target);
+                   });
     }
 
     bool inTestedRoom(const Route& route, Cell cell)
@@ -901,7 +968,7 @@ namespace
                cell.y >= origin.y && cell.y < origin.y + route.catalog.roomSize.height;
     }
 
-    std::vector<std::string> npcsThePlayerNeverMeets(
+    std::vector<std::string> npcsThePlayerCannotFight(
         const GeneratedLevel& level,
         const Route& route,
         const advanced_platformer::GameCatalogs& catalogs)
@@ -910,18 +977,25 @@ namespace
             advanced_platformer::composeTileMap(level.mapRows, level.tileLegend, catalogs.tiles);
         const Locations reached =
             reachableFrom(playerMoves(map, catalogs).forward, {{level.playerSpawn}});
-        std::unordered_set<Cell, advanced_platformer::CellHash> touched;
-        for (const RouteLocation& location : reached)
-        {
-            touched.insert(location.cell);
-            touched.insert({location.cell.x, location.cell.y - 1});
-        }
+        const advanced_platformer::Actor player = advanced_platformer::composePlayer(catalogs, 0);
         std::vector<std::string> unmet;
         for (const advanced_platformer::ActorPlacement& placement : level.actors)
         {
-            if (inTestedRoom(route, placement.spawn) && !touched.contains(placement.spawn) &&
-                !playerSeesNpc(map, reached, placement.spawn) &&
-                !npcCanReachPlayer(map, level, placement, catalogs))
+            if (!inTestedRoom(route, placement.spawn))
+            {
+                continue;
+            }
+            const std::vector<Cell> playerCells = standingCells(reached, placement.spawn);
+            const bool playerReachesNpc = std::ranges::any_of(
+                playerCells,
+                [&](Cell cell)
+                {
+                    return cell == placement.spawn ||
+                           cell == Cell{placement.spawn.x, placement.spawn.y + 1};
+                });
+            const advanced_platformer::Actor npc = placedNpc(map, placement, catalogs);
+            if (!playerReachesNpc && !playerShootsNpc(map, player, npc, playerCells) &&
+                !npcReachesPlayer(map, npc, playerCells))
             {
                 unmet.push_back(
                     placement.definitionName + " in " +
@@ -933,9 +1007,7 @@ namespace
     }
 }
 
-TEST_CASE(
-    "Every placed NPC can meet the player or be seen by them in each route level",
-    "[app][content][generation]")
+TEST_CASE("Every placed NPC can fight the player in each route level", "[app][content][generation]")
 {
     const advanced_platformer::GameCatalogs catalogs =
         advanced_platformer::loadGameCatalogs("assets/catalogs");
@@ -950,12 +1022,10 @@ TEST_CASE(
         {
             continue;
         }
-        const std::vector<std::string> unmet = npcsThePlayerNeverMeets(*level, route, catalogs);
+        const std::vector<std::string> unmet = npcsThePlayerCannotFight(*level, route, catalogs);
         for (const std::string& npc : unmet)
         {
-            UNSCOPED_INFO(
-                route.name << ": the player and the " << npc
-                           << " never meet and the player never sees it");
+            UNSCOPED_INFO(route.name << ": the player and the " << npc << " can never fight");
         }
         CHECK(unmet.empty());
     }
