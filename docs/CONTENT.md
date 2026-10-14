@@ -165,7 +165,11 @@ wall, and starts holding it, the ceiling first; its patrol ends may be on a wall
 to reach both its ends from its spawn. A flyer must spawn in open air, with no blocked tile
 right under it. Errors name the piece, `mirrored` when it is the flipped copy, and the placement's
 `id`. Every pickup must be within the player's reach, or rest on a breakable tile that
-drops it within reach; the content tests check this. No spot the player can reach may
+drops it within reach; the content tests check this. Every placed NPC must be one
+the player can fight: the player can reach it, shoot it from somewhere they can stand (in
+sight, in the gun's range, through nothing but tiles the shot breaks), or it can reach
+somewhere the player can stand. Grass blocks sight, so an NPC hidden in grass the player
+can never reach must be able to come out to them; the content tests check this as well. No spot the player can reach may
 cut them off from the exit, so a pit or ledge they can fall to needs a way back up that
 navigation can plan: a step one tile up, or two tiles up from a ledge with a free column
 before the next one and nothing above the takeoff. The content tests check this too, in
