@@ -166,8 +166,8 @@ to reach both its ends from its spawn. A flyer must spawn in open air, with no b
 right under it. Errors name the piece, `mirrored` when it is the flipped copy, and the placement's
 `id`. Every pickup must be within the player's reach, or rest on a breakable tile that
 drops it within reach; the content tests check this. Grass hides whatever stands in it,
-so every grass cell must be one the player can stand in, or stand right under; the content
-tests check this as well. No spot the player can reach may
+so every grass cell must be one the player can stand in, or stand right under, unless it
+hangs from a ceiling, where climbers hide; the content tests check this as well. No spot the player can reach may
 cut them off from the exit, so a pit or ledge they can fall to needs a way back up that
 navigation can plan: a step one tile up, or two tiles up from a ledge with a free column
 before the next one and nothing above the takeoff. The content tests check this too, in

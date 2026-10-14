@@ -882,7 +882,8 @@ namespace
         std::vector<std::string> unreached;
         for (const Cell cell : grassCells(level))
         {
-            if (!touched.contains(cell))
+            const bool hangsFromCeiling = map.blocksMovement({cell.x, cell.y - 1});
+            if (!hangsFromCeiling && !touched.contains(cell))
             {
                 unreached.push_back(spotIn(level, catalog, cell));
             }
