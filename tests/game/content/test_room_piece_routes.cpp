@@ -18,6 +18,8 @@
 
 #include <glm/vec2.hpp>
 
+#include "content/actor_catalog.hpp"
+#include "content/actor_definition.hpp"
 #include "content/game_catalogs.hpp"
 #include "content/item_catalog.hpp"
 #include "content/pickup_catalog.hpp"
@@ -30,6 +32,7 @@
 #include "content/room_pieces.hpp"
 #include "advanced_platformer/level/level_generator.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/navigation/actor_navigation.hpp"
 #include "advanced_platformer/navigation/navigation_fill.hpp"
 #include "advanced_platformer/navigation/platformer_connection_cache.hpp"
@@ -37,6 +40,7 @@
 #include "advanced_platformer/navigation/route.hpp"
 #include "advanced_platformer/world/level_validation.hpp"
 #include "advanced_platformer/world/pickup.hpp"
+#include "advanced_platformer/world/sight.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
 #include "advanced_platformer/world/world.hpp"
 #include "support/fixed_step.hpp"
@@ -846,27 +850,60 @@ TEST_CASE(
 
 namespace
 {
-    std::vector<Cell> grassCells(const GeneratedLevel& level)
+    bool npcCanReachPlayer(
+        const advanced_platformer::TileMap& map,
+        const GeneratedLevel& level,
+        const advanced_platformer::ActorPlacement& placement,
+        const advanced_platformer::GameCatalogs& catalogs)
     {
-        std::vector<Cell> cells;
-        for (int y = 0; y < static_cast<int>(level.mapRows.size()); ++y)
+        advanced_platformer::Actor npc = advanced_platformer::composeActor(
+            advanced_platformer::actorDefinition(catalogs.actors, placement.definitionName),
+            catalogs.animations,
+            0,
+            advanced_platformer::feetInCell(map.tileSize(), placement.spawn),
+            std::nullopt,
+            catalogs.machines);
+        if (npc.surfaceClimb.has_value())
         {
-            const std::string& row = level.mapRows[static_cast<std::size_t>(y)];
-            for (int x = 0; x < static_cast<int>(row.size()); ++x)
-            {
-                const auto tile = level.tileLegend.find(row[static_cast<std::size_t>(x)]);
-                if (tile != level.tileLegend.end() && tile->second == "grass")
-                {
-                    cells.push_back({x, y});
-                }
-            }
+            advanced_platformer::gripNearbySurface(map, npc.body.bounds, *npc.surfaceClimb);
         }
-        return cells;
+        return advanced_platformer::actorCanReach(
+            map,
+            npc,
+            advanced_platformer::feetInCell(map.tileSize(), level.playerSpawn),
+            tests::FixedStepSeconds);
     }
 
-    std::vector<std::string> grassOutOfReach(
+    glm::vec2 cellCentre(const advanced_platformer::TileMap& map, Cell cell)
+    {
+        const float half = static_cast<float>(map.tileSize()) / 2.0F;
+        return advanced_platformer::cellCorner(map.tileSize(), cell) + glm::vec2{half, half};
+    }
+
+    bool playerSeesNpc(
+        const advanced_platformer::TileMap& map,
+        const Locations& reached,
+        Cell spawn)
+    {
+        return std::ranges::any_of(
+            reached,
+            [&](const RouteLocation& location)
+            {
+                return advanced_platformer::lineOfSight(
+                    map, cellCentre(map, location.cell), cellCentre(map, spawn));
+            });
+    }
+
+    bool inTestedRoom(const Route& route, Cell cell)
+    {
+        const Cell origin = originOf(route.catalog, route, route.testedSlot);
+        return cell.x >= origin.x && cell.x < origin.x + route.catalog.roomSize.width &&
+               cell.y >= origin.y && cell.y < origin.y + route.catalog.roomSize.height;
+    }
+
+    std::vector<std::string> npcsThePlayerNeverMeets(
         const GeneratedLevel& level,
-        const RoomPieces& catalog,
+        const Route& route,
         const advanced_platformer::GameCatalogs& catalogs)
     {
         const advanced_platformer::TileMap map =
@@ -879,22 +916,25 @@ namespace
             touched.insert(location.cell);
             touched.insert({location.cell.x, location.cell.y - 1});
         }
-        std::vector<std::string> unreached;
-        for (const Cell cell : grassCells(level))
+        std::vector<std::string> unmet;
+        for (const advanced_platformer::ActorPlacement& placement : level.actors)
         {
-            const bool hangsFromCeiling = map.blocksMovement({cell.x, cell.y - 1});
-            if (!hangsFromCeiling && !touched.contains(cell))
+            if (inTestedRoom(route, placement.spawn) && !touched.contains(placement.spawn) &&
+                !playerSeesNpc(map, reached, placement.spawn) &&
+                !npcCanReachPlayer(map, level, placement, catalogs))
             {
-                unreached.push_back(spotIn(level, catalog, cell));
+                unmet.push_back(
+                    placement.definitionName + " in " +
+                    spotIn(level, route.catalog, placement.spawn));
             }
         }
-        std::ranges::sort(unreached);
-        return unreached;
+        std::ranges::sort(unmet);
+        return unmet;
     }
 }
 
 TEST_CASE(
-    "Every grass cell in a route level is within the player's reach",
+    "Every placed NPC can meet the player or be seen by them in each route level",
     "[app][content][generation]")
 {
     const advanced_platformer::GameCatalogs catalogs =
@@ -910,11 +950,13 @@ TEST_CASE(
         {
             continue;
         }
-        const std::vector<std::string> unreached = grassOutOfReach(*level, route.catalog, catalogs);
-        for (const std::string& spot : unreached)
+        const std::vector<std::string> unmet = npcsThePlayerNeverMeets(*level, route, catalogs);
+        for (const std::string& npc : unmet)
         {
-            UNSCOPED_INFO(route.name << ": the player cannot reach grass at " << spot);
+            UNSCOPED_INFO(
+                route.name << ": the player and the " << npc
+                           << " never meet and the player never sees it");
         }
-        CHECK(unreached.empty());
+        CHECK(unmet.empty());
     }
 }
