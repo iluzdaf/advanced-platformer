@@ -1,0 +1,8 @@
+{
+  "machines": {
+    "bot": {
+      "states": [{ "name": "walk", "does": { "script": "bot", "activity": "walk" } }],
+      "transitions": []
+    }
+  }
+}

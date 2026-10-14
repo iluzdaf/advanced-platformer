@@ -57,6 +57,7 @@ namespace advanced_platformer
         std::string outcome;
         float seconds = 0.0F;
         std::map<std::string, int> damageByNearestNpc;
+        std::map<std::string, int> damageByBotState;
         int healthLeft = 0;
         std::array<int, 2> endCell{};
         int pickupsPlaced = 0;
@@ -150,6 +151,12 @@ namespace advanced_platformer
                 }
             }
             return nearest;
+        }
+
+        std::string botStateName(const Actor& player)
+        {
+            return player.machine.has_value() ? activeNpcMachineState(*player.machine).name
+                                              : "none";
         }
 
         bool targetsPlayer(const Actor& actor, const Actor& player)
@@ -304,6 +311,7 @@ namespace advanced_platformer
         void observeStep(
             PlaytestWatch& watch,
             const GameLevel& level,
+            const std::string& botState,
             float stepSeconds,
             LevelPlaytest& result)
         {
@@ -313,6 +321,7 @@ namespace advanced_platformer
             {
                 result.damageByNearestNpc[nearestNpcName(level, player)] +=
                     watch.lastHealth - health;
+                result.damageByBotState[botState] += watch.lastHealth - health;
                 watch.damageSinceSample += watch.lastHealth - health;
             }
             watch.lastHealth = health;
@@ -421,13 +430,14 @@ namespace advanced_platformer
             PlaytestWatch watch;
             watch.lastHealth = healthOf(playerOf(level));
             watch.pickupsLeft = placedPickupsLeft(level);
-            observeStep(watch, level, 0.0F, result);
+            observeStep(watch, level, botStateName(playerOf(level)), 0.0F, result);
             recordPacing(watch, level, stepSeconds, result);
 
             while (result.seconds < secondsPerLevel)
             {
                 const Actor& player = playerOf(level);
                 const std::string nearest = nearestNpcName(level, player);
+                const std::string botState = botStateName(player);
                 const int healthBefore = healthOf(player);
                 PacingSample last = pacingSample(level, player, 0.0F);
 
@@ -441,6 +451,7 @@ namespace advanced_platformer
                 {
                     result.outcome = PlaytestOutcome::Defeated;
                     result.damageByNearestNpc[nearest] += healthBefore;
+                    result.damageByBotState[botState] += healthBefore;
                     result.healthLeft = 0;
                     last.seconds = watchedSeconds(watch, stepSeconds);
                     last.health = 0;
@@ -460,7 +471,7 @@ namespace advanced_platformer
                     result.pacing.push_back(std::move(last));
                     return result;
                 }
-                observeStep(watch, level, stepSeconds, result);
+                observeStep(watch, level, botState, stepSeconds, result);
                 if (watch.secondsSinceProgress >= StuckSeconds)
                 {
                     result.outcome = PlaytestOutcome::Stuck;
@@ -528,6 +539,7 @@ namespace advanced_platformer
             .outcome = std::string(outcomeName(level.outcome)),
             .seconds = level.seconds,
             .damageByNearestNpc = level.damageByNearestNpc,
+            .damageByBotState = level.damageByBotState,
             .healthLeft = level.healthLeft,
             .endCell = {level.endCell.x, level.endCell.y},
             .pickupsPlaced = level.pickupsPlaced,

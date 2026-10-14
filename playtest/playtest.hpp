@@ -57,6 +57,7 @@ namespace advanced_platformer
         PlaytestOutcome outcome = PlaytestOutcome::Timeout;
         float seconds = 0.0F;
         std::map<std::string, int> damageByNearestNpc;
+        std::map<std::string, int> damageByBotState;
         int healthLeft = 0;
         Cell endCell;
         int pickupsPlaced = 0;
