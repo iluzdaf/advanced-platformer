@@ -1,11 +1,14 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
 #include "content/game_catalogs.hpp"
 #include "advanced_platformer/level/level_generator.hpp"
 #include "advanced_platformer/level/room_pieces.hpp"
+#include "advanced_platformer/math/coordinates.hpp"
 #include "content/room_pieces.hpp"
 #include "content/npc_script_catalog.hpp"
 #include "level/level_composition.hpp"
@@ -56,6 +59,39 @@ TEST_CASE(
     REQUIRE_NOTHROW(
         advanced_platformer::validateRoomPieces(
             advanced_platformer::loadGameCatalogs("assets/catalogs"), tests::FixedStepSeconds));
+}
+
+namespace
+{
+    constexpr float NpcSpawnSpacingCells = 3.0F;
+
+    float cellsApart(advanced_platformer::Cell first, advanced_platformer::Cell second)
+    {
+        return std::hypot(
+            static_cast<float>(first.x - second.x), static_cast<float>(first.y - second.y));
+    }
+}
+
+TEST_CASE(
+    "No two NPCs in a shipped room piece spawn within 3 cells of each other",
+    "[app][content]")
+{
+    const auto pieces = advanced_platformer::loadRoomPieceCatalog("assets/catalogs/pieces.json");
+    for (const advanced_platformer::RoomPiece& piece : pieces.pieces)
+    {
+        for (std::size_t first = 0; first < piece.actors.size(); ++first)
+        {
+            for (std::size_t second = first + 1; second < piece.actors.size(); ++second)
+            {
+                INFO(
+                    piece.name << ": " << piece.actors[first].id << " and "
+                               << piece.actors[second].id);
+                CHECK(
+                    cellsApart(piece.actors[first].spawn, piece.actors[second].spawn) >=
+                    NpcSpawnSpacingCells);
+            }
+        }
+    }
 }
 
 TEST_CASE("Every shipped Lua activity resolves", "[app][content][lua]")

@@ -174,6 +174,8 @@ cut them off from the exit, so a pit or ledge they can fall to needs a way back 
 navigation can plan: a step one tile up, or two tiles up from a ledge with a free column
 before the next one and nothing above the takeoff. The content tests check this too, in
 levels built around each piece, and name the piece and the cell the player is trapped in.
+No two NPCs in a piece may spawn within 3 cells of each other, so fights do not start
+clumped; the content tests check this and name the piece and both NPCs.
 
 Each room needs a piece of its role with exactly its doors, so the shipped catalog
 covers every door set a room can have; a level that has a room no piece fits fails to
