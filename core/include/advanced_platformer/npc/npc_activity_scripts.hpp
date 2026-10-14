@@ -33,6 +33,14 @@ namespace advanced_platformer
         bool operator==(const NpcPickupSnapshot&) const = default;
     };
 
+    struct NpcShotSnapshot
+    {
+        glm::vec2 center{0.0F, 0.0F};
+        glm::vec2 velocity{0.0F, 0.0F};
+
+        bool operator==(const NpcShotSnapshot&) const = default;
+    };
+
     struct NpcActivitySnapshot
     {
         glm::vec2 feet = {0.0F, 0.0F};
@@ -51,6 +59,7 @@ namespace advanced_platformer
         std::vector<NpcPickupSnapshot> pickups;
         std::vector<glm::vec2> unexploredDoors;
         std::vector<int> roomsToUnexploredDoors;
+        std::vector<NpcShotSnapshot> shots;
     };
 
     struct NpcActivityCommand

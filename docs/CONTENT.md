@@ -342,6 +342,7 @@ states, which the script's facts share. [`common.lua`](../game/assets/scripts/co
 | `pickups`                | Every pickup in a room the NPC has entered: `feet`, `item` (its name in `items.json`), `quantity`, and `breakableBelow`, the center of the breakable tile the pickup rests on (`nil` otherwise). |
 | `unexploredDoors`        | For each door from a room the NPC has entered into one it has not, the feet of the place to stand nearest the doorway on the far side.                                                           |
 | `roomsToUnexploredDoors` | For each of `unexploredDoors`, in the same order, how many entered rooms the NPC walks through after its own to reach that door: 0 when the door leads out of the room it stands in.             |
+| `shots`                  | Each shot from an opposing team that the NPC sees within `noticeDistance`: its `center` and `velocity` in pixels per second.                                                                     |
 
 | Command                                          | Meaning                                                                          |
 | ------------------------------------------------ | -------------------------------------------------------------------------------- |

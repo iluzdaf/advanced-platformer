@@ -6,10 +6,12 @@
 #include <string>
 #include <vector>
 
+#include <glm/geometric.hpp>
 #include <glm/vec2.hpp>
 
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
+#include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/input/input_state.hpp"
 #include "advanced_platformer/inventory/item.hpp"
 #include "advanced_platformer/math/aabb.hpp"
@@ -27,6 +29,7 @@
 #include "advanced_platformer/world/level_exit.hpp"
 #include "advanced_platformer/world/level_room.hpp"
 #include "advanced_platformer/world/pickup.hpp"
+#include "advanced_platformer/world/sight.hpp"
 #include "advanced_platformer/world/tile_map.hpp"
 #include "advanced_platformer/world/world.hpp"
 #include "advanced_platformer/world/world_requests.hpp"
@@ -59,6 +62,29 @@ namespace advanced_platformer
             }
             const float half = static_cast<float>(map.tileSize()) / 2.0F;
             return cellCorner(map.tileSize(), below) + glm::vec2{half, half};
+        }
+
+        std::vector<NpcShotSnapshot> shotsSeen(const NpcUpdate& update, const Actor& actor)
+        {
+            std::vector<NpcShotSnapshot> shots;
+            if (!actor.senses.has_value())
+            {
+                return shots;
+            }
+            const glm::vec2 eyes = centerOf(actor.body.bounds);
+            const float reach = actor.senses->noticeDistance;
+            for (const Projectile& projectile : update.world.projectiles())
+            {
+                const glm::vec2 center = centerOf(projectile.bounds);
+                const glm::vec2 offset = center - eyes;
+                if (areOpponents(actor.team, projectile.team) &&
+                    glm::dot(offset, offset) <= reach * reach &&
+                    lineOfSight(update.map, eyes, center))
+                {
+                    shots.push_back({.center = center, .velocity = projectile.velocity});
+                }
+            }
+            return shots;
         }
 
         NpcActivitySnapshot activitySnapshot(
@@ -116,6 +142,7 @@ namespace advanced_platformer
             snapshot.unexploredDoors = brain.discovery.unexploredDoors;
             snapshot.roomsToUnexploredDoors = roomsToUnexploredDoors(
                 brain.discovery, rooms, cellAtFeet(update.map.tileSize(), snapshot.feet));
+            snapshot.shots = shotsSeen(update, actor);
             return snapshot;
         }
     }
