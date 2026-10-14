@@ -228,7 +228,8 @@ TEST_CASE("A room piece file says how a run's levels grow", "[app][content][gene
 {
     FixtureDocument document = fixturePieces();
     document.catalog["run"] =
-        tests::parseJson(R"({"grid": [5, 3], "firstRooms": 4, "roomsPerLevel": 2, "maxRooms": 9})");
+        tests::parseJson(R"({"grid": [5, 3], "firstRooms": 4, "roomsPerLevel": 2, "maxRooms": 9,
+                             "mainRoutePercent": 60, "sideBranchRooms": 2})");
 
     const advanced_platformer::RoomPieces catalog = loadFixture(document);
 
@@ -237,6 +238,8 @@ TEST_CASE("A room piece file says how a run's levels grow", "[app][content][gene
     REQUIRE(catalog.run.firstRooms == 4);
     REQUIRE(catalog.run.roomsPerLevel == 2);
     REQUIRE(catalog.run.maxRooms == 9);
+    REQUIRE(catalog.run.mainRoutePercent == 60);
+    REQUIRE(catalog.run.sideBranchRooms == 2);
 
     tests::eraseKey(document.catalog["run"], "grid");
     const advanced_platformer::RoomPieces defaulted = loadFixture(document);
@@ -248,7 +251,8 @@ TEST_CASE("A room piece file rejects runs it cannot build", "[app][content][gene
 {
     FixtureDocument document = fixturePieces();
     document.catalog["run"] =
-        tests::parseJson(R"({"grid": [3, 3], "firstRooms": 4, "roomsPerLevel": 1, "maxRooms": 6})");
+        tests::parseJson(R"({"grid": [3, 3], "firstRooms": 4, "roomsPerLevel": 1, "maxRooms": 6,
+                             "mainRoutePercent": 60, "sideBranchRooms": 2})");
     auto& run = document.catalog["run"];
 
     SECTION("No run")
@@ -279,6 +283,21 @@ TEST_CASE("A room piece file rejects runs it cannot build", "[app][content][gene
         requireRejected(
             document,
             "run.maxRooms: expected at least 2 rooms and no more than the grid's 9 slots");
+    }
+    SECTION("No main route")
+    {
+        run["mainRoutePercent"] = 0;
+        requireRejected(document, "run.mainRoutePercent: expected 1 to 100");
+    }
+    SECTION("A main route longer than the level")
+    {
+        run["mainRoutePercent"] = 101;
+        requireRejected(document, "run.mainRoutePercent: expected 1 to 100");
+    }
+    SECTION("No side branches")
+    {
+        run["sideBranchRooms"] = 0;
+        requireRejected(document, "run.sideBranchRooms: expected at least 1 room");
     }
     SECTION("An empty grid")
     {

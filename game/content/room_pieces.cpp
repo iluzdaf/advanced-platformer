@@ -128,6 +128,8 @@ namespace advanced_platformer
         int firstRooms = 0;
         int roomsPerLevel = 0;
         int maxRooms = 0;
+        int mainRoutePercent = 0;
+        int sideBranchRooms = 0;
     };
 
     struct RoomPieceCatalogJson
@@ -516,6 +518,16 @@ namespace advanced_platformer
             if (run.roomsPerLevel < 0)
             {
                 failJson(sourceName, "run.roomsPerLevel", "expected zero or more rooms");
+            }
+            run.mainRoutePercent = json.mainRoutePercent;
+            run.sideBranchRooms = json.sideBranchRooms;
+            if (run.mainRoutePercent < 1 || run.mainRoutePercent > 100)
+            {
+                failJson(sourceName, "run.mainRoutePercent", "expected 1 to 100");
+            }
+            if (run.sideBranchRooms < 1)
+            {
+                failJson(sourceName, "run.sideBranchRooms", "expected at least 1 room");
             }
             return run;
         }

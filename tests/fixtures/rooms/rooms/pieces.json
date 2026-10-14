@@ -4,7 +4,9 @@
     "grid": [3, 1],
     "firstRooms": 3,
     "roomsPerLevel": 0,
-    "maxRooms": 3
+    "maxRooms": 3,
+    "mainRoutePercent": 60,
+    "sideBranchRooms": 2
   },
   "tileLegend": {
     ".": "empty",

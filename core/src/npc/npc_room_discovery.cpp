@@ -52,12 +52,10 @@ namespace advanced_platformer
             return nearest;
         }
 
-        void addDoorways(
-            std::vector<glm::vec2>& doors,
+        std::vector<Cell> openingsBetween(
             const TileMap& map,
             const LevelRoom& from,
-            const LevelRoom& to,
-            glm::vec2 bodySize)
+            const LevelRoom& to)
         {
             const Cell first{
                 std::max(from.origin.x, to.origin.x), std::max(from.origin.y, to.origin.y)};
@@ -66,26 +64,20 @@ namespace advanced_platformer
                 std::min(from.origin.y + from.size.height, to.origin.y + to.size.height) - 1};
             const bool column = first.x == last.x && last.y - first.y >= 2;
             const bool row = first.y == last.y && last.x - first.x >= 2;
+            std::vector<Cell> middles;
             if (!column && !row)
             {
-                return;
+                return middles;
             }
             const Cell step = column ? Cell{0, 1} : Cell{1, 0};
             std::vector<Cell> opening;
             const auto closeOpening = [&]
             {
-                if (opening.empty())
+                if (!opening.empty())
                 {
-                    return;
+                    middles.push_back(opening[opening.size() / 2]);
+                    opening.clear();
                 }
-                const Cell middle = opening[opening.size() / 2];
-                if (const std::optional<Cell> resting =
-                        restingCellNearest(map, to, middle, bodySize);
-                    resting.has_value())
-                {
-                    doors.push_back(feetInCell(map.tileSize(), *resting));
-                }
-                opening.clear();
             };
             for (Cell cell{first.x + step.x, first.y + step.y}; cell != last;
                  cell = {cell.x + step.x, cell.y + step.y})
@@ -100,15 +92,18 @@ namespace advanced_platformer
                 }
             }
             closeOpening();
+            return middles;
         }
 
-        std::vector<glm::vec2> unexploredDoorsOf(
-            const RoomDiscovery& discovery,
+        void findDoors(
+            RoomDiscovery& discovery,
             const std::vector<LevelRoom>& rooms,
             const TileMap& map,
             glm::vec2 bodySize)
         {
-            std::vector<glm::vec2> doors;
+            discovery.unexploredDoors.clear();
+            discovery.unexploredDoorRooms.clear();
+            discovery.enteredLinks.assign(rooms.size(), {});
             for (std::size_t from = 0; from < rooms.size(); ++from)
             {
                 if (!discovery.entered[from])
@@ -117,13 +112,33 @@ namespace advanced_platformer
                 }
                 for (std::size_t to = 0; to < rooms.size(); ++to)
                 {
-                    if (!discovery.entered[to])
+                    if (to == from)
                     {
-                        addDoorways(doors, map, rooms[from], rooms[to], bodySize);
+                        continue;
+                    }
+                    const std::vector<Cell> openings = openingsBetween(map, rooms[from], rooms[to]);
+                    if (openings.empty())
+                    {
+                        continue;
+                    }
+                    if (discovery.entered[to])
+                    {
+                        discovery.enteredLinks[from].push_back(to);
+                        continue;
+                    }
+                    for (const Cell middle : openings)
+                    {
+                        if (const std::optional<Cell> resting =
+                                restingCellNearest(map, rooms[to], middle, bodySize);
+                            resting.has_value())
+                        {
+                            discovery.unexploredDoors.push_back(
+                                feetInCell(map.tileSize(), *resting));
+                            discovery.unexploredDoorRooms.push_back(from);
+                        }
                     }
                 }
             }
-            return doors;
         }
     }
 
@@ -151,7 +166,7 @@ namespace advanced_platformer
         if (changed)
         {
             discovery.breaksWhenFound = map.brokenCells().size();
-            discovery.unexploredDoors = unexploredDoorsOf(discovery, rooms, map, body.size);
+            findDoors(discovery, rooms, map, body.size);
         }
     }
 
@@ -169,5 +184,42 @@ namespace advanced_platformer
             }
         }
         return false;
+    }
+
+    std::vector<int> roomsToUnexploredDoors(
+        const RoomDiscovery& discovery,
+        const std::vector<LevelRoom>& rooms,
+        Cell feet)
+    {
+        constexpr int Unreached = -1;
+        std::vector<int> away(rooms.size(), Unreached);
+        std::vector<std::size_t> queue;
+        for (std::size_t room = 0; room < rooms.size() && room < discovery.entered.size(); ++room)
+        {
+            if (discovery.entered[room] && inside(rooms[room], feet))
+            {
+                away[room] = 0;
+                queue.push_back(room);
+            }
+        }
+        for (std::size_t next = 0; next < queue.size(); ++next)
+        {
+            const std::size_t room = queue[next];
+            for (const std::size_t linked : discovery.enteredLinks[room])
+            {
+                if (away[linked] == Unreached)
+                {
+                    away[linked] = away[room] + 1;
+                    queue.push_back(linked);
+                }
+            }
+        }
+        std::vector<int> result;
+        result.reserve(discovery.unexploredDoorRooms.size());
+        for (const std::size_t room : discovery.unexploredDoorRooms)
+        {
+            result.push_back(away[room] == Unreached ? static_cast<int>(rooms.size()) : away[room]);
+        }
+        return result;
     }
 }

@@ -2,6 +2,7 @@
 #include <catch2/matchers/catch_matchers_string.hpp>
 
 #include <algorithm>
+#include <cstdlib>
 #include <cstddef>
 #include <cstdint>
 #include <format>
@@ -24,11 +25,28 @@ namespace
 
     constexpr const char* FixturePieces = "tests/fixtures/rooms/rooms/pieces.json";
 
-    RoomPieces fixtureCatalog(advanced_platformer::GridSize grid, int rooms)
+    RoomPieces fixtureCatalog(
+        advanced_platformer::GridSize grid,
+        int rooms,
+        int mainRoutePercent = 60,
+        int sideBranchRooms = 2)
     {
         RoomPieces catalog = advanced_platformer::loadRoomPieceCatalog(FixturePieces);
-        catalog.run = {.grid = grid, .firstRooms = rooms, .roomsPerLevel = 0, .maxRooms = rooms};
+        catalog.run = {
+            .grid = grid,
+            .firstRooms = rooms,
+            .roomsPerLevel = 0,
+            .maxRooms = rooms,
+            .mainRoutePercent = mainRoutePercent,
+            .sideBranchRooms = sideBranchRooms};
         return catalog;
+    }
+
+    const advanced_platformer::GeneratedRoom& roomWith(
+        const GeneratedLevel& level,
+        const std::string& piece)
+    {
+        return *std::ranges::find(level.rooms, piece, &advanced_platformer::GeneratedRoom::piece);
     }
 }
 
@@ -153,6 +171,33 @@ TEST_CASE("A generated level names the piece in each room", "[app][content][gene
     }
 }
 
+TEST_CASE("The exit ends a main route of the run's share of rooms", "[app][content][generation]")
+{
+    const RoomPieces catalog = fixtureCatalog({9, 1}, 5);
+    std::set<int> exitSides;
+    for (std::uint32_t seed = 1; seed <= 10; ++seed)
+    {
+        const GeneratedLevel level =
+            advanced_platformer::generateLevel(catalog, 1, seed, "pieces.json");
+        INFO("seed " << seed);
+
+        const int start = roomWith(level, "start").origin.x;
+        const int exit = roomWith(level, "exit").origin.x;
+        REQUIRE(std::abs(exit - start) == 2 * 7);
+        exitSides.insert(exit > start ? 1 : -1);
+    }
+    REQUIRE(exitSides.size() == 2);
+}
+
+TEST_CASE("Side branches grow no longer than the run allows", "[app][content][generation]")
+{
+    REQUIRE_NOTHROW(
+        advanced_platformer::generateLevel(fixtureCatalog({9, 1}, 7, 50, 3), 1, 1, "pieces.json"));
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::generateLevel(fixtureCatalog({9, 1}, 7, 50, 2), 1, 1, "pieces.json"),
+        "Could not grow 7 rooms with a 4-room main route in a 9 by 1 grid");
+}
+
 TEST_CASE("A mirrored piece flips its placements with its map", "[app][content][generation]")
 {
     RoomPieces catalog = fixtureCatalog({2, 1}, 2);
@@ -196,7 +241,13 @@ TEST_CASE(
 TEST_CASE("Each level adds rooms until the run's cap", "[app][content][generation]")
 {
     RoomPieces catalog = advanced_platformer::loadRoomPieceCatalog(FixturePieces);
-    catalog.run = {.grid = {9, 1}, .firstRooms = 3, .roomsPerLevel = 2, .maxRooms = 7};
+    catalog.run = {
+        .grid = {9, 1},
+        .firstRooms = 3,
+        .roomsPerLevel = 2,
+        .maxRooms = 7,
+        .mainRoutePercent = 50,
+        .sideBranchRooms = 4};
     const auto roomsIn = [&](int levelNumber)
     {
         const GeneratedLevel level =

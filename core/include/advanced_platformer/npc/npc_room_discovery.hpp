@@ -17,6 +17,8 @@ namespace advanced_platformer
     {
         std::vector<bool> entered;
         std::vector<glm::vec2> unexploredDoors;
+        std::vector<std::size_t> unexploredDoorRooms;
+        std::vector<std::vector<std::size_t>> enteredLinks;
         std::size_t breaksWhenFound = 0;
     };
 
@@ -25,6 +27,11 @@ namespace advanced_platformer
         const std::vector<LevelRoom>& rooms,
         const TileMap& map,
         const Aabb& body);
+
+    std::vector<int> roomsToUnexploredDoors(
+        const RoomDiscovery& discovery,
+        const std::vector<LevelRoom>& rooms,
+        Cell feet);
 
     bool discovered(const RoomDiscovery& discovery, const std::vector<LevelRoom>& rooms, Cell cell);
 }

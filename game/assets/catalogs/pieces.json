@@ -3,7 +3,9 @@
   "run": {
     "firstRooms": 6,
     "roomsPerLevel": 3,
-    "maxRooms": 18
+    "maxRooms": 18,
+    "mainRoutePercent": 60,
+    "sideBranchRooms": 2
   },
   "tileLegend": {
     ".": "empty",

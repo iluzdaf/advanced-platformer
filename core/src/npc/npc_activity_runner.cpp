@@ -114,6 +114,8 @@ namespace advanced_platformer
                         .breakableBelow = breakableTileBelow(update.map, feet)});
             }
             snapshot.unexploredDoors = brain.discovery.unexploredDoors;
+            snapshot.roomsToUnexploredDoors = roomsToUnexploredDoors(
+                brain.discovery, rooms, cellAtFeet(update.map.tileSize(), snapshot.feet));
             return snapshot;
         }
     }

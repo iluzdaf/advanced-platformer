@@ -67,21 +67,25 @@ always gives the same levels. The `run` block of [`pieces.json`](#room-pieces) s
 the levels grow:
 
 ```json
-"run": { "firstRooms": 6, "roomsPerLevel": 3, "maxRooms": 18 }
+"run": { "firstRooms": 6, "roomsPerLevel": 3, "maxRooms": 18, "mainRoutePercent": 60, "sideBranchRooms": 2 }
 ```
 
-| Field           | Required | Meaning                                                          |
-| --------------- | -------- | ---------------------------------------------------------------- |
-| `firstRooms`    | Yes      | How many rooms level 1 has, from 2 up to `maxRooms`.             |
-| `roomsPerLevel` | Yes      | How many rooms each later level adds. Zero or more.              |
-| `maxRooms`      | Yes      | The most rooms a level has, from 2 up to the number of slots.    |
-| `grid`          | No       | The grid of room slots, `[columns, rows]`. Defaults to `[9, 7]`. |
+| Field              | Required | Meaning                                                                                                |
+| ------------------ | -------- | ------------------------------------------------------------------------------------------------------ |
+| `firstRooms`       | Yes      | How many rooms level 1 has, from 2 up to `maxRooms`.                                                   |
+| `roomsPerLevel`    | Yes      | How many rooms each later level adds. Zero or more.                                                    |
+| `maxRooms`         | Yes      | The most rooms a level has, from 2 up to the number of slots.                                          |
+| `mainRoutePercent` | Yes      | The share of a level's rooms on the main route from the start to the exit, 1 to 100. At least 2 rooms. |
+| `sideBranchRooms`  | Yes      | The most rooms a side branch runs away from the main route. At least 1.                                |
+| `grid`             | No       | The grid of room slots, `[columns, rows]`. Defaults to `[9, 7]`.                                       |
 
 The rooms grow from the centre slot of the grid, each new room opening off one room
 already placed and touching no other, so they form branching corridors without loops.
-The start is the centre room, and the exit is the room the most doors away from it. A
-seed whose exit the player cannot reach is skipped for the next one, up to 100 seeds,
-and the level keeps the seed it settled on. A hot reload keeps that seed, and an edit
+The start is the centre room. The main route grows first, one room after another, and
+its last room is the exit. The other rooms then grow as side branches off any room but
+the exit, none more than `sideBranchRooms` rooms from the main route. A seed whose exit
+the player cannot reach is skipped for the next one, up to 100 seeds, and the level
+keeps the seed it settled on. A hot reload keeps that seed, and an edit
 that cuts off its exit is rejected like any other failed reload.
 Each room takes a random piece of its role whose doors are exactly the room's, flipped
 if the piece allows it. The pieces are copied onto one map with neighbours sharing the
@@ -99,7 +103,13 @@ loader reads the folder in file-name order.
 ```json
 {
   "roomSize": [20, 12],
-  "run": { "firstRooms": 6, "roomsPerLevel": 3, "maxRooms": 18 },
+  "run": {
+    "firstRooms": 6,
+    "roomsPerLevel": 3,
+    "maxRooms": 18,
+    "mainRoutePercent": 60,
+    "sideBranchRooms": 2
+  },
   "tileLegend": { ".": "empty", "#": "stone" }
 }
 ```
@@ -308,23 +318,24 @@ command or `nil`. Every hook gets `memory` last: one table per NPC and script, k
 states, which the script's facts share. [`common.lua`](../game/assets/scripts/common.lua) has `idle`, `patrol`, `chase`,
 `attack`, `search`, `retreat` and `watch`.
 
-| Snapshot              | Meaning                                                                                                                                                                                          |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `feet`, `center`      | The NPC's feet and body centre.                                                                                                                                                                  |
-| `health`              | `current` and `maximum`, when the NPC has health.                                                                                                                                                |
-| `targetFeet`          | The target's known feet, while it is known.                                                                                                                                                      |
-| `lastKnownTargetFeet` | Where the target was last seen or heard; `{0, 0}` before any.                                                                                                                                    |
-| `targetCenter`        | The living target's body centre now, seen or not.                                                                                                                                                |
-| `targetKind`          | The living target's name in `actors.json`, such as `bat` or `player`.                                                                                                                            |
-| `patrol`              | `firstFeet`, `secondFeet` and `headingToSecond`, when the NPC has a patrol.                                                                                                                      |
-| `footing`             | `left` and `right`: whether a walker could stand a body width that way.                                                                                                                          |
-| `facts`               | The [facts](#facts).                                                                                                                                                                             |
-| `stateElapsed`        | Seconds in this state.                                                                                                                                                                           |
-| `routeStatus`         | `found`, `unreachable` (the route ends as close to the goal as the NPC can get) or `deferred` (the engine is still working it out); `nil` before any route or after `clearRoute`.                |
-| `routeComplete`       | Whether the last route asked for has been followed to its end.                                                                                                                                   |
-| `exitFeet`            | The level exit's feet, once the NPC has entered the exit's room.                                                                                                                                 |
-| `pickups`             | Every pickup in a room the NPC has entered: `feet`, `item` (its name in `items.json`), `quantity`, and `breakableBelow`, the center of the breakable tile the pickup rests on (`nil` otherwise). |
-| `unexploredDoors`     | For each door from a room the NPC has entered into one it has not, the feet of the place to stand nearest the doorway on the far side.                                                           |
+| Snapshot                 | Meaning                                                                                                                                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `feet`, `center`         | The NPC's feet and body centre.                                                                                                                                                                  |
+| `health`                 | `current` and `maximum`, when the NPC has health.                                                                                                                                                |
+| `targetFeet`             | The target's known feet, while it is known.                                                                                                                                                      |
+| `lastKnownTargetFeet`    | Where the target was last seen or heard; `{0, 0}` before any.                                                                                                                                    |
+| `targetCenter`           | The living target's body centre now, seen or not.                                                                                                                                                |
+| `targetKind`             | The living target's name in `actors.json`, such as `bat` or `player`.                                                                                                                            |
+| `patrol`                 | `firstFeet`, `secondFeet` and `headingToSecond`, when the NPC has a patrol.                                                                                                                      |
+| `footing`                | `left` and `right`: whether a walker could stand a body width that way.                                                                                                                          |
+| `facts`                  | The [facts](#facts).                                                                                                                                                                             |
+| `stateElapsed`           | Seconds in this state.                                                                                                                                                                           |
+| `routeStatus`            | `found`, `unreachable` (the route ends as close to the goal as the NPC can get) or `deferred` (the engine is still working it out); `nil` before any route or after `clearRoute`.                |
+| `routeComplete`          | Whether the last route asked for has been followed to its end.                                                                                                                                   |
+| `exitFeet`               | The level exit's feet, once the NPC has entered the exit's room.                                                                                                                                 |
+| `pickups`                | Every pickup in a room the NPC has entered: `feet`, `item` (its name in `items.json`), `quantity`, and `breakableBelow`, the center of the breakable tile the pickup rests on (`nil` otherwise). |
+| `unexploredDoors`        | For each door from a room the NPC has entered into one it has not, the feet of the place to stand nearest the doorway on the far side.                                                           |
+| `roomsToUnexploredDoors` | For each of `unexploredDoors`, in the same order, how many entered rooms the NPC walks through after its own to reach that door: 0 when the door leads out of the room it stands in.             |
 
 | Command                                          | Meaning                                                                          |
 | ------------------------------------------------ | -------------------------------------------------------------------------------- |

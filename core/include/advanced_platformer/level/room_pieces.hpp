@@ -63,6 +63,8 @@ namespace advanced_platformer
         int firstRooms = 0;
         int roomsPerLevel = 0;
         int maxRooms = 0;
+        int mainRoutePercent = 0;
+        int sideBranchRooms = 0;
     };
 
     struct RoomPieces

@@ -94,6 +94,7 @@ belong to.
 | Room                | One grid slot of a generated level, with the doors the layout gave it. The generator fills it with a matching piece.                                  |
 | Room piece          | A hand-drawn room with a role and doors on its edges, one file in `pieces/`. A room gets one whose doors match exactly.                               |
 | Room layout         | The grid slots a generated level's rooms fill, the doors between them, and which room is the exit.                                                    |
+| Main route          | The rooms of a room layout from the start to the exit, grown first. The other rooms are side branches off it.                                         |
 | Generated level     | What the generator hands over: the pieces' map rows stitched into one, the legend, the placements in cells, and each room's piece (`GeneratedLevel`). |
 | Level               | A generated level composed into a map and world with the player in it, ready to play (`GameLevel`).                                                   |
 | Seed                | The number a generated level is built from. The same seed always builds the same level.                                                               |
