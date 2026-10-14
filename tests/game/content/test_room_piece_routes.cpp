@@ -843,3 +843,77 @@ TEST_CASE(
         CHECK(trapped.empty());
     }
 }
+
+namespace
+{
+    std::vector<Cell> grassCells(const GeneratedLevel& level)
+    {
+        std::vector<Cell> cells;
+        for (int y = 0; y < static_cast<int>(level.mapRows.size()); ++y)
+        {
+            const std::string& row = level.mapRows[static_cast<std::size_t>(y)];
+            for (int x = 0; x < static_cast<int>(row.size()); ++x)
+            {
+                const auto tile = level.tileLegend.find(row[static_cast<std::size_t>(x)]);
+                if (tile != level.tileLegend.end() && tile->second == "grass")
+                {
+                    cells.push_back({x, y});
+                }
+            }
+        }
+        return cells;
+    }
+
+    std::vector<std::string> grassOutOfReach(
+        const GeneratedLevel& level,
+        const RoomPieces& catalog,
+        const advanced_platformer::GameCatalogs& catalogs)
+    {
+        const advanced_platformer::TileMap map =
+            advanced_platformer::composeTileMap(level.mapRows, level.tileLegend, catalogs.tiles);
+        const Locations reached =
+            reachableFrom(playerMoves(map, catalogs).forward, {{level.playerSpawn}});
+        std::unordered_set<Cell, advanced_platformer::CellHash> touched;
+        for (const RouteLocation& location : reached)
+        {
+            touched.insert(location.cell);
+            touched.insert({location.cell.x, location.cell.y - 1});
+        }
+        std::vector<std::string> unreached;
+        for (const Cell cell : grassCells(level))
+        {
+            if (!touched.contains(cell))
+            {
+                unreached.push_back(spotIn(level, catalog, cell));
+            }
+        }
+        std::ranges::sort(unreached);
+        return unreached;
+    }
+}
+
+TEST_CASE(
+    "Every grass cell in a route level is within the player's reach",
+    "[app][content][generation]")
+{
+    const advanced_platformer::GameCatalogs catalogs =
+        advanced_platformer::loadGameCatalogs("assets/catalogs");
+    const RoomPieces shipped = shippedPieces();
+    std::vector<Route> routes = doorPairRoutes(shipped);
+    std::ranges::move(startRoutes(shipped), std::back_inserter(routes));
+    std::ranges::move(exitRoutes(shipped), std::back_inserter(routes));
+    for (const Route& route : routes)
+    {
+        const std::optional<GeneratedLevel> level = generateRoute(route);
+        if (!level.has_value())
+        {
+            continue;
+        }
+        const std::vector<std::string> unreached = grassOutOfReach(*level, route.catalog, catalogs);
+        for (const std::string& spot : unreached)
+        {
+            UNSCOPED_INFO(route.name << ": the player cannot reach grass at " << spot);
+        }
+        CHECK(unreached.empty());
+    }
+}
