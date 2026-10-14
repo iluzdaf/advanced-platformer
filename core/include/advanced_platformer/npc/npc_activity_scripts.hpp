@@ -50,6 +50,7 @@ namespace advanced_platformer
         std::optional<glm::vec2> exitFeet;
         std::vector<NpcPickupSnapshot> pickups;
         std::vector<glm::vec2> unexploredDoors;
+        std::vector<int> roomsToUnexploredDoors;
     };
 
     struct NpcActivityCommand

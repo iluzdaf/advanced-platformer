@@ -6,7 +6,6 @@
 #include <cstdint>
 #include <format>
 #include <limits>
-#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -58,7 +57,7 @@ namespace advanced_platformer
         {
             Cell grid;
             RoomDoors doors;
-            int depth = 0;
+            int branch = 0;
         };
 
         struct RoomLayout
@@ -92,38 +91,82 @@ namespace advanced_platformer
                 AllSides, [&](RoomSide side) { return roomAt(rooms, stepTowards(grid, side)); }));
         }
 
-        std::optional<std::vector<RoomSlot>> growRooms(
+        bool canAdd(GridSize grid, const std::vector<RoomSlot>& rooms, Cell next)
+        {
+            return contains(grid, next) && !roomAt(rooms, next) &&
+                   placedNeighbours(rooms, next) == 1;
+        }
+
+        void addRoom(std::vector<RoomSlot>& rooms, std::size_t parent, RoomSide side, int branch)
+        {
+            rooms[parent].doors = withDoor(rooms[parent].doors, side);
+            rooms.push_back(
+                {.grid = stepTowards(rooms[parent].grid, side),
+                 .doors = withDoor(RoomDoors{}, oppositeOf(side)),
+                 .branch = branch});
+        }
+
+        bool growMainRoute(
             GridSize grid,
-            int roomCount,
+            std::vector<RoomSlot>& rooms,
+            int routeRooms,
             LevelRandom& random)
         {
-            std::vector<RoomSlot> rooms{{.grid = {grid.width / 2, grid.height / 2}}};
+            while (std::cmp_less(rooms.size(), routeRooms))
+            {
+                std::vector<RoomSide> open;
+                for (const RoomSide side : AllSides)
+                {
+                    if (canAdd(grid, rooms, stepTowards(rooms.back().grid, side)))
+                    {
+                        open.push_back(side);
+                    }
+                }
+                if (open.empty())
+                {
+                    return false;
+                }
+                addRoom(rooms, rooms.size() - 1, open[randomBelow(random, open.size())], 0);
+            }
+            return true;
+        }
+
+        bool growSideBranches(
+            GridSize grid,
+            std::vector<RoomSlot>& rooms,
+            int roomCount,
+            int sideBranchRooms,
+            std::size_t exit,
+            LevelRandom& random)
+        {
             int tries = 0;
             while (std::cmp_less(rooms.size(), roomCount))
             {
                 if (++tries > roomCount * GrowthTriesPerRoom)
                 {
-                    return std::nullopt;
+                    return false;
                 }
                 const std::size_t parent = randomBelow(random, rooms.size());
                 const RoomSide side = AllSides[randomBelow(random, AllSides.size())];
-                const Cell next = stepTowards(rooms[parent].grid, side);
-                if (!contains(grid, next) || roomAt(rooms, next) ||
-                    placedNeighbours(rooms, next) != 1)
+                if (parent == exit || rooms[parent].branch >= sideBranchRooms ||
+                    !canAdd(grid, rooms, stepTowards(rooms[parent].grid, side)))
                 {
                     continue;
                 }
-                rooms[parent].doors = withDoor(rooms[parent].doors, side);
-                rooms.push_back(
-                    {.grid = next,
-                     .doors = withDoor(RoomDoors{}, oppositeOf(side)),
-                     .depth = rooms[parent].depth + 1});
+                addRoom(rooms, parent, side, rooms[parent].branch + 1);
             }
-            return rooms;
+            return true;
         }
 
-        RoomLayout layoutRooms(GridSize grid, int roomCount, LevelRandom& random)
+        int mainRouteRooms(const RunSettings& run, int roomCount)
         {
+            const int share = ((roomCount * run.mainRoutePercent) + 50) / 100;
+            return std::clamp(share, 2, roomCount);
+        }
+
+        RoomLayout layoutRooms(const RunSettings& run, int roomCount, LevelRandom& random)
+        {
+            const GridSize grid = run.grid;
             if (roomCount < 2 || roomCount > grid.width * grid.height)
             {
                 throw std::invalid_argument(
@@ -132,27 +175,25 @@ namespace advanced_platformer
                         grid.width * grid.height,
                         roomCount));
             }
+            const int routeRooms = mainRouteRooms(run, roomCount);
             for (int attempt = 0; attempt < LayoutAttempts; ++attempt)
             {
-                std::optional<std::vector<RoomSlot>> rooms = growRooms(grid, roomCount, random);
-                if (!rooms.has_value())
+                std::vector<RoomSlot> rooms{{.grid = {grid.width / 2, grid.height / 2}}};
+                if (!growMainRoute(grid, rooms, routeRooms, random))
                 {
                     continue;
                 }
-                RoomLayout layout{.grid = grid, .rooms = std::move(*rooms)};
-                for (std::size_t room = 1; room < layout.rooms.size(); ++room)
+                const std::size_t exit = rooms.size() - 1;
+                if (growSideBranches(grid, rooms, roomCount, run.sideBranchRooms, exit, random))
                 {
-                    if (layout.rooms[room].depth > layout.rooms[layout.exit].depth)
-                    {
-                        layout.exit = room;
-                    }
+                    return {.grid = grid, .rooms = std::move(rooms), .exit = exit};
                 }
-                return layout;
             }
             throw std::invalid_argument(
                 std::format(
-                    "Could not grow {} rooms in a {} by {} grid",
+                    "Could not grow {} rooms with a {}-room main route in a {} by {} grid",
                     roomCount,
+                    routeRooms,
                     grid.width,
                     grid.height));
         }
@@ -343,7 +384,7 @@ namespace advanced_platformer
     {
         LevelRandom random{seed};
         const RoomLayout layout =
-            layoutRooms(roomPieces.run.grid, roomsForLevel(roomPieces.run, levelNumber), random);
+            layoutRooms(roomPieces.run, roomsForLevel(roomPieces.run, levelNumber), random);
         std::vector<RoomChoice> choices;
         try
         {

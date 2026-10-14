@@ -325,8 +325,10 @@ Each NPC update has three steps:
   pathfinding, is engine work.
 - Each NPC update starts with `discoverRooms`, which marks the rooms the NPC's feet are
   in. When that or a broken tile changes anything, it works out the unexplored doors
-  again and keeps them in the brain's `RoomDiscovery`, so a snapshot copies them and
-  only filters the exit and pickups by room. A world without rooms hides nothing.
+  again and keeps them in the brain's `RoomDiscovery`, with the links between entered
+  rooms, so a snapshot copies them, counts the entered rooms between the NPC and each door
+  over those links, and only filters the exit and pickups by room. A world without rooms
+  hides nothing.
 - `LuaNpcScripts` loads each script into its own sandboxed environment: the base, math,
   string, and table libraries, no `require`, no files. Positions are `glm::vec2` bound
   as `vec2`, copied in and out; its constructor is a read-only global.

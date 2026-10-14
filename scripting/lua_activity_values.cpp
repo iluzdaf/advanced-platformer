@@ -212,6 +212,12 @@ namespace advanced_platformer
             doors.add(luaVector(lua, door));
         }
         result["unexploredDoors"] = doors;
+        sol::table roomsToDoors = lua.create_table();
+        for (const int rooms : snapshot.roomsToUnexploredDoors)
+        {
+            roomsToDoors.add(rooms);
+        }
+        result["roomsToUnexploredDoors"] = roomsToDoors;
 
         sol::table facts = lua.create_table();
         facts["targetKnown"] = snapshot.facts.targetKnown;

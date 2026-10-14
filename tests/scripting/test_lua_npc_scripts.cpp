@@ -261,6 +261,42 @@ TEST_CASE("A snapshot's unexplored doors reach Lua as positions", "[lua][npc]")
     REQUIRE(none.clearRoute);
 }
 
+TEST_CASE("A snapshot's rooms to each unexplored door reach Lua in the doors' order", "[lua][npc]")
+{
+    LuaNpcScripts scripts;
+    scripts.loadScriptText(
+        "example",
+        R"(
+            return {
+                activities = {
+                    decide = {
+                        description = 'Test activity decide',
+                        update = function(self, snapshot)
+                            local doors = snapshot.unexploredDoors
+                            local rooms = snapshot.roomsToUnexploredDoors
+                            local nearest = 1
+                            for index = 2, #doors do
+                                if rooms[index] < rooms[nearest] then
+                                    nearest = index
+                                end
+                            end
+                            return { routeTo = doors[nearest] }
+                        end
+                    }
+                }
+            }
+        )",
+        "command.lua");
+
+    NpcActivitySnapshot snapshot = commandSnapshot();
+    snapshot.unexploredDoors = {{72.0F, 64.0F}, {136.0F, 64.0F}, {200.0F, 64.0F}};
+    snapshot.roomsToUnexploredDoors = {2, 0, 1};
+    scripts.enter(FirstActor, Activity, snapshot);
+
+    REQUIRE(
+        scripts.update(FirstActor, Activity, snapshot, 0.5F).routeTo == glm::vec2{136.0F, 64.0F});
+}
+
 TEST_CASE("A script reads its health and asks to use an item by name", "[lua][npc]")
 {
     LuaNpcScripts scripts;

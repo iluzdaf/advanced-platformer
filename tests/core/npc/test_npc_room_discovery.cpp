@@ -133,6 +133,24 @@ TEST_CASE(
     REQUIRE(snapshotAt(map, world, explorer, RoomOneFeet).unexploredDoors.empty());
 }
 
+TEST_CASE("Each unexplored door counts the entered rooms between the NPC and it", "[npc][rooms]")
+{
+    const advanced_platformer::TileMap map = threeRoomMap();
+    advanced_platformer::World world;
+    world.setRooms(threeRooms());
+    const advanced_platformer::ActorId explorer = addExplorer(world, RoomOneFeet);
+
+    REQUIRE(
+        snapshotAt(map, world, explorer, RoomOneFeet).roomsToUnexploredDoors ==
+        std::vector<int>{0});
+    REQUIRE(
+        snapshotAt(map, world, explorer, RoomTwoFeet).roomsToUnexploredDoors ==
+        std::vector<int>{0});
+    REQUIRE(
+        snapshotAt(map, world, explorer, RoomOneFeet).roomsToUnexploredDoors ==
+        std::vector<int>{1});
+}
+
 TEST_CASE("A wall without an opening between two rooms is no door", "[npc][rooms]")
 {
     const advanced_platformer::TileMap map =

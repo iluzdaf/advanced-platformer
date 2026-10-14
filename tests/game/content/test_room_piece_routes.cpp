@@ -4,6 +4,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <deque>
 #include <iterator>
 #include <optional>
@@ -167,8 +168,15 @@ namespace
     std::optional<GeneratedLevel> generateRoute(Route route)
     {
         const int rooms = static_cast<int>(route.slots.size());
+        const int routeRooms =
+            std::abs(route.exitSlot.x - Centre.x) + std::abs(route.exitSlot.y - Centre.y) + 1;
         route.catalog.run = {
-            .grid = Grid, .firstRooms = rooms, .roomsPerLevel = 0, .maxRooms = rooms};
+            .grid = Grid,
+            .firstRooms = rooms,
+            .roomsPerLevel = 0,
+            .maxRooms = rooms,
+            .mainRoutePercent = routeRooms * 100 / rooms,
+            .sideBranchRooms = 1};
         for (std::uint32_t seed = 1; seed <= SeedsToTry; ++seed)
         {
             GeneratedLevel level;
