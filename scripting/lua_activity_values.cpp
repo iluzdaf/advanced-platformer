@@ -225,6 +225,7 @@ namespace advanced_platformer
                 "center", luaVector(lua, shot.center), "velocity", luaVector(lua, shot.velocity)));
         }
         result["shots"] = shots;
+        result["ceilingAbove"] = optionalVector(snapshot.ceilingAbove);
 
         sol::table facts = lua.create_table();
         facts["targetKnown"] = snapshot.facts.targetKnown;

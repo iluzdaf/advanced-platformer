@@ -343,6 +343,7 @@ states, which the script's facts share. [`common.lua`](../game/assets/scripts/co
 | `unexploredDoors`        | For each door from a room the NPC has entered into one it has not, the feet of the place to stand nearest the doorway on the far side.                                                           |
 | `roomsToUnexploredDoors` | For each of `unexploredDoors`, in the same order, how many entered rooms the NPC walks through after its own to reach that door: 0 when the door leads out of the room it stands in.             |
 | `shots`                  | Each shot from an opposing team that the NPC sees within `noticeDistance`: its `center` and `velocity` in pixels per second.                                                                     |
+| `ceilingAbove`           | The underside of the nearest solid tile straight above the NPC's centre; `nil` when none.                                                                                                        |
 
 | Command                                          | Meaning                                                                          |
 | ------------------------------------------------ | -------------------------------------------------------------------------------- |

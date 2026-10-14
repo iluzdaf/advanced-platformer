@@ -330,6 +330,38 @@ TEST_CASE("A snapshot's shots reach Lua with their centre and velocity", "[lua][
     REQUIRE(scripts.update(FirstActor, Activity, snapshot, 0.5F).clearRoute);
 }
 
+TEST_CASE("A snapshot's ceiling above reaches Lua", "[lua][npc]")
+{
+    LuaNpcScripts scripts;
+    scripts.loadScriptText(
+        "example",
+        R"(
+            return {
+                activities = {
+                    decide = {
+                        description = 'Test activity decide',
+                        update = function(self, snapshot)
+                            if snapshot.ceilingAbove == nil then
+                                return { clearRoute = true }
+                            end
+                            return { routeTo = snapshot.ceilingAbove }
+                        end
+                    }
+                }
+            }
+        )",
+        "command.lua");
+
+    NpcActivitySnapshot snapshot = commandSnapshot();
+    snapshot.ceilingAbove = glm::vec2{24.0F, 32.0F};
+    scripts.enter(FirstActor, Activity, snapshot);
+    REQUIRE(
+        scripts.update(FirstActor, Activity, snapshot, 0.5F).routeTo == glm::vec2{24.0F, 32.0F});
+
+    snapshot.ceilingAbove.reset();
+    REQUIRE(scripts.update(FirstActor, Activity, snapshot, 0.5F).clearRoute);
+}
+
 TEST_CASE("A script reads its health and asks to use an item by name", "[lua][npc]")
 {
     LuaNpcScripts scripts;
