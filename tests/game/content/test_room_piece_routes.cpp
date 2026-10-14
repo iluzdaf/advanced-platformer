@@ -39,6 +39,7 @@
 #include "advanced_platformer/movement/surface_climb.hpp"
 #include "advanced_platformer/navigation/actor_navigation.hpp"
 #include "advanced_platformer/navigation/navigation_fill.hpp"
+#include "advanced_platformer/navigation/navigation_path.hpp"
 #include "advanced_platformer/navigation/platformer_connection_cache.hpp"
 #include "advanced_platformer/navigation/platformer_traversal_profile.hpp"
 #include "advanced_platformer/navigation/route.hpp"
@@ -945,6 +946,10 @@ namespace
         const advanced_platformer::Actor& npc,
         const std::vector<Cell>& playerCells)
     {
+        if (!player.primaryAttack.has_value())
+        {
+            return false;
+        }
         const auto* gun = std::get_if<advanced_platformer::RangedWeapon>(&*player.primaryAttack);
         const glm::vec2 target = advanced_platformer::centerOf(npc.body.bounds);
         const float halfHeight = player.body.bounds.size.y / 2.0F;
