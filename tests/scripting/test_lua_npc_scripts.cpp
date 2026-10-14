@@ -297,6 +297,39 @@ TEST_CASE("A snapshot's rooms to each unexplored door reach Lua in the doors' or
         scripts.update(FirstActor, Activity, snapshot, 0.5F).routeTo == glm::vec2{136.0F, 64.0F});
 }
 
+TEST_CASE("A snapshot's shots reach Lua with their centre and velocity", "[lua][npc]")
+{
+    LuaNpcScripts scripts;
+    scripts.loadScriptText(
+        "example",
+        R"(
+            return {
+                activities = {
+                    decide = {
+                        description = 'Test activity decide',
+                        update = function(self, snapshot)
+                            local shot = snapshot.shots[1]
+                            if shot == nil then
+                                return { clearRoute = true }
+                            end
+                            return { routeTo = shot.center + shot.velocity }
+                        end
+                    }
+                }
+            }
+        )",
+        "command.lua");
+
+    NpcActivitySnapshot snapshot = commandSnapshot();
+    snapshot.shots = {{.center = {72.0F, 64.0F}, .velocity = {-40.0F, 0.0F}}};
+    scripts.enter(FirstActor, Activity, snapshot);
+    REQUIRE(
+        scripts.update(FirstActor, Activity, snapshot, 0.5F).routeTo == glm::vec2{32.0F, 64.0F});
+
+    snapshot.shots.clear();
+    REQUIRE(scripts.update(FirstActor, Activity, snapshot, 0.5F).clearRoute);
+}
+
 TEST_CASE("A script reads its health and asks to use an item by name", "[lua][npc]")
 {
     LuaNpcScripts scripts;

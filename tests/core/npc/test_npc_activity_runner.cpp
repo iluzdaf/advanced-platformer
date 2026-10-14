@@ -282,6 +282,56 @@ TEST_CASE("The engine fills an activity's snapshot from the world", "[npc][lua]"
     REQUIRE(snapshot.lastKnownTargetFeet == glm::vec2{56.0F, 32.0F});
 }
 
+namespace
+{
+    advanced_platformer::Projectile shotAt(glm::vec2 center, advanced_platformer::Team team)
+    {
+        advanced_platformer::Projectile shot;
+        shot.bounds = {center - glm::vec2{2.0F, 2.0F}, {4.0F, 4.0F}};
+        shot.velocity = {-120.0F, 0.0F};
+        shot.team = team;
+        shot.sprite.region.size = {4.0F, 4.0F};
+        return shot;
+    }
+}
+
+TEST_CASE(
+    "A snapshot lists the opposing shots its NPC can see within notice distance",
+    "[npc][lua]")
+{
+    advanced_platformer::TileMap map = tests::TileMapBuilder(
+        {"............",
+         "............",
+         "............",
+         "....#.......",
+         "....#.......",
+         "##.........."});
+    advanced_platformer::World world;
+    world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({24.0F, 80.0F})
+            .platforming()
+            .onTeam(advanced_platformer::Team::Enemy)
+            .thinking({64.0F, 1.0F})
+            .running(
+                tests::NpcMachineBuilder::named("test").state(
+                    "acting", advanced_platformer::NpcActivity{"fixture", "act"})));
+    world.addProjectile(shotAt({48.0F, 70.0F}, advanced_platformer::Team::Player));
+    world.addProjectile(shotAt({40.0F, 66.0F}, advanced_platformer::Team::Enemy));
+    world.addProjectile(shotAt({84.0F, 70.0F}, advanced_platformer::Team::Player));
+    world.addProjectile(shotAt({24.0F, 4.0F}, advanced_platformer::Team::Player));
+    tests::RecordingNpcScripts scripts;
+
+    advanced_platformer::WorldRequests requests;
+    advanced_platformer::updateNpcBehaviour(map, world, requests, tests::FixedStepSeconds, scripts);
+
+    REQUIRE_FALSE(scripts.calls.empty());
+    REQUIRE(
+        scripts.calls.back().snapshot.shots ==
+        std::vector<advanced_platformer::NpcShotSnapshot>{
+            {.center = {48.0F, 70.0F}, .velocity = {-120.0F, 0.0F}}});
+}
+
 TEST_CASE("The snapshot says how the route search ended", "[npc][lua][navigation]")
 {
     advanced_platformer::TileMap map = tests::TileMapBuilder(
