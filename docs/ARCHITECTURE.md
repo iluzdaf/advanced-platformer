@@ -705,7 +705,8 @@ replacement and gameplay control remain later integration work.
   count again once 15 seconds have passed so that walking back through rooms already
   explored, as after a detour for a potion, is not mistaken for being stuck.
 - Each line holds the run and level seeds, the outcome, seconds, damage counted against
-  the nearest live NPC's definition, health left, the cell the player ended in, pickups
+  the nearest live NPC's definition and against the bot's machine state at the start of
+  the step the damage landed in (`damageByBotState`), health left, the cell the player ended in, pickups
   placed and collected, Lua script errors, the level's tiles as it starts (`map`, one
   string per row: `#` blocks movement, `X` breaks, `G` hides whoever stands in it, `.` is
   open), and the level's pacing: a sample every half second, and one when the level ends.

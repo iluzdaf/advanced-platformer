@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <map>
 #include <utility>
 #include <string>
 #include <vector>
@@ -52,6 +53,27 @@ TEST_CASE("A playtest samples the level's pacing every half second")
         CHECK(pacing[sample].seconds - pacing[sample - 1].seconds <= Catch::Approx(0.5F));
         CHECK_FALSE(pacing[sample].piece.empty());
     }
+}
+
+TEST_CASE("A playtest counts damage against the bot's state when it was hurt")
+{
+    advanced_platformer::GameContent content =
+        tests::fixtureContent("tests/fixtures/rooms/contact_enemy/pieces.json");
+    content.npcScripts.loadScript("contact_enemy", "tests/fixtures/scripts/contact_enemy.lua");
+    advanced_platformer::Game game = tests::fixtureGame(
+        advanced_platformer::playtestContent(
+            std::move(content), "tests/fixtures/left_walking_bot"));
+
+    const std::vector<advanced_platformer::LevelPlaytest> results =
+        advanced_platformer::playtestRun(game, 1, 60.0F, tests::FixedStepSeconds);
+
+    REQUIRE(results.size() == 1);
+    const advanced_platformer::LevelPlaytest& level = results.front();
+    CHECK(level.outcome == advanced_platformer::PlaytestOutcome::Defeated);
+    REQUIRE(level.damageByNearestNpc.contains("test_contact_enemy"));
+    const int damage = level.damageByNearestNpc.at("test_contact_enemy");
+    CHECK(damage > 0);
+    CHECK(level.damageByBotState == std::map<std::string, int>{{"walk", damage}});
 }
 
 TEST_CASE("A playtest records the level's tiles as it starts")
@@ -194,6 +216,7 @@ TEST_CASE("A level playtest is written as one JSON line")
         .levelSeed = 11,
         .outcome = advanced_platformer::PlaytestOutcome::Stuck,
         .damageByNearestNpc = {{"rat", 2}},
+        .damageByBotState = {{"kite", 2}},
         .endCell = {3, 4},
         .map = {"#.", "XG"},
         .pacing = {
@@ -213,6 +236,7 @@ TEST_CASE("A level playtest is written as one JSON line")
     CHECK(text.find('\n') == std::string::npos);
     CHECK(text.find(R"("outcome":"stuck")") != std::string::npos);
     CHECK(text.find(R"("damageByNearestNpc":{"rat":2})") != std::string::npos);
+    CHECK(text.find(R"("damageByBotState":{"kite":2})") != std::string::npos);
     CHECK(text.find(R"("endCell":[3,4])") != std::string::npos);
     CHECK(text.find(R"("map":["#.","XG"])") != std::string::npos);
     CHECK(
