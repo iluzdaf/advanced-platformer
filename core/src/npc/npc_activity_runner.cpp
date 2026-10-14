@@ -87,6 +87,20 @@ namespace advanced_platformer
             return shots;
         }
 
+        std::optional<glm::vec2> ceilingAbove(const TileMap& map, glm::vec2 center)
+        {
+            const int tileSize = map.tileSize();
+            for (Cell cell = cellAt(tileSize, center); map.contains(cell); --cell.y)
+            {
+                if (map.blocksMovement(cell))
+                {
+                    return glm::vec2{
+                        center.x, cellCorner(tileSize, cell).y + static_cast<float>(tileSize)};
+                }
+            }
+            return std::nullopt;
+        }
+
         NpcActivitySnapshot activitySnapshot(
             const NpcUpdate& update,
             const Actor& actor,
@@ -143,6 +157,7 @@ namespace advanced_platformer
             snapshot.roomsToUnexploredDoors = roomsToUnexploredDoors(
                 brain.discovery, rooms, cellAtFeet(update.map.tileSize(), snapshot.feet));
             snapshot.shots = shotsSeen(update, actor);
+            snapshot.ceilingAbove = ceilingAbove(update.map, snapshot.center);
             return snapshot;
         }
     }

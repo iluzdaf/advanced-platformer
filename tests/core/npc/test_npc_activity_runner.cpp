@@ -4,7 +4,9 @@
 
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
+#include <glm/vec2.hpp>
 
 #include "advanced_platformer/actor/actor.hpp"
 #include "advanced_platformer/actor/actor_id.hpp"
@@ -330,6 +332,37 @@ TEST_CASE(
         scripts.calls.back().snapshot.shots ==
         std::vector<advanced_platformer::NpcShotSnapshot>{
             {.center = {48.0F, 70.0F}, .velocity = {-120.0F, 0.0F}}});
+}
+
+TEST_CASE(
+    "A snapshot gives the underside of the nearest solid tile straight above its NPC",
+    "[npc][lua]")
+{
+    const auto ceilingSeen = [](std::vector<std::string> rows)
+    {
+        advanced_platformer::TileMap map = tests::TileMapBuilder(std::move(rows));
+        advanced_platformer::World world;
+        world.addActor(
+            tests::ActorBuilder::sized({12.0F, 12.0F})
+                .atFeet({24.0F, 80.0F})
+                .platforming()
+                .onTeam(advanced_platformer::Team::Enemy)
+                .thinking({64.0F, 1.0F})
+                .running(
+                    tests::NpcMachineBuilder::named("test").state(
+                        "acting", advanced_platformer::NpcActivity{"fixture", "act"})));
+        tests::RecordingNpcScripts scripts;
+        advanced_platformer::WorldRequests requests;
+        advanced_platformer::updateNpcBehaviour(
+            map, world, requests, tests::FixedStepSeconds, scripts);
+        REQUIRE_FALSE(scripts.calls.empty());
+        return scripts.calls.back().snapshot.ceilingAbove;
+    };
+
+    REQUIRE(
+        ceilingSeen({"....", ".#..", "#...", "....", "....", "####"}) ==
+        std::optional<glm::vec2>{{24.0F, 32.0F}});
+    REQUIRE_FALSE(ceilingSeen({"....", "....", "#.#.", "....", "....", "####"}).has_value());
 }
 
 TEST_CASE("The snapshot says how the route search ended", "[npc][lua][navigation]")

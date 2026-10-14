@@ -60,6 +60,7 @@ namespace advanced_platformer
         std::vector<glm::vec2> unexploredDoors;
         std::vector<int> roomsToUnexploredDoors;
         std::vector<NpcShotSnapshot> shots;
+        std::optional<glm::vec2> ceilingAbove;
     };
 
     struct NpcActivityCommand
