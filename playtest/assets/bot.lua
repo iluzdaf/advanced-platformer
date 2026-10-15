@@ -13,9 +13,14 @@ local DodgeDistance = 64.0
 local DodgeSecondsLimit = 0.75
 local PouncerKind = "spider"
 local PounceKeepAway = 80.0
-local KeepAwaySecondsLimit = 1.0
+local KeepAwaySecondsLimit = 2.0
 local DoorReplansLimit = 4
 local PushDistance = 48.0
+local LowHealth = 1
+local CellSize = 16
+local NoProgressSeconds = 4.0
+local UnstickSecondsLimit = 2.0
+local UnstickJumpSeconds = 0.5
 
 local function stillFor(memory, snapshot, step)
     local feet = snapshot.feet
@@ -102,10 +107,22 @@ local function onTheWay(memory, snapshot, command)
     return fightNearest(snapshot, command)
 end
 
-local function nearestPickupOf(snapshot, item)
+local function stillPlaced(snapshot, item, feet, skipped)
+    if feet == nil or (skipped or {})[tostring(feet)] then
+        return false
+    end
+    for _, pickup in ipairs(snapshot.pickups) do
+        if pickup.item == item and pickup.feet == feet then
+            return true
+        end
+    end
+    return false
+end
+
+local function nearestPickupOf(snapshot, item, skipped)
     local nearest, nearestDistance
     for _, pickup in ipairs(snapshot.pickups) do
-        if pickup.item == item then
+        if pickup.item == item and not (skipped or {})[tostring(pickup.feet)] then
             local distance = snapshot.feet:distance(pickup.feet)
             if nearestDistance == nil or distance < nearestDistance then
                 nearest, nearestDistance = pickup.feet, distance
@@ -266,6 +283,42 @@ return {
             return withinBudget(memory.keepAwaySeconds, step, KeepAwaySecondsLimit)
         end,
 
+        potionNeeded = function(memory, snapshot)
+            local health = snapshot.health
+            if health == nil or health.current > LowHealth then
+                return false
+            end
+            memory.unreachablePotions = memory.unreachablePotions or {}
+            return nearestPickupOf(snapshot, PotionItem, memory.unreachablePotions) ~= nil
+        end,
+
+        noProgress = function(memory, snapshot, step)
+            local level = tostring(snapshot.exitFeet)
+            if memory.progressLevel ~= level then
+                memory.progressLevel = level
+                memory.seenCells = {}
+                memory.noProgressSeconds = 0
+            end
+            local feet = snapshot.feet
+            local cell = math.floor(feet.x / CellSize) .. "," .. math.floor(feet.y / CellSize)
+            if memory.seenCells[cell] then
+                memory.noProgressSeconds = memory.noProgressSeconds + step
+            else
+                memory.seenCells[cell] = true
+                memory.noProgressSeconds = 0
+            end
+            if memory.noProgressSeconds < NoProgressSeconds then
+                memory.unstickSeconds = 0
+                return false
+            end
+            if withinBudget(memory.unstickSeconds, step, UnstickSecondsLimit) then
+                return true
+            end
+            memory.noProgressSeconds = 0
+            memory.unstickSeconds = 0
+            return false
+        end,
+
         freedLootNearby = function(memory, snapshot)
             if memory.freedItem == nil then
                 return false
@@ -341,6 +394,56 @@ return {
                 local pickup = nearestPickupOf(snapshot, memory.freedItem)
                 local command = routeWithReplan(memory, snapshot, step, pickup)
                 return onTheWay(memory, snapshot, command)
+            end,
+        },
+
+        heal = {
+            description = "Entered while potionNeeded: at LowHealth health, route to the "
+                .. "nearest health potion in the level the route has not found "
+                .. "unreachable, keeping that potion as the goal while it is still "
+                .. "there, doing the same on the way as travel, so the potion is drunk "
+                .. "as soon as it is in the bag.",
+            update = function(_, snapshot, step, memory)
+                local potion = memory.healTarget
+                if not stillPlaced(snapshot, PotionItem, potion, memory.unreachablePotions) then
+                    potion = nearestPickupOf(snapshot, PotionItem, memory.unreachablePotions)
+                end
+                if snapshot.routeStatus == "unreachable" and memory.healTarget == potion then
+                    memory.unreachablePotions[tostring(potion)] = true
+                end
+                memory.healTarget = potion
+                local command = routeWithReplan(memory, snapshot, step, potion)
+                return onTheWay(memory, snapshot, command)
+            end,
+        },
+
+        unstick = {
+            description = "Entered while noProgress: the bot has reached no new cell for "
+                .. "NoProgressSeconds. Give up the potion heal was heading for, if "
+                .. "any, and walk the other way from last time, jumping every "
+                .. "UnstickJumpSeconds, for at most UnstickSecondsLimit, then try "
+                .. "the goal again.",
+            enter = function(_, snapshot, memory)
+                local health = snapshot.health
+                if
+                    memory.healTarget ~= nil
+                    and memory.unreachablePotions ~= nil
+                    and health ~= nil
+                    and health.current <= LowHealth
+                then
+                    memory.unreachablePotions[tostring(memory.healTarget)] = true
+                end
+                memory.unstickDirection = -(memory.unstickDirection or -1)
+            end,
+            update = function(_, snapshot, step, memory)
+                memory.unstickSeconds = (memory.unstickSeconds or 0) + step
+                local jump = memory.unstickSeconds % UnstickJumpSeconds < step
+                return onTheWay(memory, snapshot, {
+                    clearRoute = true,
+                    direction = { x = memory.unstickDirection, y = 0 },
+                    jumpPressed = jump,
+                    jumpHeld = true,
+                })
             end,
         },
 

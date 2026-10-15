@@ -532,6 +532,108 @@
           "after": 0.6
         }
       ]
+    },
+    "flier": {
+      "states": [
+        {
+          "name": "idle",
+          "does": {
+            "script": "common",
+            "activity": "idle"
+          }
+        },
+        {
+          "name": "hover",
+          "does": {
+            "script": "bat",
+            "activity": "hover"
+          }
+        },
+        {
+          "name": "dive",
+          "does": {
+            "script": "bat",
+            "activity": "dive"
+          }
+        },
+        {
+          "name": "climb",
+          "does": {
+            "script": "bat",
+            "activity": "climb"
+          }
+        },
+        {
+          "name": "search",
+          "does": {
+            "script": "common",
+            "activity": "search"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "from": ["idle", "search"],
+          "to": "hover",
+          "when": {
+            "targetKnown": true
+          }
+        },
+        {
+          "from": ["hover", "dive", "climb"],
+          "to": "search",
+          "when": {
+            "targetKnown": false,
+            "searches": true
+          }
+        },
+        {
+          "from": ["hover", "dive", "climb"],
+          "to": "idle",
+          "when": {
+            "targetKnown": false
+          }
+        },
+        {
+          "from": "hover",
+          "to": "dive",
+          "when": {
+            "perched": true
+          }
+        },
+        {
+          "from": "hover",
+          "to": "dive",
+          "when": {},
+          "after": 1.2
+        },
+        {
+          "from": "dive",
+          "to": "climb",
+          "when": {
+            "belowTarget": true
+          }
+        },
+        {
+          "from": "dive",
+          "to": "climb",
+          "when": {},
+          "after": 0.6
+        },
+        {
+          "from": "climb",
+          "to": "hover",
+          "when": {},
+          "after": 0.5
+        },
+        {
+          "from": "search",
+          "to": "idle",
+          "when": {
+            "searchTimeUp": true
+          }
+        }
+      ]
     }
   }
 }

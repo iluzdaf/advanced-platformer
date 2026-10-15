@@ -41,9 +41,9 @@
       "animations": "bat",
       "spriteAnchor": "center",
       "health": 1,
-      "movement": { "flying": {} },
-      "senses": { "noticeDistance": 56, "targetMemoryDuration": 0.5 },
-      "machine": "pursuer",
+      "movement": { "flying": { "speed": 100 } },
+      "senses": { "noticeDistance": 120, "targetMemoryDuration": 3.0 },
+      "machine": "flier",
       "primaryAttack": { "bite": {} }
     },
     "bat_dodger": {
@@ -54,7 +54,7 @@
       "spriteAnchor": "center",
       "health": 1,
       "movement": { "flying": { "speed": 100 } },
-      "senses": { "noticeDistance": 160, "targetMemoryDuration": 2.0, "standoffDistance": 56 },
+      "senses": { "noticeDistance": 160, "targetMemoryDuration": 2.0, "standoffDistance": 80 },
       "machine": "dodger",
       "primaryAttack": { "bite": {} }
     },

@@ -693,9 +693,10 @@ replacement and gameplay control remain later integration work.
   without a rebuild. It senses, thinks and moves exactly as an NPC does, so each of its
   behaviours is a state with transitions that an NPC's machine can take over: `explore`
   routes to the nearest unexplored door until it has seen the exit's room, `travel`
-  then routes to the exit, `loot` collects a pickup it shot free, and `kite`, `hold`, `dodge`
-  and `keepAway` answer an opponent, each entered on a script fact and limited per
-  approach. `playtestContent` builds that content on top of the shipped catalogs, so
+  then routes to the exit, `loot` collects a pickup it shot free, `heal` routes to a health
+  potion at 1 health, `unstick` walks and jumps the other way when it has reached no new
+  cell for a few seconds, and `kite`, `hold`, `dodge` and `keepAway` answer an opponent,
+  each entered on a script fact and limited per approach. `playtestContent` builds that content on top of the shipped catalogs, so
   nothing of the bot ships with the game.
 - A level ends at the exit, when the player is defeated (which ends the run, as in the
   game), when for 15 seconds the player stands only in cells they were in during the

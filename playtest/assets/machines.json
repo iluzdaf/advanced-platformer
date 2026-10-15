@@ -8,26 +8,28 @@
         { "name": "kite", "does": { "script": "bot", "activity": "kite" } },
         { "name": "hold", "does": { "script": "bot", "activity": "hold" } },
         { "name": "dodge", "does": { "script": "bot", "activity": "dodge" } },
-        { "name": "keepAway", "does": { "script": "bot", "activity": "keepAway" } }
+        { "name": "keepAway", "does": { "script": "bot", "activity": "keepAway" } },
+        { "name": "heal", "does": { "script": "bot", "activity": "heal" } },
+        { "name": "unstick", "does": { "script": "bot", "activity": "unstick" } }
       ],
       "transitions": [
         {
-          "from": ["explore", "travel", "loot", "hold", "dodge", "keepAway"],
+          "from": ["explore", "travel", "loot", "hold", "dodge", "keepAway", "heal", "unstick"],
           "to": "kite",
           "when": { "targetClosingIn": true }
         },
         {
-          "from": ["explore", "travel", "loot", "kite", "dodge", "keepAway"],
+          "from": ["explore", "travel", "loot", "kite", "dodge", "keepAway", "heal", "unstick"],
           "to": "hold",
           "when": { "targetClosingIn": false, "nonRatInRange": true }
         },
         {
-          "from": ["explore", "travel", "loot", "kite", "hold", "keepAway"],
+          "from": ["explore", "travel", "loot", "kite", "hold", "keepAway", "heal", "unstick"],
           "to": "dodge",
           "when": { "targetClosingIn": false, "nonRatInRange": false, "batDiving": true }
         },
         {
-          "from": ["explore", "travel", "loot", "kite", "hold", "dodge"],
+          "from": ["explore", "travel", "loot", "kite", "hold", "dodge", "heal", "unstick"],
           "to": "keepAway",
           "when": {
             "targetClosingIn": false,
@@ -37,18 +39,43 @@
           }
         },
         {
-          "from": ["explore", "travel", "kite", "hold", "dodge", "keepAway"],
+          "from": ["explore", "travel", "loot", "kite", "hold", "dodge", "keepAway", "heal"],
+          "to": "unstick",
+          "when": {
+            "targetClosingIn": false,
+            "nonRatInRange": false,
+            "batDiving": false,
+            "spiderNear": false,
+            "noProgress": true
+          }
+        },
+        {
+          "from": ["explore", "travel", "loot", "kite", "hold", "dodge", "keepAway", "unstick"],
+          "to": "heal",
+          "when": {
+            "targetClosingIn": false,
+            "nonRatInRange": false,
+            "batDiving": false,
+            "spiderNear": false,
+            "potionNeeded": true,
+            "noProgress": false
+          }
+        },
+        {
+          "from": ["explore", "travel", "kite", "hold", "dodge", "keepAway", "heal", "unstick"],
           "to": "loot",
           "when": {
             "targetClosingIn": false,
             "nonRatInRange": false,
             "batDiving": false,
             "spiderNear": false,
-            "freedLootNearby": true
+            "freedLootNearby": true,
+            "potionNeeded": false,
+            "noProgress": false
           }
         },
         {
-          "from": ["travel", "loot", "kite", "hold", "dodge", "keepAway"],
+          "from": ["travel", "loot", "kite", "hold", "dodge", "keepAway", "heal", "unstick"],
           "to": "explore",
           "when": {
             "targetClosingIn": false,
@@ -56,11 +83,13 @@
             "batDiving": false,
             "spiderNear": false,
             "freedLootNearby": false,
+            "potionNeeded": false,
+            "noProgress": false,
             "exitKnown": false
           }
         },
         {
-          "from": ["explore", "loot", "kite", "hold", "dodge", "keepAway"],
+          "from": ["explore", "loot", "kite", "hold", "dodge", "keepAway", "heal", "unstick"],
           "to": "travel",
           "when": {
             "targetClosingIn": false,
@@ -68,6 +97,8 @@
             "batDiving": false,
             "spiderNear": false,
             "freedLootNearby": false,
+            "potionNeeded": false,
+            "noProgress": false,
             "exitKnown": true
           }
         }
