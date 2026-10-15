@@ -20,6 +20,11 @@
       "id": "spider_1",
       "definition": "spider",
       "spawn": [11, 4]
+    },
+    {
+      "id": "boar_1",
+      "definition": "boar",
+      "spawn": [15, 10]
     }
   ],
   "pickups": [

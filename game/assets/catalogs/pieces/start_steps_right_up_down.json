@@ -23,5 +23,12 @@
       "definition": "coin_pile",
       "spawn": [16, 7]
     }
+  ],
+  "actors": [
+    {
+      "id": "bat_dodger_1",
+      "definition": "bat_dodger",
+      "spawn": [14, 8]
+    }
   ]
 }

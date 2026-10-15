@@ -24,6 +24,11 @@
       "id": "zombie_1",
       "definition": "zombie",
       "spawn": [7, 10]
+    },
+    {
+      "id": "boar_1",
+      "definition": "boar",
+      "spawn": [13, 8]
     }
   ]
 }
