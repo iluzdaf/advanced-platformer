@@ -135,7 +135,8 @@ namespace advanced_platformer
             for (const glm::ivec2 direction : Directions)
             {
                 const Cell candidate{cell.x + direction.x, cell.y + direction.y};
-                if (map.contains(candidate) && !map.blocksMovement(candidate))
+                if (map.contains(candidate) && !map.blocksMovement(candidate) &&
+                    !map.hurtsAt(candidate))
                 {
                     connections.push_back({{{candidate}, Traversal::Fly, {}}, 1});
                 }

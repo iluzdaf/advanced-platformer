@@ -18,6 +18,12 @@
       "blocksMovement": true,
       "blocksSight": false,
       "breaksInto": "empty"
+    },
+    "spikes": {
+      "sprite": { "position": [128, 248] },
+      "blocksMovement": false,
+      "blocksSight": false,
+      "touchDamage": { "damage": 1, "lift": 200, "repeatSeconds": 1.0, "height": 8 }
     }
   }
 }

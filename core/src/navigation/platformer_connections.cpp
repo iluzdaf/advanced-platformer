@@ -181,6 +181,10 @@ namespace advanced_platformer
                 updatePlatformerMovement(map, body, movement, run, profile.stepSeconds);
                 includeCellsAroundBounds(result.footprint, map.tileSize(), body.bounds);
                 ++result.simulatedTicks;
+                if (touchDamageOverlapping(map, body.bounds).has_value())
+                {
+                    return result;
+                }
             }
             bool leftGround = false;
             std::optional<Cell> landing;
@@ -198,6 +202,10 @@ namespace advanced_platformer
                 updatePlatformerMovement(map, body, movement, intentions, profile.stepSeconds);
                 includeCellsAroundBounds(result.footprint, map.tileSize(), body.bounds);
                 ++result.simulatedTicks;
+                if (touchDamageOverlapping(map, body.bounds).has_value())
+                {
+                    return result;
+                }
 
                 leftGround = leftGround || !movement.grounded;
                 if (!leftGround || !movement.grounded)
@@ -517,6 +525,10 @@ namespace advanced_platformer
                     map, body, movement, climb, intentions, profile.stepSeconds);
                 includeCellsAroundBounds(result.footprint, tileSize, body.bounds);
                 ++result.simulatedTicks;
+                if (touchDamageOverlapping(map, body.bounds).has_value())
+                {
+                    return result;
+                }
                 if (from.surface != ClimbSurface::None && !toFloor &&
                     climb.surface == ClimbSurface::None)
                 {
@@ -554,6 +566,10 @@ namespace advanced_platformer
                     map, body, movement, climb, release, profile.stepSeconds);
                 includeCellsAroundBounds(result.footprint, tileSize, body.bounds);
                 ++result.simulatedTicks;
+                if (touchDamageOverlapping(map, body.bounds).has_value())
+                {
+                    return result;
+                }
                 if (!movement.grounded)
                 {
                     continue;

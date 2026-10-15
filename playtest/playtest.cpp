@@ -386,6 +386,10 @@ namespace advanced_platformer
 
         char tileLetter(const TileDefinition& tile)
         {
+            if (tile.touchDamage.has_value())
+            {
+                return '^';
+            }
             if (tile.breaksIntoTileId.has_value())
             {
                 return 'X';

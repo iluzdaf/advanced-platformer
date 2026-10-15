@@ -94,7 +94,7 @@ TEST_CASE("A playtest records the level's tiles as it starts")
     for (const std::string& row : rows)
     {
         CHECK(row.size() == width);
-        CHECK(row.find_first_not_of("#XG.") == std::string::npos);
+        CHECK(row.find_first_not_of("#XG^.") == std::string::npos);
     }
     CHECK(rows.front().find('#') != std::string::npos);
     CHECK(std::ranges::any_of(rows, [](const std::string& row) { return row.contains('.'); }));

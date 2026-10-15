@@ -57,9 +57,11 @@ namespace advanced_platformer
             throw std::invalid_argument("tile catalog must reserve ID zero for 'empty'");
         }
         if (catalog.definitions.front().blocksMovement || catalog.definitions.front().blocksSight ||
-            catalog.definitions.front().climbable)
+            catalog.definitions.front().climbable ||
+            catalog.definitions.front().touchDamage.has_value())
         {
-            throw std::invalid_argument("empty must allow movement and sight and not be climbable");
+            throw std::invalid_argument(
+                "empty must allow movement and sight and must not be climbable or hurt");
         }
         std::set<int> usedIds;
         for (const auto& entry : catalog.ids)
@@ -80,6 +82,26 @@ namespace advanced_platformer
             {
                 throw std::invalid_argument(
                     std::format("climbable tile '{}' must block movement", entry.first));
+            }
+            if (definition.touchDamage.has_value())
+            {
+                const TouchDamage& touch = *definition.touchDamage;
+                if (definition.blocksMovement)
+                {
+                    throw std::invalid_argument(
+                        std::format(
+                            "tile '{}' hurts on touch so must not block movement", entry.first));
+                }
+                if (touch.damage <= 0 || !isFiniteNonNegative(touch.lift) ||
+                    !isFinitePositive(touch.repeatSeconds) || !isFinitePositive(touch.height) ||
+                    touch.height > static_cast<float>(catalog.tileSize))
+                {
+                    throw std::invalid_argument(
+                        std::format(
+                            "tile '{}' touchDamage needs positive damage, a lift of zero or more, "
+                            "positive repeatSeconds and a height up to the tile size",
+                            entry.first));
+                }
             }
             const auto& sprite = definition.sprite;
             if (!isFiniteNonNegative(sprite.position) || !isFinitePositive(sprite.size))

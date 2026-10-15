@@ -11,6 +11,7 @@
     ".": "empty",
     "#": "stone",
     "G": "grass",
-    "X": "glass"
+    "X": "glass",
+    "^": "spikes"
   }
 }

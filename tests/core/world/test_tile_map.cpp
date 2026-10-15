@@ -25,12 +25,22 @@ TEST_CASE("An ASCII tile map is rectangular and row-major", "[world][tile-map]")
 
 TEST_CASE("Tile movement blocking comes from its definition", "[world][tile-map]")
 {
-    // A declared tile that blocks nothing: being a tile is not what blocks.
     const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"#x"}).where('x', tests::Tile());
 
     REQUIRE(map.blocksMovement({0, 0}));
     REQUIRE_FALSE(map.blocksMovement({1, 0}));
+}
+
+TEST_CASE("A tile hurts on touch only when its definition says so", "[world][tile-map]")
+{
+    const advanced_platformer::TileMap map =
+        tests::TileMapBuilder({"^.#"}).where('^', tests::Tile{}.hurts({}));
+
+    REQUIRE(map.hurtsAt({0, 0}));
+    REQUIRE_FALSE(map.hurtsAt({1, 0}));
+    REQUIRE_FALSE(map.hurtsAt({2, 0}));
+    REQUIRE_FALSE(map.hurtsAt({3, 0}));
 }
 
 TEST_CASE("Map sides and bottom block movement while the top stays open", "[world][tile-map]")
@@ -82,9 +92,7 @@ TEST_CASE("Breaking a tile replaces it with what its definition breaks into", "[
     REQUIRE(map.tileAt({0, 0}) == 0);
     REQUIRE_FALSE(map.blocksMovement({0, 0}));
 
-    // Breaking it again finds an empty tile, which declares nothing to break into.
     REQUIRE_FALSE(map.breakTile({0, 0}));
-    // The neighbouring solid tile declares nothing to break into either, so it stays.
     REQUIRE_FALSE(map.breakTile({1, 0}));
     REQUIRE(map.blocksMovement({1, 0}));
 }
@@ -107,7 +115,6 @@ TEST_CASE("A tile map logs the cells it broke, in order", "[world][tile-map]")
 
     REQUIRE(map.breakTile({1, 0}));
     REQUIRE(map.breakTile({0, 0}));
-    // Neither an empty cell nor a solid one that declares nothing to break into is logged.
     REQUIRE_FALSE(map.breakTile({1, 0}));
     REQUIRE_FALSE(map.breakTile({2, 0}));
     REQUIRE(map.brokenCells() == std::vector<advanced_platformer::Cell>{{1, 0}, {0, 0}});
@@ -115,7 +122,6 @@ TEST_CASE("A tile map logs the cells it broke, in order", "[world][tile-map]")
 
 TEST_CASE("Breaking reports failure outside the map instead of throwing", "[world][tile-map]")
 {
-    // Map boundaries block movement, so a cast can report a cell that is not in the map.
     advanced_platformer::TileMap map = tests::TileMapBuilder({"..", ".."});
 
     REQUIRE_FALSE(map.breakTile({-1, 0}));
@@ -141,6 +147,29 @@ TEST_CASE("Tile maps reject invalid definitions and tile IDs", "[world][tile-map
             1,
             {2},
             std::vector<TileDefinition>{{false, false, {}}, {true, true, {}}}),
+        std::invalid_argument);
+}
+
+TEST_CASE("Tile maps reject touch damage they cannot apply", "[world][tile-map]")
+{
+    using advanced_platformer::TileDefinition;
+    using advanced_platformer::TileMap;
+    using advanced_platformer::TouchDamage;
+    const auto mapWith = [](TileDefinition definition)
+    { return TileMap(tests::TileSize, 1, 1, {1}, {TileDefinition{}, definition}); };
+
+    REQUIRE_NOTHROW(mapWith({.touchDamage = TouchDamage{}}));
+    REQUIRE_THROWS_AS(
+        mapWith({.blocksMovement = true, .touchDamage = TouchDamage{}}), std::invalid_argument);
+    REQUIRE_THROWS_AS(mapWith({.touchDamage = TouchDamage{.damage = 0}}), std::invalid_argument);
+    REQUIRE_THROWS_AS(mapWith({.touchDamage = TouchDamage{.lift = -1.0F}}), std::invalid_argument);
+    REQUIRE_THROWS_AS(
+        mapWith({.touchDamage = TouchDamage{.repeatSeconds = 0.0F}}), std::invalid_argument);
+    REQUIRE_THROWS_AS(
+        mapWith({.touchDamage = TouchDamage{.height = tests::TileSize + 1.0F}}),
+        std::invalid_argument);
+    REQUIRE_THROWS_AS(
+        TileMap(tests::TileSize, 1, 1, {0}, {TileDefinition{.touchDamage = TouchDamage{}}}),
         std::invalid_argument);
 }
 

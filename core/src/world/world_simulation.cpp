@@ -4,6 +4,7 @@
 #include "advanced_platformer/actor/lifecycle.hpp"
 #include "advanced_platformer/combat/attack_system.hpp"
 #include "advanced_platformer/combat/projectile_system.hpp"
+#include "advanced_platformer/combat/touch_damage.hpp"
 #include "advanced_platformer/npc/npc_activity_runner.hpp"
 #include "advanced_platformer/npc/npc_senses.hpp"
 #include "advanced_platformer/navigation/navigation_fill.hpp"
@@ -59,6 +60,7 @@ namespace advanced_platformer
             "Combat",
             "Projectile bursts",
             [&] { updateProjectileBursts(world, requests, deltaTime); });
+        phase("Combat", "Touch damage", [&] { updateTouchDamage(map, world, requests); });
         phase("World", "Life states", [&] { updateLifeState(world, requests, deltaTime); });
         phase("World", "Pickups", [&] { updatePickups(world, requests); });
         phase(

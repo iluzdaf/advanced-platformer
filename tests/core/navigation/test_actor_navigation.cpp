@@ -298,6 +298,23 @@ TEST_CASE("A flying path crosses open cells around a wall", "[navigation][flying
     REQUIRE(frameStatisticCount(profile, "Cells expanded") >= 1);
 }
 
+TEST_CASE("A flying path goes around tiles that hurt", "[navigation][flying]")
+{
+    const TileMap map =
+        tests::TileMapBuilder({"....", ".^^.", "...."}).where('^', tests::Tile{}.hurts({}));
+
+    const Actor flyer = tests::ActorBuilder::sized(FlyerSize).inCell({0, 1}).flying(60.0F);
+    const NavigationPathResult result = resultOf(findFlight(map, flyer, feetIn({3, 1})));
+
+    REQUIRE(result.status == NavigationPathStatus::Found);
+    const NavigationPath path = pathOf(result);
+    REQUIRE(
+        std::ranges::none_of(
+            path.waypoints,
+            [](const auto& waypoint)
+            { return cellOf(waypoint.feet).y == 1 && cellOf(waypoint.feet).x != 3; }));
+}
+
 TEST_CASE("A flyer whose feet are off the map gets no result", "[navigation][flying]")
 {
     const TileMap map = tests::TileMapBuilder({"...", "..."});
