@@ -31,7 +31,6 @@ namespace
 #else
     constexpr const char* PlaytestAssetDirectory = "playtest/assets";
 #endif
-    constexpr float DefaultSecondsPerLevel = 120.0F;
 
     template <class T> T parsedArgument(std::string_view text, std::string_view name)
     {
@@ -48,7 +47,7 @@ namespace
     {
         std::uint32_t runSeed = 0;
         int levels = 0;
-        float secondsPerLevel = DefaultSecondsPerLevel;
+        float secondsPerLevel = advanced_platformer::DefaultPlaytestSecondsPerLevel;
         std::filesystem::path botDirectory = PlaytestAssetDirectory;
     };
 

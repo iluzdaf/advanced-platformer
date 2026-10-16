@@ -2,5 +2,7 @@
 
 namespace advanced_platformer
 {
-    int runApplication();
+    struct LaunchOptions;
+
+    int runApplication(const LaunchOptions& options);
 }

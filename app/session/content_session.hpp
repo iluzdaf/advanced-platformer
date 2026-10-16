@@ -19,7 +19,8 @@ namespace advanced_platformer
         ContentSession(
             std::filesystem::path directory,
             SpriteRenderer& spriteRenderer,
-            bool watchAssets);
+            bool watchAssets,
+            std::optional<std::filesystem::path> botDirectory);
 
         ContentSession(const ContentSession&) = delete;
         ContentSession& operator=(const ContentSession&) = delete;
@@ -33,6 +34,7 @@ namespace advanced_platformer
 
     private:
         std::filesystem::path assetDirectory;
+        std::optional<std::filesystem::path> botDirectory;
         SpriteRenderer& renderer;
         int textureId;
         std::optional<AssetWatcher> watcher;

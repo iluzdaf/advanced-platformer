@@ -18,6 +18,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/app/debug/frame_axes.cpp
         ${PROJECT_SOURCE_DIR}/app/debug/frame_selection.cpp
         ${PROJECT_SOURCE_DIR}/app/graphics/display_viewport.cpp
+        ${PROJECT_SOURCE_DIR}/app/launch_options.cpp
         ${PROJECT_SOURCE_DIR}/app/session/asset_watcher.cpp
         ${PROJECT_SOURCE_DIR}/app/session/atlas_regions.cpp
         ${PROJECT_SOURCE_DIR}/app/session/level_requests.cpp
@@ -35,6 +36,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/app/session/test_level_requests.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/session/test_play_control.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/test_application_context.cpp
+        ${PROJECT_SOURCE_DIR}/tests/app/test_launch_options.cpp
         ${PROJECT_SOURCE_DIR}/tests/app/ui/test_inventory_layout.cpp
         ${PROJECT_SOURCE_DIR}/tests/core/combat/test_bite_attack.cpp
         ${PROJECT_SOURCE_DIR}/tests/core/combat/test_contact_damage.cpp

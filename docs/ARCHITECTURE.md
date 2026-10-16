@@ -31,25 +31,26 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 
 ### Folders
 
-| Location              | Responsibility                                                                                             |
-| --------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `core/include`        | The core's public headers, under `advanced_platformer/`                                                    |
-| `core/src`            | The core's implementations                                                                                 |
-| `audio/include`       | Public device and playback interfaces, under `advanced_platformer/audio/`                                  |
-| `audio/src`           | Shared audio device and playback implementations                                                           |
-| `music`               | Standalone authoring tool and its WAV preview exporter                                                     |
-| `scripting`           | Lua VM, sandbox, `vec2` binding, and the activity adapter                                                  |
-| `game/content`        | Content definitions, Glaze loaders, catalogs, and validators                                               |
-| `game/level`          | Level composition and reload                                                                               |
-| `game/game.hpp`       | `Game` owns the current level, catalogs, scripts, and camera, and is the one way a level changes           |
-| `game/diagnostics`    | The debug overlay and navigation snapshots `Game` records, and the console log                             |
-| `app/application.cpp` | Window events, input, fixed steps, pause and single step, UI requests, hot reload, and rendering           |
-| `app/session`         | The content session and asset watcher, the atlas check, pause and single step, and UI requests to the game |
-| `app/graphics`        | Window and OpenGL context, ImGui session, viewport conversion, and sprite submission                       |
-| `app/ui`              | HUD, inventory, exit hint, and pause notice                                                                |
-| `app/debug`           | ImGui presentation of the diagnostics, the console, and the frame profile UI                               |
-| `playtest`            | The playtest runner; `playtest/assets` holds the bot's machine and Lua activities                          |
-| `game/assets`         | Catalogs, room pieces, Lua scripts, and the atlas                                                          |
+| Location                 | Responsibility                                                                                                             |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `core/include`           | The core's public headers, under `advanced_platformer/`                                                                    |
+| `core/src`               | The core's implementations                                                                                                 |
+| `audio/include`          | Public device and playback interfaces, under `advanced_platformer/audio/`                                                  |
+| `audio/src`              | Shared audio device and playback implementations                                                                           |
+| `music`                  | Standalone authoring tool and its WAV preview exporter                                                                     |
+| `scripting`              | Lua VM, sandbox, `vec2` binding, and the activity adapter                                                                  |
+| `game/content`           | Content definitions, Glaze loaders, catalogs, and validators                                                               |
+| `game/level`             | Level composition and reload                                                                                               |
+| `game/game.hpp`          | `Game` owns the current level, catalogs, scripts, and camera, and is the one way a level changes                           |
+| `game/diagnostics`       | The debug overlay and navigation snapshots `Game` records, and the console log                                             |
+| `app/application.cpp`    | Window events, input, fixed steps, pause and single step, UI requests, hot reload, and rendering                           |
+| `app/launch_options.cpp` | The run seed, bot directory and playtest level the game starts with                                                        |
+| `app/session`            | The content session and asset watcher, the atlas check, pause and single step, and UI requests to the game                 |
+| `app/graphics`           | Window and OpenGL context, ImGui session, viewport conversion, and sprite submission                                       |
+| `app/ui`                 | HUD, inventory, exit hint, and pause notice                                                                                |
+| `app/debug`              | ImGui presentation of the diagnostics, the console, and the frame profile UI                                               |
+| `playtest`               | The playtest runner and the replay code the game also builds; `playtest/assets` holds the bot's machine and Lua activities |
+| `game/assets`            | Catalogs, room pieces, Lua scripts, and the atlas                                                                          |
 
 - `GameLevel` keeps the level number, map, world, player spawn, and the placement id of
   each actor and pickup together. Each composed actor carries its definition name, such
@@ -708,6 +709,14 @@ replacement and gameplay control remain later integration work.
   cell for a few seconds, and `kite`, `hold`, `dodge` and `keepAway` answer an opponent,
   each entered on a script fact and limited per approach. `playtestContent` builds that content on top of the shipped catalogs, so
   nothing of the bot ships with the game.
+- `advanced_platformer [--seed <run seed>] [--bot <directory>] [--level <level> [--seconds <seconds per level>]]`
+  replays a playtest level in the window. `--bot` loads the content through
+  `playtestContent`, and the session applies it again on every hot reload. `--level`
+  first calls `playtestUntilLevel`, which plays the levels before it through
+  `playtestRun` with the same time limit, so the window opens on the level exactly as
+  the runner reached it, with the same health, inventory and run seed. A defeat before
+  that level stops the launch with an error. The keyboard does not steer the bot,
+  because its machine sets the player's intentions every step.
 - A level ends at the exit, when the player is defeated (which ends the run, as in the
   game), when for 15 seconds the player stands only in cells they were in during the
   15 seconds before (stuck), or at the time limit. After stuck or a timeout the run moves

@@ -18,6 +18,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/app/graphics/game_window.cpp
         ${PROJECT_SOURCE_DIR}/app/graphics/imgui_session.cpp
         ${PROJECT_SOURCE_DIR}/app/graphics/sprite_renderer.cpp
+        ${PROJECT_SOURCE_DIR}/app/launch_options.cpp
         ${PROJECT_SOURCE_DIR}/app/main.cpp
         ${PROJECT_SOURCE_DIR}/app/session/asset_watcher.cpp
         ${PROJECT_SOURCE_DIR}/app/session/atlas_regions.cpp
@@ -31,4 +32,5 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/app/ui/inventory_layout.cpp
         ${PROJECT_SOURCE_DIR}/app/ui/inventory_ui.cpp
         ${PROJECT_SOURCE_DIR}/app/ui/pause_ui.cpp
+        ${PROJECT_SOURCE_DIR}/playtest/playtest.cpp
 )
