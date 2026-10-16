@@ -13,6 +13,8 @@ namespace advanced_platformer
     class Game;
     struct GameContent;
 
+    constexpr float DefaultPlaytestSecondsPerLevel = 120.0F;
+
     enum class PlaytestOutcome : std::uint8_t
     {
         Exit,
@@ -73,5 +75,6 @@ namespace advanced_platformer
         int levels,
         float secondsPerLevel,
         float stepSeconds);
+    void playtestUntilLevel(Game& game, int level, float secondsPerLevel, float stepSeconds);
     std::string formatLevelPlaytest(const LevelPlaytest& level);
 }

@@ -3,6 +3,8 @@
 #include <memory>
 #include "application.hpp"
 #include "application_context.hpp"
+#include "launch_options.hpp"
+#include "playtest.hpp"
 
 #include <cstdlib>
 #include <iostream>
@@ -214,7 +216,7 @@ namespace advanced_platformer
         }
     }
 
-    int runApplication()
+    int runApplication(const LaunchOptions& options)
     {
         ConsoleLog console(std::cerr);
         const GameWindow window(
@@ -229,7 +231,7 @@ namespace advanced_platformer
         const ImGuiSession imgui(window.handle());
 
         SpriteRenderer renderer;
-        ContentSession content(AssetDirectory, renderer, WatchAssets);
+        ContentSession content(AssetDirectory, renderer, WatchAssets, options.botDirectory);
         FixedStep fixedStep;
         GameContent loaded = content.load();
         Game game(
@@ -238,7 +240,15 @@ namespace advanced_platformer
             std::move(loaded.npcScripts),
             std::move(loaded.presentation),
             static_cast<float>(fixedStep.stepSeconds()),
-            std::random_device{}());
+            options.runSeed.value_or(std::random_device{}()));
+        if (options.level.has_value())
+        {
+            playtestUntilLevel(
+                game,
+                *options.level,
+                options.secondsPerLevel,
+                static_cast<float>(fixedStep.stepSeconds()));
+        }
         AudioDevice audio;
         std::shared_ptr<const SoundBuffer> playingMusic;
         DebugTools debugTools;

@@ -515,6 +515,25 @@ namespace advanced_platformer
         return results;
     }
 
+    void playtestUntilLevel(Game& game, int level, float secondsPerLevel, float stepSeconds)
+    {
+        if (level < 1)
+        {
+            throw std::invalid_argument("The level to play until must be 1 or more");
+        }
+        const std::vector<LevelPlaytest> played =
+            playtestRun(game, level - 1, secondsPerLevel, stepSeconds);
+        if (!played.empty() && played.back().outcome == PlaytestOutcome::Defeated)
+        {
+            throw std::runtime_error(
+                std::format(
+                    "The bot was defeated on level {} of run seed {}, before level {}",
+                    played.back().level,
+                    played.back().runSeed,
+                    level));
+        }
+    }
+
     namespace
     {
         std::string_view outcomeName(PlaytestOutcome outcome)

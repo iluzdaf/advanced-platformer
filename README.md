@@ -120,6 +120,16 @@ build/mac-debug/advanced_platformer_playtest 1 5
 
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#playtest) describes the bot and each field.
 
+To watch a playtest level, start the game with the run seed, the bot and the level. The
+bot plays the levels before it without drawing them, with the runner's time limit per
+level (`--seconds` changes it), and then you watch it play that level:
+
+```sh
+build/mac-debug/advanced_platformer --seed 24 --bot playtest/assets --level 8 --seconds 240
+```
+
+`--seed` alone plays that run yourself, and `--bot` alone watches the bot from level 1.
+
 ## Playing the example game
 
 | Action                                              | Controls                                  |

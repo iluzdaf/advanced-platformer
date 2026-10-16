@@ -60,7 +60,10 @@ enable_project_coverage(advanced_platformer_game)
 add_executable(advanced_platformer)
 include(cmake/sources/Application.cmake)
 target_compile_features(advanced_platformer PRIVATE cxx_std_26)
-target_include_directories(advanced_platformer PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
+target_include_directories(
+    advanced_platformer
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app ${CMAKE_CURRENT_SOURCE_DIR}/playtest
+)
 target_compile_definitions(
     advanced_platformer
     PRIVATE

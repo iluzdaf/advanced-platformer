@@ -1,8 +1,10 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_string.hpp>
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <map>
 #include <utility>
 #include <string>
@@ -206,6 +208,64 @@ TEST_CASE("A playtest calls a level stuck after 15 seconds in no new cell")
     REQUIRE(results.size() == 1);
     CHECK(results.front().outcome == advanced_platformer::PlaytestOutcome::Stuck);
     CHECK(results.front().seconds == Catch::Approx(15.0F).margin(0.1));
+}
+
+TEST_CASE("Playing until a level leaves the game where the run reached that level")
+{
+    advanced_platformer::Game replay = tests::fixtureGame(
+        advanced_platformer::playtestContent(
+            tests::fixtureContent(), ADVANCED_PLATFORMER_SOURCE_PLAYTEST_ASSETS));
+    advanced_platformer::Game run = tests::fixtureGame(
+        advanced_platformer::playtestContent(
+            tests::fixtureContent(), ADVANCED_PLATFORMER_SOURCE_PLAYTEST_ASSETS));
+
+    advanced_platformer::playtestUntilLevel(replay, 3, 60.0F, tests::FixedStepSeconds);
+    const std::vector<advanced_platformer::LevelPlaytest> played =
+        advanced_platformer::playtestRun(run, 2, 60.0F, tests::FixedStepSeconds);
+
+    REQUIRE(played.size() == 2);
+    CHECK(replay.levelNumber() == 3);
+    CHECK(replay.levelSeed() == run.levelSeed());
+    CHECK(replay.runSeed() == run.runSeed());
+    CHECK(replay.playerHealth().current == run.playerHealth().current);
+}
+
+TEST_CASE("Playing until the first level plays nothing")
+{
+    advanced_platformer::Game game = tests::fixtureGame(
+        advanced_platformer::playtestContent(
+            tests::fixtureContent(), ADVANCED_PLATFORMER_SOURCE_PLAYTEST_ASSETS));
+    const std::uint32_t levelSeed = game.levelSeed();
+
+    advanced_platformer::playtestUntilLevel(game, 1, 60.0F, tests::FixedStepSeconds);
+
+    CHECK(game.levelNumber() == 1);
+    CHECK(game.levelSeed() == levelSeed);
+}
+
+TEST_CASE("Playing until a level the bot is defeated before is refused")
+{
+    advanced_platformer::GameContent content =
+        tests::fixtureContent("tests/fixtures/rooms/contact_enemy/pieces.json");
+    content.npcScripts.loadScript("contact_enemy", "tests/fixtures/scripts/contact_enemy.lua");
+    advanced_platformer::Game game = tests::fixtureGame(
+        advanced_platformer::playtestContent(
+            std::move(content), "tests/fixtures/left_walking_bot"));
+
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::playtestUntilLevel(game, 2, 60.0F, tests::FixedStepSeconds),
+        "The bot was defeated on level 1 of run seed 1, before level 2");
+}
+
+TEST_CASE("Playing until a level below 1 is refused")
+{
+    advanced_platformer::Game game = tests::fixtureGame(
+        advanced_platformer::playtestContent(
+            tests::fixtureContent(), ADVANCED_PLATFORMER_SOURCE_PLAYTEST_ASSETS));
+
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::playtestUntilLevel(game, 0, 60.0F, tests::FixedStepSeconds),
+        "The level to play until must be 1 or more");
 }
 
 TEST_CASE("A level playtest is written as one JSON line")

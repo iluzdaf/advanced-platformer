@@ -5,6 +5,7 @@
 
 #include <glm/vec2.hpp>
 #include <format>
+#include <optional>
 #include <utility>
 
 #include "session/atlas_regions.hpp"
@@ -14,6 +15,7 @@
 #include "level/level_composition.hpp"
 #include "level/level_reload.hpp"
 #include "graphics/sprite_renderer.hpp"
+#include "playtest.hpp"
 #include "advanced_platformer/timing/fixed_step.hpp"
 
 namespace advanced_platformer
@@ -29,9 +31,14 @@ namespace advanced_platformer
 
         GameContent loadContentForAtlas(
             const std::filesystem::path& assetDirectory,
+            const std::optional<std::filesystem::path>& botDirectory,
             glm::ivec2 atlasSize)
         {
             GameContent content = loadGameContent(assetDirectory);
+            if (botDirectory.has_value())
+            {
+                content = playtestContent(std::move(content), *botDirectory);
+            }
             validateAtlasRegions(content.gameCatalogs, atlasSize, assetDirectory / "catalogs");
             validateRoomPieces(content.gameCatalogs, static_cast<float>(FixedDeltaSeconds));
             return content;
@@ -41,8 +48,10 @@ namespace advanced_platformer
     ContentSession::ContentSession(
         std::filesystem::path directory,
         SpriteRenderer& spriteRenderer,
-        bool watchAssets)
+        bool watchAssets,
+        std::optional<std::filesystem::path> bot)
         : assetDirectory(std::move(directory)),
+          botDirectory(std::move(bot)),
           renderer(spriteRenderer),
           textureId(spriteRenderer.loadTexture(loadAtlas(assetDirectory)))
     {
@@ -55,7 +64,7 @@ namespace advanced_platformer
     GameContent ContentSession::load() const
     {
         const Texture texture = atlas();
-        return loadContentForAtlas(assetDirectory, {texture.width, texture.height});
+        return loadContentForAtlas(assetDirectory, botDirectory, {texture.width, texture.height});
     }
 
     bool ContentSession::assetsChanged()
@@ -74,8 +83,8 @@ namespace advanced_platformer
         try
         {
             const Image image = loadAtlas(assetDirectory);
-            const LevelReload reload =
-                game.reload(loadContentForAtlas(assetDirectory, {image.width, image.height}));
+            const LevelReload reload = game.reload(
+                loadContentForAtlas(assetDirectory, botDirectory, {image.width, image.height}));
             renderer.replaceTexture(textureId, image);
             console.write(ConsoleLevel::Info, describeReload(reload));
         }
