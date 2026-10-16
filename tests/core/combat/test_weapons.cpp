@@ -63,7 +63,8 @@ namespace
 
     int shotsPerPrimary(advanced_platformer::World& world)
     {
-        return std::get<advanced_platformer::RangedWeapon>(tests::player(world).primaryAttack.value_or(advanced_platformer::BiteAttack{}))
+        return std::get<advanced_platformer::RangedWeapon>(
+                   tests::player(world).primaryAttack.value_or(advanced_platformer::BiteAttack{}))
             .projectilesPerShot;
     }
 
@@ -89,7 +90,9 @@ TEST_CASE(
 
     REQUIRE(advanced_platformer::useItem(world, world.playerId(), 0));
     REQUIRE(tests::player(world).equippedWeapon.has_value());
-    REQUIRE(tests::player(world).equippedWeapon.value_or(advanced_platformer::EquippedWeapon{}).item == GunId);
+    REQUIRE(
+        tests::player(world).equippedWeapon.value_or(advanced_platformer::EquippedWeapon{}).item ==
+        GunId);
     REQUIRE(shotsPerPrimary(world) == 5);
 
     REQUIRE(advanced_platformer::useItem(world, world.playerId(), 0));
@@ -106,14 +109,19 @@ TEST_CASE(
 
     pullTrigger(world);
     REQUIRE(world.projectiles().size() == 5);
-    REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(ShellsId) == 1);
+    REQUIRE(
+        tests::component<advanced_platformer::Inventory>(tests::player(world)).count(ShellsId) ==
+        1);
     REQUIRE(tests::player(world).equippedWeapon.has_value());
 
     pullTrigger(world);
-    REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(ShellsId) == 0);
+    REQUIRE(
+        tests::component<advanced_platformer::Inventory>(tests::player(world)).count(ShellsId) ==
+        0);
     REQUIRE_FALSE(tests::player(world).equippedWeapon.has_value());
     REQUIRE(shotsPerPrimary(world) == 1);
-    REQUIRE(tests::component<advanced_platformer::Inventory>(tests::player(world)).count(GunId) == 1);
+    REQUIRE(
+        tests::component<advanced_platformer::Inventory>(tests::player(world)).count(GunId) == 1);
 }
 
 TEST_CASE("A gun without its ammo in the bag cannot be equipped", "[combat][weapon][inventory]")
