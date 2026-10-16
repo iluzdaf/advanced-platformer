@@ -142,6 +142,7 @@ build/mac-debug/advanced_platformer --seed 24 --bot playtest/assets --level 8 --
 | Collect an item                                     | Walk over it                              |
 | Open or close the inventory (pauses the game)       | Q, or click the bag at the bottom-left    |
 | Drink a health potion                               | Click it in the open inventory            |
+| Equip a shotgun or sniper, or put it away           | Click it in the open inventory            |
 | Restart the current level, keeping health and items | F5                                        |
 | Generate the current level again from the next seed | F6                                        |
 | Pause or resume the simulation                      | P                                         |

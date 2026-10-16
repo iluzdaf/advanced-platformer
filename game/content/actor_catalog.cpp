@@ -63,18 +63,6 @@ namespace advanced_platformer
         std::optional<float> recoveryDuration;
     };
 
-    struct RangedFields
-    {
-        std::optional<int> damage;
-        std::optional<glm::vec2> projectileSize;
-        std::optional<float> projectileSpeed;
-        std::optional<float> projectileLifetime;
-        std::optional<float> shootDuration;
-        std::optional<float> recoveryDuration;
-        std::optional<bool> breaksTiles;
-        std::optional<SpriteJson> sprite;
-    };
-
     struct ContactFields
     {
         std::optional<int> damage;
@@ -182,20 +170,7 @@ namespace advanced_platformer
 
         Attack attackFrom(const RangedJson& json)
         {
-            const RangedFields& fields = json.ranged;
-            RangedWeapon ranged;
-            setIfGiven(ranged.damage, fields.damage);
-            setIfGiven(ranged.projectileSize, fields.projectileSize);
-            setIfGiven(ranged.projectileSpeed, fields.projectileSpeed);
-            setIfGiven(ranged.projectileLifetime, fields.projectileLifetime);
-            setIfGiven(ranged.shootDuration, fields.shootDuration);
-            setIfGiven(ranged.recoveryDuration, fields.recoveryDuration);
-            setIfGiven(ranged.breaksTiles, fields.breaksTiles);
-            if (fields.sprite.has_value())
-            {
-                ranged.projectileSprite = spriteFrom(*fields.sprite);
-            }
-            return ranged;
+            return rangedWeaponFrom(json.ranged);
         }
 
         Attack attackFrom(const ContactJson& json)

@@ -33,6 +33,11 @@
       "id": "coin_cache_1",
       "definition": "coin_cache",
       "spawn": [7, 10]
+    },
+    {
+      "id": "shells_1",
+      "definition": "shells",
+      "spawn": [6, 10]
     }
   ]
 }

@@ -32,6 +32,11 @@
       "id": "coin_pile_1",
       "definition": "coin_pile",
       "spawn": [6, 10]
+    },
+    {
+      "id": "shells_1",
+      "definition": "shells",
+      "spawn": [3, 10]
     }
   ]
 }

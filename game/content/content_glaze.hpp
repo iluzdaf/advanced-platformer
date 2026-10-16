@@ -10,6 +10,7 @@
 #include <glaze/glaze.hpp>
 #include <glm/vec2.hpp>
 
+#include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/render/sprite.hpp"
 
 namespace advanced_platformer
@@ -89,6 +90,22 @@ namespace advanced_platformer
     };
 
     Sprite spriteFrom(const SpriteJson& json);
+
+    struct RangedFields
+    {
+        std::optional<int> damage;
+        std::optional<glm::vec2> projectileSize;
+        std::optional<float> projectileSpeed;
+        std::optional<float> projectileLifetime;
+        std::optional<float> shootDuration;
+        std::optional<float> recoveryDuration;
+        std::optional<bool> breaksTiles;
+        std::optional<int> projectilesPerShot;
+        std::optional<float> spreadDegrees;
+        std::optional<SpriteJson> sprite;
+    };
+
+    RangedWeapon rangedWeaponFrom(const RangedFields& fields);
 
     std::string loadContentText(const std::filesystem::path& path);
 

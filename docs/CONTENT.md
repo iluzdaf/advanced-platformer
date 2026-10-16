@@ -257,7 +257,7 @@ key names the form and its value is that form's object.
 | `surfaceClimb`   | `speed` (60)                                                                                                                                                                                                                                          |
 | `senses`         | `noticeDistance` (96), `targetMemoryDuration` (1.5), `searchDuration` (2), `standoffDistance` (48)                                                                                                                                                    |
 | attack `bite`    | `damage` (1), `hitboxSize` ([10, 8]), `reach` (4), `windupDuration` (0.12), `activeDuration` (0.08), `recoveryDuration` (0.3)                                                                                                                         |
-| attack `ranged`  | `damage` (1), `projectileSize` ([4, 2]), `projectileSpeed` (180), `projectileLifetime` (2), `shootDuration` (0.15), `recoveryDuration` (0.2), `breaksTiles` (false), `sprite`                                                                         |
+| attack `ranged`  | `damage` (1), `projectileSize` ([4, 2]), `projectileSpeed` (180), `projectileLifetime` (2), `shootDuration` (0.15), `recoveryDuration` (0.2), `breaksTiles` (false), `projectilesPerShot` (1), `spreadDegrees` (0, fanned evenly across), `sprite`    |
 | attack `contact` | `damage` (1), `knockback` (none): `speed` (150), `lift` (120), the push away from the attacker and the lift, in pixels per second. Damages while held.                                                                                                |
 | attack `pounce`  | `damage` (1), `knockback` (none), `speed` (200), `lift` (120), `range` (64), `recoveryDuration` (0.5). Needs `platformer`; damages while in the air.                                                                                                  |
 
@@ -329,6 +329,8 @@ states, which the script's facts share. [`common.lua`](../game/assets/scripts/co
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `feet`, `center`         | The NPC's feet and body centre.                                                                                                                                                                  |
 | `health`                 | `current` and `maximum`, when the NPC has health.                                                                                                                                                |
+| `carried`                | The bag's items by name in `items.json`, each with the quantity carried; empty without a bag.                                                                                                    |
+| `equipped`               | The name of the gun in use from the bag; `nil` when the NPC uses its own primary attack.                                                                                                         |
 | `targetFeet`             | The target's known feet, while it is known.                                                                                                                                                      |
 | `lastKnownTargetFeet`    | Where the target was last seen or heard; `{0, 0}` before any.                                                                                                                                    |
 | `targetCenter`           | The living target's body centre now, seen or not.                                                                                                                                                |
@@ -462,6 +464,23 @@ holds and that the set has, so a missing clip falls through to the next row: a j
 | `maximumStack` | Positive.                                    |
 | `effect`       | `none` (default) or `heal`.                  |
 | `effectAmount` | Zero for `none`, positive for `heal`.        |
+| `weapon`       | Optional; makes the item a gun, below.       |
+
+A gun names the item it spends as `ammo` and its shot as a [`ranged` attack](#actors):
+
+```json
+"shotgun": {
+  "name": "Shotgun",
+  "icon": { "position": [144, 240], "size": [16, 16] },
+  "maximumStack": 1,
+  "weapon": {
+    "ammo": "shells",
+    "ranged": { "projectilesPerShot": 5, "spreadDegrees": 30, "projectileLifetime": 0.3 }
+  }
+}
+```
+
+A gun has no other `effect`, and its `ammo` must be another item in `items.json`.
 
 Saves, if added, should store item names: item IDs are assigned at load and can change.
 

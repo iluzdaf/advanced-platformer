@@ -113,6 +113,21 @@ namespace advanced_platformer
             snapshot.feet = feetOf(actor.body.bounds);
             snapshot.center = centerOf(actor.body.bounds);
             snapshot.health = actor.health;
+            if (actor.inventory.has_value())
+            {
+                for (const std::optional<ItemStack>& slot : actor.inventory->slots())
+                {
+                    if (slot.has_value())
+                    {
+                        snapshot.carried[update.world.itemDefinition(slot->item).name] +=
+                            slot->quantity;
+                    }
+                }
+            }
+            if (actor.equippedWeapon.has_value())
+            {
+                snapshot.equipped = update.world.itemDefinition(actor.equippedWeapon->item).name;
+            }
             snapshot.patrol = actor.patrol;
             if (actor.platformerMovement.has_value())
             {

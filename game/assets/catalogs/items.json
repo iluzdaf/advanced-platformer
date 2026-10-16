@@ -16,6 +16,50 @@
       "name": "Key",
       "icon": { "position": [32, 240], "size": [16, 16] },
       "maximumStack": 1
+    },
+    "shotgun": {
+      "name": "Shotgun",
+      "icon": { "position": [144, 240], "size": [16, 16] },
+      "maximumStack": 1,
+      "weapon": {
+        "ammo": "shells",
+        "ranged": {
+          "projectilesPerShot": 5,
+          "spreadDegrees": 30,
+          "projectileSize": [4, 4],
+          "projectileSpeed": 240,
+          "projectileLifetime": 0.3,
+          "recoveryDuration": 0.6,
+          "breaksTiles": true,
+          "sprite": { "position": [208, 240], "size": [4, 4] }
+        }
+      }
+    },
+    "shells": {
+      "name": "Shells",
+      "icon": { "position": [176, 240], "size": [16, 16] },
+      "maximumStack": 24
+    },
+    "sniper": {
+      "name": "Sniper",
+      "icon": { "position": [160, 240], "size": [16, 16] },
+      "maximumStack": 1,
+      "weapon": {
+        "ammo": "rounds",
+        "ranged": {
+          "damage": 3,
+          "projectileSpeed": 420,
+          "projectileLifetime": 0.9,
+          "recoveryDuration": 1.0,
+          "breaksTiles": true,
+          "sprite": { "position": [216, 240], "size": [12, 4] }
+        }
+      }
+    },
+    "rounds": {
+      "name": "Rounds",
+      "icon": { "position": [192, 240], "size": [16, 16] },
+      "maximumStack": 12
     }
   }
 }
