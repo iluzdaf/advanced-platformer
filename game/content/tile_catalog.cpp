@@ -20,11 +20,8 @@
 
 namespace advanced_platformer
 {
-    // tiles.json as written: its member names are the file's keys. Glaze reflects only types
-    // with linkage, so these cannot go in an anonymous namespace.
     struct TileSpriteJson
     {
-        // A tile sprite gives only where it starts: it is one tile in size.
         glm::vec2 position{};
     };
 
@@ -35,6 +32,7 @@ namespace advanced_platformer
         std::optional<bool> climbable;
         std::optional<TileSpriteJson> sprite;
         std::optional<std::string> breaksInto;
+        std::optional<WithDefaults<TouchDamage>> touchDamage;
     };
 
     struct TilesJson
@@ -52,7 +50,6 @@ namespace advanced_platformer
         }
         TileCatalog result;
         result.tileSize = file.tileSize;
-        // Resolve breaksInto after every tile has an ID, so forward references work.
         std::map<std::string, std::string> breaksIntoNames;
         const auto add =
             [&result, &breaksIntoNames, sourceName](const std::string& name, const TileJson& json)
@@ -62,9 +59,12 @@ namespace advanced_platformer
             definition.blocksMovement = json.blocksMovement;
             definition.blocksSight = json.blocksSight;
             definition.climbable = json.climbable.value_or(false);
+            if (json.touchDamage.has_value())
+            {
+                definition.touchDamage = json.touchDamage->get();
+            }
             if (name == "empty")
             {
-                // The empty tile is never drawn and never broken.
                 if (json.sprite.has_value())
                 {
                     failJson(sourceName, path, "unknown field 'sprite'");
@@ -125,7 +125,6 @@ namespace advanced_platformer
     {
         for (const auto& [name, id] : catalog.ids)
         {
-            // Empty tiles are not drawn.
             if (id != 0)
             {
                 requireInAtlas(
@@ -142,7 +141,6 @@ namespace advanced_platformer
         const std::map<char, std::string>& legend,
         const TileCatalog& catalog)
     {
-        // Callers can supply catalogs built directly in C++, without using the JSON loader.
         validateTileCatalog(catalog);
         validateTileLegend(legend, catalog);
         std::map<char, int> ids;

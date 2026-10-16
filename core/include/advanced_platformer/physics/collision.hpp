@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include <glm/vec2.hpp>
 
 #include "advanced_platformer/math/aabb.hpp"
@@ -7,6 +9,7 @@
 namespace advanced_platformer
 {
     class TileMap;
+    struct TouchDamage;
 
     struct CollisionContacts
     {
@@ -18,10 +21,9 @@ namespace advanced_platformer
 
     CollisionContacts moveAndCollide(const TileMap& map, Aabb& bounds, glm::vec2 displacement);
 
-    // Unlike moveAndCollide, this probes for surfaces touching a stationary box,
-    // allowing a small tolerance for floating-point positions.
     CollisionContacts touchingSurfaces(const TileMap& map, const Aabb& bounds);
 
-    // Only marked solid tiles can hold a wall or ceiling climber.
     CollisionContacts touchingClimbableSurfaces(const TileMap& map, const Aabb& bounds);
+
+    std::optional<TouchDamage> touchDamageOverlapping(const TileMap& map, const Aabb& bounds);
 }

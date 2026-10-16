@@ -24,9 +24,18 @@ TEST_CASE("A standable cell has support below and room for the body", "[navigati
     const advanced_platformer::TileMap map = tests::TileMapBuilder({".#.", "...", "###"});
 
     REQUIRE(advanced_platformer::canStandAt(map, {1, 1}, SmallBody));
-    // The tall body would reach into the tile above.
     REQUIRE_FALSE(advanced_platformer::canStandAt(map, {1, 1}, TallBody));
     REQUIRE_FALSE(advanced_platformer::canStandAt(map, {1, 0}, SmallBody));
+}
+
+TEST_CASE("A body cannot stand or rest in a tile that hurts", "[navigation][platformer]")
+{
+    const advanced_platformer::TileMap map =
+        tests::TileMapBuilder({".^.", "###"}).where('^', tests::Tile{}.hurts({}));
+
+    REQUIRE(advanced_platformer::canStandAt(map, {0, 0}, SmallBody));
+    REQUIRE_FALSE(advanced_platformer::canStandAt(map, {1, 0}, SmallBody));
+    REQUIRE_FALSE(advanced_platformer::bodyFits(map, {{16.0F, 4.0F}, SmallBody}));
 }
 
 TEST_CASE("A body may extend above the map but not through its walls", "[navigation][platformer]")
@@ -36,7 +45,6 @@ TEST_CASE("A body may extend above the map but not through its walls", "[navigat
     REQUIRE(advanced_platformer::boxInCell(tests::TileSize, {1, 0}, tall).topLeft.y < 0.0F);
     REQUIRE(advanced_platformer::canStandAt(map, {1, 0}, tall));
 
-    // Wider than a tile in the first column, the body would poke past the map's side.
     REQUIRE_FALSE(advanced_platformer::canStandAt(map, {0, 0}, {20.0F, 12.0F}));
 }
 
@@ -57,17 +65,13 @@ TEST_CASE(
     "A climbable cell has a climbable wall or ceiling the body can rest on",
     "[navigation][platformer][climb]")
 {
-    // A climbable roof and left wall, and a plain wall on the right.
     const advanced_platformer::TileMap map =
         tests::TileMapBuilder({"ccccc", "c...#", "c...#", "#####"})
             .where('c', tests::Tile{}.blocksMovement().climbable());
 
-    // Beside the climbable wall, and under the roof.
     REQUIRE(advanced_platformer::canClimbAt(map, {1, 2}, SmallBody));
     REQUIRE(advanced_platformer::canClimbAt(map, {2, 1}, SmallBody));
-    // In the open, and beside a wall that cannot be climbed.
     REQUIRE_FALSE(advanced_platformer::canClimbAt(map, {2, 2}, SmallBody));
     REQUIRE_FALSE(advanced_platformer::canClimbAt(map, {3, 2}, SmallBody));
-    // Inside the wall itself.
     REQUIRE_FALSE(advanced_platformer::canClimbAt(map, {0, 2}, SmallBody));
 }

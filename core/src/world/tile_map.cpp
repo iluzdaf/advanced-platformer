@@ -9,9 +9,32 @@
 #include <vector>
 
 #include "advanced_platformer/math/coordinates.hpp"
+#include "advanced_platformer/math/validation.hpp"
 
 namespace advanced_platformer
 {
+    namespace
+    {
+        void validateTouchDamage(
+            const TileDefinition& definition,
+            const TouchDamage& touch,
+            int tileSize)
+        {
+            if (definition.blocksMovement)
+            {
+                throw std::invalid_argument("A tile that hurts on touch must not block movement");
+            }
+            if (touch.damage <= 0 || !isFiniteNonNegative(touch.lift) ||
+                !isFinitePositive(touch.repeatSeconds) || !isFinitePositive(touch.height) ||
+                touch.height > static_cast<float>(tileSize))
+            {
+                throw std::invalid_argument(
+                    "Touch damage needs positive damage, a finite lift, positive repeat time and "
+                    "a height within the tile");
+            }
+        }
+    }
+
     TileMap::TileMap(
         int tileSize,
         int width,
@@ -41,7 +64,8 @@ namespace advanced_platformer
         }
 
         if (tileDefinitions.empty() || tileDefinitions.front().blocksMovement ||
-            tileDefinitions.front().blocksSight || tileDefinitions.front().climbable)
+            tileDefinitions.front().blocksSight || tileDefinitions.front().climbable ||
+            tileDefinitions.front().touchDamage.has_value())
         {
             throw std::invalid_argument("Tile ID zero must be defined as empty");
         }
@@ -51,6 +75,10 @@ namespace advanced_platformer
             if (definition.climbable && !definition.blocksMovement)
             {
                 throw std::invalid_argument("A climbable tile must block movement");
+            }
+            if (definition.touchDamage.has_value())
+            {
+                validateTouchDamage(definition, *definition.touchDamage, mapTileSize);
             }
         }
 
@@ -188,6 +216,11 @@ namespace advanced_platformer
     bool TileMap::climbableAt(Cell cell) const
     {
         return contains(cell) && definitionAt(cell).climbable;
+    }
+
+    bool TileMap::hurtsAt(Cell cell) const
+    {
+        return contains(cell) && definitionAt(cell).touchDamage.has_value();
     }
 
     bool TileMap::breakTile(Cell cell)

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <optional>
 #include <stdexcept>
 
 #include <glm/vec2.hpp>
@@ -40,8 +41,6 @@ namespace advanced_platformer
             }
         }
 
-        // One axis of the map as the movement sees it: the extent and cell count along the
-        // way, and how many cells lie across it. x is axis 0 and y is axis 1, as in glm.
         struct AxisView
         {
             int axis = 0;
@@ -103,11 +102,6 @@ namespace advanced_platformer
             bool hitTile = false;
         };
 
-        // How far the box may move along one axis before a blocking tile stops it. The scan
-        // runs from the cell the leading edge is in to the cell it would end in. Arriving
-        // exactly at a map edge counts as reaching the cell beyond it: past the sides and
-        // bottom that cell blocks, and above the top it is open, so either way the answer
-        // is the map's.
         AllowedMovement allowedMovement(
             const TileMap& map,
             const AxisView& view,
@@ -205,5 +199,35 @@ namespace advanced_platformer
     CollisionContacts touchingClimbableSurfaces(const TileMap& map, const Aabb& bounds)
     {
         return probeSurfaces(map, bounds, SurfaceKind::Climbable);
+    }
+
+    std::optional<TouchDamage> touchDamageOverlapping(const TileMap& map, const Aabb& bounds)
+    {
+        const CellRange cells = cellsCovered(map.tileSize(), bounds);
+        for (int row = cells.first.y; row <= cells.last.y; ++row)
+        {
+            for (int column = cells.first.x; column <= cells.last.x; ++column)
+            {
+                if (!map.contains({column, row}))
+                {
+                    continue;
+                }
+                const std::optional<TouchDamage>& touch =
+                    map.definitionAt({column, row}).touchDamage;
+                if (!touch.has_value())
+                {
+                    continue;
+                }
+                const glm::vec2 corner = cellCorner(map.tileSize(), {column, row});
+                const auto side = static_cast<float>(map.tileSize());
+                const Aabb hurting{
+                    {corner.x, corner.y + side - touch->height}, {side, touch->height}};
+                if (overlaps(bounds, hurting))
+                {
+                    return touch;
+                }
+            }
+        }
+        return std::nullopt;
     }
 }

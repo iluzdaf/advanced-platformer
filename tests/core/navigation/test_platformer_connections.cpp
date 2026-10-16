@@ -83,6 +83,42 @@ TEST_CASE("Walk connections reach every cell on the floor", "[navigation][platfo
     REQUIRE(hasConnection(walks, {5, 0}, Traversal::Walk));
 }
 
+TEST_CASE("Connections never stand in a tile that hurts", "[navigation][platformer]")
+{
+    const PlatformerTraversalProfile profile{
+        .size = SmallBody, .stepSeconds = tests::FixedStepSeconds};
+    const advanced_platformer::TileMap floor =
+        tests::TileMapBuilder({"........", "........", "...^....", "########"})
+            .where('^', tests::Tile{}.hurts({.height = 8.0F}));
+    const std::vector<RouteConnection> fromEdge =
+        tests::connectionsFrom(floor, {2, 2}, profile).connections;
+
+    REQUIRE(hasConnection(fromEdge, {1, 2}, Traversal::Walk));
+    REQUIRE_FALSE(hasConnection(fromEdge, {4, 2}, Traversal::Walk));
+    REQUIRE(landsBeyond(fromEdge, 4, 2));
+    REQUIRE(
+        std::ranges::none_of(
+            fromEdge,
+            [](const RouteConnection& connection)
+            { return connection.step.destination.cell == Cell{3, 2}; }));
+}
+
+TEST_CASE(
+    "A jump that would touch a tile that hurts is not a connection",
+    "[navigation][platformer]")
+{
+    const PlatformerTraversalProfile profile{
+        .size = SmallBody, .stepSeconds = tests::FixedStepSeconds};
+    const advanced_platformer::TileMap open =
+        tests::TileMapBuilder({"........", "........", "........", "########"});
+    const advanced_platformer::TileMap hurting =
+        tests::TileMapBuilder({"...^....", "...^....", "...^....", "########"})
+            .where('^', tests::Tile{}.hurts({}));
+
+    REQUIRE(landsBeyond(tests::connectionsFrom(open, {2, 2}, profile).connections, 4, 2));
+    REQUIRE_FALSE(landsBeyond(tests::connectionsFrom(hurting, {2, 2}, profile).connections, 4, 2));
+}
+
 TEST_CASE("A direct walk costs less than stopping along the way", "[navigation][platformer]")
 {
     const PlatformerTraversalProfile profile{

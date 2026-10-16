@@ -97,7 +97,7 @@ reload, [GLOSSARY.md](GLOSSARY.md) for the words the code uses, and
 | 4     | Update NPC senses and target memory                                                               |
 | 5     | Advance NPC machines and run their Lua activities into intentions                                 |
 | 6     | Move actors, then pickups, resolving tile collision                                               |
-| 7     | Update attacks, projectiles, which may break tiles, and projectile bursts                         |
+| 7     | Update attacks, projectiles, which may break tiles, projectile bursts, and touch damage           |
 | 8     | Apply damage and knockback, advance death timers, defeat the player                               |
 | 9     | Detect pickups                                                                                    |
 | 10    | Forget the Lua state of actors about to be removed, then apply queued requests                    |
@@ -221,18 +221,25 @@ team, and life state, plus optional components.
 ## Tile map, collision, and validation
 
 - `TileMap` is a rectangular, row-major array of tile IDs; zero is empty. A definition
-  chooses `blocksMovement`, `blocksSight`, `climbable`, and what the tile `breaksInto`.
+  chooses `blocksMovement`, `blocksSight`, `climbable`, what the tile `breaksInto`, and
+  its `touchDamage`.
 - One layer serves rendering, collision, sensing, and climbing.
 - Actors, pickups, and exits are level data, not tile IDs. Tests build maps from text
   with `tests/support/tile_map_builder.hpp`, which supplies its own definitions.
 
-| Tile  | Movement and projectiles | Sight | Hides what stands in it |
-| ----- | ------------------------ | ----- | ----------------------- |
-| Empty | Pass                     | Pass  | No                      |
-| Stone | Block                    | Block | Nothing can stand in it |
-| Glass | Block                    | Pass  | Nothing can stand in it |
-| Grass | Pass                     | Block | Yes                     |
+| Tile   | Movement and projectiles | Sight | Hides what stands in it |
+| ------ | ------------------------ | ----- | ----------------------- |
+| Empty  | Pass                     | Pass  | No                      |
+| Stone  | Block                    | Block | Nothing can stand in it |
+| Glass  | Block                    | Pass  | Nothing can stand in it |
+| Grass  | Pass                     | Block | Yes                     |
+| Spikes | Pass, and hurt           | Pass  | No                      |
 
+- A tile with `touchDamage` must not block movement. `updateTouchDamage` hurts every
+  living actor with health whose body overlaps the tile's bottom `height` pixels, unless
+  the actor was hurt less than `repeatSeconds` ago, and lifts it straight up by `lift`.
+  `touchDamageOverlapping` is the one test of that overlap; damage itself still goes
+  through `updateLifeState`.
 - Collision sweeps an arbitrary-sized AABB along X against nearby tile boxes, then along
   Y, and reports left, right, ground, and ceiling contacts. Actors do not collide with or
   push one another. The left, right, and bottom map edges block; the top is open.
@@ -365,6 +372,9 @@ Each NPC update has three steps:
   penalty.
 - The result is a `NavigationPath` of waypoints: the feet at the end of each step, its
   traversal, and its recorded inputs. Cells and surfaces stay inside navigation.
+- Navigation never plans through a tile that hurts: `bodyFits` rejects bounds that touch
+  one, so no route stands there; a jump, fall or climb whose simulated body touches one is
+  not a connection; and a flyer does not enter such a cell.
 - A goal is a point that need not be somewhere the actor can be. The search heads for
   the cell holding it and stops at the cheapest place in that cell.
 
@@ -709,8 +719,8 @@ replacement and gameplay control remain later integration work.
   the nearest live NPC's definition and against the bot's machine state at the start of
   the step the damage landed in (`damageByBotState`), health left, the cell the player ended in, pickups
   placed and collected, Lua script errors, the level's tiles as it starts (`map`, one
-  string per row: `#` blocks movement, `X` breaks, `G` hides whoever stands in it, `.` is
-  open), and the level's pacing: a sample every half second, and one when the level ends.
+  string per row: `#` blocks movement, `X` breaks, `G` hides whoever stands in it, `^`
+  hurts on touch, `.` is open), and the level's pacing: a sample every half second, and one when the level ends.
 
 | Pacing field    | Meaning                                                                                                               |
 | --------------- | --------------------------------------------------------------------------------------------------------------------- |

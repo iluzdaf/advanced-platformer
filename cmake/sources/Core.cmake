@@ -11,6 +11,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/core/src/combat/attack_system.cpp
         ${PROJECT_SOURCE_DIR}/core/src/combat/combat.cpp
         ${PROJECT_SOURCE_DIR}/core/src/combat/projectile_system.cpp
+        ${PROJECT_SOURCE_DIR}/core/src/combat/touch_damage.cpp
         ${PROJECT_SOURCE_DIR}/core/src/input/input_state.cpp
         ${PROJECT_SOURCE_DIR}/core/src/input/input_program.cpp
         ${PROJECT_SOURCE_DIR}/core/src/inventory/inventory.cpp

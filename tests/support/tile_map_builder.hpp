@@ -14,8 +14,6 @@
 
 namespace tests
 {
-    // The properties of one tile, for tests where they are the subject. A tile starts out
-    // blocking nothing, and a test asks for exactly what it depends on.
     class Tile
     {
     public:
@@ -37,13 +35,18 @@ namespace tests
             return *this;
         }
 
+        Tile hurts(advanced_platformer::TouchDamage touch) &&
+        {
+            definition.touchDamage = touch;
+            return *this;
+        }
+
         Tile withSprite(advanced_platformer::SpriteRegion region) &&
         {
             definition.sprite = region;
             return *this;
         }
 
-        // What breaking the tile leaves, named by its map symbol.
         Tile breaksInto(char symbol) &&
         {
             breaksIntoSymbol = symbol;
@@ -57,10 +60,6 @@ namespace tests
         std::optional<char> breaksIntoSymbol;
     };
 
-    // '.' is empty (ID 0); '#' blocks movement and sight. Tests that depend on
-    // specific tile properties should declare another symbol with where(). Neither
-    // built-in symbol can be redefined, and undeclared symbols are rejected.
-    // Conversion builds a TileMap using tests::TileSize.
     class TileMapBuilder
     {
     public:

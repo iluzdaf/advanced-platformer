@@ -9,6 +9,7 @@
 #include "content/tile_catalog.hpp"
 #include "advanced_platformer/physics/segment_cast.hpp"
 #include "advanced_platformer/world/sight.hpp"
+#include "advanced_platformer/world/tile_map.hpp"
 #include "support/json_document.hpp"
 
 TEST_CASE("Tile catalogs reject unknown fields and say where", "[app][tiles]")
@@ -134,9 +135,60 @@ TEST_CASE("Only movement-blocking tiles can be marked climbable", "[app][tiles]"
         Catch::Matchers::ContainsSubstring("climbable tile 'grass' must block movement"));
 }
 
+TEST_CASE("Tiles that hurt on touch read their damage, lift and repeat time", "[app][tiles]")
+{
+    const auto catalog = advanced_platformer::parseTileCatalog(
+        R"({"tileSize":16,"tiles":{
+        "empty":{"blocksMovement":false,"blocksSight":false},
+        "spikes":{"blocksMovement":false,"blocksSight":false,"sprite":{"position":[0,0]},
+                  "touchDamage":{"damage":2,"lift":150,"repeatSeconds":0.5}},
+        "thorns":{"blocksMovement":false,"blocksSight":true,"sprite":{"position":[16,0]},
+                  "touchDamage":{}}
+    }})",
+        "tiles.json");
+    const auto& spikes = catalog.definitions[static_cast<std::size_t>(catalog.ids.at("spikes"))];
+    const auto& thorns = catalog.definitions[static_cast<std::size_t>(catalog.ids.at("thorns"))];
+
+    REQUIRE(
+        spikes.touchDamage ==
+        advanced_platformer::TouchDamage{.damage = 2, .lift = 150.0F, .repeatSeconds = 0.5F});
+    REQUIRE(thorns.touchDamage == advanced_platformer::TouchDamage{});
+    REQUIRE_FALSE(catalog.definitions.front().touchDamage.has_value());
+}
+
+TEST_CASE("Tile catalogs reject touch damage that cannot apply", "[app][tiles]")
+{
+    const auto parse = [](const std::string& tile)
+    {
+        return advanced_platformer::parseTileCatalog(
+            R"({"tileSize":16,"tiles":{
+        "empty":{"blocksMovement":false,"blocksSight":false},
+        "spikes":)" +
+                tile + "}}",
+            "tiles.json");
+    };
+
+    REQUIRE_THROWS_WITH(
+        parse(R"({"blocksMovement":true,"blocksSight":false,"sprite":{"position":[0,0]},
+                  "touchDamage":{}})"),
+        Catch::Matchers::ContainsSubstring(
+            "tile 'spikes' hurts on touch so must not block movement"));
+    REQUIRE_THROWS_WITH(
+        parse(R"({"blocksMovement":false,"blocksSight":false,"sprite":{"position":[0,0]},
+                  "touchDamage":{"damage":0}})"),
+        Catch::Matchers::ContainsSubstring("tile 'spikes' touchDamage needs positive damage"));
+    REQUIRE_THROWS_WITH(
+        parse(R"({"blocksMovement":false,"blocksSight":false,"sprite":{"position":[0,0]},
+                  "touchDamage":{"repeatSeconds":0}})"),
+        Catch::Matchers::ContainsSubstring("tile 'spikes' touchDamage needs positive damage"));
+    REQUIRE_THROWS_WITH(
+        parse(R"({"blocksMovement":false,"blocksSight":false,"sprite":{"position":[0,0]},
+                  "touchDamage":{"dammage":1}})"),
+        Catch::Matchers::ContainsSubstring("unknown field 'dammage'"));
+}
+
 TEST_CASE("Breakable tiles resolve breaksInto to a catalog ID", "[app][tiles]")
 {
-    // cracked is declared after glass refers to it, so resolution cannot be a single pass.
     const auto catalog = advanced_platformer::parseTileCatalog(
         R"({"tileSize":16,"tiles":{
         "empty":{"blocksMovement":false,"blocksSight":false},
@@ -175,7 +227,6 @@ TEST_CASE("Tile catalogs reject unusable breaksInto targets", "[app][tiles]")
         parse("missing"),
         Catch::Matchers::ContainsSubstring(
             "tiles.json: tiles.glass.breaksInto: unknown tile name 'missing'"));
-    // Breaking into itself would leave the tile in place forever.
     REQUIRE_THROWS_AS(parse("glass"), std::invalid_argument);
 }
 

@@ -186,13 +186,14 @@ walk and jump through every shipped piece from each of its doors to each other.
 
 `tiles.json` has `tileSize`, the side of a tile in world pixels (16), and `tiles`, by name.
 
-| Field            | Required | Meaning                                                                                |
-| ---------------- | -------- | -------------------------------------------------------------------------------------- |
-| `blocksMovement` | Yes      | Solid to bodies.                                                                       |
-| `blocksSight`    | Yes      | Stops NPC sight.                                                                       |
-| `sprite`         | \*       | `{ "position": [x, y] }`; the region is one tile square. `empty` has none.             |
-| `climbable`      | No       | A climber can grip its walls and underside. Map edges never are.                       |
-| `breaksInto`     | No       | The tile it becomes when a `breaksTiles` shot hits it. Chain tiles to break in stages. |
+| Field            | Required | Meaning                                                                                                                                                                                                                                                                                                                       |
+| ---------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `blocksMovement` | Yes      | Solid to bodies.                                                                                                                                                                                                                                                                                                              |
+| `blocksSight`    | Yes      | Stops NPC sight.                                                                                                                                                                                                                                                                                                              |
+| `sprite`         | \*       | `{ "position": [x, y] }`; the region is one tile square. `empty` has none.                                                                                                                                                                                                                                                    |
+| `climbable`      | No       | A climber can grip its walls and underside. Map edges never are.                                                                                                                                                                                                                                                              |
+| `breaksInto`     | No       | The tile it becomes when a `breaksTiles` shot hits it. Chain tiles to break in stages.                                                                                                                                                                                                                                        |
+| `touchDamage`    | No       | Hurts whoever touches it: `damage` (1), `lift` (0, the upward knockback speed), `repeatSeconds` (1, how long after any hurt it can hurt again) and `height` (16, the pixels up from the tile's bottom that hurt, at most the tile size). The tile must not block movement. Navigation never stands in it or moves through it. |
 
 \* Required on every tile but `empty`, which must allow movement and sight. Speeds and
 jump heights are tuned for 16-pixel tiles.

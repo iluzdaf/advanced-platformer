@@ -44,7 +44,7 @@ namespace advanced_platformer
                 }
             }
         }
-        return true;
+        return !touchDamageOverlapping(map, bounds).has_value();
     }
 
     bool canStandAt(const TileMap& map, Cell cell, glm::vec2 bodySize)
