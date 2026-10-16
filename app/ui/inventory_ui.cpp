@@ -28,6 +28,7 @@ namespace advanced_platformer
         constexpr ImU32 SlotColour = IM_COL32(40, 44, 52, 220);
         constexpr ImU32 HoveredSlotColour = IM_COL32(72, 76, 84, 240);
         constexpr ImU32 SlotBorderColour = IM_COL32(150, 156, 168, 220);
+        constexpr ImU32 EquippedBorderColour = IM_COL32(236, 188, 76, 255);
 
         bool drawInventorySlot(
             const Game& game,
@@ -42,7 +43,15 @@ namespace advanced_platformer
             ImDrawList* drawList = ImGui::GetWindowDrawList();
             const ImU32 background = ImGui::IsItemHovered() ? HoveredSlotColour : SlotColour;
             drawList->AddRectFilled(slotMinimum, slotMaximum, background);
-            drawList->AddRect(slotMinimum, slotMaximum, SlotBorderColour, 0.0F, 0, 1.0F);
+            const bool equipped =
+                slot.has_value() && game.playerEquippedWeapon() == std::optional{slot->item};
+            drawList->AddRect(
+                slotMinimum,
+                slotMaximum,
+                equipped ? EquippedBorderColour : SlotBorderColour,
+                0.0F,
+                0,
+                equipped ? 2.0F : 1.0F);
 
             if (!slot.has_value())
             {
@@ -56,7 +65,7 @@ namespace advanced_platformer
             char count[16];
             std::snprintf(count, sizeof(count), "%d", slot->quantity);
             drawShadowedText(*drawList, iconMinimum, HudTextColour, count);
-            return clicked && item.effect != ItemEffect::None;
+            return clicked && (item.effect != ItemEffect::None || item.weapon.has_value());
         }
     }
 

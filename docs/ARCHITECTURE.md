@@ -177,6 +177,11 @@ team, and life state, plus optional components.
 | Health and inventory | `Health`, `Inventory`                                                                                    | Optional                                              |
 
 - Attack components need a non-neutral team for opponent filtering.
+- A gun is an item with a `weapon`, a `RangedWeapon`, and the item it spends as `ammo`.
+  `useItem` equips it: `EquippedWeapon` holds the primary attack it replaced, which
+  `holsterWeapon` brings back when the gun is used again or `updateAttacks` finds no ammo
+  left. Each shot of the primary attack spends one ammo while a gun is equipped, and the
+  equipped gun carries over to the next level and through a hot reload.
 - `World::addActor` checks component combinations. Level validation checks placement
   against the map.
 - Systems read the components they need. There is no actor subclass or virtual dispatch.
@@ -705,7 +710,8 @@ replacement and gameplay control remain later integration work.
   behaviours is a state with transitions that an NPC's machine can take over: `explore`
   routes to the nearest unexplored door until it has seen the exit's room, `travel`
   then routes to the exit, `loot` collects a pickup it shot free, `heal` routes to a health
-  potion at 1 health, `unstick` walks and jumps the other way when it has reached no new
+  potion at 1 health, `switchWeapon` equips the shotgun for a close opponent, the sniper
+  for a far one and the pistol otherwise, `unstick` walks and jumps the other way when it has reached no new
   cell for a few seconds, and `kite`, `hold`, `dodge` and `keepAway` answer an opponent,
   each entered on a script fact and limited per approach. `playtestContent` builds that content on top of the shipped catalogs, so
   nothing of the bot ships with the game.

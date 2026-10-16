@@ -14,6 +14,7 @@
 
 #include <glaze/glaze.hpp>
 
+#include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/render/sprite.hpp"
 
 namespace advanced_platformer
@@ -100,6 +101,25 @@ namespace advanced_platformer
         sprite.region = {json.position, json.size};
         sprite.anchor = json.anchor.value_or(SpriteAnchor::BodyFeet);
         return sprite;
+    }
+
+    RangedWeapon rangedWeaponFrom(const RangedFields& fields)
+    {
+        RangedWeapon weapon;
+        weapon.damage = fields.damage.value_or(weapon.damage);
+        weapon.projectileSize = fields.projectileSize.value_or(weapon.projectileSize);
+        weapon.projectileSpeed = fields.projectileSpeed.value_or(weapon.projectileSpeed);
+        weapon.projectileLifetime = fields.projectileLifetime.value_or(weapon.projectileLifetime);
+        weapon.shootDuration = fields.shootDuration.value_or(weapon.shootDuration);
+        weapon.recoveryDuration = fields.recoveryDuration.value_or(weapon.recoveryDuration);
+        weapon.breaksTiles = fields.breaksTiles.value_or(weapon.breaksTiles);
+        weapon.projectilesPerShot = fields.projectilesPerShot.value_or(weapon.projectilesPerShot);
+        weapon.spreadDegrees = fields.spreadDegrees.value_or(weapon.spreadDegrees);
+        if (fields.sprite.has_value())
+        {
+            weapon.projectileSprite = spriteFrom(*fields.sprite);
+        }
+        return weapon;
     }
 
     std::string loadContentText(const std::filesystem::path& path)

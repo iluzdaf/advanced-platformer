@@ -63,6 +63,7 @@ namespace advanced_platformer
         std::optional<ActorId> machineActorAt(glm::vec2 internalPosition) const;
         Health playerHealth() const;
         const Inventory& playerInventory() const;
+        std::optional<int> playerEquippedWeapon() const;
         const ItemDefinition& itemDefinition(int id) const;
         void useInventoryItem(std::size_t slot);
         bool breakTileAt(glm::vec2 internalPosition);

@@ -30,6 +30,7 @@
 #include "advanced_platformer/input/input_state.hpp"
 #include "advanced_platformer/inventory/inventory.hpp"
 #include "advanced_platformer/inventory/item.hpp"
+#include "advanced_platformer/inventory/item_use.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
@@ -113,6 +114,10 @@ namespace advanced_platformer
         {
             next.health = live->health;
             next.inventory = live->inventory;
+            if (live->equippedWeapon.has_value())
+            {
+                equipWeapon(next, level.world.itemDefinition(live->equippedWeapon->item));
+            }
         }
         return next;
     }
@@ -282,6 +287,16 @@ namespace advanced_platformer
             throw std::logic_error("The player is missing its inventory");
         }
         return *player->inventory;
+    }
+
+    std::optional<int> Game::playerEquippedWeapon() const
+    {
+        const Actor* player = level.world.findActor(level.world.playerId());
+        if (player == nullptr || !player->equippedWeapon.has_value())
+        {
+            return std::nullopt;
+        }
+        return player->equippedWeapon->item;
     }
 
     const ItemDefinition& Game::itemDefinition(int id) const

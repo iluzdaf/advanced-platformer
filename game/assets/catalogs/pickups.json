@@ -23,6 +23,30 @@
       "quantity": 1,
       "bodySize": [16, 16],
       "sprite": { "position": [104, 240], "size": [12, 12] }
+    },
+    "shotgun": {
+      "item": "shotgun",
+      "quantity": 1,
+      "bodySize": [16, 16],
+      "sprite": { "position": [144, 240], "size": [16, 16] }
+    },
+    "shells": {
+      "item": "shells",
+      "quantity": 6,
+      "bodySize": [16, 16],
+      "sprite": { "position": [176, 240], "size": [16, 16] }
+    },
+    "sniper": {
+      "item": "sniper",
+      "quantity": 1,
+      "bodySize": [16, 16],
+      "sprite": { "position": [160, 240], "size": [16, 16] }
+    },
+    "rounds": {
+      "item": "rounds",
+      "quantity": 4,
+      "bodySize": [16, 16],
+      "sprite": { "position": [192, 240], "size": [16, 16] }
     }
   }
 }

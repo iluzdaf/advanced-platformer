@@ -36,12 +36,16 @@ namespace advanced_platformer
         float shootDuration = 0.15F;
         float recoveryDuration = 0.20F;
         bool breaksTiles = false;
+        int projectilesPerShot = 1;
+        float spreadDegrees = 0.0F;
 
         RangedPhase phase = RangedPhase::Ready;
         float phaseTimeRemaining = 0.0F;
         std::optional<double> lastFiredTimeSeconds;
         Sprite projectileSprite = {0, {{0.0F, 0.0F}, {4.0F, 2.0F}}};
     };
+
+    void validateRangedWeapon(const RangedWeapon& weapon);
 
     enum class BitePhase
     {

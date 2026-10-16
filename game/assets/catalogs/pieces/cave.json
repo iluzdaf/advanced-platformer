@@ -32,6 +32,11 @@
       "id": "coin_pile_1",
       "definition": "coin_pile",
       "spawn": [7, 8]
+    },
+    {
+      "id": "shotgun_1",
+      "definition": "shotgun",
+      "spawn": [3, 10]
     }
   ]
 }

@@ -397,6 +397,42 @@ TEST_CASE("A script reads its health and asks to use an item by name", "[lua][np
     REQUIRE(scripts.diagnostics().empty());
 }
 
+TEST_CASE("A script reads what its bag carries and which gun it holds", "[lua][npc]")
+{
+    LuaNpcScripts scripts;
+    scripts.loadScriptText(
+        "example",
+        R"(
+            return {
+                activities = {
+                    decide = {
+                        description = 'Test activity decide',
+                        update = function(self, snapshot)
+                            if snapshot.equipped == nil and (snapshot.carried.Shells or 0) > 0 then
+                                return { useItem = "Gun" }
+                            end
+                            return {}
+                        end
+                    }
+                }
+            }
+        )",
+        "command.lua");
+
+    NpcActivitySnapshot snapshot = commandSnapshot();
+    snapshot.carried = {{"Gun", 1}, {"Shells", 4}};
+    scripts.enter(FirstActor, Activity, snapshot);
+    REQUIRE(scripts.update(FirstActor, Activity, snapshot, 0.5F).useItem == "Gun");
+
+    snapshot.equipped = "Gun";
+    REQUIRE_FALSE(scripts.update(FirstActor, Activity, snapshot, 0.5F).useItem.has_value());
+
+    snapshot.equipped.reset();
+    snapshot.carried.erase("Shells");
+    REQUIRE_FALSE(scripts.update(FirstActor, Activity, snapshot, 0.5F).useItem.has_value());
+    REQUIRE(scripts.diagnostics().empty());
+}
+
 TEST_CASE("Lua receives independent surface and range facts", "[lua][npc]")
 {
     LuaNpcScripts scripts;

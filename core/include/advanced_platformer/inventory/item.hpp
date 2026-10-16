@@ -1,7 +1,9 @@
 #pragma once
 
+#include <optional>
 #include <string>
 
+#include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/render/sprite.hpp"
 
 namespace advanced_platformer
@@ -22,6 +24,8 @@ namespace advanced_platformer
         int maximumStack = 1;
         ItemEffect effect = ItemEffect::None;
         int effectAmount = 0;
+        std::optional<RangedWeapon> weapon = std::nullopt;
+        std::optional<ItemId> ammo = std::nullopt;
     };
 
     struct ItemStack

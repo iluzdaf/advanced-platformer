@@ -37,6 +37,11 @@
       "id": "coin_pile_1",
       "definition": "coin_pile",
       "spawn": [7, 5]
+    },
+    {
+      "id": "rounds_1",
+      "definition": "rounds",
+      "spawn": [5, 10]
     }
   ]
 }
