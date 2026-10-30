@@ -474,7 +474,7 @@ A gun names the item it spends as `ammo` and its shot as a [`ranged` attack](#ac
   "icon": { "position": [144, 240], "size": [16, 16] },
   "maximumStack": 1,
   "weapon": {
-    "ammo": "shells",
+    "ammo": "ammo",
     "ranged": { "projectilesPerShot": 5, "spreadDegrees": 30, "projectileLifetime": 0.3 }
   }
 }

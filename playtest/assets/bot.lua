@@ -22,9 +22,8 @@ local NoProgressSeconds = 4.0
 local UnstickSecondsLimit = 2.0
 local UnstickJumpSeconds = 0.5
 local ShotgunItem = "Shotgun"
-local ShellsItem = "Shells"
+local AmmoItem = "Ammo"
 local SniperItem = "Sniper"
-local RoundsItem = "Rounds"
 local ShotgunDistance = 64.0
 local SniperDistance = 96.0
 
@@ -113,8 +112,8 @@ local function onTheWay(memory, snapshot, command)
     return fightNearest(snapshot, command)
 end
 
-local function loaded(snapshot, gun, ammo)
-    return (snapshot.carried[gun] or 0) > 0 and (snapshot.carried[ammo] or 0) > 0
+local function loaded(snapshot, gun)
+    return (snapshot.carried[gun] or 0) > 0 and (snapshot.carried[AmmoItem] or 0) > 0
 end
 
 local function weaponFor(snapshot)
@@ -122,10 +121,10 @@ local function weaponFor(snapshot)
     if not snapshot.facts.targetVisible or distance == nil then
         return nil
     end
-    if distance <= ShotgunDistance and loaded(snapshot, ShotgunItem, ShellsItem) then
+    if distance <= ShotgunDistance and loaded(snapshot, ShotgunItem) then
         return ShotgunItem
     end
-    if distance >= SniperDistance and loaded(snapshot, SniperItem, RoundsItem) then
+    if distance >= SniperDistance and loaded(snapshot, SniperItem) then
         return SniperItem
     end
     return nil

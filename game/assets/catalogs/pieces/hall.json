@@ -29,8 +29,8 @@
       "spawn": [9, 9]
     },
     {
-      "id": "shells_1",
-      "definition": "shells",
+      "id": "ammo_1",
+      "definition": "ammo",
       "spawn": [14, 10]
     }
   ]

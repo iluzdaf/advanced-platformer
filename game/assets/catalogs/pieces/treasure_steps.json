@@ -30,8 +30,8 @@
       "spawn": [17, 3]
     },
     {
-      "id": "rounds_1",
-      "definition": "rounds",
+      "id": "ammo_1",
+      "definition": "ammo",
       "spawn": [3, 10]
     }
   ]
