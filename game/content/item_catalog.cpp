@@ -35,6 +35,12 @@ template <> struct glz::meta<advanced_platformer::ItemEffect>
 
 namespace advanced_platformer
 {
+    struct WeaponJson
+    {
+        std::string ammo;
+        RangedFields ranged;
+    };
+
     struct ItemJson
     {
         std::string name;
@@ -42,6 +48,7 @@ namespace advanced_platformer
         int maximumStack = 1;
         std::optional<ItemEffect> effect;
         std::optional<int> effectAmount;
+        std::optional<WeaponJson> weapon;
     };
 
     struct ItemsJson
@@ -93,6 +100,24 @@ namespace advanced_platformer
             item.effectAmount = json.effectAmount.value_or(0);
             catalog.definitions.emplace(key, item);
         }
+        for (const auto& [key, json] : file.items)
+        {
+            if (!json.weapon.has_value())
+            {
+                continue;
+            }
+            const auto ammo = catalog.definitions.find(json.weapon->ammo);
+            if (ammo == catalog.definitions.end())
+            {
+                failJson(
+                    sourceName,
+                    fieldPath(fieldPath(fieldPath("items", key), "weapon"), "ammo"),
+                    std::format("unknown item '{}'", json.weapon->ammo));
+            }
+            ItemDefinition& item = catalog.definitions.at(key);
+            item.weapon = rangedWeaponFrom(json.weapon->ranged);
+            item.ammo = ammo->second.id;
+        }
         validateInFile(sourceName, [&] { validateItemCatalog(catalog); });
         return catalog;
     }
@@ -114,6 +139,16 @@ namespace advanced_platformer
                 atlasSize,
                 sourceName,
                 fieldPath(fieldPath("items", name), "icon"));
+            if (definition.weapon.has_value())
+            {
+                requireInAtlas(
+                    definition.weapon->projectileSprite.region,
+                    atlasSize,
+                    sourceName,
+                    fieldPath(
+                        fieldPath(fieldPath(fieldPath("items", name), "weapon"), "ranged"),
+                        "sprite"));
+            }
         }
     }
 
@@ -144,6 +179,10 @@ namespace advanced_platformer
         {
             auto item = entry.second;
             item.icon.textureId = textureId;
+            if (item.weapon.has_value())
+            {
+                item.weapon->projectileSprite.textureId = textureId;
+            }
             result.push_back(item);
         }
         return result;

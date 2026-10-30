@@ -160,6 +160,15 @@ namespace advanced_platformer
         {
             result["health"] = sol::lua_nil;
         }
+        sol::table carried = lua.create_table();
+        for (const auto& [item, quantity] : snapshot.carried)
+        {
+            carried[item] = quantity;
+        }
+        result["carried"] = carried;
+        result["equipped"] = snapshot.equipped.has_value()
+                                 ? sol::make_object(lua, *snapshot.equipped)
+                                 : sol::make_object(lua, sol::lua_nil);
         result["targetFeet"] = optionalVector(snapshot.targetFeet);
         result["lastKnownTargetFeet"] = luaVector(lua, snapshot.lastKnownTargetFeet);
         result["targetCenter"] = optionalVector(snapshot.targetCenter);

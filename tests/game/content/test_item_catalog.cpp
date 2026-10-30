@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <string>
 #include "content/item_catalog.hpp"
+#include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/inventory/item.hpp"
 #include "support/json_document.hpp"
 
@@ -38,6 +39,43 @@ TEST_CASE("Item JSON resolves custom names to stable runtime IDs", "[app][items]
         advanced_platformer::composeItemStack(catalog, {"missing", 1}), std::invalid_argument);
     REQUIRE_THROWS_AS(
         advanced_platformer::composeItemStack(catalog, {"herb", 0}), std::invalid_argument);
+}
+
+TEST_CASE("Item JSON gives a gun its shot and the item it spends as ammo", "[app][items][json]")
+{
+    auto itemJson = itemData();
+    itemJson["items"]["pellets"] = tests::parseJson(R"({
+        "name":"Pellets","maximumStack":20,"icon":{"position":[0,0],"size":[8,8]}
+    })");
+    itemJson["items"]["blaster"] = tests::parseJson(R"({
+        "name":"Blaster","maximumStack":1,"icon":{"position":[8,0],"size":[8,8]},
+        "weapon":{"ammo":"pellets","ranged":{
+            "damage":2,"projectilesPerShot":3,"spreadDegrees":20,
+            "sprite":{"position":[16,0],"size":[4,4]}
+        }}
+    })");
+    const auto catalog =
+        advanced_platformer::parseItemCatalog(tests::dumpJson(itemJson), "items.json");
+    const auto& blaster = advanced_platformer::itemDefinition(catalog, "blaster");
+    REQUIRE(blaster.ammo == advanced_platformer::itemDefinition(catalog, "pellets").id);
+    const advanced_platformer::RangedWeapon shot =
+        blaster.weapon.value_or(advanced_platformer::RangedWeapon{});
+    REQUIRE(shot.damage == 2);
+    REQUIRE(shot.projectilesPerShot == 3);
+    REQUIRE(shot.spreadDegrees == 20.0F);
+    REQUIRE_FALSE(advanced_platformer::itemDefinition(catalog, "herb").weapon.has_value());
+    for (const auto& item : advanced_platformer::composeItems(catalog, 6))
+    {
+        if (item.weapon.has_value())
+        {
+            REQUIRE(item.weapon->projectileSprite.textureId == 6);
+        }
+    }
+
+    itemJson["items"]["blaster"]["weapon"]["ammo"] = "darts";
+    REQUIRE_THROWS_WITH(
+        advanced_platformer::parseItemCatalog(tests::dumpJson(itemJson), "items.json"),
+        "items.json: items.blaster.weapon.ammo: unknown item 'darts'");
 }
 
 TEST_CASE("Item JSON names where a malformed file goes wrong", "[app][items][json]")

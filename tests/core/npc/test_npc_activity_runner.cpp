@@ -488,3 +488,43 @@ TEST_CASE("A script can use an item from its NPC's bag by name", "[npc][lua][inv
     REQUIRE(tests::component<advanced_platformer::Health>(world, npc).current == 3);
     REQUIRE(tests::component<advanced_platformer::Inventory>(world, npc).count(2) == 1);
 }
+
+TEST_CASE(
+    "A script sees what its NPC carries and can equip a gun from the bag by name",
+    "[npc][lua][inventory]")
+{
+    advanced_platformer::TileMap map = tests::TileMapBuilder({"........", "........", "########"});
+    advanced_platformer::World world(
+        {{.id = 1,
+          .name = "Gun",
+          .maximumStack = 1,
+          .weapon = advanced_platformer::RangedWeapon{},
+          .ammo = 2},
+         {.id = 2, .name = "Shells", .maximumStack = 9}});
+    advanced_platformer::Inventory bag(2);
+    bag.add(world.itemDefinition(1), 1);
+    bag.add(world.itemDefinition(2), 3);
+    const advanced_platformer::ActorId npc = world.addActor(
+        tests::ActorBuilder::sized({12.0F, 12.0F})
+            .atFeet({24.0F, 16.0F})
+            .flying(20.0F)
+            .withInventory(bag)
+            .onTeam(advanced_platformer::Team::Enemy)
+            .withPrimary(advanced_platformer::BiteAttack{})
+            .thinking({64.0F, 1.0F})
+            .running(
+                tests::NpcMachineBuilder::named("test").state(
+                    "acting", advanced_platformer::NpcActivity{"fixture", "act"})));
+    tests::RecordingNpcScripts scripts;
+    scripts.command.useItem = "Gun";
+
+    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
+    REQUIRE(scripts.calls.back().snapshot.carried.at("Gun") == 1);
+    REQUIRE(scripts.calls.back().snapshot.carried.at("Shells") == 3);
+    REQUIRE_FALSE(scripts.calls.back().snapshot.equipped.has_value());
+    REQUIRE(tests::actor(world, npc).equippedWeapon.has_value());
+
+    scripts.command.useItem.reset();
+    advanced_platformer::updateWorldSimulation(map, world, tests::FixedStepSeconds, scripts);
+    REQUIRE(scripts.calls.back().snapshot.equipped == "Gun");
+}

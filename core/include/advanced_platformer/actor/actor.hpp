@@ -8,6 +8,7 @@
 #include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/input/input_state.hpp"
 #include "advanced_platformer/inventory/inventory.hpp"
+#include "advanced_platformer/inventory/item.hpp"
 #include "advanced_platformer/movement/flying_movement.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
 #include "advanced_platformer/movement/surface_climb.hpp"
@@ -24,6 +25,12 @@ namespace advanced_platformer
     {
         int current = 1;
         int maximum = 1;
+    };
+
+    struct EquippedWeapon
+    {
+        ItemId item = 0;
+        std::optional<Attack> holstered;
     };
 
     enum class LifeState
@@ -55,6 +62,7 @@ namespace advanced_platformer
         Team team = Team::Neutral;
         std::optional<Attack> primaryAttack;
         std::optional<Attack> secondaryAttack;
+        std::optional<EquippedWeapon> equippedWeapon;
         std::optional<NpcBrain> brain;
         std::optional<NpcPerception> perception;
         std::optional<NpcMachine> machine;

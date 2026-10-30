@@ -21,6 +21,11 @@ local CellSize = 16
 local NoProgressSeconds = 4.0
 local UnstickSecondsLimit = 2.0
 local UnstickJumpSeconds = 0.5
+local ShotgunItem = "Shotgun"
+local AmmoItem = "Ammo"
+local SniperItem = "Sniper"
+local ShotgunDistance = 64.0
+local SniperDistance = 96.0
 
 local function stillFor(memory, snapshot, step)
     local feet = snapshot.feet
@@ -105,6 +110,24 @@ local function onTheWay(memory, snapshot, command)
     command = freeLoot(memory, snapshot, command)
     command = drinkWhenLow(snapshot, command)
     return fightNearest(snapshot, command)
+end
+
+local function loaded(snapshot, gun)
+    return (snapshot.carried[gun] or 0) > 0 and (snapshot.carried[AmmoItem] or 0) > 0
+end
+
+local function weaponFor(snapshot)
+    local distance = targetDistance(snapshot)
+    if not snapshot.facts.targetVisible or distance == nil then
+        return nil
+    end
+    if distance <= ShotgunDistance and loaded(snapshot, ShotgunItem) then
+        return ShotgunItem
+    end
+    if distance >= SniperDistance and loaded(snapshot, SniperItem) then
+        return SniperItem
+    end
+    return nil
 end
 
 local function stillPlaced(snapshot, item, feet, skipped)
@@ -292,6 +315,10 @@ return {
             return nearestPickupOf(snapshot, PotionItem, memory.unreachablePotions) ~= nil
         end,
 
+        weaponBetter = function(_, snapshot)
+            return weaponFor(snapshot) ~= snapshot.equipped
+        end,
+
         noProgress = function(memory, snapshot, step)
             local level = tostring(snapshot.exitFeet)
             if memory.progressLevel ~= level then
@@ -444,6 +471,19 @@ return {
                     jumpPressed = jump,
                     jumpHeld = true,
                 })
+            end,
+        },
+
+        switchWeapon = {
+            description = "Entered while weaponBetter: equip the shotgun for an opponent in "
+                .. "sight within ShotgunDistance, the sniper for one at SniperDistance or "
+                .. "further, when the bag holds that gun and its ammo, and the pistol "
+                .. "otherwise, so no ammo is spent on tiles or out of sight; keep "
+                .. "shooting the opponent in sight.",
+            update = function(_, snapshot)
+                local command = fightNearest(snapshot, { clearRoute = true })
+                command.useItem = weaponFor(snapshot) or snapshot.equipped
+                return command
             end,
         },
 

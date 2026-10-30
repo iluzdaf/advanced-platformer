@@ -46,6 +46,8 @@ namespace advanced_platformer
         glm::vec2 feet = {0.0F, 0.0F};
         glm::vec2 center = {0.0F, 0.0F};
         std::optional<Health> health;
+        std::map<std::string, int> carried;
+        std::optional<std::string> equipped;
         std::optional<glm::vec2> targetFeet;
         glm::vec2 lastKnownTargetFeet = {0.0F, 0.0F};
         std::optional<glm::vec2> targetCenter;

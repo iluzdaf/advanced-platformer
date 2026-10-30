@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 
+#include "advanced_platformer/combat/combat.hpp"
+
 namespace advanced_platformer
 {
     void validateItemDefinition(const ItemDefinition& definition)
@@ -12,6 +14,18 @@ namespace advanced_platformer
         {
             throw std::invalid_argument(
                 "Item definitions require an ID, name and valid stack/effect");
+        }
+        if (definition.weapon.has_value() != definition.ammo.has_value() ||
+            (definition.weapon.has_value() &&
+             (definition.effect != ItemEffect::None || *definition.ammo <= 0 ||
+              *definition.ammo == definition.id)))
+        {
+            throw std::invalid_argument(
+                "A weapon item needs another item as its ammo and no other effect");
+        }
+        if (definition.weapon.has_value())
+        {
+            validateRangedWeapon(*definition.weapon);
         }
     }
 }

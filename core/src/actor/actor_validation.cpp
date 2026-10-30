@@ -90,16 +90,7 @@ namespace advanced_platformer
         {
             if (const auto* weapon = std::get_if<RangedWeapon>(&attack))
             {
-                requireSeconds(weapon->phaseTimeRemaining, "Ranged weapon phase time remaining");
-                if (weapon->damage <= 0 || !isFinitePositive(weapon->projectileSize) ||
-                    !isFinitePositive(weapon->projectileSpeed) ||
-                    !isFinitePositive(weapon->projectileLifetime) ||
-                    !isFinitePositive(weapon->shootDuration) ||
-                    !isFinitePositive(weapon->recoveryDuration) ||
-                    !isFinitePositive(weapon->projectileSprite.region.size))
-                {
-                    throw std::invalid_argument("Actor ranged weapon data is invalid");
-                }
+                validateRangedWeapon(*weapon);
             }
             else if (const auto* bite = std::get_if<BiteAttack>(&attack))
             {

@@ -7,6 +7,7 @@
 #include <variant>
 
 #include <glm/geometric.hpp>
+#include <glm/trigonometric.hpp>
 #include <glm/vec2.hpp>
 
 #include "advanced_platformer/actor/actor.hpp"
@@ -14,6 +15,8 @@
 #include "advanced_platformer/actor/actor_id.hpp"
 #include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/combat/attack.hpp"
+#include "advanced_platformer/inventory/item.hpp"
+#include "advanced_platformer/inventory/item_use.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/validation.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
@@ -30,9 +33,11 @@ namespace advanced_platformer
             return std::ranges::find(hits, id) != hits.end();
         }
 
-        Projectile makeProjectile(const Actor& actor, const RangedWeapon& weapon)
+        Projectile makeProjectile(
+            const Actor& actor,
+            const RangedWeapon& weapon,
+            glm::vec2 direction)
         {
-            const glm::vec2 direction = glm::normalize(actor.intentions.aimDirection);
             const glm::vec2 actorCenter = centerOf(actor.body.bounds);
             const float actorRadius =
                 std::max(actor.body.bounds.size.x, actor.body.bounds.size.y) * 0.5F;
@@ -53,6 +58,15 @@ namespace advanced_platformer
             return projectile;
         }
 
+        glm::vec2 rotated(glm::vec2 direction, float radians)
+        {
+            const float cosine = std::cos(radians);
+            const float sine = std::sin(radians);
+            return {
+                direction.x * cosine - direction.y * sine,
+                direction.x * sine + direction.y * cosine};
+        }
+
         void beginShot(
             const Actor& actor,
             RangedWeapon& weapon,
@@ -63,7 +77,18 @@ namespace advanced_platformer
             weapon.phaseTimeRemaining = weapon.shootDuration;
             weapon.lastFiredTimeSeconds = world.simulationTimeSeconds();
             world.recordEvent({actor.id, feetOf(actor.body.bounds), WorldEventKind::Shot});
-            requests.spawnProjectile(makeProjectile(actor, weapon));
+            const glm::vec2 aim = glm::normalize(actor.intentions.aimDirection);
+            const float spread = glm::radians(weapon.spreadDegrees);
+            for (int pellet = 0; pellet < weapon.projectilesPerShot; ++pellet)
+            {
+                const float angle =
+                    weapon.projectilesPerShot == 1
+                        ? 0.0F
+                        : spread * (static_cast<float>(pellet) /
+                                        static_cast<float>(weapon.projectilesPerShot - 1) -
+                                    0.5F);
+                requests.spawnProjectile(makeProjectile(actor, weapon, rotated(aim, angle)));
+            }
         }
 
         void enterNextPhase(RangedWeapon& weapon)
@@ -209,6 +234,7 @@ namespace advanced_platformer
             Actor& actor,
             RangedWeapon& weapon,
             bool pressed,
+            std::optional<ItemId> ammo,
             World& world,
             WorldRequests& requests,
             float deltaTime)
@@ -221,6 +247,10 @@ namespace advanced_platformer
             else if (weapon.phase == RangedPhase::Ready && pressed && hasAimDirection(actor))
             {
                 beginShot(actor, weapon, requests, world);
+                if (ammo.has_value() && actor.inventory.has_value())
+                {
+                    actor.inventory->remove(*ammo, 1);
+                }
             }
             else
             {
@@ -318,12 +348,28 @@ namespace advanced_platformer
         }
     }
 
+    namespace
+    {
+        std::optional<ItemId> ammoSpentBy(const World& world, const Actor& actor, AttackSlot slot)
+        {
+            if (slot != AttackSlot::Primary || !actor.equippedWeapon.has_value())
+            {
+                return std::nullopt;
+            }
+            return world.itemDefinition(actor.equippedWeapon->item).ammo;
+        }
+    }
+
     void updateAttacks(World& world, WorldRequests& requests, float deltaTime)
     {
         requireSeconds(deltaTime, "Attacks time step");
 
         for (Actor& actor : world.actors())
         {
+            if (actor.equippedWeapon.has_value() && !hasAmmo(world, actor))
+            {
+                holsterWeapon(actor);
+            }
             for (const AttackSlot slot : AttackSlots)
             {
                 std::optional<Attack>& attack = attackIn(actor, slot);
@@ -338,7 +384,14 @@ namespace advanced_platformer
                 }
                 else if (auto* weapon = std::get_if<RangedWeapon>(&*attack))
                 {
-                    updateRangedAttack(actor, *weapon, pressed, world, requests, deltaTime);
+                    updateRangedAttack(
+                        actor,
+                        *weapon,
+                        pressed,
+                        ammoSpentBy(world, actor, slot),
+                        world,
+                        requests,
+                        deltaTime);
                 }
                 else if (auto* contact = std::get_if<ContactDamage>(&*attack))
                 {

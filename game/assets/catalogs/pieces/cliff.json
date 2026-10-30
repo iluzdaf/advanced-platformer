@@ -33,6 +33,11 @@
       "id": "coin_pile_1",
       "definition": "coin_pile",
       "spawn": [14, 6]
+    },
+    {
+      "id": "sniper_1",
+      "definition": "sniper",
+      "spawn": [3, 10]
     }
   ]
 }

@@ -21,6 +21,7 @@
 #include "advanced_platformer/combat/combat.hpp"
 #include "advanced_platformer/inventory/inventory.hpp"
 #include "advanced_platformer/inventory/item.hpp"
+#include "advanced_platformer/inventory/item_use.hpp"
 #include "advanced_platformer/math/aabb.hpp"
 #include "advanced_platformer/math/coordinates.hpp"
 #include "advanced_platformer/movement/platformer_movement.hpp"
@@ -162,6 +163,15 @@ namespace advanced_platformer
             {
                 rebuilt.inventory = carryInventory(
                     *live.inventory, rebuilt.inventory->slots().size(), itemIds, world);
+            }
+            if (live.equippedWeapon.has_value())
+            {
+                const auto weapon = itemIds.find(live.equippedWeapon->item);
+                if (weapon != itemIds.end() &&
+                    world.itemDefinition(weapon->second).weapon.has_value())
+                {
+                    equipWeapon(rebuilt, world.itemDefinition(weapon->second));
+                }
             }
             if (rebuilt.brain.has_value() && live.brain.has_value())
             {

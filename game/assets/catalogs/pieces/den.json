@@ -33,6 +33,11 @@
       "id": "health_potion_1",
       "definition": "health_potion",
       "spawn": [15, 10]
+    },
+    {
+      "id": "shotgun_1",
+      "definition": "shotgun",
+      "spawn": [2, 10]
     }
   ]
 }

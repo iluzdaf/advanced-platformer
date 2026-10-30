@@ -32,6 +32,11 @@
       "id": "coin_pile_1",
       "definition": "coin_pile",
       "spawn": [6, 10]
+    },
+    {
+      "id": "ammo_1",
+      "definition": "ammo",
+      "spawn": [3, 10]
     }
   ]
 }

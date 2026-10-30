@@ -43,6 +43,7 @@ target_sources(
         ${PROJECT_SOURCE_DIR}/tests/core/combat/test_projectile_system.cpp
         ${PROJECT_SOURCE_DIR}/tests/core/combat/test_ranged_attack.cpp
         ${PROJECT_SOURCE_DIR}/tests/core/combat/test_touch_damage.cpp
+        ${PROJECT_SOURCE_DIR}/tests/core/combat/test_weapons.cpp
         ${PROJECT_SOURCE_DIR}/tests/game/content/test_actor_catalog.cpp
         ${PROJECT_SOURCE_DIR}/tests/game/content/test_actor_definition.cpp
         ${PROJECT_SOURCE_DIR}/tests/game/content/test_animation_catalog.cpp
